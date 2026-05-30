@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>QC Rolling Process Inspection | Amhara Metal Industry</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         @media print {
@@ -22,20 +21,17 @@
 <body class="bg-gray-100 font-sans">
 <div class="max-w-7xl mx-auto p-4 md:p-6">
 
-    <!-- Header -->
     <div class="bg-white rounded-t-xl shadow p-4 mb-2 flex justify-between items-center">
         <div>
             <h1 class="text-xl font-bold text-blue-900">Amhara Metal Industry & Machine Technology Development Enterprise</h1>
             <p class="text-sm font-semibold">Quality Assurance Directorate – Rolling Process Inspection Checklist</p>
         </div>
         <div class="text-right text-sm text-gray-600">
-            <i class="fas fa-cloud-upload-alt"></i> Data saved to Supabase cloud
+            <i class="fas fa-cloud-upload-alt"></i> Data saved via backend API
         </div>
     </div>
 
-    <!-- Inspection Form -->
     <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
-        <!-- Engineer name and date -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
             <div>
                 <label class="font-bold">QC Engineer Name *</label>
@@ -47,7 +43,6 @@
             </div>
         </div>
 
-        <!-- 1. Source & doc availability -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
             <div>
                 <label class="font-bold">Source of Process Inspection</label>
@@ -72,11 +67,10 @@
             </div>
             <div>
                 <label class="font-bold">Inspected By</label>
-                <input type="text" id="inspectedByName" readonly class="w-full bg-gray-100 border p-1 rounded" value="(same as Engineer Name)">
+                <input type="text" id="inspectedByName" readonly class="w-full bg-gray-100 border p-1 rounded">
             </div>
         </div>
 
-        <!-- 2. Shift, Operator, Inspection time -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
             <div>
                 <label class="font-bold">Shift Number</label>
@@ -100,125 +94,21 @@
             </div>
         </div>
 
-        <!-- ========= ACCEPTANCE CONDITIONS TABLE (exactly as in image) ========= -->
         <div class="overflow-x-auto border rounded-md">
             <table class="min-w-full text-sm border-collapse">
                 <thead class="bg-gray-200">
-                    <tr>
-                        <th class="p-2 border">Inspection Parameters</th>
-                        <th class="p-2 border">Rating</th>
-                        <th class="p-2 border">Cause of Defects (check all)</th>
-                        <th class="p-2 border">Engineering Solutions</th>
-                    </tr>
+                    <tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Rating</th><th class="p-2 border">Cause of Defects (check all)</th><th class="p-2 border">Engineering Solutions</th></tr>
                 </thead>
-                <tbody id="acceptanceTableBody">
-                    <!-- Row 1: Availability of Jigs & Fixture -->
-                    <tr>
-                        <td class="border p-2 font-medium">Availability of Jigs & Fixture</td>
-                        <td class="border">
-                            <select id="rating_jigs_fixture" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
-                                <option value="Excellent">Excellent</option>
-                                <option value="V.Good">V.Good</option>
-                                <option value="Good">Good</option>
-                                <option value="Poor">Poor</option>
-                            </select>
-                        </td>
-                        <td class="border">
-                            <div class="cause-checkbox-group flex flex-wrap gap-2">
-                                <label><input type="checkbox" value="Machine" class="cause-check" data-param="jigs_fixture"> Machine</label>
-                                <label><input type="checkbox" value="Design" class="cause-check" data-param="jigs_fixture"> Design</label>
-                                <label><input type="checkbox" value="Operator" class="cause-check" data-param="jigs_fixture"> Operator</label>
-                                <label><input type="checkbox" value="Methods" class="cause-check" data-param="jigs_fixture"> Methods</label>
-                                <label><input type="checkbox" value="Material" class="cause-check" data-param="jigs_fixture"> Material</label>
-                            </div>
-                        </td>
-                        <td class="border"><input type="text" id="eng_jigs_fixture" class="w-full p-1 border rounded text-sm"></td>
-                    </tr>
-                    <!-- Row 2: Condition of Type of Material used as per Design -->
-                    <tr>
-                        <td class="border p-2 font-medium">Condition of Type of Material used as per Design</td>
-                        <td class="border">
-                            <select id="rating_material_condition" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
-                                <option value="Excellent">Excellent</option>
-                                <option value="V.Good">V.Good</option>
-                                <option value="Good">Good</option>
-                                <option value="Poor">Poor</option>
-                            </select>
-                        </td>
-                        <td class="border">
-                            <div class="cause-checkbox-group flex flex-wrap gap-2">
-                                <label><input type="checkbox" value="Machine" class="cause-check" data-param="material_condition"> Machine</label>
-                                <label><input type="checkbox" value="Design" class="cause-check" data-param="material_condition"> Design</label>
-                                <label><input type="checkbox" value="Operator" class="cause-check" data-param="material_condition"> Operator</label>
-                                <label><input type="checkbox" value="Methods" class="cause-check" data-param="material_condition"> Methods</label>
-                                <label><input type="checkbox" value="Material" class="cause-check" data-param="material_condition"> Material</label>
-                            </div>
-                        </td>
-                        <td class="border"><input type="text" id="eng_material_condition" class="w-full p-1 border rounded text-sm"></td>
-                    </tr>
-                    <!-- Row 3: Condition of Surface uniformity -->
-                    <tr>
-                        <td class="border p-2 font-medium">Condition of Surface uniformity</td>
-                        <td class="border">
-                            <select id="rating_surface_uniformity" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
-                                <option value="Excellent">Excellent</option>
-                                <option value="V.Good">V.Good</option>
-                                <option value="Good">Good</option>
-                                <option value="Poor">Poor</option>
-                            </select>
-                        </td>
-                        <td class="border">
-                            <div class="cause-checkbox-group flex flex-wrap gap-2">
-                                <label><input type="checkbox" value="Machine" class="cause-check" data-param="surface_uniformity"> Machine</label>
-                                <label><input type="checkbox" value="Design" class="cause-check" data-param="surface_uniformity"> Design</label>
-                                <label><input type="checkbox" value="Operator" class="cause-check" data-param="surface_uniformity"> Operator</label>
-                                <label><input type="checkbox" value="Methods" class="cause-check" data-param="surface_uniformity"> Methods</label>
-                                <label><input type="checkbox" value="Material" class="cause-check" data-param="surface_uniformity"> Material</label>
-                            </div>
-                        </td>
-                        <td class="border"><input type="text" id="eng_surface_uniformity" class="w-full p-1 border rounded text-sm"></td>
-                    </tr>
-                    <!-- Row 4: Condition of Dimensional accuracy & sharpness as per Design -->
-                    <tr>
-                        <td class="border p-2 font-medium">Condition of Dimensional accuracy & sharpness as per Design</td>
-                        <td class="border">
-                            <select id="rating_dimensional_accuracy" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
-                                <option value="Excellent">Excellent</option>
-                                <option value="V.Good">V.Good</option>
-                                <option value="Good">Good</option>
-                                <option value="Poor">Poor</option>
-                            </select>
-                        </td>
-                        <td class="border">
-                            <div class="cause-checkbox-group flex flex-wrap gap-2">
-                                <label><input type="checkbox" value="Machine" class="cause-check" data-param="dimensional_accuracy"> Machine</label>
-                                <label><input type="checkbox" value="Design" class="cause-check" data-param="dimensional_accuracy"> Design</label>
-                                <label><input type="checkbox" value="Operator" class="cause-check" data-param="dimensional_accuracy"> Operator</label>
-                                <label><input type="checkbox" value="Methods" class="cause-check" data-param="dimensional_accuracy"> Methods</label>
-                                <label><input type="checkbox" value="Material" class="cause-check" data-param="dimensional_accuracy"> Material</label>
-                            </div>
-                        </td>
-                        <td class="border"><input type="text" id="eng_dimensional_accuracy" class="w-full p-1 border rounded text-sm"></td>
-                    </tr>
-                </tbody>
+                <tbody id="acceptanceTableBody"></tbody>
             </table>
         </div>
 
-        <!-- cumulative and result -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-3 rounded">
             <div><label class="font-bold">CUMULATIVE POINTS</label> <input type="number" id="cumulativePoints" readonly class="border p-1 rounded w-32 bg-gray-100"></div>
-            <div><label class="font-bold">Result</label> 
-                <select id="result" class="border p-1 rounded ml-2">
-                    <option value="Accepted">Accepted</option>
-                    <option value="Rework">Rework</option>
-                    <option value="Reject">Reject</option>
-                    <option value="Conditional Accepted">Conditional Accepted</option>
-                </select>
-            </div>
+            <div><label class="font-bold">Result</label> <select id="result" class="border p-1 rounded ml-2"><option>Accepted</option><option>Rework</option><option>Reject</option><option>Conditional Accepted</option></select></div>
             <div><label class="font-bold">Responsible Person Name</label> <input type="text" id="responsiblePerson" class="border p-1 rounded w-full"></div>
         </div>
 
-        <!-- 4. COST SECTION (unchanged) -->
         <div class="border p-4 rounded-md">
             <h3 class="font-bold text-lg">Internal Failure Costs</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
@@ -234,59 +124,75 @@
             </div>
         </div>
 
-        <!-- 5. Defects & Correction -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
             <div><label class="font-bold">N.B The Most Frequent Defects</label><textarea id="mostFrequentDefects" rows="2" class="border p-1 w-full"></textarea></div>
             <div><label class="font-bold">Defect Correction Transfer Slip</label><input type="text" id="defectCorrectionSlip" class="border p-1 w-full"></div>
             <div class="md:col-span-2"><label class="font-bold">Cause of Defects (detailed)</label><textarea id="causeOfDefectsDetail" rows="2" class="border p-1 w-full"></textarea></div>
         </div>
 
-        <!-- buttons -->
         <div class="flex justify-end gap-4 no-print">
             <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
-            <button type="button" onclick="saveToSupabase()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
+            <button type="button" onclick="saveToBackend()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
         </div>
         <div id="formMessage" class="text-center text-sm mt-2"></div>
     </form>
 
-    <!-- History section -->
     <div class="mt-8 bg-white shadow rounded p-4 no-print">
         <div class="flex justify-between items-center">
-            <h3 class="font-bold text-lg">📋 Previous Inspections (from cloud)</h3>
-            <button onclick="loadHistoryFromSupabase()" class="text-blue-600 text-sm underline">Refresh</button>
+            <h3 class="font-bold text-lg">📋 Previous Inspections</h3>
+            <button onclick="loadHistory()" class="text-blue-600 text-sm underline">Refresh</button>
         </div>
         <div id="inspectionHistory" class="max-h-60 overflow-y-auto text-sm mt-2"></div>
     </div>
 </div>
 
 <script>
-    // ---------- SUPABASE CONFIG (your credentials) ----------
-    const SUPABASE_URL = "https://vlbnjraaowuyrdexhklk.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYm5qcmFhb3d1eXJkZXhoa2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTMyNTEsImV4cCI6MjA5NDY2OTI1MX0.pOByJxbMsRQZWgjp7P9bsnsb_AugI67SwAlCXpdpV6U";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
     const parameters = ["jigs_fixture", "material_condition", "surface_uniformity", "dimensional_accuracy"];
+    const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
+
+    function buildAcceptanceTable() {
+        const tbody = document.getElementById("acceptanceTableBody");
+        tbody.innerHTML = "";
+        const labels = [
+            "Availability of Jigs & Fixture",
+            "Condition of Type of Material used as per Design",
+            "Condition of Surface uniformity",
+            "Condition of Dimensional accuracy & sharpness as per Design"
+        ];
+        parameters.forEach((p, idx) => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerHTML = `<div class="border p-2 font-medium">${labels[idx]}</div>`;
+            row.insertCell(1).innerHTML = `<select id="rating_${p}" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
+                <option>Excellent</option><option>V.Good</option><option>Good</option><option>Poor</option>
+            </select>`;
+            row.insertCell(2).innerHTML = `<div class="cause-checkbox-group flex flex-wrap gap-2">
+                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Machine"> Machine</label>
+                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Design"> Design</label>
+                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Operator"> Operator</label>
+                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Methods"> Methods</label>
+                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Material"> Material</label>
+            </div>`;
+            row.insertCell(3).innerHTML = `<input type="text" id="eng_${p}" class="w-full p-1 border rounded text-sm">`;
+        });
+    }
 
     function updateCumulativePoints() {
         let total = 0;
         parameters.forEach(p => {
             const sel = document.getElementById(`rating_${p}`);
-            if (sel && sel.value) total += ratingPoints[sel.value] || 0;
+            if (sel) total += ratingPoints[sel.value] || 0;
         });
         document.getElementById("cumulativePoints").value = total;
     }
 
     function computeFailureCost() {
-        const defMaterial = parseFloat(document.getElementById("defectedMaterialCost").value) || 0;
-        const laborHours = parseFloat(document.getElementById("laborHours").value) || 0;
-        const salaryHr = parseFloat(document.getElementById("salaryPerHour").value) || 0;
-        const totalMachine = parseFloat(document.getElementById("totalMachineCost").value) || 0;
-        const machHours = parseFloat(document.getElementById("machiningHours").value) || 0;
-        const machCostHr = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
-        const laborCost = laborHours * salaryHr;
-        const machiningCost = machHours * machCostHr;
-        const total = defMaterial + laborCost + totalMachine + machiningCost;
+        const def = parseFloat(document.getElementById("defectedMaterialCost").value) || 0;
+        const laborH = parseFloat(document.getElementById("laborHours").value) || 0;
+        const salaryH = parseFloat(document.getElementById("salaryPerHour").value) || 0;
+        const machCost = parseFloat(document.getElementById("totalMachineCost").value) || 0;
+        const machH = parseFloat(document.getElementById("machiningHours").value) || 0;
+        const machRate = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
+        const total = def + (laborH * salaryH) + machCost + (machH * machRate);
         document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
         document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
         return total;
@@ -295,11 +201,11 @@
     function updateTotalTime() {
         const start = document.getElementById("startTime").value;
         const end = document.getElementById("endTime").value;
-        if(start && end) {
+        if (start && end) {
             const [sh, sm] = start.split(":").map(Number);
             const [eh, em] = end.split(":").map(Number);
             let minutes = (eh*60+em) - (sh*60+sm);
-            if(minutes < 0) minutes += 24*60;
+            if (minutes < 0) minutes += 1440;
             document.getElementById("totalTimeDisplay").innerText = `Total: ${minutes} min (${(minutes/60).toFixed(1)} hr)`;
             return minutes;
         }
@@ -312,8 +218,8 @@
             const rating = document.getElementById(`rating_${p}`).value;
             const causes = [];
             document.querySelectorAll(`.cause-check[data-param="${p}"]:checked`).forEach(cb => causes.push(cb.value));
-            const engineeringSolution = document.getElementById(`eng_${p}`).value;
-            data[p] = { rating, causes, engineering_solution: engineeringSolution };
+            const eng = document.getElementById(`eng_${p}`).value;
+            data[p] = { rating, causes, engineering_solution: eng };
         });
         return data;
     }
@@ -328,103 +234,97 @@
             document.querySelectorAll(`.cause-check[data-param="${p}"]`).forEach(cb => cb.checked = false);
         });
         updateCumulativePoints();
-        document.getElementById("defectedMaterialCost").value = "";
-        document.getElementById("laborHours").value = "";
-        document.getElementById("salaryPerHour").value = "";
-        document.getElementById("totalMachineCost").value = "";
-        document.getElementById("machiningHours").value = "";
-        document.getElementById("machiningCostPerHr").value = "";
         computeFailureCost();
         document.getElementById("formMessage").innerHTML = "";
     }
-async function saveToSupabase() {
-  const engineerName = document.getElementById("qcEngineerName").value.trim();
-  if (!engineerName) {
-    document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please enter QC Engineer Name</span>`;
-    return;
-  }
-  const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
-  if (!sourceType) {
-    document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please select Source of Process Inspection</span>`;
-    return;
-  }
 
-  const inspectionRecord = {
-    username: engineerName,
-    source_type: sourceType,
-    outsource_institute: document.getElementById("outsourceInstitute").value,
-    design_available: document.getElementById("designAvail").checked,
-    mpp_available: document.getElementById("mppAvail").checked,
-    operation_status: document.getElementById("operationStatus").value,
-    shift: document.querySelector('input[name="shift"]:checked')?.value ? parseInt(document.querySelector('input[name="shift"]:checked').value) : null,
-    operator_name: document.getElementById("operatorName").value,
-    start_time: document.getElementById("startTime").value,
-    end_time: document.getElementById("endTime").value,
-    total_minutes: updateTotalTime(),
-    acceptance_data: getAcceptanceData(),
-    cumulative_points: parseInt(document.getElementById("cumulativePoints").value) || 0,
-    result: document.getElementById("result").value,
-    responsible_person: document.getElementById("responsiblePerson").value,
-    defected_material_cost: parseFloat(document.getElementById("defectedMaterialCost").value) || 0,
-    labor_hours: parseFloat(document.getElementById("laborHours").value) || 0,
-    salary_per_hour: parseFloat(document.getElementById("salaryPerHour").value) || 0,
-    total_machine_cost: parseFloat(document.getElementById("totalMachineCost").value) || 0,
-    machining_hours: parseFloat(document.getElementById("machiningHours").value) || 0,
-    machining_cost_per_hr: parseFloat(document.getElementById("machiningCostPerHr").value) || 0,
-    total_internal_failure_cost: computeFailureCost(),
-    most_frequent_defects: document.getElementById("mostFrequentDefects").value,
-    defect_correction_slip: document.getElementById("defectCorrectionSlip").value,
-    cause_of_defects: document.getElementById("causeOfDefectsDetail").value
-  };
+    async function saveToBackend() {
+        const engineerName = document.getElementById("qcEngineerName").value.trim();
+        if (!engineerName) {
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please enter QC Engineer Name</span>`;
+            return;
+        }
+        const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
+        if (!sourceType) {
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please select Source of Process Inspection</span>`;
+            return;
+        }
 
-  try {
-    const response = await fetch('/api/inspections', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inspectionRecord)
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error);
+        const payload = {
+            username: engineerName,
+            source_type: sourceType,
+            outsource_institute: document.getElementById("outsourceInstitute").value,
+            design_available: document.getElementById("designAvail").checked,
+            mpp_available: document.getElementById("mppAvail").checked,
+            operation_status: document.getElementById("operationStatus").value,
+            shift: document.querySelector('input[name="shift"]:checked')?.value ? parseInt(document.querySelector('input[name="shift"]:checked').value) : null,
+            operator_name: document.getElementById("operatorName").value,
+            start_time: document.getElementById("startTime").value,
+            end_time: document.getElementById("endTime").value,
+            total_minutes: updateTotalTime(),
+            acceptance_data: getAcceptanceData(),
+            cumulative_points: parseInt(document.getElementById("cumulativePoints").value) || 0,
+            result: document.getElementById("result").value,
+            responsible_person: document.getElementById("responsiblePerson").value,
+            defected_material_cost: parseFloat(document.getElementById("defectedMaterialCost").value) || 0,
+            labor_hours: parseFloat(document.getElementById("laborHours").value) || 0,
+            salary_per_hour: parseFloat(document.getElementById("salaryPerHour").value) || 0,
+            total_machine_cost: parseFloat(document.getElementById("totalMachineCost").value) || 0,
+            machining_hours: parseFloat(document.getElementById("machiningHours").value) || 0,
+            machining_cost_per_hr: parseFloat(document.getElementById("machiningCostPerHr").value) || 0,
+            total_internal_failure_cost: computeFailureCost(),
+            most_frequent_defects: document.getElementById("mostFrequentDefects").value,
+            defect_correction_slip: document.getElementById("defectCorrectionSlip").value,
+            cause_of_defects: document.getElementById("causeOfDefectsDetail").value
+        };
+
+        try {
+            const response = await fetch('/api/inspections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Unknown error');
+            }
+            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection saved to cloud!</span>`;
+            resetForm();
+            loadHistory();
+        } catch (err) {
+            console.error('Save error:', err);
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`;
+        }
     }
-    document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection saved to cloud!</span>`;
-    resetForm();
-    loadHistoryFromSupabase();
-  } catch (err) {
-    document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`;
-  }
-}
 
-async function loadHistoryFromSupabase() {
-  try {
-    const response = await fetch('/api/inspections');
-    if (!response.ok) throw new Error('Failed to load');
-    const data = await response.json();
-    const historyDiv = document.getElementById("inspectionHistory");
-    if (!data || data.length === 0) {
-      historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found.</p>";
-      return;
+    async function loadHistory() {
+        try {
+            const response = await fetch('/api/inspections');
+            if (!response.ok) throw new Error('Failed to fetch');
+            const data = await response.json();
+            const historyDiv = document.getElementById("inspectionHistory");
+            if (!data || data.length === 0) {
+                historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found.</p>";
+                return;
+            }
+            historyDiv.innerHTML = data.map(row => `
+                <div class="border-b py-2">
+                    <div class="flex justify-between">
+                        <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span>
+                        <span>Result: ${row.result}</span>
+                    </div>
+                    <div class="text-sm text-gray-600">Engineer: ${row.username} | Points: ${row.cumulative_points}</div>
+                </div>
+            `).join("");
+        } catch (err) {
+            console.error(err);
+            document.getElementById("inspectionHistory").innerHTML = "<p class='text-red-500'>Error loading history</p>";
+        }
     }
-    historyDiv.innerHTML = data.map(row => `
-      <div class="border-b py-2">
-        <div class="flex justify-between">
-          <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span>
-          <span>Result: ${row.result}</span>
-        </div>
-        <div class="text-sm text-gray-600">Engineer: ${row.username} | Points: ${row.cumulative_points}</div>
-      </div>
-    `).join("");
-  } catch (err) {
-    console.error(err);
-    document.getElementById("inspectionHistory").innerHTML = "<p class='text-red-500'>Error loading history</p>";
-  }
-}
-    // Sync "Inspected By" with engineer name
-    document.getElementById("qcEngineerName").addEventListener("input", function() {
-        document.getElementById("inspectedByName").value = this.value;
-    });
 
-    // Auto-update cost & time
+    document.getElementById("qcEngineerName").addEventListener("input", () => {
+        document.getElementById("inspectedByName").value = document.getElementById("qcEngineerName").value;
+    });
     document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
     document.getElementById("laborHours").addEventListener("input", computeFailureCost);
     document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
@@ -434,16 +334,12 @@ async function loadHistoryFromSupabase() {
     document.getElementById("startTime").addEventListener("change", updateTotalTime);
     document.getElementById("endTime").addEventListener("change", updateTotalTime);
 
-    // Initialize
     document.addEventListener("DOMContentLoaded", () => {
+        buildAcceptanceTable();
         updateCumulativePoints();
-        loadHistoryFromSupabase();
+        loadHistory();
         document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10);
-        // Set default rating values
-        parameters.forEach(p => {
-            const sel = document.getElementById(`rating_${p}`);
-            if(sel) sel.value = "Excellent";
-        });
+        parameters.forEach(p => { const sel = document.getElementById(`rating_${p}`); if(sel) sel.value = "Excellent"; });
         updateCumulativePoints();
     });
 </script>
