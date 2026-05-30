@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>QC Rolling Process Inspection | Amhara Metal Industry</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         @media print {
@@ -22,20 +21,20 @@
 <body class="bg-gray-100 font-sans">
 <div class="max-w-7xl mx-auto p-4 md:p-6">
 
-    <!-- Header -->
+    <!-- Header always visible -->
     <div class="bg-white rounded-t-xl shadow p-4 mb-2 flex justify-between items-center">
         <div>
             <h1 class="text-xl font-bold text-blue-900">Amhara Metal Industry & Machine Technology Development Enterprise</h1>
             <p class="text-sm font-semibold">Quality Assurance Directorate – Rolling Process Inspection Checklist</p>
         </div>
         <div class="text-right text-sm text-gray-600">
-            <i class="fas fa-cloud-upload-alt"></i> Data saved to cloud
+            <i class="fas fa-save"></i> Data saved locally in your browser
         </div>
     </div>
 
-    <!-- Inspection Form (always visible, no login) -->
+    <!-- Inspection Form (always visible) -->
     <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
-        <!-- Engineer Name (manual entry, replaces login) -->
+        <!-- Engineer name (replaces login) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
             <div>
                 <label class="font-bold">QC Engineer Name *</label>
@@ -72,7 +71,7 @@
             </div>
             <div>
                 <label class="font-bold">Inspected By</label>
-                <input type="text" id="inspectedByName" readonly class="w-full bg-gray-100 border p-1 rounded" placeholder="Auto-filled">
+                <input type="text" id="inspectedByName" readonly class="w-full bg-gray-100 border p-1 rounded" value="(same as Engineer Name)">
             </div>
         </div>
 
@@ -147,26 +146,25 @@
         <!-- buttons -->
         <div class="flex justify-end gap-4 no-print">
             <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
-            <button type="button" onclick="submitInspection()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
+            <button type="button" onclick="saveToLocalStorage()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save Inspection Locally</button>
+            <button type="button" onclick="exportAllData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">📥 Export JSON</button>
         </div>
         <div id="formMessage" class="text-center text-sm mt-2"></div>
     </form>
 
     <!-- History section -->
     <div class="mt-8 bg-white shadow rounded p-4 no-print">
-        <h3 class="font-bold text-lg">📋 Previous Inspections (from cloud)</h3>
+        <h3 class="font-bold text-lg">📋 Previous Inspections (stored in browser)</h3>
         <div id="inspectionHistory" class="max-h-60 overflow-y-auto text-sm mt-2"></div>
-        <button onclick="refreshHistory()" class="text-blue-600 text-sm mt-2 underline">Refresh</button>
+        <button onclick="clearAllData()" class="text-red-600 text-sm mt-2 underline">Clear all data</button>
     </div>
 </div>
 
 <script>
-    // ---------- SUPABASE CONFIG (REPLACE WITH YOUR CREDENTIALS) ----------
-    const SUPABASE_URL = "https://vlbnjraaowuyrdexhklk.supabase.co";   // CHANGE
-    const SUPABASE_ANON_KEY = "yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYm5qcmFhb3d1eXJkZXhoa2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTMyNTEsImV4cCI6MjA5NDY2OTI1MX0.pOByJxbMsRQZWgjp7P9bsnsb_AugI67SwAlCXpdpV6U";                 // CHANGE
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // -------- LOCAL STORAGE KEY ----------
+    const STORAGE_KEY = "rolling_inspections";
 
-    // ----- Acceptance parameters -----
+    // ----- Acceptance parameters definition -----
     const parameters = [
         { id: "jigs_fixture", label: "Availability of Jigs & Fixture" },
         { id: "material_condition", label: "Condition of Type of Material used as per Design" },
@@ -175,15 +173,17 @@
     ];
     const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
 
+    // Build table
     function buildAcceptanceTable() {
         const tbody = document.getElementById("acceptanceTableBody");
         tbody.innerHTML = "";
         parameters.forEach(param => {
             const row = tbody.insertRow();
+            // Parameter name
             const cellParam = row.insertCell(0);
             cellParam.className = "border p-2 font-medium";
             cellParam.innerText = param.label;
-            
+            // Rating dropdown
             const cellRating = row.insertCell(1);
             cellRating.className = "border";
             const select = document.createElement("select");
@@ -197,7 +197,7 @@
             });
             select.addEventListener("change", updateCumulativePoints);
             cellRating.appendChild(select);
-            
+            // Causes checkboxes
             const cellCauses = row.insertCell(2);
             cellCauses.className = "border";
             const causesDiv = document.createElement("div");
@@ -215,7 +215,7 @@
                 causesDiv.appendChild(label);
             });
             cellCauses.appendChild(causesDiv);
-            
+            // Engineering solution
             const cellSolution = row.insertCell(3);
             cellSolution.className = "border";
             const inputSolution = document.createElement("input");
@@ -291,107 +291,129 @@
         document.getElementById("machiningCostPerHr").value = "";
         computeFailureCost();
         document.getElementById("formMessage").innerHTML = "";
+        // Also clear engineer name? Keep it for convenience.
     }
 
-    async function submitInspection() {
+    function saveToLocalStorage() {
         const engineerName = document.getElementById("qcEngineerName").value.trim();
         if(!engineerName) {
             document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please enter QC Engineer Name</span>`;
             return;
         }
         const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
-        if(!sourceType) {
-            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please select Source of Process Inspection</span>`;
-            return;
-        }
-        
-        const inspectionRecord = {
-            username: engineerName,   // store manually entered name
-            submitted_at: new Date(),
-            source_type: sourceType,
-            outsource_institute: document.getElementById("outsourceInstitute").value,
-            design_available: document.getElementById("designAvail").checked,
-            mpp_available: document.getElementById("mppAvail").checked,
-            operation_status: document.getElementById("operationStatus").value,
-            shift: document.querySelector('input[name="shift"]:checked')?.value ? parseInt(document.querySelector('input[name="shift"]:checked').value) : null,
-            operator_name: document.getElementById("operatorName").value,
-            start_time: document.getElementById("startTime").value,
-            end_time: document.getElementById("endTime").value,
-            total_minutes: updateTotalTime(),
-            acceptance_data: getAcceptanceData(),
-            cumulative_points: parseInt(document.getElementById("cumulativePoints").value) || 0,
+        if(!sourceType) { alert("Please select Source of Process Inspection"); return; }
+
+        // Gather all data
+        const inspection = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            engineerName: engineerName,
+            sourceType: sourceType,
+            outsourceInstitute: document.getElementById("outsourceInstitute").value,
+            designAvail: document.getElementById("designAvail").checked,
+            mppAvail: document.getElementById("mppAvail").checked,
+            operationStatus: document.getElementById("operationStatus").value,
+            shift: document.querySelector('input[name="shift"]:checked')?.value,
+            operatorName: document.getElementById("operatorName").value,
+            startTime: document.getElementById("startTime").value,
+            endTime: document.getElementById("endTime").value,
+            totalMinutes: updateTotalTime(),
+            acceptanceData: getAcceptanceData(),
+            cumulativePoints: parseInt(document.getElementById("cumulativePoints").value) || 0,
             result: document.getElementById("result").value,
-            responsible_person: document.getElementById("responsiblePerson").value,
-            defected_material_cost: parseFloat(document.getElementById("defectedMaterialCost").value) || 0,
-            labor_hours: parseFloat(document.getElementById("laborHours").value) || 0,
-            salary_per_hour: parseFloat(document.getElementById("salaryPerHour").value) || 0,
-            total_machine_cost: parseFloat(document.getElementById("totalMachineCost").value) || 0,
-            machining_hours: parseFloat(document.getElementById("machiningHours").value) || 0,
-            machining_cost_per_hr: parseFloat(document.getElementById("machiningCostPerHr").value) || 0,
-            total_internal_failure_cost: computeFailureCost(),
-            most_frequent_defects: document.getElementById("mostFrequentDefects").value,
-            defect_correction_slip: document.getElementById("defectCorrectionSlip").value,
-            cause_of_defects: document.getElementById("causeOfDefectsDetail").value
+            responsiblePerson: document.getElementById("responsiblePerson").value,
+            defectedMaterialCost: parseFloat(document.getElementById("defectedMaterialCost").value) || 0,
+            laborHours: parseFloat(document.getElementById("laborHours").value) || 0,
+            salaryPerHour: parseFloat(document.getElementById("salaryPerHour").value) || 0,
+            totalMachineCost: parseFloat(document.getElementById("totalMachineCost").value) || 0,
+            machiningHours: parseFloat(document.getElementById("machiningHours").value) || 0,
+            machiningCostPerHr: parseFloat(document.getElementById("machiningCostPerHr").value) || 0,
+            totalInternalFailureCost: computeFailureCost(),
+            mostFrequentDefects: document.getElementById("mostFrequentDefects").value,
+            defectCorrectionSlip: document.getElementById("defectCorrectionSlip").value,
+            causeOfDefectsDetail: document.getElementById("causeOfDefectsDetail").value
         };
 
-        const { data, error } = await supabase.from("rolling_inspections").insert([inspectionRecord]);
-        if(error) {
-            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Cloud error: ${error.message}</span>`;
-        } else {
-            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Saved to cloud!</span>`;
-            resetForm();
-            refreshHistory();
-        }
+        // Retrieve existing, add new, save
+        let allInspections = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        allInspections.unshift(inspection);  // newest first
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allInspections));
+
+        document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection saved locally!</span>`;
+        resetForm();
+        displayHistory();
     }
 
-    async function refreshHistory() {
-        const { data, error } = await supabase
-            .from("rolling_inspections")
-            .select("id, submitted_at, result, cumulative_points, username")
-            .order("submitted_at", { ascending: false })
-            .limit(20);
-        if(error) {
-            console.error(error);
-            document.getElementById("inspectionHistory").innerHTML = "<p class='text-red-500'>Error loading history</p>";
-            return;
-        }
+    function displayHistory() {
+        const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
         const historyDiv = document.getElementById("inspectionHistory");
-        if(!data || data.length === 0) {
-            historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found.</p>";
+        if(all.length === 0) {
+            historyDiv.innerHTML = "<p class='text-gray-500'>No inspections saved yet.</p>";
             return;
         }
-        historyDiv.innerHTML = data.map(row => `
-            <div class="border-b py-2">
-                <div class="flex justify-between">
-                    <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span>
-                    <span>Result: ${row.result}</span>
+        historyDiv.innerHTML = all.map(ins => `
+            <div class="border-b py-2 flex justify-between items-center">
+                <div>
+                    <strong>${new Date(ins.timestamp).toLocaleString()}</strong><br>
+                    Engineer: ${ins.engineerName} | Result: ${ins.result} | Points: ${ins.cumulativePoints}
                 </div>
-                <div class="text-sm text-gray-600">Engineer: ${row.username} | Points: ${row.cumulative_points}</div>
+                <button onclick="deleteInspection(${ins.id})" class="text-red-500 text-sm underline">Delete</button>
             </div>
         `).join("");
     }
 
-    // Auto-fill inspected by when engineer name changes
+    function deleteInspection(id) {
+        let all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        all = all.filter(ins => ins.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+        displayHistory();
+        document.getElementById("formMessage").innerHTML = `<span class="text-blue-600">Inspection deleted.</span>`;
+    }
+
+    function clearAllData() {
+        if(confirm("Delete ALL saved inspections? This cannot be undone.")) {
+            localStorage.removeItem(STORAGE_KEY);
+            displayHistory();
+            document.getElementById("formMessage").innerHTML = `<span class="text-blue-600">All data cleared.</span>`;
+        }
+    }
+
+    function exportAllData() {
+        const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if(all.length === 0) { alert("No data to export."); return; }
+        const dataStr = JSON.stringify(all, null, 2);
+        const blob = new Blob([dataStr], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `rolling_inspections_${new Date().toISOString().slice(0,19)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // sync inspected by field with engineer name
     document.getElementById("qcEngineerName").addEventListener("input", function() {
         document.getElementById("inspectedByName").value = this.value;
     });
 
-    // Event listeners for cost & time
-    const costInputs = ["defectedMaterialCost","laborHours","salaryPerHour","totalMachineCost","machiningHours","machiningCostPerHr"];
-    costInputs.forEach(id => {
-        document.getElementById(id).addEventListener("input", computeFailureCost);
-    });
+    // auto update cost & time
+    document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
+    document.getElementById("laborHours").addEventListener("input", computeFailureCost);
+    document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
+    document.getElementById("totalMachineCost").addEventListener("input", computeFailureCost);
+    document.getElementById("machiningHours").addEventListener("input", computeFailureCost);
+    document.getElementById("machiningCostPerHr").addEventListener("input", computeFailureCost);
     document.getElementById("startTime").addEventListener("change", updateTotalTime);
     document.getElementById("endTime").addEventListener("change", updateTotalTime);
 
-    // Initialize
+    // init
     document.addEventListener("DOMContentLoaded", () => {
         buildAcceptanceTable();
         updateCumulativePoints();
-        refreshHistory();
+        displayHistory();
         document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10);
-        document.getElementById("inspectedByName").value = "";
     });
 </script>
 </body>
 </html>
+       
