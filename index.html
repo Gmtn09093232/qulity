@@ -2,142 +2,396 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QC Rolling Inspection</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>QC Rolling Process Inspection | Amhara Metal Industry</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #inspectionForm, #inspectionForm * { visibility: visible; }
+            #inspectionForm { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
+            .no-print { display: none; }
+        }
+        .rating-select { min-width: 100px; }
+        .cause-checkbox-group label { margin-right: 12px; font-size: 0.8rem; }
+        table th, table td { vertical-align: top; padding: 8px 6px; }
+    </style>
 </head>
-<body class="bg-gray-100 p-4">
+<body class="bg-gray-100 font-sans">
+<div class="max-w-7xl mx-auto p-4 md:p-6">
 
-<div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
-    <!-- Login Section -->
-    <div id="loginSection">
-        <h2 class="text-2xl font-bold mb-4">QC Engineer Login</h2>
-        <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-2">
-        <input type="password" id="password" placeholder="Password" class="w-full p-2 border rounded mb-2">
-        <button onclick="handleLogin()" class="bg-blue-600 text-white px-4 py-2 rounded mr-2">Login</button>
-        <button onclick="handleSignup()" class="bg-gray-600 text-white px-4 py-2 rounded">Sign Up</button>
-        <div id="loginMessage" class="text-red-500 mt-2"></div>
+    <!-- Header -->
+    <div class="bg-white rounded-t-xl shadow p-4 mb-2 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold text-blue-900">Amhara Metal Industry & Machine Technology Development Enterprise</h1>
+            <p class="text-sm font-semibold">Quality Assurance Directorate – Rolling Process Inspection Checklist</p>
+        </div>
+        <div class="text-right text-sm text-gray-600">
+            <i class="fas fa-cloud-upload-alt"></i> Data saved to cloud
+        </div>
     </div>
 
-    <!-- Inspection Form (hidden until login) -->
-    <div id="inspectionSection" class="hidden">
-        <h2 class="text-xl font-bold">Rolling Process Inspection</h2>
-        <p>Logged in as: <span id="userEmail"></span> <button onclick="logout()" class="text-red-600 underline">Logout</button></p>
-        <hr class="my-3">
-        <form id="inspectionForm">
-            <!-- simplified fields for testing -->
-            <div class="mb-2">
-                <label>Operator Name:</label>
-                <input type="text" id="operatorName" class="border p-1 w-full">
+    <!-- Inspection Form (always visible, no login) -->
+    <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
+        <!-- Engineer Name (manual entry, replaces login) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
+            <div>
+                <label class="font-bold">QC Engineer Name *</label>
+                <input type="text" id="qcEngineerName" class="w-full border p-2 rounded" placeholder="e.g. Abebech Alemu" required>
             </div>
-            <div class="mb-2">
-                <label>Result:</label>
-                <select id="result" class="border p-1">
-                    <option>Accepted</option><option>Rework</option><option>Reject</option>
+            <div>
+                <label class="font-bold">Date</label>
+                <input type="date" id="inspectionDate" class="w-full border p-2 rounded">
+            </div>
+        </div>
+
+        <!-- 1. Source & doc availability -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
+            <div>
+                <label class="font-bold">Source of Process Inspection</label>
+                <div class="flex gap-4 mt-1">
+                    <label><input type="radio" name="sourceType" value="Outsource" required> Outsource</label>
+                    <label><input type="radio" name="sourceType" value="Insource"> Insource</label>
+                </div>
+                <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="w-full border rounded p-1 mt-2 text-sm">
+            </div>
+            <div>
+                <label class="font-bold">Document Availability</label>
+                <div class="flex gap-6">
+                    <label><input type="checkbox" id="designAvail"> Design</label>
+                    <label><input type="checkbox" id="mppAvail"> MPP</label>
+                </div>
+                <label class="font-bold mt-2 block">Operation Condition</label>
+                <select id="operationStatus" class="w-full border p-1 rounded">
+                    <option value="Holdup">Holdup</option>
+                    <option value="Continue">Continue</option>
+                    <option value="Ending">Ending</option>
                 </select>
             </div>
-            <button type="button" onclick="submitInspection()" class="bg-green-600 text-white px-4 py-2 rounded">Save Inspection</button>
-        </form>
-        <div id="formFeedback" class="mt-3"></div>
-        <hr class="my-3">
-        <h3 class="font-bold">Previous Inspections</h3>
-        <div id="historyList" class="text-sm"></div>
+            <div>
+                <label class="font-bold">Inspected By</label>
+                <input type="text" id="inspectedByName" readonly class="w-full bg-gray-100 border p-1 rounded" placeholder="Auto-filled">
+            </div>
+        </div>
+
+        <!-- 2. Shift, Operator, Inspection time -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
+            <div>
+                <label class="font-bold">Shift Number</label>
+                <div class="flex gap-4">
+                    <label><input type="radio" name="shift" value="1"> Shift 1</label>
+                    <label><input type="radio" name="shift" value="2"> Shift 2</label>
+                    <label><input type="radio" name="shift" value="3"> Shift 3</label>
+                </div>
+            </div>
+            <div>
+                <label class="font-bold">Operator Name</label>
+                <input type="text" id="operatorName" class="w-full border p-1 rounded">
+            </div>
+            <div>
+                <label class="font-bold">Inspection Time</label>
+                <div class="flex gap-2 text-sm">
+                    <input type="time" id="startTime" class="border p-1 rounded w-1/2"> 
+                    <input type="time" id="endTime" class="border p-1 rounded w-1/2">
+                </div>
+                <span id="totalTimeDisplay" class="text-xs text-gray-600">Total: -- min</span>
+            </div>
+        </div>
+
+        <!-- 3. ACCEPTANCE CONDITIONS TABLE -->
+        <div class="overflow-x-auto border rounded-md">
+            <table class="min-w-full text-sm border-collapse">
+                <thead class="bg-gray-200">
+                    <tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Rating</th><th class="p-2 border">Cause of Defects (check all)</th><th class="p-2 border">Engineering Solutions</th></tr>
+                </thead>
+                <tbody id="acceptanceTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- cumulative and result -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-3 rounded">
+            <div><label class="font-bold">CUMULATIVE POINTS</label> <input type="number" id="cumulativePoints" readonly class="border p-1 rounded w-32 bg-gray-100"></div>
+            <div><label class="font-bold">Result</label> 
+                <select id="result" class="border p-1 rounded ml-2">
+                    <option value="Accepted">Accepted</option><option value="Rework">Rework</option><option value="Reject">Reject</option><option value="Conditional Accepted">Conditional Accepted</option>
+                </select>
+            </div>
+            <div><label class="font-bold">Responsible Person Name</label> <input type="text" id="responsiblePerson" class="border p-1 rounded w-full"></div>
+        </div>
+
+        <!-- 4. COST SECTION -->
+        <div class="border p-4 rounded-md">
+            <h3 class="font-bold text-lg">Internal Failure Costs</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                <div><label>Defected Material Cost (ETB)</label> <input type="number" step="0.01" id="defectedMaterialCost" class="border p-1 rounded w-full"></div>
+                <div><label>Labor Hours</label> <input type="number" step="0.5" id="laborHours" class="border p-1 rounded w-full"></div>
+                <div><label>Salary per Hour (ETB)</label> <input type="number" step="0.01" id="salaryPerHour" class="border p-1 rounded w-full"></div>
+                <div><label>Total Machine Cost (ETB)</label> <input type="number" step="0.01" id="totalMachineCost" class="border p-1 rounded w-full"></div>
+                <div><label>Machining Hours</label> <input type="number" step="0.5" id="machiningHours" class="border p-1 rounded w-full"></div>
+                <div><label>Machining Cost per Hr (ETB)</label> <input type="number" step="0.01" id="machiningCostPerHr" class="border p-1 rounded w-full"></div>
+            </div>
+            <div class="mt-3 p-2 bg-gray-100 rounded"><span class="font-bold">Total Internal Failure Cost (ETB):</span> <span id="totalFailureCostDisplay">0.00</span>
+                <input type="hidden" id="totalInternalFailureCost">
+            </div>
+        </div>
+
+        <!-- 5. Defects & Correction -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+            <div><label class="font-bold">N.B The Most Frequent Defects</label><textarea id="mostFrequentDefects" rows="2" class="border p-1 w-full"></textarea></div>
+            <div><label class="font-bold">Defect Correction Transfer Slip</label><input type="text" id="defectCorrectionSlip" class="border p-1 w-full"></div>
+            <div class="md:col-span-2"><label class="font-bold">Cause of Defects (detailed)</label><textarea id="causeOfDefectsDetail" rows="2" class="border p-1 w-full"></textarea></div>
+        </div>
+
+        <!-- buttons -->
+        <div class="flex justify-end gap-4 no-print">
+            <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
+            <button type="button" onclick="submitInspection()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
+        </div>
+        <div id="formMessage" class="text-center text-sm mt-2"></div>
+    </form>
+
+    <!-- History section -->
+    <div class="mt-8 bg-white shadow rounded p-4 no-print">
+        <h3 class="font-bold text-lg">📋 Previous Inspections (from cloud)</h3>
+        <div id="inspectionHistory" class="max-h-60 overflow-y-auto text-sm mt-2"></div>
+        <button onclick="refreshHistory()" class="text-blue-600 text-sm mt-2 underline">Refresh</button>
     </div>
 </div>
 
 <script>
-    // ---------- REPLACE WITH YOUR ACTUAL SUPABASE CREDENTIALS ----------
-    const SUPABASE_URL = "https://vlbnjraaowuyrdexhklk.supabase.co";   // CHANGE THIS
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYm5qcmFhb3d1eXJkZXhoa2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTMyNTEsImV4cCI6MjA5NDY2OTI1MX0.pOByJxbMsRQZWgjp7P9bsnsb_AugI67SwAlCXpdpV6U
+    // ---------- SUPABASE CONFIG (REPLACE WITH YOUR CREDENTIALS) ----------
+    const SUPABASE_URL = "https://vlbnjraaowuyrdexhklk.supabase.co";   // CHANGE
+    const SUPABASE_ANON_KEY = "yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYm5qcmFhb3d1eXJkZXhoa2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTMyNTEsImV4cCI6MjA5NDY2OTI1MX0.pOByJxbMsRQZWgjp7P9bsnsb_AugI67SwAlCXpdpV6U";                 // CHANGE
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let currentUser = null;
+    // ----- Acceptance parameters -----
+    const parameters = [
+        { id: "jigs_fixture", label: "Availability of Jigs & Fixture" },
+        { id: "material_condition", label: "Condition of Type of Material used as per Design" },
+        { id: "surface_uniformity", label: "Condition of Surface uniformity" },
+        { id: "dimensional_accuracy", label: "Condition of Dimensional accuracy & sharpness as per Design" }
+    ];
+    const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
 
-    async function handleLogin() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-            document.getElementById('loginMessage').innerText = "Login error: " + error.message;
-        } else {
-            currentUser = data.user;
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('inspectionSection').classList.remove('hidden');
-            document.getElementById('userEmail').innerText = currentUser.email;
-            loadHistory();
-        }
+    function buildAcceptanceTable() {
+        const tbody = document.getElementById("acceptanceTableBody");
+        tbody.innerHTML = "";
+        parameters.forEach(param => {
+            const row = tbody.insertRow();
+            const cellParam = row.insertCell(0);
+            cellParam.className = "border p-2 font-medium";
+            cellParam.innerText = param.label;
+            
+            const cellRating = row.insertCell(1);
+            cellRating.className = "border";
+            const select = document.createElement("select");
+            select.className = "rating-select w-full p-1 border rounded";
+            select.id = `rating_${param.id}`;
+            ["Excellent","V.Good","Good","Poor"].forEach(r => {
+                const opt = document.createElement("option");
+                opt.value = r;
+                opt.text = r;
+                select.appendChild(opt);
+            });
+            select.addEventListener("change", updateCumulativePoints);
+            cellRating.appendChild(select);
+            
+            const cellCauses = row.insertCell(2);
+            cellCauses.className = "border";
+            const causesDiv = document.createElement("div");
+            causesDiv.className = "cause-checkbox-group flex flex-wrap gap-2";
+            const causeFields = ["Machine","Design","Operator","Methods","Material"];
+            causeFields.forEach(cause => {
+                const label = document.createElement("label");
+                label.className = "text-xs";
+                const cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.value = cause;
+                cb.name = `cause_${param.id}_${cause}`;
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(cause));
+                causesDiv.appendChild(label);
+            });
+            cellCauses.appendChild(causesDiv);
+            
+            const cellSolution = row.insertCell(3);
+            cellSolution.className = "border";
+            const inputSolution = document.createElement("input");
+            inputSolution.type = "text";
+            inputSolution.className = "w-full p-1 border rounded text-sm";
+            inputSolution.id = `eng_${param.id}`;
+            cellSolution.appendChild(inputSolution);
+        });
     }
 
-    async function handleSignup() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) {
-            document.getElementById('loginMessage').innerText = "Signup error: " + error.message;
-        } else {
-            document.getElementById('loginMessage').innerHTML = "Account created! You can now <strong>login</strong>.";
-        }
+    function updateCumulativePoints() {
+        let total = 0;
+        parameters.forEach(param => {
+            const select = document.getElementById(`rating_${param.id}`);
+            if(select && select.value) total += ratingPoints[select.value] || 0;
+        });
+        document.getElementById("cumulativePoints").value = total;
     }
 
-    async function logout() {
-        await supabase.auth.signOut();
-        currentUser = null;
-        document.getElementById('loginSection').classList.remove('hidden');
-        document.getElementById('inspectionSection').classList.add('hidden');
-        document.getElementById('email').value = '';
-        document.getElementById('password').value = '';
-        document.getElementById('loginMessage').innerHTML = '';
+    function computeFailureCost() {
+        const defMaterial = parseFloat(document.getElementById("defectedMaterialCost").value) || 0;
+        const laborHours = parseFloat(document.getElementById("laborHours").value) || 0;
+        const salaryHr = parseFloat(document.getElementById("salaryPerHour").value) || 0;
+        const totalMachine = parseFloat(document.getElementById("totalMachineCost").value) || 0;
+        const machHours = parseFloat(document.getElementById("machiningHours").value) || 0;
+        const machCostHr = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
+        const laborCost = laborHours * salaryHr;
+        const machiningCost = machHours * machCostHr;
+        const total = defMaterial + laborCost + totalMachine + machiningCost;
+        document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
+        document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
+        return total;
+    }
+
+    function updateTotalTime() {
+        const start = document.getElementById("startTime").value;
+        const end = document.getElementById("endTime").value;
+        if(start && end) {
+            const [sh, sm] = start.split(":").map(Number);
+            const [eh, em] = end.split(":").map(Number);
+            let minutes = (eh*60+em) - (sh*60+sm);
+            if(minutes < 0) minutes += 24*60;
+            document.getElementById("totalTimeDisplay").innerText = `Total: ${minutes} min (${(minutes/60).toFixed(1)} hr)`;
+            return minutes;
+        }
+        return 0;
+    }
+
+    function getAcceptanceData() {
+        const data = {};
+        parameters.forEach(param => {
+            const rating = document.getElementById(`rating_${param.id}`).value;
+            const causes = [];
+            document.querySelectorAll(`input[name^="cause_${param.id}_"]:checked`).forEach(cb => causes.push(cb.value));
+            const engineeringSolution = document.getElementById(`eng_${param.id}`).value;
+            data[param.id] = { rating, causes, engineering_solution: engineeringSolution };
+        });
+        return data;
+    }
+
+    function resetForm() {
+        document.getElementById("inspectionForm").reset();
+        parameters.forEach(param => {
+            const sel = document.getElementById(`rating_${param.id}`);
+            if(sel) sel.value = "Excellent";
+        });
+        updateCumulativePoints();
+        document.getElementById("defectedMaterialCost").value = "";
+        document.getElementById("laborHours").value = "";
+        document.getElementById("salaryPerHour").value = "";
+        document.getElementById("totalMachineCost").value = "";
+        document.getElementById("machiningHours").value = "";
+        document.getElementById("machiningCostPerHr").value = "";
+        computeFailureCost();
+        document.getElementById("formMessage").innerHTML = "";
     }
 
     async function submitInspection() {
-        if (!currentUser) return;
-        const operator = document.getElementById('operatorName').value;
-        const resultVal = document.getElementById('result').value;
-        const payload = {
-            user_id: currentUser.id,
-            username: currentUser.email,
-            operator_name: operator,
-            result: resultVal,
-            submitted_at: new Date()
+        const engineerName = document.getElementById("qcEngineerName").value.trim();
+        if(!engineerName) {
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please enter QC Engineer Name</span>`;
+            return;
+        }
+        const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
+        if(!sourceType) {
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please select Source of Process Inspection</span>`;
+            return;
+        }
+        
+        const inspectionRecord = {
+            username: engineerName,   // store manually entered name
+            submitted_at: new Date(),
+            source_type: sourceType,
+            outsource_institute: document.getElementById("outsourceInstitute").value,
+            design_available: document.getElementById("designAvail").checked,
+            mpp_available: document.getElementById("mppAvail").checked,
+            operation_status: document.getElementById("operationStatus").value,
+            shift: document.querySelector('input[name="shift"]:checked')?.value ? parseInt(document.querySelector('input[name="shift"]:checked').value) : null,
+            operator_name: document.getElementById("operatorName").value,
+            start_time: document.getElementById("startTime").value,
+            end_time: document.getElementById("endTime").value,
+            total_minutes: updateTotalTime(),
+            acceptance_data: getAcceptanceData(),
+            cumulative_points: parseInt(document.getElementById("cumulativePoints").value) || 0,
+            result: document.getElementById("result").value,
+            responsible_person: document.getElementById("responsiblePerson").value,
+            defected_material_cost: parseFloat(document.getElementById("defectedMaterialCost").value) || 0,
+            labor_hours: parseFloat(document.getElementById("laborHours").value) || 0,
+            salary_per_hour: parseFloat(document.getElementById("salaryPerHour").value) || 0,
+            total_machine_cost: parseFloat(document.getElementById("totalMachineCost").value) || 0,
+            machining_hours: parseFloat(document.getElementById("machiningHours").value) || 0,
+            machining_cost_per_hr: parseFloat(document.getElementById("machiningCostPerHr").value) || 0,
+            total_internal_failure_cost: computeFailureCost(),
+            most_frequent_defects: document.getElementById("mostFrequentDefects").value,
+            defect_correction_slip: document.getElementById("defectCorrectionSlip").value,
+            cause_of_defects: document.getElementById("causeOfDefectsDetail").value
         };
-        const { data, error } = await supabase.from('rolling_inspections').insert([payload]);
-        if (error) {
-            document.getElementById('formFeedback').innerHTML = `<span class="text-red-600">Error: ${error.message}</span>`;
+
+        const { data, error } = await supabase.from("rolling_inspections").insert([inspectionRecord]);
+        if(error) {
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Cloud error: ${error.message}</span>`;
         } else {
-            document.getElementById('formFeedback').innerHTML = '<span class="text-green-600">Saved successfully!</span>';
-            loadHistory();
+            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Saved to cloud!</span>`;
+            resetForm();
+            refreshHistory();
         }
     }
 
-    async function loadHistory() {
-        if (!currentUser) return;
+    async function refreshHistory() {
         const { data, error } = await supabase
-            .from('rolling_inspections')
-            .select('operator_name, result, submitted_at')
-            .eq('user_id', currentUser.id)
-            .order('submitted_at', { ascending: false })
-            .limit(5);
-        if (error) console.error(error);
-        const historyDiv = document.getElementById('historyList');
-        if (data && data.length) {
-            historyDiv.innerHTML = data.map(row => `<div>${new Date(row.submitted_at).toLocaleString()} - ${row.operator_name} (${row.result})</div>`).join('');
-        } else {
-            historyDiv.innerHTML = '<div>No inspections yet.</div>';
+            .from("rolling_inspections")
+            .select("id, submitted_at, result, cumulative_points, username")
+            .order("submitted_at", { ascending: false })
+            .limit(20);
+        if(error) {
+            console.error(error);
+            document.getElementById("inspectionHistory").innerHTML = "<p class='text-red-500'>Error loading history</p>";
+            return;
         }
+        const historyDiv = document.getElementById("inspectionHistory");
+        if(!data || data.length === 0) {
+            historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found.</p>";
+            return;
+        }
+        historyDiv.innerHTML = data.map(row => `
+            <div class="border-b py-2">
+                <div class="flex justify-between">
+                    <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span>
+                    <span>Result: ${row.result}</span>
+                </div>
+                <div class="text-sm text-gray-600">Engineer: ${row.username} | Points: ${row.cumulative_points}</div>
+            </div>
+        `).join("");
     }
 
-    // Auto-check existing session
-    window.onload = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-            currentUser = session.user;
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('inspectionSection').classList.remove('hidden');
-            document.getElementById('userEmail').innerText = currentUser.email;
-            loadHistory();
-        }
-    };
+    // Auto-fill inspected by when engineer name changes
+    document.getElementById("qcEngineerName").addEventListener("input", function() {
+        document.getElementById("inspectedByName").value = this.value;
+    });
+
+    // Event listeners for cost & time
+    const costInputs = ["defectedMaterialCost","laborHours","salaryPerHour","totalMachineCost","machiningHours","machiningCostPerHr"];
+    costInputs.forEach(id => {
+        document.getElementById(id).addEventListener("input", computeFailureCost);
+    });
+    document.getElementById("startTime").addEventListener("change", updateTotalTime);
+    document.getElementById("endTime").addEventListener("change", updateTotalTime);
+
+    // Initialize
+    document.addEventListener("DOMContentLoaded", () => {
+        buildAcceptanceTable();
+        updateCumulativePoints();
+        refreshHistory();
+        document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10);
+        document.getElementById("inspectedByName").value = "";
+    });
 </script>
 </body>
 </html>
