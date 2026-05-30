@@ -20,6 +20,16 @@ app.use(async (req, res, next) => {
   next();
 });
 
+const path = require('path');
+
+// Serve the HTML form when visiting the root URL
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// If you have static files (CSS, JS), serve them as well
+app.use(express.static('public'));
+
 // Routes
 app.use('/api/inspections', require('./inspections')(supabase));
 
