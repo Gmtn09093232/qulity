@@ -21,6 +21,6 @@ app.use(async (req, res, next) => {
 });
 
 // Routes
-app.use('/api/inspections', require('./routes/inspections')(supabase));
+app.use('/api/inspections', require('./inspections')(supabase));
 
 app.listen(process.env.PORT, () => console.log(`Server running on port ${process.env.PORT}`));
