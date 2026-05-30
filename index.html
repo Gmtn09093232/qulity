@@ -35,7 +35,7 @@
 
     <!-- Inspection Form -->
     <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
-        <!-- Engineer name -->
+        <!-- Engineer name and date -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
             <div>
                 <label class="font-bold">QC Engineer Name *</label>
@@ -100,13 +100,107 @@
             </div>
         </div>
 
-        <!-- 3. ACCEPTANCE CONDITIONS TABLE -->
+        <!-- ========= ACCEPTANCE CONDITIONS TABLE (exactly as in image) ========= -->
         <div class="overflow-x-auto border rounded-md">
             <table class="min-w-full text-sm border-collapse">
                 <thead class="bg-gray-200">
-                    <tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Rating</th><th class="p-2 border">Cause of Defects (check all)</th><th class="p-2 border">Engineering Solutions</th></tr>
+                    <tr>
+                        <th class="p-2 border">Inspection Parameters</th>
+                        <th class="p-2 border">Rating</th>
+                        <th class="p-2 border">Cause of Defects (check all)</th>
+                        <th class="p-2 border">Engineering Solutions</th>
+                    </tr>
                 </thead>
-                <tbody id="acceptanceTableBody"></tbody>
+                <tbody id="acceptanceTableBody">
+                    <!-- Row 1: Availability of Jigs & Fixture -->
+                    <tr>
+                        <td class="border p-2 font-medium">Availability of Jigs & Fixture</td>
+                        <td class="border">
+                            <select id="rating_jigs_fixture" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
+                                <option value="Excellent">Excellent</option>
+                                <option value="V.Good">V.Good</option>
+                                <option value="Good">Good</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                        </td>
+                        <td class="border">
+                            <div class="cause-checkbox-group flex flex-wrap gap-2">
+                                <label><input type="checkbox" value="Machine" class="cause-check" data-param="jigs_fixture"> Machine</label>
+                                <label><input type="checkbox" value="Design" class="cause-check" data-param="jigs_fixture"> Design</label>
+                                <label><input type="checkbox" value="Operator" class="cause-check" data-param="jigs_fixture"> Operator</label>
+                                <label><input type="checkbox" value="Methods" class="cause-check" data-param="jigs_fixture"> Methods</label>
+                                <label><input type="checkbox" value="Material" class="cause-check" data-param="jigs_fixture"> Material</label>
+                            </div>
+                        </td>
+                        <td class="border"><input type="text" id="eng_jigs_fixture" class="w-full p-1 border rounded text-sm"></td>
+                    </tr>
+                    <!-- Row 2: Condition of Type of Material used as per Design -->
+                    <tr>
+                        <td class="border p-2 font-medium">Condition of Type of Material used as per Design</td>
+                        <td class="border">
+                            <select id="rating_material_condition" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
+                                <option value="Excellent">Excellent</option>
+                                <option value="V.Good">V.Good</option>
+                                <option value="Good">Good</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                        </td>
+                        <td class="border">
+                            <div class="cause-checkbox-group flex flex-wrap gap-2">
+                                <label><input type="checkbox" value="Machine" class="cause-check" data-param="material_condition"> Machine</label>
+                                <label><input type="checkbox" value="Design" class="cause-check" data-param="material_condition"> Design</label>
+                                <label><input type="checkbox" value="Operator" class="cause-check" data-param="material_condition"> Operator</label>
+                                <label><input type="checkbox" value="Methods" class="cause-check" data-param="material_condition"> Methods</label>
+                                <label><input type="checkbox" value="Material" class="cause-check" data-param="material_condition"> Material</label>
+                            </div>
+                        </td>
+                        <td class="border"><input type="text" id="eng_material_condition" class="w-full p-1 border rounded text-sm"></td>
+                    </tr>
+                    <!-- Row 3: Condition of Surface uniformity -->
+                    <tr>
+                        <td class="border p-2 font-medium">Condition of Surface uniformity</td>
+                        <td class="border">
+                            <select id="rating_surface_uniformity" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
+                                <option value="Excellent">Excellent</option>
+                                <option value="V.Good">V.Good</option>
+                                <option value="Good">Good</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                        </td>
+                        <td class="border">
+                            <div class="cause-checkbox-group flex flex-wrap gap-2">
+                                <label><input type="checkbox" value="Machine" class="cause-check" data-param="surface_uniformity"> Machine</label>
+                                <label><input type="checkbox" value="Design" class="cause-check" data-param="surface_uniformity"> Design</label>
+                                <label><input type="checkbox" value="Operator" class="cause-check" data-param="surface_uniformity"> Operator</label>
+                                <label><input type="checkbox" value="Methods" class="cause-check" data-param="surface_uniformity"> Methods</label>
+                                <label><input type="checkbox" value="Material" class="cause-check" data-param="surface_uniformity"> Material</label>
+                            </div>
+                        </td>
+                        <td class="border"><input type="text" id="eng_surface_uniformity" class="w-full p-1 border rounded text-sm"></td>
+                    </tr>
+                    <!-- Row 4: Condition of Dimensional accuracy & sharpness as per Design -->
+                    <tr>
+                        <td class="border p-2 font-medium">Condition of Dimensional accuracy & sharpness as per Design</td>
+                        <td class="border">
+                            <select id="rating_dimensional_accuracy" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
+                                <option value="Excellent">Excellent</option>
+                                <option value="V.Good">V.Good</option>
+                                <option value="Good">Good</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                        </td>
+                        <td class="border">
+                            <div class="cause-checkbox-group flex flex-wrap gap-2">
+                                <label><input type="checkbox" value="Machine" class="cause-check" data-param="dimensional_accuracy"> Machine</label>
+                                <label><input type="checkbox" value="Design" class="cause-check" data-param="dimensional_accuracy"> Design</label>
+                                <label><input type="checkbox" value="Operator" class="cause-check" data-param="dimensional_accuracy"> Operator</label>
+                                <label><input type="checkbox" value="Methods" class="cause-check" data-param="dimensional_accuracy"> Methods</label>
+                                <label><input type="checkbox" value="Material" class="cause-check" data-param="dimensional_accuracy"> Material</label>
+                            </div>
+                        </td>
+                        <td class="border"><input type="text" id="eng_dimensional_accuracy" class="w-full p-1 border rounded text-sm"></td>
+                    </tr>
+                </tbody>
             </table>
         </div>
 
@@ -115,13 +209,16 @@
             <div><label class="font-bold">CUMULATIVE POINTS</label> <input type="number" id="cumulativePoints" readonly class="border p-1 rounded w-32 bg-gray-100"></div>
             <div><label class="font-bold">Result</label> 
                 <select id="result" class="border p-1 rounded ml-2">
-                    <option value="Accepted">Accepted</option><option value="Rework">Rework</option><option value="Reject">Reject</option><option value="Conditional Accepted">Conditional Accepted</option>
+                    <option value="Accepted">Accepted</option>
+                    <option value="Rework">Rework</option>
+                    <option value="Reject">Reject</option>
+                    <option value="Conditional Accepted">Conditional Accepted</option>
                 </select>
             </div>
             <div><label class="font-bold">Responsible Person Name</label> <input type="text" id="responsiblePerson" class="border p-1 rounded w-full"></div>
         </div>
 
-        <!-- 4. COST SECTION -->
+        <!-- 4. COST SECTION (unchanged) -->
         <div class="border p-4 rounded-md">
             <h3 class="font-bold text-lg">Internal Failure Costs</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
@@ -168,69 +265,14 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYm5qcmFhb3d1eXJkZXhoa2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTMyNTEsImV4cCI6MjA5NDY2OTI1MX0.pOByJxbMsRQZWgjp7P9bsnsb_AugI67SwAlCXpdpV6U";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ----- Acceptance parameters -----
-    const parameters = [
-        { id: "jigs_fixture", label: "Availability of Jigs & Fixture" },
-        { id: "material_condition", label: "Condition of Type of Material used as per Design" },
-        { id: "surface_uniformity", label: "Condition of Surface uniformity" },
-        { id: "dimensional_accuracy", label: "Condition of Dimensional accuracy & sharpness as per Design" }
-    ];
     const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
-
-    // Build table
-    function buildAcceptanceTable() {
-        const tbody = document.getElementById("acceptanceTableBody");
-        tbody.innerHTML = "";
-        parameters.forEach(param => {
-            const row = tbody.insertRow();
-            const cellParam = row.insertCell(0);
-            cellParam.className = "border p-2 font-medium";
-            cellParam.innerText = param.label;
-            const cellRating = row.insertCell(1);
-            cellRating.className = "border";
-            const select = document.createElement("select");
-            select.className = "rating-select w-full p-1 border rounded";
-            select.id = `rating_${param.id}`;
-            ["Excellent","V.Good","Good","Poor"].forEach(r => {
-                const opt = document.createElement("option");
-                opt.value = r;
-                opt.text = r;
-                select.appendChild(opt);
-            });
-            select.addEventListener("change", updateCumulativePoints);
-            cellRating.appendChild(select);
-            const cellCauses = row.insertCell(2);
-            cellCauses.className = "border";
-            const causesDiv = document.createElement("div");
-            causesDiv.className = "cause-checkbox-group flex flex-wrap gap-2";
-            const causeFields = ["Machine","Design","Operator","Methods","Material"];
-            causeFields.forEach(cause => {
-                const label = document.createElement("label");
-                label.className = "text-xs";
-                const cb = document.createElement("input");
-                cb.type = "checkbox";
-                cb.value = cause;
-                cb.name = `cause_${param.id}_${cause}`;
-                label.appendChild(cb);
-                label.appendChild(document.createTextNode(cause));
-                causesDiv.appendChild(label);
-            });
-            cellCauses.appendChild(causesDiv);
-            const cellSolution = row.insertCell(3);
-            cellSolution.className = "border";
-            const inputSolution = document.createElement("input");
-            inputSolution.type = "text";
-            inputSolution.className = "w-full p-1 border rounded text-sm";
-            inputSolution.id = `eng_${param.id}`;
-            cellSolution.appendChild(inputSolution);
-        });
-    }
+    const parameters = ["jigs_fixture", "material_condition", "surface_uniformity", "dimensional_accuracy"];
 
     function updateCumulativePoints() {
         let total = 0;
-        parameters.forEach(param => {
-            const select = document.getElementById(`rating_${param.id}`);
-            if(select && select.value) total += ratingPoints[select.value] || 0;
+        parameters.forEach(p => {
+            const sel = document.getElementById(`rating_${p}`);
+            if (sel && sel.value) total += ratingPoints[sel.value] || 0;
         });
         document.getElementById("cumulativePoints").value = total;
     }
@@ -266,21 +308,24 @@
 
     function getAcceptanceData() {
         const data = {};
-        parameters.forEach(param => {
-            const rating = document.getElementById(`rating_${param.id}`).value;
+        parameters.forEach(p => {
+            const rating = document.getElementById(`rating_${p}`).value;
             const causes = [];
-            document.querySelectorAll(`input[name^="cause_${param.id}_"]:checked`).forEach(cb => causes.push(cb.value));
-            const engineeringSolution = document.getElementById(`eng_${param.id}`).value;
-            data[param.id] = { rating, causes, engineering_solution: engineeringSolution };
+            document.querySelectorAll(`.cause-check[data-param="${p}"]:checked`).forEach(cb => causes.push(cb.value));
+            const engineeringSolution = document.getElementById(`eng_${p}`).value;
+            data[p] = { rating, causes, engineering_solution: engineeringSolution };
         });
         return data;
     }
 
     function resetForm() {
         document.getElementById("inspectionForm").reset();
-        parameters.forEach(param => {
-            const sel = document.getElementById(`rating_${param.id}`);
-            if(sel) sel.value = "Excellent";
+        parameters.forEach(p => {
+            const sel = document.getElementById(`rating_${p}`);
+            if (sel) sel.value = "Excellent";
+            const eng = document.getElementById(`eng_${p}`);
+            if (eng) eng.value = "";
+            document.querySelectorAll(`.cause-check[data-param="${p}"]`).forEach(cb => cb.checked = false);
         });
         updateCumulativePoints();
         document.getElementById("defectedMaterialCost").value = "";
@@ -334,7 +379,7 @@
             cause_of_defects: document.getElementById("causeOfDefectsDetail").value
         };
 
-        const { data, error } = await supabase.from("rolling_inspections").insert([inspectionRecord]);
+        const { error } = await supabase.from("rolling_inspections").insert([inspectionRecord]);
         if(error) {
             document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Cloud error: ${error.message}</span>`;
         } else {
@@ -371,12 +416,12 @@
         `).join("");
     }
 
-    // sync inspected by field with engineer name
+    // Sync "Inspected By" with engineer name
     document.getElementById("qcEngineerName").addEventListener("input", function() {
         document.getElementById("inspectedByName").value = this.value;
     });
 
-    // auto update cost & time
+    // Auto-update cost & time
     document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
     document.getElementById("laborHours").addEventListener("input", computeFailureCost);
     document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
@@ -386,12 +431,17 @@
     document.getElementById("startTime").addEventListener("change", updateTotalTime);
     document.getElementById("endTime").addEventListener("change", updateTotalTime);
 
-    // init
+    // Initialize
     document.addEventListener("DOMContentLoaded", () => {
-        buildAcceptanceTable();
         updateCumulativePoints();
         loadHistoryFromSupabase();
         document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10);
+        // Set default rating values
+        parameters.forEach(p => {
+            const sel = document.getElementById(`rating_${p}`);
+            if(sel) sel.value = "Excellent";
+        });
+        updateCumulativePoints();
     });
 </script>
 </body>
