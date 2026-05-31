@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Rolling Inspections</title>
+    <title>Admin Dashboard | Quality Inspections</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -18,7 +18,7 @@
     <div class="bg-white rounded-xl shadow p-4 mb-6 flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-blue-900">📊 Quality Control Dashboard</h1>
-            <p class="text-gray-600">Rolling Process Inspection Summary</p>
+            <p class="text-gray-600">All Processes Inspection Summary</p>
         </div>
         <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
             <i class="fas fa-sync-alt"></i> Refresh
@@ -54,6 +54,18 @@
         <div class="bg-white rounded-lg shadow p-4">
             <h2 class="font-bold text-lg mb-3">Filters</h2>
             <div class="mb-3">
+                <label class="block text-sm font-medium">Process Type</label>
+                <select id="filterProcess" class="w-full border rounded p-2 mt-1">
+                    <option value="">All Processes</option>
+                    <option value="Rolling">Rolling</option>
+                    <option value="Bending">Bending</option>
+                    <option value="GasCutting">Gas Cutting</option>
+                    <option value="Milling">Milling</option>
+                    <option value="Drilling">Drilling</option>
+                    <option value="Welding">Welding / Assembly</option>
+                </select>
+            </div>
+            <div class="mb-3">
                 <label class="block text-sm font-medium">Engineer Name</label>
                 <input type="text" id="filterEngineer" class="w-full border rounded p-2 mt-1" placeholder="All">
             </div>
@@ -76,6 +88,7 @@
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="p-3 text-left">Date & Time</th>
+                        <th class="p-3 text-left">Process</th>
                         <th class="p-3 text-left">Engineer</th>
                         <th class="p-3 text-left">Result</th>
                         <th class="p-3 text-left">Points</th>
@@ -84,7 +97,7 @@
                     </tr>
                 </thead>
                 <tbody id="inspectionTableBody">
-                    <tr><td colspan="6" class="text-center p-4">Loading data...</td></tr>
+                    <tr><td colspan="7" class="text-center p-4">Loading data...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -96,27 +109,29 @@
     let allInspections = [];
     let resultChart = null;
 
-    // Fetch all inspections from your backend API
     async function fetchData() {
         try {
             const response = await fetch('/api/inspections');
             if (!response.ok) throw new Error('Failed to fetch');
             allInspections = await response.json();
-            applyFilters(); // apply current filter settings
+            applyFilters();
         } catch (err) {
             console.error(err);
-            document.getElementById('inspectionTableBody').innerHTML = '<tr><td colspan="6" class="text-center text-red-500 p-4">Error loading data</td></tr>';
+            document.getElementById('inspectionTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-red-500 p-4">Error loading data</td></tr>';
         }
     }
 
-    // Apply filters and update UI
     function applyFilters() {
+        const processFilter = document.getElementById('filterProcess').value;
         const engineerFilter = document.getElementById('filterEngineer').value.trim().toLowerCase();
         const dateFrom = document.getElementById('filterDateFrom').value;
         const dateTo = document.getElementById('filterDateTo').value;
 
         let filtered = [...allInspections];
 
+        if (processFilter) {
+            filtered = filtered.filter(insp => insp.process_type === processFilter);
+        }
         if (engineerFilter) {
             filtered = filtered.filter(insp => insp.username && insp.username.toLowerCase().includes(engineerFilter));
         }
@@ -175,14 +190,19 @@
     function updateTable(data) {
         const tbody = document.getElementById('inspectionTableBody');
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">No inspections match filters</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">No inspections match filters</td></tr>';
             document.getElementById('tableInfo').innerText = 'Showing 0 records';
             return;
         }
 
-        tbody.innerHTML = data.map(insp => `
+        tbody.innerHTML = data.map(insp => {
+            let processDisplay = insp.process_type || 'Rolling';
+            if (processDisplay === 'GasCutting') processDisplay = 'Gas Cutting';
+            if (processDisplay === 'Welding') processDisplay = 'Welding / Assembly';
+            return `
             <tr class="border-b hover:bg-gray-50">
                 <td class="p-3">${new Date(insp.submitted_at).toLocaleString()}</td>
+                <td class="p-3">${escapeHtml(processDisplay)}</td>
                 <td class="p-3">${escapeHtml(insp.username) || '-'}</td>
                 <td class="p-3">
                     <span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(insp.result)}">${insp.result}</span>
@@ -190,8 +210,8 @@
                 <td class="p-3">${insp.cumulative_points ?? '-'}</td>
                 <td class="p-3">${escapeHtml(insp.operator_name) || '-'}</td>
                 <td class="p-3">${escapeHtml(insp.responsible_person) || '-'}</td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
         document.getElementById('tableInfo').innerText = `Showing ${data.length} of ${allInspections.length} inspections`;
     }
 
@@ -215,7 +235,6 @@
         });
     }
 
-    // Initial load
     fetchData();
 </script>
 </body>
