@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>QC Inspection | Amhara Metal Industry</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         @media print {
@@ -22,246 +21,138 @@
 <body class="bg-gray-100 font-sans">
 <div class="max-w-7xl mx-auto p-4 md:p-6">
 
-    <!-- LOGIN PANEL (visible initially) -->
-    <div id="loginPanel" class="bg-white rounded-xl shadow-lg p-6 max-w-md mx-auto mt-20">
-        <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold text-blue-800">🔧 Quality Control Login</h2>
-            <p class="text-gray-600">Amhara Metal Industry – Inspection System</p>
+    <div class="bg-white rounded-t-xl shadow p-4 mb-2 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold text-blue-900">Amhara Metal Industry & Machine Technology Development Enterprise</h1>
+            <p class="text-sm font-semibold">Quality Assurance Directorate – Inspection Checklist</p>
         </div>
-        <div class="space-y-4">
-            <input type="email" id="loginEmail" placeholder="Engineer Email" class="w-full p-3 border rounded-lg">
-            <input type="password" id="loginPassword" placeholder="Password" class="w-full p-3 border rounded-lg">
-            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Login</button>
-            <button onclick="signup()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg transition">Create New Account (Sign Up)</button>
-        </div>
-        <div id="loginError" class="text-red-500 text-sm mt-4 text-center"></div>
-        <div id="signupMessage" class="text-green-600 text-sm mt-2 text-center"></div>
-        <div class="mt-6 text-center text-sm text-gray-500">
-            <i class="fas fa-user-shield"></i> Accounts are created by you (Sign Up). Admins can also create accounts.
+        <div class="text-right text-sm text-gray-600">
+            <i class="fas fa-cloud-upload-alt"></i> Data saved via backend API
         </div>
     </div>
 
-    <!-- MAIN INSPECTION PANEL (hidden until login) -->
-    <div id="inspectionPanel" class="hidden">
-        <div class="bg-white rounded-t-xl shadow p-4 mb-2 flex justify-between items-center">
+    <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
+        <!-- Process Type Selector (NEW) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
             <div>
-                <h1 class="text-xl font-bold text-blue-900">Amhara Metal Industry & Machine Technology Development Enterprise</h1>
-                <p class="text-sm font-semibold">Quality Assurance Directorate – Inspection Checklist</p>
+                <label class="font-bold">Process Type *</label>
+                <select id="processType" class="w-full border p-2 rounded" onchange="switchProcess()">
+                    <option value="Rolling">Rolling Process</option>
+                    <option value="Bending">Bending Process</option>
+                    <option value="GasCutting">Gas Cutting Process</option>
+                    <option value="Milling">Milling Process</option>
+                    <option value="Drilling">Drilling Process</option>
+                    <option value="Welding">Welding / Assembly Process</option>
+                </select>
             </div>
-            <div class="text-right text-sm text-gray-600 flex items-center gap-3">
-                <i class="fas fa-cloud-upload-alt"></i> Data saved via backend API
-                <button onclick="logout()" class="text-red-600 text-sm underline no-print">Logout</button>
+            <div>
+                <label class="font-bold">QC Engineer Name *</label>
+                <input type="text" id="qcEngineerName" class="w-full border p-2 rounded" placeholder="e.g. Abebech Alemu" required>
             </div>
         </div>
 
-        <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
-            <!-- Process Type Selector -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
-                <div>
-                    <label class="font-bold">Process Type *</label>
-                    <select id="processType" class="w-full border p-2 rounded" onchange="switchProcess()">
-                        <option value="Rolling">Rolling Process</option>
-                        <option value="Bending">Bending Process</option>
-                        <option value="GasCutting">Gas Cutting Process</option>
-                        <option value="Milling">Milling Process</option>
-                        <option value="Drilling">Drilling Process</option>
-                        <option value="Welding">Welding / Assembly Process</option>
-                    </select>
+        <!-- Existing header fields (unchanged) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
+            <div>
+                <label class="font-bold">Source of Process Inspection</label>
+                <div class="flex gap-4 mt-1">
+                    <label><input type="radio" name="sourceType" value="Outsource" required> Outsource</label>
+                    <label><input type="radio" name="sourceType" value="Insource"> Insource</label>
                 </div>
-                <div>
-                    <label class="font-bold">QC Engineer Name *</label>
-                    <input type="text" id="qcEngineerName" class="w-full border p-2 rounded bg-gray-100" readonly required>
-                </div>
+                <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="w-full border rounded p-1 mt-2 text-sm">
             </div>
-
-            <!-- Existing header fields (unchanged) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
-                <div>
-                    <label class="font-bold">Source of Process Inspection</label>
-                    <div class="flex gap-4 mt-1">
-                        <label><input type="radio" name="sourceType" value="Outsource" required> Outsource</label>
-                        <label><input type="radio" name="sourceType" value="Insource"> Insource</label>
-                    </div>
-                    <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="w-full border rounded p-1 mt-2 text-sm">
+            <div>
+                <label class="font-bold">Document Availability</label>
+                <div class="flex gap-6">
+                    <label><input type="checkbox" id="designAvail"> Design</label>
+                    <label><input type="checkbox" id="mppAvail"> MPP</label>
                 </div>
-                <div>
-                    <label class="font-bold">Document Availability</label>
-                    <div class="flex gap-6">
-                        <label><input type="checkbox" id="designAvail"> Design</label>
-                        <label><input type="checkbox" id="mppAvail"> MPP</label>
-                    </div>
-                    <label class="font-bold mt-2 block">Operation Condition</label>
-                    <select id="operationStatus" class="w-full border p-1 rounded">
-                        <option value="Holdup">Holdup</option>
-                        <option value="Continue">Continue</option>
-                        <option value="Ending">Ending</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="font-bold">Inspected By</label>
-                    <input type="text" id="inspectedByName" readonly class="w-full bg-gray-100 border p-1 rounded">
-                </div>
+                <label class="font-bold mt-2 block">Operation Condition</label>
+                <select id="operationStatus" class="w-full border p-1 rounded">
+                    <option value="Holdup">Holdup</option>
+                    <option value="Continue">Continue</option>
+                    <option value="Ending">Ending</option>
+                </select>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
-                <div>
-                    <label class="font-bold">Shift Number</label>
-                    <div class="flex gap-4">
-                        <label><input type="radio" name="shift" value="1"> Shift 1</label>
-                        <label><input type="radio" name="shift" value="2"> Shift 2</label>
-                        <label><input type="radio" name="shift" value="3"> Shift 3</label>
-                    </div>
-                </div>
-                <div>
-                    <label class="font-bold">Operator Name</label>
-                    <input type="text" id="operatorName" class="w-full border p-1 rounded">
-                </div>
-                <div>
-                    <label class="font-bold">Inspection Time</label>
-                    <div class="flex gap-2 text-sm">
-                        <input type="time" id="startTime" class="border p-1 rounded w-1/2"> 
-                        <input type="time" id="endTime" class="border p-1 rounded w-1/2">
-                    </div>
-                    <span id="totalTimeDisplay" class="text-xs text-gray-600">Total: -- min</span>
-                </div>
+            <div>
+                <label class="font-bold">Inspected By</label>
+                <input type="text" id="inspectedByName" readonly class="w-full bg-gray-100 border p-1 rounded">
             </div>
-
-            <!-- Dynamic process-specific fields -->
-            <div id="dynamicFieldsContainer"></div>
-
-            <!-- Cumulative points & result -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-3 rounded">
-                <div><label class="font-bold">CUMULATIVE POINTS</label> <input type="number" id="cumulativePoints" readonly class="border p-1 rounded w-32 bg-gray-100"></div>
-                <div><label class="font-bold">Result</label> <select id="result" class="border p-1 rounded ml-2"><option>Accepted</option><option>Rework</option><option>Reject</option><option>Conditional Accepted</option></select></div>
-                <div><label class="font-bold">Responsible Person Name</label> <input type="text" id="responsiblePerson" class="border p-1 rounded w-full"></div>
-            </div>
-
-            <!-- Cost section -->
-            <div class="border p-4 rounded-md">
-                <h3 class="font-bold text-lg">Internal Failure Costs</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
-                    <div><label>Defected Material Cost (ETB)</label> <input type="number" step="0.01" id="defectedMaterialCost" class="border p-1 rounded w-full"></div>
-                    <div><label>Labor Hours</label> <input type="number" step="0.5" id="laborHours" class="border p-1 rounded w-full"></div>
-                    <div><label>Salary per Hour (ETB)</label> <input type="number" step="0.01" id="salaryPerHour" class="border p-1 rounded w-full"></div>
-                    <div><label>Total Machine Cost (ETB)</label> <input type="number" step="0.01" id="totalMachineCost" class="border p-1 rounded w-full"></div>
-                    <div><label>Machining Hours</label> <input type="number" step="0.5" id="machiningHours" class="border p-1 rounded w-full"></div>
-                    <div><label>Machining Cost per Hr (ETB)</label> <input type="number" step="0.01" id="machiningCostPerHr" class="border p-1 rounded w-full"></div>
-                </div>
-                <div class="mt-3 p-2 bg-gray-100 rounded"><span class="font-bold">Total Internal Failure Cost (ETB):</span> <span id="totalFailureCostDisplay">0.00</span>
-                    <input type="hidden" id="totalInternalFailureCost">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
-                <div><label class="font-bold">N.B The Most Frequent Defects</label><textarea id="mostFrequentDefects" rows="2" class="border p-1 w-full"></textarea></div>
-                <div><label class="font-bold">Defect Correction Transfer Slip</label><input type="text" id="defectCorrectionSlip" class="border p-1 w-full"></div>
-                <div class="md:col-span-2"><label class="font-bold">Cause of Defects (detailed)</label><textarea id="causeOfDefectsDetail" rows="2" class="border p-1 w-full"></textarea></div>
-            </div>
-
-            <div class="flex justify-end gap-4 no-print">
-                <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
-                <button type="button" onclick="saveToBackend()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
-            </div>
-            <div id="formMessage" class="text-center text-sm mt-2"></div>
-        </form>
-
-        <div class="mt-8 bg-white shadow rounded p-4 no-print">
-            <div class="flex justify-between items-center">
-                <h3 class="font-bold text-lg">📋 Previous Inspections</h3>
-                <button onclick="loadHistory()" class="text-blue-600 text-sm underline">Refresh</button>
-            </div>
-            <div id="inspectionHistory" class="max-h-60 overflow-y-auto text-sm mt-2"></div>
         </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
+            <div>
+                <label class="font-bold">Shift Number</label>
+                <div class="flex gap-4">
+                    <label><input type="radio" name="shift" value="1"> Shift 1</label>
+                    <label><input type="radio" name="shift" value="2"> Shift 2</label>
+                    <label><input type="radio" name="shift" value="3"> Shift 3</label>
+                </div>
+            </div>
+            <div>
+                <label class="font-bold">Operator Name</label>
+                <input type="text" id="operatorName" class="w-full border p-1 rounded">
+            </div>
+            <div>
+                <label class="font-bold">Inspection Time</label>
+                <div class="flex gap-2 text-sm">
+                    <input type="time" id="startTime" class="border p-1 rounded w-1/2"> 
+                    <input type="time" id="endTime" class="border p-1 rounded w-1/2">
+                </div>
+                <span id="totalTimeDisplay" class="text-xs text-gray-600">Total: -- min</span>
+            </div>
+        </div>
+
+        <!-- Dynamic process-specific fields (extra info + inspection table) -->
+        <div id="dynamicFieldsContainer"></div>
+
+        <!-- Cumulative points & result (only used for Rolling, but kept for all) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-3 rounded">
+            <div><label class="font-bold">CUMULATIVE POINTS</label> <input type="number" id="cumulativePoints" readonly class="border p-1 rounded w-32 bg-gray-100"></div>
+            <div><label class="font-bold">Result</label> <select id="result" class="border p-1 rounded ml-2"><option>Accepted</option><option>Rework</option><option>Reject</option><option>Conditional Accepted</option></select></div>
+            <div><label class="font-bold">Responsible Person Name</label> <input type="text" id="responsiblePerson" class="border p-1 rounded w-full"></div>
+        </div>
+
+        <!-- Cost section (unchanged) -->
+        <div class="border p-4 rounded-md">
+            <h3 class="font-bold text-lg">Internal Failure Costs</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                <div><label>Defected Material Cost (ETB)</label> <input type="number" step="0.01" id="defectedMaterialCost" class="border p-1 rounded w-full"></div>
+                <div><label>Labor Hours</label> <input type="number" step="0.5" id="laborHours" class="border p-1 rounded w-full"></div>
+                <div><label>Salary per Hour (ETB)</label> <input type="number" step="0.01" id="salaryPerHour" class="border p-1 rounded w-full"></div>
+                <div><label>Total Machine Cost (ETB)</label> <input type="number" step="0.01" id="totalMachineCost" class="border p-1 rounded w-full"></div>
+                <div><label>Machining Hours</label> <input type="number" step="0.5" id="machiningHours" class="border p-1 rounded w-full"></div>
+                <div><label>Machining Cost per Hr (ETB)</label> <input type="number" step="0.01" id="machiningCostPerHr" class="border p-1 rounded w-full"></div>
+            </div>
+            <div class="mt-3 p-2 bg-gray-100 rounded"><span class="font-bold">Total Internal Failure Cost (ETB):</span> <span id="totalFailureCostDisplay">0.00</span>
+                <input type="hidden" id="totalInternalFailureCost">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+            <div><label class="font-bold">N.B The Most Frequent Defects</label><textarea id="mostFrequentDefects" rows="2" class="border p-1 w-full"></textarea></div>
+            <div><label class="font-bold">Defect Correction Transfer Slip</label><input type="text" id="defectCorrectionSlip" class="border p-1 w-full"></div>
+            <div class="md:col-span-2"><label class="font-bold">Cause of Defects (detailed)</label><textarea id="causeOfDefectsDetail" rows="2" class="border p-1 w-full"></textarea></div>
+        </div>
+
+        <div class="flex justify-end gap-4 no-print">
+            <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
+            <button type="button" onclick="saveToBackend()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
+        </div>
+        <div id="formMessage" class="text-center text-sm mt-2"></div>
+    </form>
+
+    <div class="mt-8 bg-white shadow rounded p-4 no-print">
+        <div class="flex justify-between items-center">
+            <h3 class="font-bold text-lg">📋 Previous Inspections</h3>
+            <button onclick="loadHistory()" class="text-blue-600 text-sm underline">Refresh</button>
+        </div>
+        <div id="inspectionHistory" class="max-h-60 overflow-y-auto text-sm mt-2"></div>
     </div>
 </div>
 
 <script>
-    // Supabase configuration (your keys)
-    const SUPABASE_URL = "https://vlbnjraaowuyrdexhklk.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYm5qcmFhb3d1eXJkZXhoa2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTMyNTEsImV4cCI6MjA5NDY2OTI1MX0.pOByJxbMsRQZWgjp7P9bsnsb_AugI67SwAlCXpdpV6U";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let currentUser = null;
-
-    // ---------- Authentication ----------
-    async function login() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        if (!email || !password) {
-            document.getElementById('loginError').innerText = 'Please enter email and password';
-            document.getElementById('signupMessage').innerHTML = '';
-            return;
-        }
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-            document.getElementById('loginError').innerText = error.message;
-            document.getElementById('signupMessage').innerHTML = '';
-        } else {
-            currentUser = data.user;
-            document.getElementById('loginPanel').classList.add('hidden');
-            document.getElementById('inspectionPanel').classList.remove('hidden');
-            document.getElementById('qcEngineerName').value = currentUser.email;
-            document.getElementById('inspectedByName').value = currentUser.email;
-            renderDynamicFields();
-            loadHistory();
-            document.getElementById('inspectionDate').value = new Date().toISOString().slice(0,10);
-            if (currentProcess === "Rolling") {
-                const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
-                function updateCumulativePoints() {
-                    let total = 0;
-                    const params = processDefinitions.Rolling.parameters;
-                    params.forEach(p => {
-                        const sel = document.getElementById(`rating_${p.id}`);
-                        if (sel && sel.value) total += ratingPoints[sel.value] || 0;
-                    });
-                    document.getElementById("cumulativePoints").value = total;
-                }
-                processDefinitions.Rolling.parameters.forEach(p => {
-                    const sel = document.getElementById(`rating_${p.id}`);
-                    if (sel) sel.addEventListener("change", updateCumulativePoints);
-                });
-                updateCumulativePoints();
-            }
-        }
-    }
-
-    async function signup() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        if (!email || !password) {
-            document.getElementById('loginError').innerText = 'Please enter email and password';
-            document.getElementById('signupMessage').innerHTML = '';
-            return;
-        }
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) {
-            document.getElementById('loginError').innerText = error.message;
-            document.getElementById('signupMessage').innerHTML = '';
-        } else {
-            // Check if email confirmation is required
-            if (data.user && data.user.identities && data.user.identities.length === 0) {
-                document.getElementById('signupMessage').innerHTML = 'User already exists. Please log in.';
-            } else {
-                document.getElementById('signupMessage').innerHTML = 'Account created! You can now log in. (If email confirmation is ON, please check your inbox.)';
-            }
-            document.getElementById('loginError').innerText = '';
-            // Optionally clear password field
-            document.getElementById('loginPassword').value = '';
-        }
-    }
-
-    async function logout() {
-        await supabase.auth.signOut();
-        currentUser = null;
-        document.getElementById('loginPanel').classList.remove('hidden');
-        document.getElementById('inspectionPanel').classList.add('hidden');
-        document.getElementById('loginEmail').value = '';
-        document.getElementById('loginPassword').value = '';
-        document.getElementById('loginError').innerText = '';
-        document.getElementById('signupMessage').innerHTML = '';
-    }
-
-    // ----- Process definitions (unchanged) -----
+    // ----- Process definitions (exactly matching your images) -----
     const processDefinitions = {
         Rolling: {
             parameters: [
@@ -273,7 +164,7 @@
             ratingOptions: ["Excellent", "V.Good", "Good", "Poor"],
             causeFields: ["Machine","Design","Operator","Methods","Material"],
             hasEngineeringSolution: true,
-            extraFields: []
+            extraFields: []  // no extra fields for rolling
         },
         Bending: {
             parameters: [
@@ -389,6 +280,7 @@
 
     let currentProcess = "Rolling";
 
+    // Switch process and re-render dynamic fields
     function switchProcess() {
         currentProcess = document.getElementById("processType").value;
         renderDynamicFields();
@@ -400,6 +292,7 @@
         const container = document.getElementById("dynamicFieldsContainer");
         let html = "";
 
+        // Extra fields (process-specific metadata)
         if (def.extraFields && def.extraFields.length) {
             html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 border-b pb-4 mb-4">`;
             def.extraFields.forEach(f => {
@@ -408,6 +301,7 @@
             html += `</div>`;
         }
 
+        // Inspection parameters table
         html += `<div class="overflow-x-auto border rounded-md"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-200">`;
         html += `<tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Acceptance Conditions</th><th class="p-2 border">Cause of Defects</th>`;
         if (def.hasEngineeringSolution) html += `<th class="p-2 border">Engineering Solutions</th>`;
@@ -433,6 +327,7 @@
         });
         html += `</tbody></table></div>`;
 
+        // Quantity summary (common for all processes) – add delivered/accepted/rework/reject qty
         html += `<div class="grid grid-cols-2 md:grid-cols-5 gap-2 bg-gray-50 p-3 rounded mt-4">
             <div><label class="font-bold">Delivered Qty</label><input type="number" id="deliveredQty" class="border p-1 rounded w-full"></div>
             <div><label class="font-bold">Accepted Qty</label><input type="number" id="acceptedQty" class="border p-1 rounded w-full"></div>
@@ -443,6 +338,7 @@
 
         container.innerHTML = html;
 
+        // For Rolling process, also set up cumulative points calculation
         if (currentProcess === "Rolling") {
             const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
             function updateCumulativePoints() {
@@ -454,12 +350,14 @@
                 });
                 document.getElementById("cumulativePoints").value = total;
             }
+            // Attach event listeners to rating selects
             processDefinitions.Rolling.parameters.forEach(p => {
                 const sel = document.getElementById(`rating_${p.id}`);
                 if (sel) sel.addEventListener("change", updateCumulativePoints);
             });
             updateCumulativePoints();
         } else {
+            // For non-rolling, cumulative points is not used – set to 0
             document.getElementById("cumulativePoints").value = 0;
         }
     }
@@ -485,6 +383,7 @@
                 extra[f.id] = document.getElementById(f.id)?.value || '';
             });
         }
+        // Also add quantity fields
         extra.deliveredQty = document.getElementById("deliveredQty")?.value || null;
         extra.acceptedQty = document.getElementById("acceptedQty")?.value || null;
         extra.reworkQty = document.getElementById("reworkQty")?.value || null;
@@ -493,9 +392,10 @@
         return extra;
     }
 
+    // Reset function (clears all fields)
     function resetForm() {
         document.getElementById("inspectionForm").reset();
-        renderDynamicFields();
+        renderDynamicFields();  // re-renders dynamic part (clears extra fields and table)
         document.getElementById("defectedMaterialCost").value = "";
         document.getElementById("laborHours").value = "";
         document.getElementById("salaryPerHour").value = "";
@@ -623,17 +523,45 @@
         }
     }
 
-    // Attach cost and time listeners (they exist only after login, but we add them anyway)
-    document.getElementById("defectedMaterialCost")?.addEventListener("input", computeFailureCost);
-    document.getElementById("laborHours")?.addEventListener("input", computeFailureCost);
-    document.getElementById("salaryPerHour")?.addEventListener("input", computeFailureCost);
-    document.getElementById("totalMachineCost")?.addEventListener("input", computeFailureCost);
-    document.getElementById("machiningHours")?.addEventListener("input", computeFailureCost);
-    document.getElementById("machiningCostPerHr")?.addEventListener("input", computeFailureCost);
-    document.getElementById("startTime")?.addEventListener("change", updateTotalTime);
-    document.getElementById("endTime")?.addEventListener("change", updateTotalTime);
+    // Sync "Inspected By" with engineer name
+    document.getElementById("qcEngineerName").addEventListener("input", () => {
+        document.getElementById("inspectedByName").value = document.getElementById("qcEngineerName").value;
+    });
 
-    // No auto login – stay on login page initially
+    // Attach cost and time listeners
+    document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
+    document.getElementById("laborHours").addEventListener("input", computeFailureCost);
+    document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
+    document.getElementById("totalMachineCost").addEventListener("input", computeFailureCost);
+    document.getElementById("machiningHours").addEventListener("input", computeFailureCost);
+    document.getElementById("machiningCostPerHr").addEventListener("input", computeFailureCost);
+    document.getElementById("startTime").addEventListener("change", updateTotalTime);
+    document.getElementById("endTime").addEventListener("change", updateTotalTime);
+
+    // Initialize
+    document.addEventListener("DOMContentLoaded", () => {
+        renderDynamicFields();
+        loadHistory();
+        document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10);
+        // For Rolling, also ensure cumulative points are calculated
+        if (currentProcess === "Rolling") {
+            const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
+            function updateCumulativePoints() {
+                let total = 0;
+                const params = processDefinitions.Rolling.parameters;
+                params.forEach(p => {
+                    const sel = document.getElementById(`rating_${p.id}`);
+                    if (sel && sel.value) total += ratingPoints[sel.value] || 0;
+                });
+                document.getElementById("cumulativePoints").value = total;
+            }
+            processDefinitions.Rolling.parameters.forEach(p => {
+                const sel = document.getElementById(`rating_${p.id}`);
+                if (sel) sel.addEventListener("change", updateCumulativePoints);
+            });
+            updateCumulativePoints();
+        }
+    });
 </script>
 </body>
 </html>
