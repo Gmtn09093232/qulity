@@ -23,10 +23,13 @@ const supabase = createClient(
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
-
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
 // GET all inspections (public – no auth required)
 app.get('/api/inspections', async (req, res) => {
   const { data, error } = await supabase
