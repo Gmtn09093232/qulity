@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Rolling Inspections</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .card-hover:hover { transform: translateY(-2px); transition: 0.2s; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+<div class="max-w-7xl mx-auto p-4 md:p-6">
+
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow p-4 mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-blue-900">📊 Quality Control Dashboard</h1>
+            <p class="text-gray-600">Rolling Process Inspection Summary</p>
+        </div>
+        <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="summaryCards">
+        <div class="bg-white rounded-lg shadow p-4 card-hover">
+            <div class="text-gray-500 text-sm">Total Inspections</div>
+            <div class="text-3xl font-bold text-blue-600" id="totalCount">-</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 card-hover">
+            <div class="text-gray-500 text-sm">Average Points</div>
+            <div class="text-3xl font-bold text-green-600" id="avgPoints">-</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 card-hover">
+            <div class="text-gray-500 text-sm">Pass Rate (Accepted)</div>
+            <div class="text-3xl font-bold text-green-600" id="passRate">-</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 card-hover">
+            <div class="text-gray-500 text-sm">Reject + Rework</div>
+            <div class="text-3xl font-bold text-red-600" id="failCount">-</div>
+        </div>
+    </div>
+
+    <!-- Chart and Filters -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-4 lg:col-span-2">
+            <h2 class="font-bold text-lg mb-2">Results Distribution</h2>
+            <canvas id="resultChart" height="200"></canvas>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <h2 class="font-bold text-lg mb-3">Filters</h2>
+            <div class="mb-3">
+                <label class="block text-sm font-medium">Engineer Name</label>
+                <input type="text" id="filterEngineer" class="w-full border rounded p-2 mt-1" placeholder="All">
+            </div>
+            <div class="mb-3">
+                <label class="block text-sm font-medium">Date From</label>
+                <input type="date" id="filterDateFrom" class="w-full border rounded p-2 mt-1">
+            </div>
+            <div class="mb-3">
+                <label class="block text-sm font-medium">Date To</label>
+                <input type="date" id="filterDateTo" class="w-full border rounded p-2 mt-1">
+            </div>
+            <button onclick="applyFilters()" class="bg-gray-700 text-white w-full py-2 rounded hover:bg-gray-800">Apply Filters</button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-3 text-left">Date & Time</th>
+                        <th class="p-3 text-left">Engineer</th>
+                        <th class="p-3 text-left">Result</th>
+                        <th class="p-3 text-left">Points</th>
+                        <th class="p-3 text-left">Operator</th>
+                        <th class="p-3 text-left">Responsible</th>
+                    </tr>
+                </thead>
+                <tbody id="inspectionTableBody">
+                    <tr><td colspan="6" class="text-center p-4">Loading data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="tableInfo" class="p-3 text-sm text-gray-500 border-t"></div>
+    </div>
+</div>
+
+<script>
+    let allInspections = [];
+    let resultChart = null;
+
+    // Fetch all inspections from your backend API
+    async function fetchData() {
+        try {
+            const response = await fetch('/api/inspections');
+            if (!response.ok) throw new Error('Failed to fetch');
+            allInspections = await response.json();
+            applyFilters(); // apply current filter settings
+        } catch (err) {
+            console.error(err);
+            document.getElementById('inspectionTableBody').innerHTML = '<tr><td colspan="6" class="text-center text-red-500 p-4">Error loading data</td></tr>';
+        }
+    }
+
+    // Apply filters and update UI
+    function applyFilters() {
+        const engineerFilter = document.getElementById('filterEngineer').value.trim().toLowerCase();
+        const dateFrom = document.getElementById('filterDateFrom').value;
+        const dateTo = document.getElementById('filterDateTo').value;
+
+        let filtered = [...allInspections];
+
+        if (engineerFilter) {
+            filtered = filtered.filter(insp => insp.username && insp.username.toLowerCase().includes(engineerFilter));
+        }
+        if (dateFrom) {
+            const from = new Date(dateFrom);
+            from.setHours(0,0,0,0);
+            filtered = filtered.filter(insp => new Date(insp.submitted_at) >= from);
+        }
+        if (dateTo) {
+            const to = new Date(dateTo);
+            to.setHours(23,59,59,999);
+            filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to);
+        }
+
+        updateSummary(filtered);
+        updateChart(filtered);
+        updateTable(filtered);
+    }
+
+    function updateSummary(data) {
+        const total = data.length;
+        const totalPoints = data.reduce((sum, insp) => sum + (insp.cumulative_points || 0), 0);
+        const avgPoints = total === 0 ? 0 : (totalPoints / total).toFixed(1);
+        const acceptedCount = data.filter(insp => insp.result === 'Accepted').length;
+        const passRate = total === 0 ? 0 : ((acceptedCount / total) * 100).toFixed(1);
+        const failCount = data.filter(insp => insp.result === 'Reject' || insp.result === 'Rework').length;
+
+        document.getElementById('totalCount').innerText = total;
+        document.getElementById('avgPoints').innerText = avgPoints;
+        document.getElementById('passRate').innerText = `${passRate}%`;
+        document.getElementById('failCount').innerText = failCount;
+    }
+
+    function updateChart(data) {
+        const results = { Accepted: 0, Rework: 0, Reject: 0, 'Conditional Accepted': 0 };
+        data.forEach(insp => {
+            if (results[insp.result] !== undefined) results[insp.result]++;
+            else results[insp.result] = 1;
+        });
+
+        const ctx = document.getElementById('resultChart').getContext('2d');
+        if (resultChart) resultChart.destroy();
+        resultChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(results),
+                datasets: [{
+                    data: Object.values(results),
+                    backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c', '#3498db'],
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: true }
+        });
+    }
+
+    function updateTable(data) {
+        const tbody = document.getElementById('inspectionTableBody');
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">No inspections match filters</td></tr>';
+            document.getElementById('tableInfo').innerText = 'Showing 0 records';
+            return;
+        }
+
+        tbody.innerHTML = data.map(insp => `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-3">${new Date(insp.submitted_at).toLocaleString()}</td>
+                <td class="p-3">${escapeHtml(insp.username) || '-'}</td>
+                <td class="p-3">
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(insp.result)}">${insp.result}</span>
+                </td>
+                <td class="p-3">${insp.cumulative_points ?? '-'}</td>
+                <td class="p-3">${escapeHtml(insp.operator_name) || '-'}</td>
+                <td class="p-3">${escapeHtml(insp.responsible_person) || '-'}</td>
+            </tr>
+        `).join('');
+        document.getElementById('tableInfo').innerText = `Showing ${data.length} of ${allInspections.length} inspections`;
+    }
+
+    function getResultColor(result) {
+        switch(result) {
+            case 'Accepted': return 'bg-green-100 text-green-800';
+            case 'Rework': return 'bg-yellow-100 text-yellow-800';
+            case 'Reject': return 'bg-red-100 text-red-800';
+            case 'Conditional Accepted': return 'bg-blue-100 text-blue-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Initial load
+    fetchData();
+</script>
+</body>
+</html>
