@@ -22,7 +22,7 @@
 <body class="bg-gray-100 font-sans">
 <div class="max-w-7xl mx-auto p-4 md:p-6">
 
-    <!-- LOGIN PANEL -->
+    <!-- LOGIN PANEL (visible initially) -->
     <div id="loginPanel" class="bg-white rounded-xl shadow-lg p-6 max-w-md mx-auto mt-20 text-center">
         <div class="mb-6">
             <h2 class="text-2xl font-bold text-blue-800">🔧 Quality Control Login</h2>
@@ -68,7 +68,7 @@
                 </div>
             </div>
 
-            <!-- Existing header fields (unchanged) -->
+            <!-- Existing header fields -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
                 <div>
                     <label class="font-bold">Source of Process Inspection</label>
@@ -120,7 +120,7 @@
                 </div>
             </div>
 
-            <!-- Dynamic fields container -->
+            <!-- Dynamic process-specific fields -->
             <div id="dynamicFieldsContainer"></div>
 
             <!-- Cumulative points & result -->
@@ -171,7 +171,6 @@
 
 <script>
     // ---------- Telegram Login Handling ----------
-    let authToken = localStorage.getItem('telegram_token');
     let currentUser = null;
 
     window.onTelegramAuth = function(user) {
@@ -263,31 +262,382 @@
         document.getElementById('loginError').innerText = '';
     }
 
-    // ----- Process definitions (same as before, omitted for brevity) -----
-    // ... insert your existing processDefinitions, switchProcess, renderDynamicFields, getAcceptanceData, etc. ...
-    // For space, I assume you have the full definitions from the previous version.
-    // (You can copy the full processDefinitions object from my previous answer.)
+    // ----- Process definitions (unchanged) -----
+    const processDefinitions = {
+        Rolling: {
+            parameters: [
+                { id: "jigs_fixture", label: "Availability of Jigs & Fixture" },
+                { id: "material_condition", label: "Condition of Type of Material used as per Design" },
+                { id: "surface_uniformity", label: "Condition of Surface uniformity" },
+                { id: "dimensional_accuracy", label: "Condition of Dimensional accuracy & sharpness as per Design" }
+            ],
+            ratingOptions: ["Excellent", "V.Good", "Good", "Poor"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: true,
+            extraFields: []
+        },
+        Bending: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material as per Design" },
+                { id: "surface_uniformity", label: "Surface uniformity" },
+                { id: "cracking", label: "Condition of Cracking" },
+                { id: "wrinkle", label: "Condition of Wrinkle" },
+                { id: "dimensional_accuracy", label: "Dimensional Accuracy as per design" }
+            ],
+            ratingOptions: ["Accepted", "Conditional Accept", "Rework", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Part Name", id: "partName" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Location", id: "location" }
+            ]
+        },
+        GasCutting: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material used as Per Design" },
+                { id: "dimensional_accuracy", label: "Dimensional accuracy as per Design" },
+                { id: "finishing_no_slag", label: "Finishing Appearance without slag" }
+            ],
+            ratingOptions: ["Accept", "Conditional Accept", "Rework", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Location", id: "location" },
+                { label: "Part Name", id: "partName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Shift No.", id: "shiftNo" }
+            ]
+        },
+        Milling: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material used as Per Design" },
+                { id: "dimensional_accuracy", label: "Dimensional accuracy as per Design" },
+                { id: "corner_sharpness", label: "Exact Sharpness of the Corners" },
+                { id: "shining", label: "Shining of the work piece" },
+                { id: "finishing_no_burs", label: "Finishing Appearance without Burs" }
+            ],
+            ratingOptions: ["Accepted", "Conditional Accept", "Rework", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Shift No.", id: "shiftNo" },
+                { label: "Part Name", id: "partName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Location", id: "location" }
+            ]
+        },
+        Drilling: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material used as Per Design" },
+                { id: "drilling_sequence", label: "Proper drilling sequence" },
+                { id: "dimensional_accuracy", label: "Dimensional accuracy as per Design" },
+                { id: "finishing_no_burs", label: "Finishing Appearance without Burs" }
+            ],
+            ratingOptions: ["Accept", "Conditional Accept", "Rework", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Part Name", id: "partName" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Shift working hour", id: "shiftWorkingHour" },
+                { label: "From", id: "shiftFrom" }, { label: "To", id: "shiftTo" },
+                { label: "Shift No.", id: "shiftNo" },
+                { label: "Location", id: "location" }
+            ]
+        },
+        Welding: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material used as Per Design" },
+                { id: "assembly_dimensions", label: "All assembly dimensions as per design" },
+                { id: "rigidity", label: "Rigidity of welding assembly" },
+                { id: "alignment", label: "alignment for all part components" },
+                { id: "ergonomics", label: "Condition of ergonomics" },
+                { id: "name_plating", label: "Availability of name plating" }
+            ],
+            ratingOptions: ["Accepted", "Conditional Accept", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Part Name", id: "partName" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Shift working hour", id: "shiftWorkingHour" },
+                { label: "From", id: "shiftFrom" }, { label: "To", id: "shiftTo" },
+                { label: "Location", id: "location" }
+            ]
+        }
+    };
 
-    // IMPORTANT: You must include the full processDefinitions object here.
-    // To keep this answer manageable, I am not repeating the entire 200 lines.
-    // Please reuse the processDefinitions from your current working index.html.
-    // Replace the placeholder below with your actual processDefinitions object.
-
-    const processDefinitions = {}; // <-- REPLACE THIS with your full processDefinitions object
     let currentProcess = "Rolling";
-    function switchProcess() {}
-    function renderDynamicFields() {}
-    function getAcceptanceData() { return {}; }
-    function getExtraFields() { return {}; }
-    function resetForm() {}
-    function computeFailureCost() { return 0; }
-    function updateTotalTime() { return 0; }
-    function saveToBackend() {}
-    function loadHistory() {}
 
-    // After defining all functions, attach event listeners and initialize
+    function switchProcess() {
+        currentProcess = document.getElementById("processType").value;
+        renderDynamicFields();
+    }
+
+    function renderDynamicFields() {
+        const def = processDefinitions[currentProcess];
+        if (!def) return;
+        const container = document.getElementById("dynamicFieldsContainer");
+        let html = "";
+
+        if (def.extraFields && def.extraFields.length) {
+            html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 border-b pb-4 mb-4">`;
+            def.extraFields.forEach(f => {
+                html += `<div><label class="font-bold text-sm">${f.label}</label><input type="text" id="${f.id}" class="w-full border p-1 rounded text-sm"></div>`;
+            });
+            html += `</div>`;
+        }
+
+        html += `<div class="overflow-x-auto border rounded-md"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-200">`;
+        html += `<tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Acceptance Conditions</th><th class="p-2 border">Cause of Defects</th>`;
+        if (def.hasEngineeringSolution) html += `<th class="p-2 border">Engineering Solutions</th>`;
+        html += `</tr></thead><tbody>`;
+
+        def.parameters.forEach(param => {
+            html += `<tr>`;
+            html += `<td class="border p-2 font-medium">${param.label}</td>`;
+            html += `<td class="border"><select id="rating_${param.id}" class="rating-select w-full p-1 border rounded">`;
+            def.ratingOptions.forEach(opt => {
+                html += `<option value="${opt}">${opt}</option>`;
+            });
+            html += `</select></td>`;
+            html += `<td class="border"><div class="cause-checkbox-group flex flex-wrap gap-2">`;
+            def.causeFields.forEach(cause => {
+                html += `<label><input type="checkbox" class="cause-check" data-param="${param.id}" value="${cause}"> ${cause}</label>`;
+            });
+            html += `</div></td>`;
+            if (def.hasEngineeringSolution) {
+                html += `<td class="border"><input type="text" id="eng_${param.id}" class="w-full p-1 border rounded text-sm"></td>`;
+            }
+            html += `</tr>`;
+        });
+        html += `</tbody></table></div>`;
+
+        html += `<div class="grid grid-cols-2 md:grid-cols-5 gap-2 bg-gray-50 p-3 rounded mt-4">
+            <div><label class="font-bold">Delivered Qty</label><input type="number" id="deliveredQty" class="border p-1 rounded w-full"></div>
+            <div><label class="font-bold">Accepted Qty</label><input type="number" id="acceptedQty" class="border p-1 rounded w-full"></div>
+            <div><label class="font-bold">Rework Qty</label><input type="number" id="reworkQty" class="border p-1 rounded w-full"></div>
+            <div><label class="font-bold">Reject Qty</label><input type="number" id="rejectQty" class="border p-1 rounded w-full"></div>
+            <div><label class="font-bold">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="border p-1 rounded w-full"></div>
+        </div>`;
+
+        container.innerHTML = html;
+
+        if (currentProcess === "Rolling") {
+            const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
+            function updateCumulativePoints() {
+                let total = 0;
+                const params = processDefinitions.Rolling.parameters;
+                params.forEach(p => {
+                    const sel = document.getElementById(`rating_${p.id}`);
+                    if (sel && sel.value) total += ratingPoints[sel.value] || 0;
+                });
+                document.getElementById("cumulativePoints").value = total;
+            }
+            processDefinitions.Rolling.parameters.forEach(p => {
+                const sel = document.getElementById(`rating_${p.id}`);
+                if (sel) sel.addEventListener("change", updateCumulativePoints);
+            });
+            updateCumulativePoints();
+        } else {
+            document.getElementById("cumulativePoints").value = 0;
+        }
+    }
+
+    function getAcceptanceData() {
+        const def = processDefinitions[currentProcess];
+        const data = {};
+        def.parameters.forEach(param => {
+            const rating = document.getElementById(`rating_${param.id}`)?.value || '';
+            const causes = [];
+            document.querySelectorAll(`.cause-check[data-param="${param.id}"]:checked`).forEach(cb => causes.push(cb.value));
+            const engineeringSolution = def.hasEngineeringSolution ? document.getElementById(`eng_${param.id}`)?.value || '' : '';
+            data[param.id] = { rating, causes, engineering_solution: engineeringSolution };
+        });
+        return data;
+    }
+
+    function getExtraFields() {
+        const def = processDefinitions[currentProcess];
+        const extra = {};
+        if (def.extraFields) {
+            def.extraFields.forEach(f => {
+                extra[f.id] = document.getElementById(f.id)?.value || '';
+            });
+        }
+        extra.deliveredQty = document.getElementById("deliveredQty")?.value || null;
+        extra.acceptedQty = document.getElementById("acceptedQty")?.value || null;
+        extra.reworkQty = document.getElementById("reworkQty")?.value || null;
+        extra.rejectQty = document.getElementById("rejectQty")?.value || null;
+        extra.conditionalAcceptQty = document.getElementById("conditionalAcceptQty")?.value || null;
+        return extra;
+    }
+
+    function resetForm() {
+        document.getElementById("inspectionForm").reset();
+        renderDynamicFields();
+        document.getElementById("defectedMaterialCost").value = "";
+        document.getElementById("laborHours").value = "";
+        document.getElementById("salaryPerHour").value = "";
+        document.getElementById("totalMachineCost").value = "";
+        document.getElementById("machiningHours").value = "";
+        document.getElementById("machiningCostPerHr").value = "";
+        computeFailureCost();
+        document.getElementById("formMessage").innerHTML = "";
+    }
+
+    function computeFailureCost() {
+        const def = parseFloat(document.getElementById("defectedMaterialCost").value) || 0;
+        const laborH = parseFloat(document.getElementById("laborHours").value) || 0;
+        const salaryH = parseFloat(document.getElementById("salaryPerHour").value) || 0;
+        const machCost = parseFloat(document.getElementById("totalMachineCost").value) || 0;
+        const machH = parseFloat(document.getElementById("machiningHours").value) || 0;
+        const machRate = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
+        const total = def + (laborH * salaryH) + machCost + (machH * machRate);
+        document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
+        document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
+        return total;
+    }
+
+    function updateTotalTime() {
+        const start = document.getElementById("startTime").value;
+        const end = document.getElementById("endTime").value;
+        if (start && end) {
+            const [sh, sm] = start.split(":").map(Number);
+            const [eh, em] = end.split(":").map(Number);
+            let minutes = (eh*60+em) - (sh*60+sm);
+            if (minutes < 0) minutes += 1440;
+            document.getElementById("totalTimeDisplay").innerText = `Total: ${minutes} min (${(minutes/60).toFixed(1)} hr)`;
+            return minutes;
+        }
+        return 0;
+    }
+
+    async function saveToBackend() {
+        const engineerName = document.getElementById("qcEngineerName").value.trim();
+        if (!engineerName) {
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please enter QC Engineer Name</span>`;
+            return;
+        }
+        const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
+        if (!sourceType) {
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please select Source of Process Inspection</span>`;
+            return;
+        }
+
+        const processType = document.getElementById("processType").value;
+        const acceptanceData = getAcceptanceData();
+        const extraFields = getExtraFields();
+
+        const payload = {
+            process_type: processType,
+            username: engineerName,
+            source_type: sourceType,
+            outsource_institute: document.getElementById("outsourceInstitute").value,
+            design_available: document.getElementById("designAvail").checked,
+            mpp_available: document.getElementById("mppAvail").checked,
+            operation_status: document.getElementById("operationStatus").value,
+            shift: document.querySelector('input[name="shift"]:checked')?.value ? parseInt(document.querySelector('input[name="shift"]:checked').value) : null,
+            operator_name: document.getElementById("operatorName").value,
+            start_time: document.getElementById("startTime").value || null,
+            end_time: document.getElementById("endTime").value || null,
+            total_minutes: updateTotalTime(),
+            acceptance_data: acceptanceData,
+            extra_fields: extraFields,
+            cumulative_points: parseInt(document.getElementById("cumulativePoints").value) || 0,
+            result: document.getElementById("result").value,
+            responsible_person: document.getElementById("responsiblePerson").value,
+            defected_material_cost: parseFloat(document.getElementById("defectedMaterialCost").value) || 0,
+            labor_hours: parseFloat(document.getElementById("laborHours").value) || 0,
+            salary_per_hour: parseFloat(document.getElementById("salaryPerHour").value) || 0,
+            total_machine_cost: parseFloat(document.getElementById("totalMachineCost").value) || 0,
+            machining_hours: parseFloat(document.getElementById("machiningHours").value) || 0,
+            machining_cost_per_hr: parseFloat(document.getElementById("machiningCostPerHr").value) || 0,
+            total_internal_failure_cost: computeFailureCost(),
+            most_frequent_defects: document.getElementById("mostFrequentDefects").value,
+            defect_correction_slip: document.getElementById("defectCorrectionSlip").value,
+            cause_of_defects: document.getElementById("causeOfDefectsDetail").value
+        };
+
+        try {
+            const response = await fetch('/api/inspections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Unknown error');
+            }
+            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection saved to cloud!</span>`;
+            resetForm();
+            loadHistory();
+        } catch (err) {
+            console.error('Save error:', err);
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`;
+        }
+    }
+
+    async function loadHistory() {
+        try {
+            const response = await fetch('/api/inspections');
+            if (!response.ok) throw new Error('Failed to fetch');
+            const data = await response.json();
+            const historyDiv = document.getElementById("inspectionHistory");
+            if (!data || data.length === 0) {
+                historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found.</p>";
+                return;
+            }
+            historyDiv.innerHTML = data.map(row => `
+                <div class="border-b py-2">
+                    <div class="flex justify-between">
+                        <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span>
+                        <span>Process: ${row.process_type || 'Rolling'}</span>
+                    </div>
+                    <div class="text-sm text-gray-600">Engineer: ${row.username} | Result: ${row.result}</div>
+                </div>
+            `).join("");
+        } catch (err) {
+            console.error(err);
+            document.getElementById("inspectionHistory").innerHTML = "<p class='text-red-500'>Error loading history</p>";
+        }
+    }
+
+    // Attach cost and time listeners (they exist only after login, but we add them anyway)
+    document.getElementById("defectedMaterialCost")?.addEventListener("input", computeFailureCost);
+    document.getElementById("laborHours")?.addEventListener("input", computeFailureCost);
+    document.getElementById("salaryPerHour")?.addEventListener("input", computeFailureCost);
+    document.getElementById("totalMachineCost")?.addEventListener("input", computeFailureCost);
+    document.getElementById("machiningHours")?.addEventListener("input", computeFailureCost);
+    document.getElementById("machiningCostPerHr")?.addEventListener("input", computeFailureCost);
+    document.getElementById("startTime")?.addEventListener("change", updateTotalTime);
+    document.getElementById("endTime")?.addEventListener("change", updateTotalTime);
+
+    // Initialize: check for existing session or show login
     document.addEventListener("DOMContentLoaded", () => {
         checkExistingSession();
+        // Create the Telegram Login Widget dynamically (only one instance)
         const script = document.createElement('script');
         script.async = true;
         script.src = "https://telegram.org/js/telegram-widget.js?22";
