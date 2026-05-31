@@ -32,10 +32,12 @@
             <input type="email" id="loginEmail" placeholder="Engineer Email" class="w-full p-3 border rounded-lg">
             <input type="password" id="loginPassword" placeholder="Password" class="w-full p-3 border rounded-lg">
             <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Login</button>
+            <button onclick="signup()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg transition">Create New Account (Sign Up)</button>
         </div>
         <div id="loginError" class="text-red-500 text-sm mt-4 text-center"></div>
+        <div id="signupMessage" class="text-green-600 text-sm mt-2 text-center"></div>
         <div class="mt-6 text-center text-sm text-gray-500">
-            <i class="fas fa-user-shield"></i> Accounts are created by the administrator.
+            <i class="fas fa-user-shield"></i> Accounts are created by you (Sign Up). Admins can also create accounts.
         </div>
     </div>
 
@@ -179,27 +181,27 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYm5qcmFhb3d1eXJkZXhoa2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTMyNTEsImV4cCI6MjA5NDY2OTI1MX0.pOByJxbMsRQZWgjp7P9bsnsb_AugI67SwAlCXpdpV6U";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ---------- Authentication ----------
     let currentUser = null;
 
+    // ---------- Authentication ----------
     async function login() {
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
         if (!email || !password) {
             document.getElementById('loginError').innerText = 'Please enter email and password';
+            document.getElementById('signupMessage').innerHTML = '';
             return;
         }
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
             document.getElementById('loginError').innerText = error.message;
+            document.getElementById('signupMessage').innerHTML = '';
         } else {
             currentUser = data.user;
             document.getElementById('loginPanel').classList.add('hidden');
             document.getElementById('inspectionPanel').classList.remove('hidden');
-            // Set engineer name fields
             document.getElementById('qcEngineerName').value = currentUser.email;
             document.getElementById('inspectedByName').value = currentUser.email;
-            // Initialize the dynamic form and load history
             renderDynamicFields();
             loadHistory();
             document.getElementById('inspectionDate').value = new Date().toISOString().slice(0,10);
@@ -223,6 +225,31 @@
         }
     }
 
+    async function signup() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        if (!email || !password) {
+            document.getElementById('loginError').innerText = 'Please enter email and password';
+            document.getElementById('signupMessage').innerHTML = '';
+            return;
+        }
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) {
+            document.getElementById('loginError').innerText = error.message;
+            document.getElementById('signupMessage').innerHTML = '';
+        } else {
+            // Check if email confirmation is required
+            if (data.user && data.user.identities && data.user.identities.length === 0) {
+                document.getElementById('signupMessage').innerHTML = 'User already exists. Please log in.';
+            } else {
+                document.getElementById('signupMessage').innerHTML = 'Account created! You can now log in. (If email confirmation is ON, please check your inbox.)';
+            }
+            document.getElementById('loginError').innerText = '';
+            // Optionally clear password field
+            document.getElementById('loginPassword').value = '';
+        }
+    }
+
     async function logout() {
         await supabase.auth.signOut();
         currentUser = null;
@@ -231,6 +258,7 @@
         document.getElementById('loginEmail').value = '';
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginError').innerText = '';
+        document.getElementById('signupMessage').innerHTML = '';
     }
 
     // ----- Process definitions (unchanged) -----
@@ -399,7 +427,7 @@
             });
             html += `</div></td>`;
             if (def.hasEngineeringSolution) {
-                html += `<td class="border"><input type="text" id="eng_${param.id}" class="w-full p-1 border rounded text-sm"></tr>`;
+                html += `<td class="border"><input type="text" id="eng_${param.id}" class="w-full p-1 border rounded text-sm"></td>`;
             }
             html += `</tr>`;
         });
