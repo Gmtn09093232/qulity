@@ -99,7 +99,7 @@
     // Fetch all inspections from your backend API
     async function fetchData() {
         try {
-            const response = await fetch('/api/inspections');
+            const response = await fetch('/api/server');
             if (!response.ok) throw new Error('Failed to fetch');
             allInspections = await response.json();
             applyFilters(); // apply current filter settings
