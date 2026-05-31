@@ -67,7 +67,19 @@
             </div>
             <div class="mb-3">
                 <label class="block text-sm font-medium">Engineer Name</label>
-                <input type="text" id="filterEngineer" class="w-full border rounded p-2 mt-1" placeholder="All">
+                <select id="filterEngineer" class="w-full border rounded p-2 mt-1">
+                    <option value="">All Engineers</option>
+                    <option value="Haileysus Wenda">Haileysus Wenda</option>
+                    <option value="Zelalem Mulu">Zelalem Mulu</option>
+                    <option value="Alemsew Azmeraw">Alemsew Azmeraw</option>
+                    <option value="Mengsit Alen">Mengsit Alen</option>
+                    <option value="Negatu Dires">Negatu Dires</option>
+                    <option value="Fentahun Teju">Fentahun Teju</option>
+                    <option value="Gizie Melkamu">Gizie Melkamu</option>
+                    <option value="Misganew Shferaw">Misganew Shferaw</option>
+                    <option value="Desalegn Alemu">Desalegn Alemu</option>
+                    <option value="Esubalew Netsuh">Esubalew Netsuh</option>
+                </select>
             </div>
             <div class="mb-3">
                 <label class="block text-sm font-medium">Date From</label>
@@ -117,13 +129,13 @@
             applyFilters();
         } catch (err) {
             console.error(err);
-            document.getElementById('inspectionTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-red-500 p-4">Error loading data</td></tr>';
+            document.getElementById('inspectionTableBody').innerHTML = '</table><td colspan="7" class="text-center text-red-500 p-4">Error loading data</td></tr>';
         }
     }
 
     function applyFilters() {
         const processFilter = document.getElementById('filterProcess').value;
-        const engineerFilter = document.getElementById('filterEngineer').value.trim().toLowerCase();
+        const engineerFilter = document.getElementById('filterEngineer').value;
         const dateFrom = document.getElementById('filterDateFrom').value;
         const dateTo = document.getElementById('filterDateTo').value;
 
@@ -133,7 +145,7 @@
             filtered = filtered.filter(insp => insp.process_type === processFilter);
         }
         if (engineerFilter) {
-            filtered = filtered.filter(insp => insp.username && insp.username.toLowerCase().includes(engineerFilter));
+            filtered = filtered.filter(insp => insp.username && insp.username.toLowerCase() === engineerFilter.toLowerCase());
         }
         if (dateFrom) {
             const from = new Date(dateFrom);
