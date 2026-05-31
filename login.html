@@ -6,45 +6,29 @@
     <title>QC Engineer Login | Amhara Metal Industry</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="bg-gray-100 font-sans">
 <div class="min-h-screen flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-        <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-blue-900">🔧 QC Engineer Login</h1>
-            <p class="text-gray-600">Amhara Metal Industry</p>
-        </div>
-        <div class="space-y-4">
-            <input type="email" id="email" placeholder="Email (Engineer Name)" class="w-full border p-3 rounded-lg">
-            <input type="password" id="password" placeholder="Password" class="w-full border p-3 rounded-lg">
-            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Login</button>
+        <h1 class="text-2xl font-bold text-center text-blue-900">🔧 QC Engineer Login</h1>
+        <div class="space-y-4 mt-4">
+            <input type="email" id="email" placeholder="Email" class="w-full border p-3 rounded">
+            <input type="password" id="password" placeholder="Password" class="w-full border p-3 rounded">
+            <button onclick="login()" class="w-full bg-blue-600 text-white py-3 rounded">Login</button>
         </div>
         <div id="errorMsg" class="text-red-500 text-sm mt-4 text-center"></div>
-        <div class="mt-6 text-center text-sm text-gray-500">
-            <i class="fas fa-user-shield"></i> Accounts are created by the administrator.
-        </div>
     </div>
 </div>
-
 <script>
     const SUPABASE_URL = "https://vlbnjraaowuyrdexhklk.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYm5qcmFhb3d1eXJkZXhoa2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTMyNTEsImV4cCI6MjA5NDY2OTI1MX0.pOByJxbMsRQZWgjp7P9bsnsb_AugI67SwAlCXpdpV6U";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     async function login() {
-        const email = document.getElementById('email').value.trim();
+        const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        if (!email || !password) {
-            document.getElementById('errorMsg').innerText = 'Please enter email and password';
-            return;
-        }
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-            document.getElementById('errorMsg').innerText = error.message;
-        } else {
-            window.location.href = '/index.html';
-        }
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) document.getElementById('errorMsg').innerText = error.message;
+        else window.location.href = '/index.html';
     }
 </script>
 </body>

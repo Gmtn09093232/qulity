@@ -105,7 +105,7 @@
             </div>
         </div>
 
-        <!-- Dynamic process-specific fields (extra info + inspection table) -->
+        <!-- Dynamic process-specific fields -->
         <div id="dynamicFieldsContainer"></div>
 
         <!-- Cumulative points & result -->
@@ -164,27 +164,26 @@
     async function checkSession() {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error || !session) {
-            window.location.href = '/login.html';
+            window.location.replace('/login.html');
             return;
         }
         currentUser = session.user;
         // Fill engineer name field (readonly)
         const engineerField = document.getElementById('qcEngineerName');
-        if (engineerField) {
-            engineerField.value = currentUser.email;
-        }
+        if (engineerField) engineerField.value = currentUser.email;
         const inspectedByField = document.getElementById('inspectedByName');
-        if (inspectedByField && currentUser.email) {
-            inspectedByField.value = currentUser.email;
-        }
+        if (inspectedByField) inspectedByField.value = currentUser.email;
     }
 
     async function logout() {
         await supabase.auth.signOut();
-        window.location.href = '/login.html';
+        // Small delay to ensure signout completes
+        setTimeout(() => {
+            window.location.replace('/login.html');
+        }, 100);
     }
 
-    // ----- Process definitions (unchanged) -----
+    // ----- Process definitions (unchanged from original) -----
     const processDefinitions = {
         Rolling: {
             parameters: [
@@ -546,7 +545,7 @@
         }
     }
 
-    // Event listeners (cost and time)
+    // Event listeners
     document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
     document.getElementById("laborHours").addEventListener("input", computeFailureCost);
     document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
@@ -556,7 +555,7 @@
     document.getElementById("startTime").addEventListener("change", updateTotalTime);
     document.getElementById("endTime").addEventListener("change", updateTotalTime);
 
-    // Initialize: check session, then render
+    // Initialize
     document.addEventListener("DOMContentLoaded", async () => {
         await checkSession();
         renderDynamicFields();
