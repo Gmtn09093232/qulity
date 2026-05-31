@@ -24,13 +24,15 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
 // GET all inspections (public – no auth required)
 app.get('/api/inspections', async (req, res) => {
   const { data, error } = await supabase
     .from('rolling_inspections')
     .select('*')
-    .order('submitted_at', { ascending: false })
-    .limit(50);
+    .order('submitted_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
