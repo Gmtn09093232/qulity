@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>QC Rolling Process Inspection | Amhara Metal Industry</title>
+    <title>QC Inspection | Amhara Metal Industry</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -24,7 +24,7 @@
     <div class="bg-white rounded-t-xl shadow p-4 mb-2 flex justify-between items-center">
         <div>
             <h1 class="text-xl font-bold text-blue-900">Amhara Metal Industry & Machine Technology Development Enterprise</h1>
-            <p class="text-sm font-semibold">Quality Assurance Directorate – Rolling Process Inspection Checklist</p>
+            <p class="text-sm font-semibold">Quality Assurance Directorate – Inspection Checklist</p>
         </div>
         <div class="text-right text-sm text-gray-600">
             <i class="fas fa-cloud-upload-alt"></i> Data saved via backend API
@@ -32,17 +32,26 @@
     </div>
 
     <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
+        <!-- Process Type Selector (NEW) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
+            <div>
+                <label class="font-bold">Process Type *</label>
+                <select id="processType" class="w-full border p-2 rounded" onchange="switchProcess()">
+                    <option value="Rolling">Rolling Process</option>
+                    <option value="Bending">Bending Process</option>
+                    <option value="GasCutting">Gas Cutting Process</option>
+                    <option value="Milling">Milling Process</option>
+                    <option value="Drilling">Drilling Process</option>
+                    <option value="Welding">Welding / Assembly Process</option>
+                </select>
+            </div>
             <div>
                 <label class="font-bold">QC Engineer Name *</label>
                 <input type="text" id="qcEngineerName" class="w-full border p-2 rounded" placeholder="e.g. Abebech Alemu" required>
             </div>
-            <div>
-                <label class="font-bold">Date</label>
-                <input type="date" id="inspectionDate" class="w-full border p-2 rounded">
-            </div>
         </div>
 
+        <!-- Existing header fields (unchanged) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
             <div>
                 <label class="font-bold">Source of Process Inspection</label>
@@ -94,21 +103,17 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto border rounded-md">
-            <table class="min-w-full text-sm border-collapse">
-                <thead class="bg-gray-200">
-                    <tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Rating</th><th class="p-2 border">Cause of Defects (check all)</th><th class="p-2 border">Engineering Solutions</th></tr>
-                </thead>
-                <tbody id="acceptanceTableBody"></tbody>
-            </table>
-        </div>
+        <!-- Dynamic process-specific fields (extra info + inspection table) -->
+        <div id="dynamicFieldsContainer"></div>
 
+        <!-- Cumulative points & result (only used for Rolling, but kept for all) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-3 rounded">
             <div><label class="font-bold">CUMULATIVE POINTS</label> <input type="number" id="cumulativePoints" readonly class="border p-1 rounded w-32 bg-gray-100"></div>
             <div><label class="font-bold">Result</label> <select id="result" class="border p-1 rounded ml-2"><option>Accepted</option><option>Rework</option><option>Reject</option><option>Conditional Accepted</option></select></div>
             <div><label class="font-bold">Responsible Person Name</label> <input type="text" id="responsiblePerson" class="border p-1 rounded w-full"></div>
         </div>
 
+        <!-- Cost section (unchanged) -->
         <div class="border p-4 rounded-md">
             <h3 class="font-bold text-lg">Internal Failure Costs</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
@@ -147,42 +152,258 @@
 </div>
 
 <script>
-    const parameters = ["jigs_fixture", "material_condition", "surface_uniformity", "dimensional_accuracy"];
-    const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
+    // ----- Process definitions (exactly matching your images) -----
+    const processDefinitions = {
+        Rolling: {
+            parameters: [
+                { id: "jigs_fixture", label: "Availability of Jigs & Fixture" },
+                { id: "material_condition", label: "Condition of Type of Material used as per Design" },
+                { id: "surface_uniformity", label: "Condition of Surface uniformity" },
+                { id: "dimensional_accuracy", label: "Condition of Dimensional accuracy & sharpness as per Design" }
+            ],
+            ratingOptions: ["Excellent", "V.Good", "Good", "Poor"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: true,
+            extraFields: []  // no extra fields for rolling
+        },
+        Bending: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material as per Design" },
+                { id: "surface_uniformity", label: "Surface uniformity" },
+                { id: "cracking", label: "Condition of Cracking" },
+                { id: "wrinkle", label: "Condition of Wrinkle" },
+                { id: "dimensional_accuracy", label: "Dimensional Accuracy as per design" }
+            ],
+            ratingOptions: ["Accepted", "Conditional Accept", "Rework", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Part Name", id: "partName" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Location", id: "location" }
+            ]
+        },
+        GasCutting: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material used as Per Design" },
+                { id: "dimensional_accuracy", label: "Dimensional accuracy as per Design" },
+                { id: "finishing_no_slag", label: "Finishing Appearance without slag" }
+            ],
+            ratingOptions: ["Accept", "Conditional Accept", "Rework", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Location", id: "location" },
+                { label: "Part Name", id: "partName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Shift No.", id: "shiftNo" }
+            ]
+        },
+        Milling: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material used as Per Design" },
+                { id: "dimensional_accuracy", label: "Dimensional accuracy as per Design" },
+                { id: "corner_sharpness", label: "Exact Sharpness of the Corners" },
+                { id: "shining", label: "Shining of the work piece" },
+                { id: "finishing_no_burs", label: "Finishing Appearance without Burs" }
+            ],
+            ratingOptions: ["Accepted", "Conditional Accept", "Rework", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Shift No.", id: "shiftNo" },
+                { label: "Part Name", id: "partName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Location", id: "location" }
+            ]
+        },
+        Drilling: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material used as Per Design" },
+                { id: "drilling_sequence", label: "Proper drilling sequence" },
+                { id: "dimensional_accuracy", label: "Dimensional accuracy as per Design" },
+                { id: "finishing_no_burs", label: "Finishing Appearance without Burs" }
+            ],
+            ratingOptions: ["Accept", "Conditional Accept", "Rework", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Part Name", id: "partName" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Shift working hour", id: "shiftWorkingHour" },
+                { label: "From", id: "shiftFrom" }, { label: "To", id: "shiftTo" },
+                { label: "Shift No.", id: "shiftNo" },
+                { label: "Location", id: "location" }
+            ]
+        },
+        Welding: {
+            parameters: [
+                { id: "material_as_per_design", label: "Material used as Per Design" },
+                { id: "assembly_dimensions", label: "All assembly dimensions as per design" },
+                { id: "rigidity", label: "Rigidity of welding assembly" },
+                { id: "alignment", label: "alignment for all part components" },
+                { id: "ergonomics", label: "Condition of ergonomics" },
+                { id: "name_plating", label: "Availability of name plating" }
+            ],
+            ratingOptions: ["Accepted", "Conditional Accept", "Reject"],
+            causeFields: ["Machine","Design","Operator","Methods","Material"],
+            hasEngineeringSolution: false,
+            extraFields: [
+                { label: "Customer Name", id: "customerName" },
+                { label: "Part Name", id: "partName" },
+                { label: "Tag No.", id: "tagNo" },
+                { label: "Work Station", id: "workStation" },
+                { label: "Project Name", id: "projectName" },
+                { label: "Drawing No.", id: "drawingNo" },
+                { label: "Shift working hour", id: "shiftWorkingHour" },
+                { label: "From", id: "shiftFrom" }, { label: "To", id: "shiftTo" },
+                { label: "Location", id: "location" }
+            ]
+        }
+    };
 
-    function buildAcceptanceTable() {
-        const tbody = document.getElementById("acceptanceTableBody");
-        tbody.innerHTML = "";
-        const labels = [
-            "Availability of Jigs & Fixture",
-            "Condition of Type of Material used as per Design",
-            "Condition of Surface uniformity",
-            "Condition of Dimensional accuracy & sharpness as per Design"
-        ];
-        parameters.forEach((p, idx) => {
-            const row = tbody.insertRow();
-            row.insertCell(0).innerHTML = `<div class="border p-2 font-medium">${labels[idx]}</div>`;
-            row.insertCell(1).innerHTML = `<select id="rating_${p}" class="rating-select w-full p-1 border rounded" onchange="updateCumulativePoints()">
-                <option>Excellent</option><option>V.Good</option><option>Good</option><option>Poor</option>
-            </select>`;
-            row.insertCell(2).innerHTML = `<div class="cause-checkbox-group flex flex-wrap gap-2">
-                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Machine"> Machine</label>
-                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Design"> Design</label>
-                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Operator"> Operator</label>
-                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Methods"> Methods</label>
-                <label><input type="checkbox" class="cause-check" data-param="${p}" value="Material"> Material</label>
-            </div>`;
-            row.insertCell(3).innerHTML = `<input type="text" id="eng_${p}" class="w-full p-1 border rounded text-sm">`;
-        });
+    let currentProcess = "Rolling";
+
+    // Switch process and re-render dynamic fields
+    function switchProcess() {
+        currentProcess = document.getElementById("processType").value;
+        renderDynamicFields();
     }
 
-    function updateCumulativePoints() {
-        let total = 0;
-        parameters.forEach(p => {
-            const sel = document.getElementById(`rating_${p}`);
-            if (sel) total += ratingPoints[sel.value] || 0;
+    function renderDynamicFields() {
+        const def = processDefinitions[currentProcess];
+        if (!def) return;
+        const container = document.getElementById("dynamicFieldsContainer");
+        let html = "";
+
+        // Extra fields (process-specific metadata)
+        if (def.extraFields && def.extraFields.length) {
+            html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 border-b pb-4 mb-4">`;
+            def.extraFields.forEach(f => {
+                html += `<div><label class="font-bold text-sm">${f.label}</label><input type="text" id="${f.id}" class="w-full border p-1 rounded text-sm"></div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Inspection parameters table
+        html += `<div class="overflow-x-auto border rounded-md"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-200">`;
+        html += `<tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Acceptance Conditions</th><th class="p-2 border">Cause of Defects</th>`;
+        if (def.hasEngineeringSolution) html += `<th class="p-2 border">Engineering Solutions</th>`;
+        html += `</tr></thead><tbody>`;
+
+        def.parameters.forEach(param => {
+            html += `<tr>`;
+            html += `<td class="border p-2 font-medium">${param.label}</td>`;
+            html += `<td class="border"><select id="rating_${param.id}" class="rating-select w-full p-1 border rounded">`;
+            def.ratingOptions.forEach(opt => {
+                html += `<option value="${opt}">${opt}</option>`;
+            });
+            html += `</select></td>`;
+            html += `<td class="border"><div class="cause-checkbox-group flex flex-wrap gap-2">`;
+            def.causeFields.forEach(cause => {
+                html += `<label><input type="checkbox" class="cause-check" data-param="${param.id}" value="${cause}"> ${cause}</label>`;
+            });
+            html += `</div></td>`;
+            if (def.hasEngineeringSolution) {
+                html += `<td class="border"><input type="text" id="eng_${param.id}" class="w-full p-1 border rounded text-sm"></td>`;
+            }
+            html += `</tr>`;
         });
-        document.getElementById("cumulativePoints").value = total;
+        html += `</tbody></table></div>`;
+
+        // Quantity summary (common for all processes) – add delivered/accepted/rework/reject qty
+        html += `<div class="grid grid-cols-2 md:grid-cols-5 gap-2 bg-gray-50 p-3 rounded mt-4">
+            <div><label class="font-bold">Delivered Qty</label><input type="number" id="deliveredQty" class="border p-1 rounded w-full"></div>
+            <div><label class="font-bold">Accepted Qty</label><input type="number" id="acceptedQty" class="border p-1 rounded w-full"></div>
+            <div><label class="font-bold">Rework Qty</label><input type="number" id="reworkQty" class="border p-1 rounded w-full"></div>
+            <div><label class="font-bold">Reject Qty</label><input type="number" id="rejectQty" class="border p-1 rounded w-full"></div>
+            <div><label class="font-bold">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="border p-1 rounded w-full"></div>
+        </div>`;
+
+        container.innerHTML = html;
+
+        // For Rolling process, also set up cumulative points calculation
+        if (currentProcess === "Rolling") {
+            const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
+            function updateCumulativePoints() {
+                let total = 0;
+                const params = processDefinitions.Rolling.parameters;
+                params.forEach(p => {
+                    const sel = document.getElementById(`rating_${p.id}`);
+                    if (sel && sel.value) total += ratingPoints[sel.value] || 0;
+                });
+                document.getElementById("cumulativePoints").value = total;
+            }
+            // Attach event listeners to rating selects
+            processDefinitions.Rolling.parameters.forEach(p => {
+                const sel = document.getElementById(`rating_${p.id}`);
+                if (sel) sel.addEventListener("change", updateCumulativePoints);
+            });
+            updateCumulativePoints();
+        } else {
+            // For non-rolling, cumulative points is not used – set to 0
+            document.getElementById("cumulativePoints").value = 0;
+        }
+    }
+
+    function getAcceptanceData() {
+        const def = processDefinitions[currentProcess];
+        const data = {};
+        def.parameters.forEach(param => {
+            const rating = document.getElementById(`rating_${param.id}`)?.value || '';
+            const causes = [];
+            document.querySelectorAll(`.cause-check[data-param="${param.id}"]:checked`).forEach(cb => causes.push(cb.value));
+            const engineeringSolution = def.hasEngineeringSolution ? document.getElementById(`eng_${param.id}`)?.value || '' : '';
+            data[param.id] = { rating, causes, engineering_solution: engineeringSolution };
+        });
+        return data;
+    }
+
+    function getExtraFields() {
+        const def = processDefinitions[currentProcess];
+        const extra = {};
+        if (def.extraFields) {
+            def.extraFields.forEach(f => {
+                extra[f.id] = document.getElementById(f.id)?.value || '';
+            });
+        }
+        // Also add quantity fields
+        extra.deliveredQty = document.getElementById("deliveredQty")?.value || null;
+        extra.acceptedQty = document.getElementById("acceptedQty")?.value || null;
+        extra.reworkQty = document.getElementById("reworkQty")?.value || null;
+        extra.rejectQty = document.getElementById("rejectQty")?.value || null;
+        extra.conditionalAcceptQty = document.getElementById("conditionalAcceptQty")?.value || null;
+        return extra;
+    }
+
+    // Reset function (clears all fields)
+    function resetForm() {
+        document.getElementById("inspectionForm").reset();
+        renderDynamicFields();  // re-renders dynamic part (clears extra fields and table)
+        document.getElementById("defectedMaterialCost").value = "";
+        document.getElementById("laborHours").value = "";
+        document.getElementById("salaryPerHour").value = "";
+        document.getElementById("totalMachineCost").value = "";
+        document.getElementById("machiningHours").value = "";
+        document.getElementById("machiningCostPerHr").value = "";
+        computeFailureCost();
+        document.getElementById("formMessage").innerHTML = "";
     }
 
     function computeFailureCost() {
@@ -212,32 +433,6 @@
         return 0;
     }
 
-    function getAcceptanceData() {
-        const data = {};
-        parameters.forEach(p => {
-            const rating = document.getElementById(`rating_${p}`).value;
-            const causes = [];
-            document.querySelectorAll(`.cause-check[data-param="${p}"]:checked`).forEach(cb => causes.push(cb.value));
-            const eng = document.getElementById(`eng_${p}`).value;
-            data[p] = { rating, causes, engineering_solution: eng };
-        });
-        return data;
-    }
-
-    function resetForm() {
-        document.getElementById("inspectionForm").reset();
-        parameters.forEach(p => {
-            const sel = document.getElementById(`rating_${p}`);
-            if (sel) sel.value = "Excellent";
-            const eng = document.getElementById(`eng_${p}`);
-            if (eng) eng.value = "";
-            document.querySelectorAll(`.cause-check[data-param="${p}"]`).forEach(cb => cb.checked = false);
-        });
-        updateCumulativePoints();
-        computeFailureCost();
-        document.getElementById("formMessage").innerHTML = "";
-    }
-
     async function saveToBackend() {
         const engineerName = document.getElementById("qcEngineerName").value.trim();
         if (!engineerName) {
@@ -250,7 +445,12 @@
             return;
         }
 
+        const processType = document.getElementById("processType").value;
+        const acceptanceData = getAcceptanceData();
+        const extraFields = getExtraFields();
+
         const payload = {
+            process_type: processType,
             username: engineerName,
             source_type: sourceType,
             outsource_institute: document.getElementById("outsourceInstitute").value,
@@ -259,10 +459,11 @@
             operation_status: document.getElementById("operationStatus").value,
             shift: document.querySelector('input[name="shift"]:checked')?.value ? parseInt(document.querySelector('input[name="shift"]:checked').value) : null,
             operator_name: document.getElementById("operatorName").value,
-            start_time: document.getElementById("startTime").value,
-            end_time: document.getElementById("endTime").value,
+            start_time: document.getElementById("startTime").value || null,
+            end_time: document.getElementById("endTime").value || null,
             total_minutes: updateTotalTime(),
-            acceptance_data: getAcceptanceData(),
+            acceptance_data: acceptanceData,
+            extra_fields: extraFields,
             cumulative_points: parseInt(document.getElementById("cumulativePoints").value) || 0,
             result: document.getElementById("result").value,
             responsible_person: document.getElementById("responsiblePerson").value,
@@ -311,9 +512,9 @@
                 <div class="border-b py-2">
                     <div class="flex justify-between">
                         <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span>
-                        <span>Result: ${row.result}</span>
+                        <span>Process: ${row.process_type || 'Rolling'}</span>
                     </div>
-                    <div class="text-sm text-gray-600">Engineer: ${row.username} | Points: ${row.cumulative_points}</div>
+                    <div class="text-sm text-gray-600">Engineer: ${row.username} | Result: ${row.result}</div>
                 </div>
             `).join("");
         } catch (err) {
@@ -322,9 +523,12 @@
         }
     }
 
+    // Sync "Inspected By" with engineer name
     document.getElementById("qcEngineerName").addEventListener("input", () => {
         document.getElementById("inspectedByName").value = document.getElementById("qcEngineerName").value;
     });
+
+    // Attach cost and time listeners
     document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
     document.getElementById("laborHours").addEventListener("input", computeFailureCost);
     document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
@@ -334,13 +538,29 @@
     document.getElementById("startTime").addEventListener("change", updateTotalTime);
     document.getElementById("endTime").addEventListener("change", updateTotalTime);
 
+    // Initialize
     document.addEventListener("DOMContentLoaded", () => {
-        buildAcceptanceTable();
-        updateCumulativePoints();
+        renderDynamicFields();
         loadHistory();
         document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10);
-        parameters.forEach(p => { const sel = document.getElementById(`rating_${p}`); if(sel) sel.value = "Excellent"; });
-        updateCumulativePoints();
+        // For Rolling, also ensure cumulative points are calculated
+        if (currentProcess === "Rolling") {
+            const ratingPoints = { "Excellent": 4, "V.Good": 3, "Good": 2, "Poor": 1 };
+            function updateCumulativePoints() {
+                let total = 0;
+                const params = processDefinitions.Rolling.parameters;
+                params.forEach(p => {
+                    const sel = document.getElementById(`rating_${p.id}`);
+                    if (sel && sel.value) total += ratingPoints[sel.value] || 0;
+                });
+                document.getElementById("cumulativePoints").value = total;
+            }
+            processDefinitions.Rolling.parameters.forEach(p => {
+                const sel = document.getElementById(`rating_${p.id}`);
+                if (sel) sel.addEventListener("change", updateCumulativePoints);
+            });
+            updateCumulativePoints();
+        }
     });
 </script>
 </body>
