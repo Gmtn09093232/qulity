@@ -38,16 +38,16 @@ function validateTelegramData(data, botToken) {
 
 // ---------- ROUTES ----------
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Telegram login endpoint
+// Telegram login endpoint (unchanged)
 app.post('/api/telegram-auth', async (req, res) => {
   const telegramData = req.body;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -56,12 +56,10 @@ app.post('/api/telegram-auth', async (req, res) => {
     return res.status(500).json({ error: 'Telegram bot token not configured' });
   }
   
-  // 1. Validate the hash
   if (!validateTelegramData(telegramData, botToken)) {
     return res.status(401).json({ error: 'Invalid Telegram authentication data' });
   }
   
-  // 2. Check auth_date (optional: reject if older than 1 day)
   const authDate = new Date(telegramData.auth_date * 1000);
   const now = new Date();
   const dayInMs = 24 * 60 * 60 * 1000;
@@ -69,7 +67,6 @@ app.post('/api/telegram-auth', async (req, res) => {
     return res.status(401).json({ error: 'Authentication data too old' });
   }
   
-  // 3. Find or create user in Supabase `telegram_users` table
   const { data: existingUser, error: findError } = await supabase
     .from('telegram_users')
     .select('*')
@@ -83,7 +80,6 @@ app.post('/api/telegram-auth', async (req, res) => {
   
   let user = existingUser;
   if (!user) {
-    // Create new user
     const { data: newUser, error: insertError } = await supabase
       .from('telegram_users')
       .insert([{
@@ -103,14 +99,12 @@ app.post('/api/telegram-auth', async (req, res) => {
     }
     user = newUser;
   } else {
-    // Update auth_date on every login
     await supabase
       .from('telegram_users')
       .update({ auth_date: new Date(telegramData.auth_date * 1000) })
       .eq('telegram_id', telegramData.id);
   }
   
-  // 4. Generate JWT token
   const token = jwt.sign(
     {
       telegram_id: user.telegram_id,
@@ -133,7 +127,7 @@ app.post('/api/telegram-auth', async (req, res) => {
   });
 });
 
-// GET all inspections (public – no auth required)
+// GET all inspections (public)
 app.get('/api/inspections', async (req, res) => {
   const { data, error } = await supabase
     .from('rolling_inspections')
@@ -144,11 +138,21 @@ app.get('/api/inspections', async (req, res) => {
   res.json(data);
 });
 
-// POST a new inspection (public)
+// POST a new inspection (public) – MODIFIED TO EXTRACT DEDICATED COLUMNS
 app.post('/api/inspections', async (req, res) => {
+  const extra = req.body.extra_fields || {};
+  
   const inspectionData = {
     ...req.body,
     submitted_at: new Date(),
+    // Extract dedicated columns from extra_fields
+    customer_name: extra["Customer Name"] || null,
+    project_name: extra["Project Name"] || null,
+    drawing_no: extra["Drawing No."] || null,
+    part_name: extra["Part Name"] || null,
+    tag_no: extra["Tag No."] || null,
+    work_station: extra["Work Station"] || null,
+    location: extra["Location"] || null
   };
   
   const { data, error } = await supabase
