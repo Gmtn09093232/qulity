@@ -47,6 +47,44 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+// GET a single inspection by ID
+app.get('/api/inspections/:id', async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase
+    .from('rolling_inspections')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) return res.status(404).json({ error: error.message });
+  res.json(data);
+});
+
+// UPDATE (PUT) an existing inspection by ID
+app.put('/api/inspections/:id', async (req, res) => {
+  const { id } = req.params;
+  const inspectionData = {
+    ...req.body,
+    submitted_at: new Date()  // update timestamp on edit
+  };
+  // Extract dedicated columns from extra_fields (as before)
+  const extra = req.body.extra_fields || {};
+  inspectionData.customer_name = extra["Customer Name"] || null;
+  inspectionData.project_name = extra["Project Name"] || null;
+  inspectionData.drawing_no = extra["Drawing No."] || null;
+  inspectionData.part_name = extra["Part Name"] || null;
+  inspectionData.tag_no = extra["Tag No."] || null;
+  inspectionData.work_station = extra["Work Station"] || null;
+  inspectionData.location = extra["Location"] || null;
+
+  const { data, error } = await supabase
+    .from('rolling_inspections')
+    .update(inspectionData)
+    .eq('id', id)
+    .select();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data[0]);
+});
+
 // Telegram login endpoint (unchanged)
 app.post('/api/telegram-auth', async (req, res) => {
   const telegramData = req.body;
