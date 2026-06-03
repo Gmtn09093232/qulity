@@ -35,6 +35,10 @@
 
     <!-- Inspection Form -->
     <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
+        <!-- Hidden field for editing mode -->
+        <input type="hidden" id="editId" value="">
+        <input type="hidden" id="isEditMode" value="false">
+
         <!-- Process Type Selector (25 operations) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
             <div>
@@ -173,7 +177,8 @@
 
         <div class="flex justify-end gap-4 no-print">
             <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
-            <button type="button" onclick="saveToBackend()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
+            <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded hidden">Cancel Edit</button>
+            <button type="button" id="saveBtn" onclick="saveToBackend()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
         </div>
         <div id="formMessage" class="text-center text-sm mt-2"></div>
     </form>
@@ -224,6 +229,8 @@
     };
 
     let currentProcess = document.getElementById("processType").value;
+    let isEditMode = false;
+    let editId = null;
 
     function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
@@ -260,7 +267,18 @@
         container.innerHTML = html;
     }
 
-    function switchProcess() { currentProcess = document.getElementById("processType").value; renderDynamicFields(); }
+    function switchProcess() { 
+        currentProcess = document.getElementById("processType").value; 
+        renderDynamicFields(); 
+        // If in edit mode, we need to reload the inspection data? Actually the process type shouldn't change during edit.
+        // We'll disable process select in edit mode? We'll just keep it, but the edit data might not match. 
+        // For simplicity, we'll not allow process change while editing, but we'll disable the select.
+        if (isEditMode) {
+            document.getElementById("processType").disabled = true;
+        } else {
+            document.getElementById("processType").disabled = false;
+        }
+    }
 
     function getAcceptanceData() {
         const def = getCurrentDef();
@@ -287,6 +305,33 @@
         return extra;
     }
 
+    function setExtraFields(extra) {
+        const def = getCurrentDef();
+        if (def.extraFields) {
+            def.extraFields.forEach(field => {
+                const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                const el = document.getElementById(id);
+                if (el && extra[field] !== undefined) el.value = extra[field];
+            });
+        }
+    }
+
+    function setAcceptanceData(acceptance) {
+        const def = getCurrentDef();
+        for (let i = 0; i < def.parameters.length; i++) {
+            const paramId = `p_${i}`;
+            const data = acceptance[paramId];
+            if (data) {
+                const ratingSelect = document.getElementById(`rating_${paramId}`);
+                if (ratingSelect) ratingSelect.value = data.rating;
+                const checkboxes = document.querySelectorAll(`.cause-check[data-param="${paramId}"]`);
+                checkboxes.forEach(cb => {
+                    cb.checked = data.causes && data.causes.includes(cb.value);
+                });
+            }
+        }
+    }
+
     function resetForm() {
         document.getElementById("inspectionForm").reset();
         renderDynamicFields();
@@ -298,6 +343,86 @@
         document.getElementById("machiningCostPerHr").value = "";
         computeFailureCost();
         document.getElementById("formMessage").innerHTML = "";
+        // Reset edit mode
+        isEditMode = false;
+        editId = null;
+        document.getElementById("editId").value = "";
+        document.getElementById("isEditMode").value = "false";
+        document.getElementById("processType").disabled = false;
+        const saveBtn = document.getElementById("saveBtn");
+        saveBtn.innerHTML = "✔ Save to Cloud";
+        document.getElementById("cancelEditBtn").classList.add("hidden");
+    }
+
+    function cancelEdit() {
+        resetForm();
+        loadHistory();
+    }
+
+    function populateFormForEdit(inspection) {
+        // Set basic fields
+        document.getElementById("qcEngineerName").value = inspection.username || "";
+        document.getElementById("outsourceInstitute").value = inspection.outsource_institute || "";
+        document.getElementById("designAvail").checked = inspection.design_available || false;
+        document.getElementById("mppAvail").checked = inspection.mpp_available || false;
+        document.getElementById("operationStatus").value = inspection.operation_status || "Holdup";
+        const shiftRadio = document.querySelector(`input[name="shift"][value="${inspection.shift}"]`);
+        if (shiftRadio) shiftRadio.checked = true;
+        document.getElementById("operatorName").value = inspection.operator_name || "";
+        document.getElementById("startTime").value = inspection.start_time || "";
+        document.getElementById("endTime").value = inspection.end_time || "";
+        updateTotalTime();
+        
+        // Quantities
+        document.getElementById("deliveredQty").value = inspection.delivered_qty || "";
+        document.getElementById("acceptedQty").value = inspection.accepted_qty || "";
+        document.getElementById("reworkQty").value = inspection.rework_qty || "";
+        document.getElementById("rejectQty").value = inspection.reject_qty || "";
+        document.getElementById("conditionalAcceptQty").value = inspection.conditional_accept_qty || "";
+        
+        // Costs
+        document.getElementById("defectedMaterialCost").value = inspection.defected_material_cost || 0;
+        document.getElementById("laborHours").value = inspection.labor_hours || 0;
+        document.getElementById("salaryPerHour").value = inspection.salary_per_hour || 0;
+        document.getElementById("machiningHours").value = inspection.machining_hours || 0;
+        document.getElementById("machiningCostPerHr").value = inspection.machining_cost_per_hr || 0;
+        document.getElementById("levelSelect").value = inspection.level || "";
+        // Trigger level auto-fill if needed
+        const levelEvent = new Event('change');
+        document.getElementById("levelSelect").dispatchEvent(levelEvent);
+        computeFailureCost();
+        
+        // Defect fields
+        document.getElementById("mostFrequentDefects").value = inspection.most_frequent_defects || "";
+        document.getElementById("defectCorrectionSlip").value = inspection.defect_correction_slip || "";
+        document.getElementById("causeOfDefectsDetail").value = inspection.cause_of_defects || "";
+        
+        // Extra fields (Customer Name, etc.)
+        const extra = inspection.extra_fields || {};
+        setExtraFields(extra);
+        
+        // Acceptance data
+        const acceptance = inspection.acceptance_data || {};
+        setAcceptanceData(acceptance);
+        
+        // Set process type (must be done before rendering dynamic fields)
+        const processOption = Array.from(document.getElementById("processType").options).find(opt => opt.text === inspection.process_type);
+        if (processOption) {
+            document.getElementById("processType").value = processOption.value;
+            switchProcess(); // re-render dynamic fields with the correct process
+        }
+        
+        // Disable process select during edit
+        document.getElementById("processType").disabled = true;
+        
+        // Set edit mode flags
+        isEditMode = true;
+        editId = inspection.id;
+        document.getElementById("editId").value = inspection.id;
+        document.getElementById("isEditMode").value = "true";
+        const saveBtn = document.getElementById("saveBtn");
+        saveBtn.innerHTML = "✔ Update to Cloud";
+        document.getElementById("cancelEditBtn").classList.remove("hidden");
     }
 
     // Auto-fill salary based on level dropdown
@@ -309,10 +434,9 @@
         else if (level === "14") salaryField.value = 96.6;
         else if (level === "custom") salaryField.value = "";
         else salaryField.value = "";
-        computeFailureCost(); // update total
+        computeFailureCost();
     });
 
-    // Recompute total cost whenever any relevant field changes
     function computeFailureCost() {
         const matCost = parseFloat(document.getElementById("defectedMaterialCost").value) || 0;
         const laborHrs = parseFloat(document.getElementById("laborHours").value) || 0;
@@ -380,10 +504,17 @@
         };
 
         try {
-            const response = await fetch('/api/inspections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            let url = '/api/inspections';
+            let method = 'POST';
+            if (isEditMode && editId) {
+                url = `/api/inspections/${editId}`;
+                method = 'PUT';
+            }
+            const response = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             if (!response.ok) throw new Error((await response.json()).error || 'Unknown error');
-            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection saved to cloud!</span>`;
-            resetForm(); loadHistory();
+            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection ${isEditMode ? 'updated' : 'saved'} to cloud!</span>`;
+            resetForm();
+            loadHistory();
         } catch (err) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`; }
     }
 
@@ -394,8 +525,29 @@
             const data = await response.json();
             const historyDiv = document.getElementById("inspectionHistory");
             if (!data || data.length === 0) historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found.</p>";
-            else historyDiv.innerHTML = data.map(row => `<div class="border-b py-2"><div class="flex justify-between"><span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><span>Process: ${row.process_type || 'Rolling'}</span></div><div class="text-sm text-gray-600">Engineer: ${row.username}</div></div>`).join("");
+            else historyDiv.innerHTML = data.map(row => `
+                <div class="border-b py-2">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><br>
+                            <span class="text-sm text-gray-600">Process: ${row.process_type || 'Rolling'} | Engineer: ${row.username}</span>
+                        </div>
+                        <button onclick="editInspection(${row.id})" class="text-blue-600 text-sm underline">Edit</button>
+                    </div>
+                </div>
+            `).join("");
         } catch (err) { document.getElementById("inspectionHistory").innerHTML = "<p class='text-red-500'>Error loading history</p>"; }
+    }
+
+    async function editInspection(id) {
+        try {
+            const response = await fetch(`/api/inspections/${id}`);
+            if (!response.ok) throw new Error();
+            const inspection = await response.json();
+            populateFormForEdit(inspection);
+        } catch (err) {
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error loading inspection: ${err.message}</span>`;
+        }
     }
 
     document.getElementById("qcEngineerName").addEventListener("input", () => document.getElementById("inspectedByName").value = document.getElementById("qcEngineerName").value);
