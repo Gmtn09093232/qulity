@@ -162,6 +162,9 @@
     let pieChart = null;
     let barChart = null;
 
+    // Valid result categories (remove undefined/null values)
+    const validResults = ["Accepted", "Rework", "Reject", "Conditional Accepted"];
+
     // Helper: get project name from record (first check dedicated column, then extra_fields)
     function getProjectName(insp) {
         if (insp.project_name) return insp.project_name;
@@ -178,7 +181,7 @@
             applyFilters();
         } catch (err) {
             console.error(err);
-            document.getElementById('inspectionTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-red-500 p-4">Error loading data</td></tr>';
+            document.getElementById('inspectionTableBody').innerHTML = '<td><td colspan="7" class="text-center text-red-500 p-4">Error loading data</td></tr>';
         }
     }
 
@@ -257,14 +260,17 @@
     }
 
     function updateCharts(data) {
+        // Only count valid results; ignore undefined/null/other
         const results = { Accepted: 0, Rework: 0, Reject: 0, 'Conditional Accepted': 0 };
         data.forEach(insp => {
-            if (results[insp.result] !== undefined) results[insp.result]++;
-            else results[insp.result] = 1;
+            const res = insp.result;
+            if (res && validResults.includes(res)) {
+                results[res]++;
+            }
         });
 
-        const labels = Object.keys(results);
-        const values = Object.values(results);
+        const labels = validResults; // always in this order
+        const values = [results.Accepted, results.Rework, results.Reject, results['Conditional Accepted']];
         const colors = ['#2ecc71', '#f39c12', '#e74c3c', '#3498db'];
 
         // Pie Chart
@@ -302,7 +308,8 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        title: { display: true, text: 'Count' }
+                        title: { display: true, text: 'Count' },
+                        stepSize: 1
                     },
                     x: {
                         title: { display: true, text: 'Result' }
@@ -330,7 +337,7 @@
                 <td class="p-3">${escapeHtml(projectName)}</td>
                 <td class="p-3">${escapeHtml(insp.username) || '-'}</td>
                 <td class="p-3">
-                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(insp.result)}">${insp.result}</span>
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(insp.result)}">${insp.result || 'N/A'}</span>
                 </td>
                 <td class="p-3">${insp.cumulative_points ?? '-'}</td>
                 <td class="p-3">${escapeHtml(insp.operator_name) || '-'}</td>
