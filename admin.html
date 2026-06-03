@@ -57,31 +57,31 @@
                 <label class="block text-sm font-medium">Process Type</label>
                 <select id="filterProcess" class="w-full border rounded p-2 mt-1">
                     <option value="">All Processes</option>
-                    <option value="Punching">Punching</option>
-                    <option value="Rolling">Rolling</option>
-                    <option value="Bending">Bending</option>
-                    <option value="GasCutting">Gas Cutting</option>
-                    <option value="Milling">Milling</option>
-                    <option value="Drilling">Drilling</option>
-                    <option value="Welding">Welding</option>
-                    <option value="Pressing">Pressing</option>
-                    <option value="Casting">Casting</option>
-                    <option value="PatternCore">Pattern & Core</option>
-                    <option value="Assembling">Assembling</option>
-                    <option value="Testing">Testing</option>
-                    <option value="Painting">Painting</option>
-                    <option value="Packaging">Packaging</option>
-                    <option value="Shearing">Shearing</option>
-                    <option value="Lathe">Lathe</option>
-                    <option value="BoringHoning">Boring & Honing</option>
-                    <option value="Grinding">Grinding</option>
-                    <option value="Forging">Forging</option>
-                    <option value="Molding">Molding</option>
-                    <option value="Polishing">Polishing</option>
-                    <option value="FastenersAssembly">Fasteners Assembly</option>
-                    <option value="Hardening">Hardening</option>
-                    <option value="Tempering">Tempering</option>
-                    <option value="Coating">Coating</option>
+                    <option value="Punching Process">Punching Process</option>
+                    <option value="Rolling Process">Rolling Process</option>
+                    <option value="Bending Process">Bending Process</option>
+                    <option value="Welding Process">Welding Process</option>
+                    <option value="Pressing Process">Pressing Process</option>
+                    <option value="Milling Process">Milling Process</option>
+                    <option value="Casting Process">Casting Process</option>
+                    <option value="Pattern & Core Making">Pattern & Core Making</option>
+                    <option value="Assembling Process">Assembling Process</option>
+                    <option value="Testing Process">Testing Process</option>
+                    <option value="Painting Process">Painting Process</option>
+                    <option value="Packaging Process">Packaging Process</option>
+                    <option value="Shearing Operation">Shearing Operation</option>
+                    <option value="Lathe Operation">Lathe Operation</option>
+                    <option value="Drilling Process">Drilling Process</option>
+                    <option value="Boring & Honing">Boring & Honing</option>
+                    <option value="Grinding Process">Grinding Process</option>
+                    <option value="Forging Process">Forging Process</option>
+                    <option value="Molding Process">Molding Process</option>
+                    <option value="Polishing & Finishing">Polishing & Finishing</option>
+                    <option value="Gas Cutting Process">Gas Cutting Process</option>
+                    <option value="Assembling (Fasteners)">Assembling (Fasteners)</option>
+                    <option value="Hardening Process">Hardening Process</option>
+                    <option value="Tempering Process">Tempering Process</option>
+                    <option value="Coating Process">Coating Process</option>
                 </select>
             </div>
             <div class="mb-3">
@@ -102,7 +102,9 @@
             </div>
             <div class="mb-3">
                 <label class="block text-sm font-medium">Project Name</label>
-                <input type="text" id="filterProjectName" class="w-full border rounded p-2 mt-1" placeholder="Enter project name...">
+                <select id="filterProjectName" class="w-full border rounded p-2 mt-1">
+                    <option value="">All Projects</option>
+                </select>
             </div>
             <div class="mb-3">
                 <label class="block text-sm font-medium">Date From</label>
@@ -144,11 +146,20 @@
     let allInspections = [];
     let resultChart = null;
 
+    // Helper: get project name from record (first check dedicated column, then extra_fields)
+    function getProjectName(insp) {
+        if (insp.project_name) return insp.project_name;
+        if (insp.extra_fields && insp.extra_fields["Project Name"]) return insp.extra_fields["Project Name"];
+        return '';
+    }
+
     async function fetchData() {
         try {
             const response = await fetch('/api/inspections');
             if (!response.ok) throw new Error('Failed to fetch');
             allInspections = await response.json();
+            // Populate project name dropdown with unique values
+            updateProjectDropdown();
             applyFilters();
         } catch (err) {
             console.error(err);
@@ -156,11 +167,21 @@
         }
     }
 
-    function getProjectName(insp) {
-        if (insp.extra_fields && insp.extra_fields["Project Name"]) {
-            return insp.extra_fields["Project Name"];
-        }
-        return '';
+    function updateProjectDropdown() {
+        const projectNames = new Set();
+        allInspections.forEach(insp => {
+            const proj = getProjectName(insp);
+            if (proj) projectNames.add(proj);
+        });
+        const sorted = Array.from(projectNames).sort();
+        const select = document.getElementById('filterProjectName');
+        select.innerHTML = '<option value="">All Projects</option>';
+        sorted.forEach(proj => {
+            const option = document.createElement('option');
+            option.value = proj;
+            option.textContent = proj;
+            select.appendChild(option);
+        });
     }
 
     function formatTotalMinutes(totalMinutes) {
@@ -176,7 +197,7 @@
     function applyFilters() {
         const processFilter = document.getElementById('filterProcess').value;
         const engineerFilter = document.getElementById('filterEngineer').value;
-        const projectFilter = document.getElementById('filterProjectName').value.trim().toLowerCase();
+        const projectFilter = document.getElementById('filterProjectName').value;
         const dateFrom = document.getElementById('filterDateFrom').value;
         const dateTo = document.getElementById('filterDateTo').value;
 
@@ -189,10 +210,7 @@
             filtered = filtered.filter(insp => insp.username && insp.username.toLowerCase() === engineerFilter.toLowerCase());
         }
         if (projectFilter) {
-            filtered = filtered.filter(insp => {
-                const projName = getProjectName(insp).toLowerCase();
-                return projName.includes(projectFilter);
-            });
+            filtered = filtered.filter(insp => getProjectName(insp) === projectFilter);
         }
         if (dateFrom) {
             const from = new Date(dateFrom);
@@ -212,9 +230,6 @@
 
     function updateSummary(data) {
         const total = data.length;
-        const totalPoints = data.reduce((sum, insp) => sum + (insp.cumulative_points || 0), 0);
-        const avgPoints = total === 0 ? 0 : (totalPoints / total).toFixed(1);
-        // REPLACE average points with total inspection time
         const totalMinutes = data.reduce((sum, insp) => sum + (insp.total_minutes || 0), 0);
         const acceptedCount = data.filter(insp => insp.result === 'Accepted').length;
         const passRate = total === 0 ? 0 : ((acceptedCount / total) * 100).toFixed(1);
@@ -257,10 +272,7 @@
         }
 
         tbody.innerHTML = data.map(insp => {
-            let processDisplay = insp.process_type || 'Rolling';
-            // Map common display names
-            if (processDisplay === 'GasCutting') processDisplay = 'Gas Cutting';
-            if (processDisplay === 'Welding') processDisplay = 'Welding';
+            const processDisplay = insp.process_type || 'Rolling Process';
             const projectName = getProjectName(insp) || '-';
             return `
             <tr class="border-b hover:bg-gray-50">
@@ -273,7 +285,7 @@
                 </td>
                 <td class="p-3">${insp.cumulative_points ?? '-'}</td>
                 <td class="p-3">${escapeHtml(insp.operator_name) || '-'}</td>
-            <tr>`;
+            </tr>`;
         }).join('');
         document.getElementById('tableInfo').innerText = `Showing ${data.length} of ${allInspections.length} inspections`;
     }
