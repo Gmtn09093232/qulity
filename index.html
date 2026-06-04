@@ -31,7 +31,7 @@
         </div>
     </div>
 
-    <!-- Main Content (hidden until secret is correct) -->
+    <!-- Main Content -->
     <div id="mainContent" style="display: none;">
         <div class="max-w-7xl mx-auto p-4 md:p-6">
 
@@ -42,7 +42,7 @@
                     <p class="text-sm font-semibold">Quality Assurance Directorate – Inspection Checklist</p>
                 </div>
                 <div class="text-right text-sm text-gray-600">
-                    <i class="fas fa-cloud-upload-alt"></i>
+                    <i class="fas fa-cloud-upload-alt"></i> Data saved via backend API
                 </div>
             </div>
 
@@ -210,7 +210,7 @@
     // ============================================================
     // SECRET NUMBER PROTECTION
     // ============================================================
-    const CORRECT_SECRET = "012070505";   // CHANGE THIS
+    const CORRECT_SECRET = "12345";   // CHANGE THIS
     if (sessionStorage.getItem('secretUnlocked') === 'true') {
         document.getElementById('secretOverlay').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
@@ -246,7 +246,6 @@
         engineerField.classList.add('bg-gray-100');
         document.getElementById('inspectedByName').value = currentEngineer;
     } else {
-        // If no engineer in URL, allow manual entry (not read‑only)
         currentEngineer = '';
     }
 
@@ -320,7 +319,7 @@
             html += `</div></td>`;
             html += `</tr>`;
         });
-        html += `</tbody></table></div>`;
+        html += `</tbody><table></div>`;
         container.innerHTML = html;
     }
 
@@ -397,7 +396,6 @@
         const saveBtn = document.getElementById("saveBtn");
         saveBtn.innerHTML = "✔ Save to Cloud";
         document.getElementById("cancelEditBtn").classList.add("hidden");
-        // Restore engineer from URL if any
         if (engineerFromUrl) {
             document.getElementById('qcEngineerName').value = currentEngineer;
             document.getElementById('inspectedByName').value = currentEngineer;
@@ -410,13 +408,11 @@
     }
 
     function populateFormForEdit(inspection) {
-        // Basic fields
         document.getElementById("qcEngineerName").value = inspection.username || "";
         document.getElementById("outsourceInstitute").value = inspection.outsource_institute || "";
         document.getElementById("designAvail").checked = inspection.design_available || false;
         document.getElementById("mppAvail").checked = inspection.mpp_available || false;
         document.getElementById("operationStatus").value = inspection.operation_status || "Holdup";
-        // Source type radio
         const sourceRadio = document.querySelector(`input[name="sourceType"][value="${inspection.source_type}"]`);
         if (sourceRadio) sourceRadio.checked = true;
         const shiftRadio = document.querySelector(`input[name="shift"][value="${inspection.shift}"]`);
@@ -425,13 +421,11 @@
         document.getElementById("startTime").value = inspection.start_time || "";
         document.getElementById("endTime").value = inspection.end_time || "";
         updateTotalTime();
-        // Quantities
         document.getElementById("deliveredQty").value = inspection.delivered_qty ?? "";
         document.getElementById("acceptedQty").value = inspection.accepted_qty ?? "";
         document.getElementById("reworkQty").value = inspection.rework_qty ?? "";
         document.getElementById("rejectQty").value = inspection.reject_qty ?? "";
         document.getElementById("conditionalAcceptQty").value = inspection.conditional_accept_qty ?? "";
-        // Costs
         document.getElementById("defectedMaterialCost").value = inspection.defected_material_cost ?? 0;
         document.getElementById("laborHours").value = inspection.labor_hours ?? 0;
         document.getElementById("salaryPerHour").value = inspection.salary_per_hour ?? 0;
@@ -441,17 +435,13 @@
         const levelEvent = new Event('change');
         document.getElementById("levelSelect").dispatchEvent(levelEvent);
         computeFailureCost();
-        // Defect fields
         document.getElementById("mostFrequentDefects").value = inspection.most_frequent_defects || "";
         document.getElementById("defectCorrectionSlip").value = inspection.defect_correction_slip || "";
         document.getElementById("causeOfDefectsDetail").value = inspection.cause_of_defects || "";
-        // Extra fields
         const extra = inspection.extra_fields || {};
         setExtraFields(extra);
-        // Acceptance data
         const acceptance = inspection.acceptance_data || {};
         setAcceptanceData(acceptance);
-        // Process type
         const processOption = Array.from(document.getElementById("processType").options).find(opt => opt.text === inspection.process_type);
         if (processOption) {
             document.getElementById("processType").value = processOption.value;
@@ -478,13 +468,18 @@
         computeFailureCost();
     });
 
+    // Recompute total cost with multiplier (rework qty + reject qty)
     function computeFailureCost() {
         const matCost = parseFloat(document.getElementById("defectedMaterialCost").value) || 0;
         const laborHrs = parseFloat(document.getElementById("laborHours").value) || 0;
         const salary = parseFloat(document.getElementById("salaryPerHour").value) || 0;
         const machHrs = parseFloat(document.getElementById("machiningHours").value) || 0;
         const machRate = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
-        const total = matCost + (laborHrs * salary) + (machHrs * machRate);
+        const reworkQty = parseFloat(document.getElementById("reworkQty").value) || 0;
+        const rejectQty = parseFloat(document.getElementById("rejectQty").value) || 0;
+        const multiplier = (reworkQty + rejectQty) || 1;  // if zero, multiply by 1 (avoid zero total)
+        const baseTotal = matCost + (laborHrs * salary) + (machHrs * machRate);
+        const total = baseTotal * multiplier;
         document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
         document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
         return total;
@@ -564,7 +559,6 @@
             const response = await fetch('/api/inspections');
             if (!response.ok) throw new Error();
             let data = await response.json();
-            // Filter to only show inspections where username matches current engineer (if engineerFromUrl exists)
             if (engineerFromUrl) {
                 data = data.filter(row => row.username === currentEngineer);
             }
@@ -601,6 +595,8 @@
     document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
     document.getElementById("machiningHours").addEventListener("input", computeFailureCost);
     document.getElementById("machiningCostPerHr").addEventListener("input", computeFailureCost);
+    document.getElementById("reworkQty").addEventListener("input", computeFailureCost);
+    document.getElementById("rejectQty").addEventListener("input", computeFailureCost);
     document.getElementById("startTime").addEventListener("change", updateTotalTime);
     document.getElementById("endTime").addEventListener("change", updateTotalTime);
 
