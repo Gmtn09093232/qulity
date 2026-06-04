@@ -48,7 +48,10 @@
 
             <!-- Inspection Form -->
             <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
-                <!-- Process Type Selector (25 operations) -->
+                <input type="hidden" id="editId" value="">
+                <input type="hidden" id="isEditMode" value="false">
+
+                <!-- Process Type Selector -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
                     <div>
                         <label class="font-bold">Process Type *</label>
@@ -186,11 +189,13 @@
 
                 <div class="flex justify-end gap-4 no-print">
                     <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
+                    <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded hidden">Cancel Edit</button>
                     <button type="button" id="saveBtn" onclick="saveToBackend()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
                 </div>
                 <div id="formMessage" class="text-center text-sm mt-2"></div>
             </form>
 
+            <!-- Previous Inspections (filtered by current engineer) -->
             <div class="mt-8 bg-white shadow rounded p-4 no-print">
                 <div class="flex justify-between items-center">
                     <h3 class="font-bold text-lg">📋 Previous Inspections</h3>
@@ -205,8 +210,7 @@
     // ============================================================
     // SECRET NUMBER PROTECTION
     // ============================================================
-    const CORRECT_SECRET = "012070505";   // <-- CHANGE THIS TO YOUR DESIRED SECRET NUMBER
-    // Check if already unlocked in this session
+    const CORRECT_SECRET = "012070505";   // CHANGE THIS
     if (sessionStorage.getItem('secretUnlocked') === 'true') {
         document.getElementById('secretOverlay').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
@@ -221,7 +225,6 @@
             sessionStorage.setItem('secretUnlocked', 'true');
             document.getElementById('secretOverlay').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
-            // Re‑initialize dynamic fields (they would have been loaded but hidden)
             renderDynamicFields();
             loadHistory();
         } else {
@@ -230,21 +233,25 @@
     }
 
     // ============================================================
-    // URL PARAMETER: auto‑fill engineer name from ?engineer=...
+    // URL PARAMETER: auto‑fill engineer name
     // ============================================================
     const urlParams = new URLSearchParams(window.location.search);
     const engineerFromUrl = urlParams.get('engineer');
+    let currentEngineer = '';
     if (engineerFromUrl) {
+        currentEngineer = decodeURIComponent(engineerFromUrl);
         const engineerField = document.getElementById('qcEngineerName');
-        engineerField.value = decodeURIComponent(engineerFromUrl);
+        engineerField.value = currentEngineer;
         engineerField.readOnly = true;
         engineerField.classList.add('bg-gray-100');
-        const inspectedByField = document.getElementById('inspectedByName');
-        if (inspectedByField) inspectedByField.value = decodeURIComponent(engineerFromUrl);
+        document.getElementById('inspectedByName').value = currentEngineer;
+    } else {
+        // If no engineer in URL, allow manual entry (not read‑only)
+        currentEngineer = '';
     }
 
     // ============================================================
-    // 25 PROCESS DEFINITIONS (unchanged)
+    // 25 PROCESS DEFINITIONS (same as before)
     // ============================================================
     const baseExtraFields = ["Customer Name", "Project Name", "Drawing No.", "Part Name", "Tag No.", "Work Station", "Location"];
     const ratingOpts = ["Accepted", "Conditional Accept", "Rework", "Reject"];
@@ -279,6 +286,8 @@
     };
 
     let currentProcess = document.getElementById("processType").value;
+    let isEditMode = false;
+    let editId = null;
 
     function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
@@ -342,6 +351,33 @@
         return extra;
     }
 
+    function setExtraFields(extra) {
+        const def = getCurrentDef();
+        if (def.extraFields) {
+            def.extraFields.forEach(field => {
+                const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                const el = document.getElementById(id);
+                if (el && extra[field] !== undefined) el.value = extra[field];
+            });
+        }
+    }
+
+    function setAcceptanceData(acceptance) {
+        const def = getCurrentDef();
+        for (let i = 0; i < def.parameters.length; i++) {
+            const paramId = `p_${i}`;
+            const data = acceptance[paramId];
+            if (data) {
+                const ratingSelect = document.getElementById(`rating_${paramId}`);
+                if (ratingSelect) ratingSelect.value = data.rating;
+                const checkboxes = document.querySelectorAll(`.cause-check[data-param="${paramId}"]`);
+                checkboxes.forEach(cb => {
+                    cb.checked = data.causes && data.causes.includes(cb.value);
+                });
+            }
+        }
+    }
+
     function resetForm() {
         document.getElementById("inspectionForm").reset();
         renderDynamicFields();
@@ -353,12 +389,82 @@
         document.getElementById("machiningCostPerHr").value = "";
         computeFailureCost();
         document.getElementById("formMessage").innerHTML = "";
+        isEditMode = false;
+        editId = null;
+        document.getElementById("editId").value = "";
+        document.getElementById("isEditMode").value = "false";
+        document.getElementById("processType").disabled = false;
+        const saveBtn = document.getElementById("saveBtn");
+        saveBtn.innerHTML = "✔ Save to Cloud";
+        document.getElementById("cancelEditBtn").classList.add("hidden");
+        // Restore engineer from URL if any
         if (engineerFromUrl) {
-            const engineerField = document.getElementById('qcEngineerName');
-            engineerField.value = decodeURIComponent(engineerFromUrl);
-            engineerField.readOnly = true;
-            document.getElementById('inspectedByName').value = decodeURIComponent(engineerFromUrl);
+            document.getElementById('qcEngineerName').value = currentEngineer;
+            document.getElementById('inspectedByName').value = currentEngineer;
         }
+    }
+
+    function cancelEdit() {
+        resetForm();
+        loadHistory();
+    }
+
+    function populateFormForEdit(inspection) {
+        // Basic fields
+        document.getElementById("qcEngineerName").value = inspection.username || "";
+        document.getElementById("outsourceInstitute").value = inspection.outsource_institute || "";
+        document.getElementById("designAvail").checked = inspection.design_available || false;
+        document.getElementById("mppAvail").checked = inspection.mpp_available || false;
+        document.getElementById("operationStatus").value = inspection.operation_status || "Holdup";
+        // Source type radio
+        const sourceRadio = document.querySelector(`input[name="sourceType"][value="${inspection.source_type}"]`);
+        if (sourceRadio) sourceRadio.checked = true;
+        const shiftRadio = document.querySelector(`input[name="shift"][value="${inspection.shift}"]`);
+        if (shiftRadio) shiftRadio.checked = true;
+        document.getElementById("operatorName").value = inspection.operator_name || "";
+        document.getElementById("startTime").value = inspection.start_time || "";
+        document.getElementById("endTime").value = inspection.end_time || "";
+        updateTotalTime();
+        // Quantities
+        document.getElementById("deliveredQty").value = inspection.delivered_qty ?? "";
+        document.getElementById("acceptedQty").value = inspection.accepted_qty ?? "";
+        document.getElementById("reworkQty").value = inspection.rework_qty ?? "";
+        document.getElementById("rejectQty").value = inspection.reject_qty ?? "";
+        document.getElementById("conditionalAcceptQty").value = inspection.conditional_accept_qty ?? "";
+        // Costs
+        document.getElementById("defectedMaterialCost").value = inspection.defected_material_cost ?? 0;
+        document.getElementById("laborHours").value = inspection.labor_hours ?? 0;
+        document.getElementById("salaryPerHour").value = inspection.salary_per_hour ?? 0;
+        document.getElementById("machiningHours").value = inspection.machining_hours ?? 0;
+        document.getElementById("machiningCostPerHr").value = inspection.machining_cost_per_hr ?? 0;
+        document.getElementById("levelSelect").value = inspection.level || "";
+        const levelEvent = new Event('change');
+        document.getElementById("levelSelect").dispatchEvent(levelEvent);
+        computeFailureCost();
+        // Defect fields
+        document.getElementById("mostFrequentDefects").value = inspection.most_frequent_defects || "";
+        document.getElementById("defectCorrectionSlip").value = inspection.defect_correction_slip || "";
+        document.getElementById("causeOfDefectsDetail").value = inspection.cause_of_defects || "";
+        // Extra fields
+        const extra = inspection.extra_fields || {};
+        setExtraFields(extra);
+        // Acceptance data
+        const acceptance = inspection.acceptance_data || {};
+        setAcceptanceData(acceptance);
+        // Process type
+        const processOption = Array.from(document.getElementById("processType").options).find(opt => opt.text === inspection.process_type);
+        if (processOption) {
+            document.getElementById("processType").value = processOption.value;
+            switchProcess();
+        }
+        document.getElementById("processType").disabled = true;
+        isEditMode = true;
+        editId = inspection.id;
+        document.getElementById("editId").value = inspection.id;
+        document.getElementById("isEditMode").value = "true";
+        const saveBtn = document.getElementById("saveBtn");
+        saveBtn.innerHTML = "✔ Update to Cloud";
+        document.getElementById("cancelEditBtn").classList.remove("hidden");
     }
 
     document.getElementById("levelSelect").addEventListener("change", function(e) {
@@ -397,7 +503,7 @@
     }
 
     async function saveToBackend() {
-        const engineerName = document.getElementById("qcEngineerName").value.trim();
+        let engineerName = document.getElementById("qcEngineerName").value.trim();
         if (!engineerName) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please enter QC Engineer Name</span>`; return; }
         const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
         if (!sourceType) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please select Source of Process Inspection</span>`; return; }
@@ -439,10 +545,17 @@
         };
 
         try {
-            const response = await fetch('/api/inspections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            let url = '/api/inspections';
+            let method = 'POST';
+            if (isEditMode && editId) {
+                url = `/api/inspections/${editId}`;
+                method = 'PUT';
+            }
+            const response = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             if (!response.ok) throw new Error((await response.json()).error || 'Unknown error');
-            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection saved to cloud!</span>`;
-            resetForm(); loadHistory();
+            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection ${isEditMode ? 'updated' : 'saved'} to cloud!</span>`;
+            resetForm();
+            loadHistory();
         } catch (err) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`; }
     }
 
@@ -450,11 +563,36 @@
         try {
             const response = await fetch('/api/inspections');
             if (!response.ok) throw new Error();
-            const data = await response.json();
+            let data = await response.json();
+            // Filter to only show inspections where username matches current engineer (if engineerFromUrl exists)
+            if (engineerFromUrl) {
+                data = data.filter(row => row.username === currentEngineer);
+            }
             const historyDiv = document.getElementById("inspectionHistory");
-            if (!data || data.length === 0) historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found.</p>";
-            else historyDiv.innerHTML = data.map(row => `<div class="border-b py-2"><div class="flex justify-between"><span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><span>Process: ${row.process_type || 'Rolling'}</span></div><div class="text-sm text-gray-600">Engineer: ${row.username}</div></div>`).join("");
+            if (!data || data.length === 0) historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found for this engineer.</p>";
+            else historyDiv.innerHTML = data.map(row => `
+                <div class="border-b py-2">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><br>
+                            <span class="text-sm text-gray-600">Process: ${row.process_type || 'Rolling'}</span>
+                        </div>
+                        <button onclick="editInspection(${row.id})" class="text-blue-600 text-sm underline">Edit</button>
+                    </div>
+                </div>
+            `).join("");
         } catch (err) { document.getElementById("inspectionHistory").innerHTML = "<p class='text-red-500'>Error loading history</p>"; }
+    }
+
+    async function editInspection(id) {
+        try {
+            const response = await fetch(`/api/inspections/${id}`);
+            if (!response.ok) throw new Error();
+            const inspection = await response.json();
+            populateFormForEdit(inspection);
+        } catch (err) {
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error loading inspection: ${err.message}</span>`;
+        }
     }
 
     document.getElementById("qcEngineerName").addEventListener("input", () => document.getElementById("inspectedByName").value = document.getElementById("qcEngineerName").value);
