@@ -46,7 +46,7 @@
         </div>
     </div>
 
-    <!-- Charts Section: Pie Chart + Bar Chart -->
+    <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="bg-white rounded-lg shadow p-4">
             <h2 class="font-bold text-lg mb-2">Results Distribution (Pie)</h2>
@@ -162,10 +162,8 @@
     let pieChart = null;
     let barChart = null;
 
-    // Valid result categories (remove undefined/null values)
     const validResults = ["Accepted", "Rework", "Reject", "Conditional Accepted"];
 
-    // Helper: get project name from record (first check dedicated column, then extra_fields)
     function getProjectName(insp) {
         if (insp.project_name) return insp.project_name;
         if (insp.extra_fields && insp.extra_fields["Project Name"]) return insp.extra_fields["Project Name"];
@@ -185,13 +183,19 @@
         }
     }
 
+    // Updated to show unique project names (no duplicates)
     function updateProjectDropdown() {
-        const projectNames = new Set();
+        const projectMap = new Map(); // use Map to ensure unique keys
         allInspections.forEach(insp => {
-            const proj = getProjectName(insp);
-            if (proj) projectNames.add(proj);
+            let proj = getProjectName(insp);
+            if (proj && proj.trim() !== '') {
+                proj = proj.trim();
+                if (!projectMap.has(proj)) {
+                    projectMap.set(proj, true);
+                }
+            }
         });
-        const sorted = Array.from(projectNames).sort();
+        const sorted = Array.from(projectMap.keys()).sort();
         const select = document.getElementById('filterProjectName');
         select.innerHTML = '<option value="">All Projects</option>';
         sorted.forEach(proj => {
@@ -260,7 +264,6 @@
     }
 
     function updateCharts(data) {
-        // Only count valid results; ignore undefined/null/other
         const results = { Accepted: 0, Rework: 0, Reject: 0, 'Conditional Accepted': 0 };
         data.forEach(insp => {
             const res = insp.result;
@@ -269,51 +272,29 @@
             }
         });
 
-        const labels = validResults; // always in this order
+        const labels = validResults;
         const values = [results.Accepted, results.Rework, results.Reject, results['Conditional Accepted']];
         const colors = ['#2ecc71', '#f39c12', '#e74c3c', '#3498db'];
 
-        // Pie Chart
         const pieCtx = document.getElementById('resultPieChart').getContext('2d');
         if (pieChart) pieChart.destroy();
         pieChart = new Chart(pieCtx, {
             type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: colors,
-                }]
-            },
+            data: { labels, datasets: [{ data: values, backgroundColor: colors }] },
             options: { responsive: true, maintainAspectRatio: true }
         });
 
-        // Bar Chart
         const barCtx = document.getElementById('resultBarChart').getContext('2d');
         if (barChart) barChart.destroy();
         barChart = new Chart(barCtx, {
             type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Number of Inspections',
-                    data: values,
-                    backgroundColor: colors,
-                    borderRadius: 6
-                }]
-            },
+            data: { labels, datasets: [{ label: 'Number of Inspections', data: values, backgroundColor: colors, borderRadius: 6 }] },
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Count' },
-                        stepSize: 1
-                    },
-                    x: {
-                        title: { display: true, text: 'Result' }
-                    }
+                    y: { beginAtZero: true, title: { display: true, text: 'Count' }, stepSize: 1 },
+                    x: { title: { display: true, text: 'Result' } }
                 }
             }
         });
@@ -358,12 +339,7 @@
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
     }
 
     fetchData();
