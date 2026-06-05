@@ -17,6 +17,7 @@
         .rating-select { min-width: 100px; }
         .cause-checkbox-group label { margin-right: 12px; font-size: 0.8rem; }
         table th, table td { vertical-align: top; padding: 8px 6px; }
+        datalist option { font-size: 0.9rem; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -56,6 +57,7 @@
                     <div>
                         <label class="font-bold">Process Type *</label>
                         <select id="processType" class="w-full border p-2 rounded" onchange="switchProcess()">
+                            <option value="Incoming">Incoming inspection (revised format)</option>
                             <option value="Punching">Punching Process</option>
                             <option value="Rolling">Rolling Process</option>
                             <option value="Bending">Bending Process</option>
@@ -89,7 +91,7 @@
                     </div>
                 </div>
 
-                <!-- Existing header fields -->
+                <!-- Existing header fields (source, docs, shift, etc.) - unchanged -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
                     <div>
                         <label class="font-bold">Source of Process Inspection</label>
@@ -137,7 +139,7 @@
                     </div>
                 </div>
 
-                <!-- Dynamic process-specific fields -->
+                <!-- Dynamic fields container -->
                 <div id="dynamicFieldsContainer"><div class="text-gray-500 text-center py-4">Loading inspection table...</div></div>
 
                 <!-- Quantity summary -->
@@ -149,42 +151,22 @@
                     <div><label class="font-bold">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="border p-1 rounded w-full"></div>
                 </div>
 
-                <!-- Internal Failure Costs (ENHANCED: added Machine Description dropdown from Machinery Master) -->
+                <!-- Internal Failure Costs (unchanged) -->
                 <div class="border p-4 rounded-md">
                     <h3 class="font-bold text-lg">Internal Failure Costs</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
                         <div><label>Defected Material Cost (ETB)</label> <input type="number" step="0.01" id="defectedMaterialCost" class="border p-1 rounded w-full"></div>
                         <div><label>Labor Hours</label> <input type="number" step="0.5" id="laborHours" class="border p-1 rounded w-full"></div>
-                        <div>
-                            <label class="block">Level</label>
-                            <select id="levelSelect" class="border p-1 rounded w-full">
-                                <option value="">-- Select --</option>
-                                <option value="12">12</option>
-                                <option value="13">13</option>
-                                <option value="14">14</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Salary per Hour (ETB)</label>
-                            <input type="number" step="0.001" id="salaryPerHour" class="border p-1 rounded w-full" placeholder="Auto-fills by level">
-                        </div>
-                        <!-- NEW: Machine Description Dropdown (populated from consolidated machinery master) -->
-                        <div>
-                            <label class="font-bold">Machine Description (Master Data)</label>
-                            <select id="machineDescriptionSelect" class="border p-1 rounded w-full">
-                                <option value="">-- Select Machine --</option>
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Select machine to auto-fill Machining Cost/Hr</p>
-                        </div>
-                        <div><label>Machining Hours</label> <input type="number" step="0.5" id="machiningHours" class="border p-1 rounded w-full"></div>
-                        <div><label>Machining Cost per Hr (ETB)</label> <input type="number" step="0.01" id="machiningCostPerHr" class="border p-1 rounded w-full" placeholder="Auto from machine master or manual"></div>
+                        <div><label class="block">Level</label><select id="levelSelect" class="border p-1 rounded w-full"><option value="">-- Select --</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="custom">Custom</option></select></div>
+                        <div><label>Salary per Hour (ETB)</label><input type="number" step="0.001" id="salaryPerHour" class="border p-1 rounded w-full"></div>
+                        <div><label class="font-bold">Machine Description (Master Data)</label><select id="machineDescriptionSelect" class="border p-1 rounded w-full"><option value="">-- Select Machine --</option></select><p class="text-xs text-gray-500 mt-1">Select machine to auto-fill Machining Cost/Hr</p></div>
+                        <div><label>Machining Hours</label><input type="number" step="0.5" id="machiningHours" class="border p-1 rounded w-full"></div>
+                        <div><label>Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="border p-1 rounded w-full"></div>
                     </div>
-                    <div class="mt-3 p-2 bg-gray-100 rounded"><span class="font-bold">Total Internal Failure Cost (ETB):</span> <span id="totalFailureCostDisplay">0.00</span>
-                        <input type="hidden" id="totalInternalFailureCost">
-                    </div>
+                    <div class="mt-3 p-2 bg-gray-100 rounded"><span class="font-bold">Total Internal Failure Cost (ETB):</span> <span id="totalFailureCostDisplay">0.00</span><input type="hidden" id="totalInternalFailureCost"></div>
                 </div>
 
+                <!-- Most frequent defects, correction slip, cause detail (unchanged) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
                     <div><label class="font-bold">N.B The Most Frequent Defects</label><textarea id="mostFrequentDefects" rows="2" class="border p-1 w-full"></textarea></div>
                     <div><label class="font-bold">Defect Correction Transfer Slip</label><input type="text" id="defectCorrectionSlip" class="border p-1 w-full"></div>
@@ -201,10 +183,7 @@
 
             <!-- Previous Inspections -->
             <div class="mt-8 bg-white shadow rounded p-4 no-print">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-lg">📋 Previous Inspections</h3>
-                    <button onclick="loadHistory()" class="text-blue-600 text-sm underline">Refresh</button>
-                </div>
+                <div class="flex justify-between items-center"><h3 class="font-bold text-lg">📋 Previous Inspections</h3><button onclick="loadHistory()" class="text-blue-600 text-sm underline">Refresh</button></div>
                 <div id="inspectionHistory" class="max-h-60 overflow-y-auto text-sm mt-2"></div>
             </div>
         </div>
@@ -212,7 +191,7 @@
 
 <script>
     // ============================================================
-    // SECRET NUMBER PROTECTION
+    // SECURITY & INIT
     // ============================================================
     const CORRECT_SECRET = "12345";
     if (sessionStorage.getItem('secretUnlocked') === 'true') {
@@ -222,7 +201,6 @@
         document.getElementById('secretOverlay').style.display = 'flex';
         document.getElementById('mainContent').style.display = 'none';
     }
-
     function checkSecret() {
         const entered = document.getElementById('secretInput').value;
         if (entered === CORRECT_SECRET) {
@@ -231,16 +209,60 @@
             document.getElementById('mainContent').style.display = 'block';
             renderDynamicFields();
             loadHistory();
-            populateMachineDropdown();  // Populate machine descriptions from master table
+            populateMachineDropdown();
         } else {
             document.getElementById('secretError').classList.remove('hidden');
         }
     }
 
     // ============================================================
-    // MACHINERY MASTER DATA (Directly from Consolidated Machinery Cost Rates)
-    // Computed MR/Hr = (Total Fixed Cost + Total Operating Cost) / Total Hours
-    // Based on provided Excel rows 1 to 69 (excluding grand total)
+    // GLOBAL SUGGESTIONS (Customer & Project names from all inspections)
+    // ============================================================
+    let allCustomerNames = new Set();
+    let allProjectNames = new Set();
+
+    // Function to update suggestions from inspections array
+    function updateSuggestionsFromInspections(inspections) {
+        allCustomerNames.clear();
+        allProjectNames.clear();
+        for (const insp of inspections) {
+            const extra = insp.extra_fields || {};
+            // For standard processes: extra has "Customer Name" and "Project Name"
+            if (extra["Customer Name"] && typeof extra["Customer Name"] === "string") {
+                allCustomerNames.add(extra["Customer Name"].trim());
+            }
+            if (extra["Project Name"] && typeof extra["Project Name"] === "string") {
+                allProjectNames.add(extra["Project Name"].trim());
+            }
+            // Also check inside incoming_rev structure (if any) - but incoming has no customer/project fields
+        }
+        // Refresh datalist options if those fields are currently rendered
+        refreshDatalistOptions();
+    }
+
+    function refreshDatalistOptions() {
+        const customerDatalist = document.getElementById("customerNameDatalist");
+        if (customerDatalist) {
+            customerDatalist.innerHTML = "";
+            Array.from(allCustomerNames).sort().forEach(name => {
+                const opt = document.createElement("option");
+                opt.value = name;
+                customerDatalist.appendChild(opt);
+            });
+        }
+        const projectDatalist = document.getElementById("projectNameDatalist");
+        if (projectDatalist) {
+            projectDatalist.innerHTML = "";
+            Array.from(allProjectNames).sort().forEach(name => {
+                const opt = document.createElement("option");
+                opt.value = name;
+                projectDatalist.appendChild(opt);
+            });
+        }
+    }
+
+    // ============================================================
+    // MACHINERY MASTER (unchanged)
     // ============================================================
     const machineryMaster = [
         { desc: "Power hack saw", fixed: 1693.44, operating: 24876.46, hours: 1767, rate: (1693.44+24876.46)/1767 },
@@ -313,157 +335,207 @@
         { desc: "Pantograph Engraving Machine", fixed: 1658.05, operating: 5337.33, hours: 1227, rate: (1658.05+5337.33)/1227 },
         { desc: "Tank End (dish head) Making Machine", fixed: 74492.47, operating: 73296.73, hours: 1375, rate: (74492.47+73296.73)/1375 }
     ];
-
-    // Populate Machine Description dropdown inside Internal Failure Costs
     function populateMachineDropdown() {
         const selectEl = document.getElementById("machineDescriptionSelect");
         if (!selectEl) return;
         selectEl.innerHTML = '<option value="">-- Select Machine --</option>';
-        machineryMaster.forEach(machine => {
-            const option = document.createElement("option");
-            option.value = machine.rate.toFixed(4);
-            option.textContent = machine.desc;
-            selectEl.appendChild(option);
-        });
-        // add event listener to auto-fill machining cost per hr
-        selectEl.addEventListener("change", function() {
-            const selectedRate = parseFloat(this.value);
-            if (!isNaN(selectedRate) && this.value !== "") {
-                document.getElementById("machiningCostPerHr").value = selectedRate.toFixed(2);
-                computeFailureCost();   // recalc total internal failure cost
-            } else {
-                // If empty, do not override existing value
-            }
-        });
+        machineryMaster.forEach(m => { const opt = document.createElement("option"); opt.value = m.rate.toFixed(4); opt.textContent = m.desc; selectEl.appendChild(opt); });
+        selectEl.addEventListener("change", function() { const rate = parseFloat(this.value); if (!isNaN(rate) && this.value) { document.getElementById("machiningCostPerHr").value = rate.toFixed(2); computeFailureCost(); } });
     }
 
     // ============================================================
-    // Existing QC form logic (unchanged except added machine dropdown)
+    // STANDARD PROCESS DEFINITIONS
     // ============================================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const engineerFromUrl = urlParams.get('engineer');
-    let currentEngineer = '';
-    if (engineerFromUrl) {
-        currentEngineer = decodeURIComponent(engineerFromUrl);
-        const engineerField = document.getElementById('qcEngineerName');
-        engineerField.value = currentEngineer;
-        engineerField.readOnly = true;
-        engineerField.classList.add('bg-gray-100');
-    } else {
-        currentEngineer = '';
-    }
-
     const baseExtraFields = ["Customer Name", "Project Name", "Drawing No.", "Part Name", "Tag No.", "Work Station", "Location"];
     const ratingOpts = ["Accepted", "Conditional Accept", "Rework", "Reject"];
     const causeFields = ["Machine","Design","Operator","Methods","Material"];
-
     const processDefinitions = {
-        Punching: { parameters: ["Material as Per Design", "Condition of Cracking", "Surface uniformity", "Dimensional accuracy as per Design", "Condition of Wrinkle", "Finishing Appearance without Burs"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Rolling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design", "Sharpness as per Design", "Shining of the work piece"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Bending: { parameters: ["Material as per Design", "Surface uniformity", "Condition of Cracking", "Condition of Wrinkle", "Dimensional Accuracy as per design"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Welding: { parameters: ["Material used as Per Design", "Condition of weld overlap", "Condition of weld crack & Under Cut", "Lack of welding bead uniformity", "Condition of Slag inclusion", "Condition of thermal distortion"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Pressing: { parameters: ["Material used as per Design", "wrinkling", "Earing", "Tearing", "surface Scratches", "Dimensional accuracy as per Design"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Milling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design", "Exact Sharpens of the Corners", "Shining of the work piece", "Finishing Appearance without Burs"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Casting: { parameters: ["Material used as Per Design", "Blow Hole & warpage", "Sand fusion", "Shrinkage porosity", "Misrun & Cold Shut", "Metal Penetration", "Slage Inclusion", "Hot Tear & Flashes", "Cut and washes"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        PatternCore: { parameters: ["Material", "Condition of surface & color coding", "Removal of Sharping Edge"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Assembling: { parameters: ["Material used as Per Design", "All assembly dimensions as per design", "Rigidity of welding assembly", "alignment for all part components", "Condition of ergonomics", "Availability of name plating"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Testing: { parameters: ["Condition of all parts assembled & alignments", "Function ability of the technology", "condition of test with & without load", "condition of Safety and hazardous"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Painting: { parameters: ["Condition of surface finish before painting", "Selection of Color Paint as per Design", "layer of painting as per design", "Bleeding & Blistering", "Lifting & Running", "Water Spotting", "Flaking & Crawling", "Wrinkling"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Packaging: { parameters: ["Condition and types of packaging systems", "Writing of Name, logo, Address of the Manufacturer & Brand", "Writing of Overall Size of the product and Package", "Writing Risky & hazardous Symbols", "Writing Qty, Net & gross weight of the product on packaging"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Shearing: { parameters: ["Material as per Design", "Dimensional accuracy as per Design", "Edge condition (no burrs)"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Lathe: { parameters: ["Material as per Design", "Dimensional accuracy (diameter, length)", "Surface finish", "Concentricity / roundness"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Drilling: { parameters: ["Material used as Per Design", "Proper drilling sequence", "Dimensional accuracy as per Design", "Finishing Appearance without Burs"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        BoringHoning: { parameters: ["Material as per Design", "Internal diameter accuracy", "Surface finish (bore)", "Roundness / cylindricity"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Grinding: { parameters: ["Material as per Design", "Surface finish (Ra value)", "Dimensional accuracy", "Absence of burn marks"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Forging: { parameters: ["Material grade as per Design", "Dimensional accuracy (length, width, height)", "Surface condition (no cracks or scale)", "Grain flow direction"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Molding: { parameters: ["Material mix as per specification", "Dimensional accuracy of mould", "Surface smoothness", "No porosity / voids"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Polishing: { parameters: ["Surface roughness (Ra) before polishing", "Final surface gloss / mirror finish", "No scratches / pitting", "Consistency over whole surface"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        GasCutting: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design", "Finishing Appearance without slag"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        FastenersAssembly: { parameters: ["Condition of part dimensions as per design", "Condition of sub & Overall assembly dimensions as per design", "Condition of fit & tolerance", "Condition proper electrical installation", "Condition inspect & test electrical equipment", "Condition of Rigidity & vibration", "Condition of availability of Name plating", "Condition of ergonomics"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Hardening: { parameters: ["Material grade", "Heating temperature uniformity", "Soaking time", "Hardness after quenching", "Decarburization layer"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Tempering: { parameters: ["Tempering temperature", "Holding time", "Final hardness", "Toughness", "Distortion"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
-        Coating: { parameters: ["Surface cleanliness before coating", "Coating thickness uniformity", "Adhesion strength", "Corrosion resistance", "Appearance (color, gloss)"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields }
+        Punching: { parameters: ["Material as Per Design", "Condition of Cracking", "Surface uniformity", "Dimensional accuracy as per Design", "Condition of Wrinkle", "Finishing Appearance without Burs"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Rolling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design", "Sharpness as per Design", "Shining of the work piece"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Bending: { parameters: ["Material as per Design", "Surface uniformity", "Condition of Cracking", "Condition of Wrinkle", "Dimensional Accuracy as per design"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Welding: { parameters: ["Material used as Per Design", "Condition of weld overlap", "Condition of weld crack & Under Cut", "Lack of welding bead uniformity", "Condition of Slag inclusion", "Condition of thermal distortion"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Pressing: { parameters: ["Material used as per Design", "wrinkling", "Earing", "Tearing", "surface Scratches", "Dimensional accuracy as per Design"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Milling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design", "Exact Sharpens of the Corners", "Shining of the work piece", "Finishing Appearance without Burs"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Casting: { parameters: ["Material used as Per Design", "Blow Hole & warpage", "Sand fusion", "Shrinkage porosity", "Misrun & Cold Shut", "Metal Penetration", "Slage Inclusion", "Hot Tear & Flashes", "Cut and washes"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        PatternCore: { parameters: ["Material", "Condition of surface & color coding", "Removal of Sharping Edge"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Assembling: { parameters: ["Material used as Per Design", "All assembly dimensions as per design", "Rigidity of welding assembly", "alignment for all part components", "Condition of ergonomics", "Availability of name plating"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Testing: { parameters: ["Condition of all parts assembled & alignments", "Function ability of the technology", "condition of test with & without load", "condition of Safety and hazardous"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Painting: { parameters: ["Condition of surface finish before painting", "Selection of Color Paint as per Design", "layer of painting as per design", "Bleeding & Blistering", "Lifting & Running", "Water Spotting", "Flaking & Crawling", "Wrinkling"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Packaging: { parameters: ["Condition and types of packaging systems", "Writing of Name, logo, Address of the Manufacturer & Brand", "Writing of Overall Size of the product and Package", "Writing Risky & hazardous Symbols", "Writing Qty, Net & gross weight of the product on packaging"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Shearing: { parameters: ["Material as per Design", "Dimensional accuracy as per Design", "Edge condition (no burrs)"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Lathe: { parameters: ["Material as per Design", "Dimensional accuracy (diameter, length)", "Surface finish", "Concentricity / roundness"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Drilling: { parameters: ["Material used as Per Design", "Proper drilling sequence", "Dimensional accuracy as per Design", "Finishing Appearance without Burs"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        BoringHoning: { parameters: ["Material as per Design", "Internal diameter accuracy", "Surface finish (bore)", "Roundness / cylindricity"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Grinding: { parameters: ["Material as per Design", "Surface finish (Ra value)", "Dimensional accuracy", "Absence of burn marks"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Forging: { parameters: ["Material grade as per Design", "Dimensional accuracy (length, width, height)", "Surface condition (no cracks or scale)", "Grain flow direction"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Molding: { parameters: ["Material mix as per specification", "Dimensional accuracy of mould", "Surface smoothness", "No porosity / voids"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Polishing: { parameters: ["Surface roughness (Ra) before polishing", "Final surface gloss / mirror finish", "No scratches / pitting", "Consistency over whole surface"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        GasCutting: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design", "Finishing Appearance without slag"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        FastenersAssembly: { parameters: ["Condition of part dimensions as per design", "Condition of sub & Overall assembly dimensions as per design", "Condition of fit & tolerance", "Condition proper electrical installation", "Condition inspect & test electrical equipment", "Condition of Rigidity & vibration", "Condition of availability of Name plating", "Condition of ergonomics"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Hardening: { parameters: ["Material grade", "Heating temperature uniformity", "Soaking time", "Hardness after quenching", "Decarburization layer"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Tempering: { parameters: ["Tempering temperature", "Holding time", "Final hardness", "Toughness", "Distortion"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+        Coating: { parameters: ["Surface cleanliness before coating", "Coating thickness uniformity", "Adhesion strength", "Corrosion resistance", "Appearance (color, gloss)"], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields }
     };
-
     let currentProcess = document.getElementById("processType").value;
-    let isEditMode = false;
-    let editId = null;
-
+    let isEditMode = false, editId = null;
     function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
+    // ============================================================
+    // REVISED INCOMING INSPECTION FORM (unchanged)
+    // ============================================================
+    function renderIncomingForm() {
+        return `
+            <div class="border rounded-md p-5 bg-white shadow-sm space-y-5">
+                <div class="text-center font-bold text-xl">INCOMING MATERIAL INSPECTION REPORT</div>
+                <div class="text-right text-sm">Document No. QAD/001</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="font-bold">1. Source of Item</label>
+                        <div class="flex gap-4"><label><input type="radio" name="sourceItem" value="Local"> Local</label><label><input type="radio" name="sourceItem" value="Foreign"> Foreign</label></div>
+                        <div><label class="text-sm">Address:</label><input type="text" id="sourceAddress" class="w-full border p-1 rounded"></div>
+                    </div>
+                    <div><label class="font-bold">2. Procurement type</label>
+                        <div class="flex flex-wrap gap-3"><label><input type="radio" name="procType" value="Direct"> Direct</label><label><input type="radio" name="procType" value="Proforma"> Proforma</label><label><input type="radio" name="procType" value="Bid"> Bid</label><label><input type="radio" name="procType" value="Other"> Other</label><input type="text" id="procTypeOther" placeholder="Specify" class="border p-1 rounded w-32"></div>
+                        <label class="text-sm">Method of Inspection:</label><input type="text" id="methodInspection" class="w-full border p-1 rounded" placeholder="visual inspection etc.">
+                    </div>
+                    <div><label class="font-bold">3. The PR is Requested by</label>
+                        <div class="flex gap-3"><label><input type="radio" name="prRequestedBy" value="PR Form"> PR Form</label><label><input type="radio" name="prRequestedBy" value="Letter"> Letter</label><label><input type="radio" name="prRequestedBy" value="System"> System</label><label><input type="radio" name="prRequestedBy" value="Other"> Other</label><input type="text" id="prRequestOther" placeholder="Specify" class="border p-1 rounded w-32"></div>
+                    </div>
+                    <div><label class="font-bold">4. Final Reference Document for Specification</label>
+                        <div class="grid grid-cols-2 gap-2"><label><input type="checkbox" value="PR"> PR</label><label><input type="checkbox" value="Proforma Invoice"> Proforma Invoice</label><label><input type="checkbox" value="Agreement"> Agreement</label><label><input type="checkbox" value="Other"> Other</label><input type="text" id="refDocOther" placeholder="Specify" class="border p-1 rounded"></div>
+                        <div class="grid grid-cols-3 gap-2 mt-1"><span>No. of Page (PR):</span><input type="number" id="refPagePR" class="border p-1 w-16"><span>No. of Page (Proforma):</span><input type="number" id="refPageProforma" class="border p-1 w-16"><span>No. of Page (Agreement):</span><input type="number" id="refPageAgreement" class="border p-1 w-16"></div>
+                    </div>
+                </div>
+                <div class="mt-4"><label class="font-bold text-lg">5. List of Items</label>
+                    <div class="overflow-x-auto"><table class="min-w-full text-xs border" id="incomingItemsTable">
+                        <thead class="bg-gray-100"><tr><th>Specification as per requester</th><th>Supplied Material Description</th><th>Actual Supplied Specification</th><th>Model</th><th>Brand</th><th>Origin</th><th>Colour</th><th>Serial No.</th><th>Unit</th><th>Delivered Qty</th><th>Accepted Qty</th><th>Rejected Qty</th><th>Conditional Accepted Qty</th><th>Supplier</th><th>Remark</th><th class="w-8"></th></tr></thead>
+                        <tbody id="incomingItemsBody"></tbody>
+                    </table></div>
+                    <button type="button" onclick="addIncomingItemRow()" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm">+ Add Item</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div><label class="font-bold">Reason For Reject</label><textarea id="reasonReject" rows="2" class="w-full border p-1 rounded"></textarea></div>
+                    <div><label class="font-bold">Reason for Conditional Accepted</label><textarea id="reasonConditional" rows="2" class="w-full border p-1 rounded"></textarea></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 border-t pt-3">
+                    <div><label class="font-bold">Inspected By</label><input type="text" id="inspectedBy" class="w-full border p-1 rounded"><label>SIGNATURE</label><input type="text" id="inspectedSign" class="w-full border p-1 rounded"><label>DATE</label><input type="date" id="inspectedDate" class="w-full border p-1 rounded"></div>
+                    <div><label class="font-bold">Collaborated By</label><input type="text" id="collabBy" class="w-full border p-1 rounded"><label>Signiture</label><input type="text" id="collabSign" class="w-full border p-1 rounded"><label>Date</label><input type="date" id="collabDate" class="w-full border p-1 rounded"></div>
+                    <div><label class="font-bold">Approved By</label><input type="text" id="approvedBy" class="w-full border p-1 rounded"><label>SIGNITURE</label><input type="text" id="approvedSign" class="w-full border p-1 rounded"><label>DATE</label><input type="date" id="approvedDate" class="w-full border p-1 rounded"></div>
+                </div>
+                <div><label class="font-bold">REMARK</label><textarea id="generalRemark" rows="2" class="w-full border p-1 rounded"></textarea></div>
+                <div class="text-xs text-gray-500 italic">Note: Please attach the final reference Document for specification. Form Modification Is not Allowed.</div>
+            </div>
+        `;
+    }
+    function addIncomingItemRow(data = null) {
+        const tbody = document.getElementById("incomingItemsBody");
+        const row = document.createElement("tr");
+        row.className = "border-b";
+        const fields = ["specReq", "suppliedDesc", "actualSpec", "model", "brand", "origin", "colour", "serialNo", "unit", "deliveredQty", "acceptedQty", "rejectedQty", "condAcceptedQty", "supplier", "remark"];
+        fields.forEach(f => { const td = document.createElement("td"); td.className = "border p-1"; const input = document.createElement("input"); input.type = f.includes("Qty") ? "number" : "text"; input.className = "w-full border-none p-0 text-xs"; input.placeholder = f; input.value = data && data[f] !== undefined ? data[f] : ""; td.appendChild(input); row.appendChild(td); });
+        const delTd = document.createElement("td"); delTd.className = "text-center"; const delBtn = document.createElement("button"); delBtn.innerHTML = "❌"; delBtn.className = "text-red-500 text-xs"; delBtn.onclick = () => row.remove(); delTd.appendChild(delBtn); row.appendChild(delTd);
+        tbody.appendChild(row);
+    }
+    function getIncomingItemsData() {
+        const rows = document.querySelectorAll("#incomingItemsBody tr");
+        const items = [];
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll("input");
+            if (inputs.length === 15) {
+                items.push({
+                    specReq: inputs[0].value, suppliedDesc: inputs[1].value, actualSpec: inputs[2].value, model: inputs[3].value, brand: inputs[4].value, origin: inputs[5].value, colour: inputs[6].value, serialNo: inputs[7].value, unit: inputs[8].value,
+                    deliveredQty: inputs[9].value, acceptedQty: inputs[10].value, rejectedQty: inputs[11].value, condAcceptedQty: inputs[12].value, supplier: inputs[13].value, remark: inputs[14].value
+                });
+            }
+        });
+        return items;
+    }
+    function setIncomingItemsData(items) {
+        const tbody = document.getElementById("incomingItemsBody");
+        tbody.innerHTML = "";
+        items.forEach(item => addIncomingItemRow(item));
+        if (items.length === 0) addIncomingItemRow();
+    }
+
+    // ============================================================
+    // RENDER DYNAMIC FIELDS (enhanced with datalist for Customer/Project)
+    // ============================================================
     function renderDynamicFields() {
-        const def = getCurrentDef();
         const container = document.getElementById("dynamicFieldsContainer");
         if (!container) return;
+        if (currentProcess === "Incoming") {
+            container.innerHTML = renderIncomingForm();
+            if (document.getElementById("incomingItemsBody") && document.getElementById("incomingItemsBody").children.length === 0) addIncomingItemRow();
+            return;
+        }
+        const def = getCurrentDef();
         let html = "";
+        // Extra fields with datalist support for Customer Name and Project Name
         if (def.extraFields && def.extraFields.length) {
             html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 border-b pb-4 mb-4">`;
             def.extraFields.forEach(field => {
                 const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                 if (field === "Work Station") {
-                    html += `<div><label class="font-bold text-sm">${field}</label>
-                        <select id="${safeId}" class="w-full border p-1 rounded text-sm">
-                            <option value="">-- Select Workstation --</option>
-                            <option value="machine shop">Machine Shop</option>
-                            <option value="fabrication">Fabrication</option>
-                            <option value="assembling">Assembling</option>
-                            <option value="forging">Forging</option>
-                            <option value="foundry">Foundry</option>
-                            <option value="wood shop">Wood Shop</option>
-                        </select>
-                    </div>`;
+                    html += `<div><label class="font-bold text-sm">${field}</label><select id="${safeId}" class="w-full border p-1 rounded text-sm"><option value="">-- Select Workstation --</option><option value="machine shop">Machine Shop</option><option value="fabrication">Fabrication</option><option value="assembling">Assembling</option><option value="forging">Forging</option><option value="foundry">Foundry</option><option value="wood shop">Wood Shop</option></select></div>`;
                 } else if (field === "Location") {
-                    html += `<div><label class="font-bold text-sm">${field}</label>
-                        <select id="${safeId}" class="w-full border p-1 rounded text-sm">
-                            <option value="">-- Select Location --</option>
-                            <option value="bahir dar flexible">Bahir Dar Flexible</option>
-                            <option value="kombolcha">Kombolcha</option>
-                            <option value="transformer">Transformer</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>`;
+                    html += `<div><label class="font-bold text-sm">${field}</label><select id="${safeId}" class="w-full border p-1 rounded text-sm"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
+                } else if (field === "Customer Name") {
+                    html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" list="customerNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Start typing for suggestions..."><datalist id="customerNameDatalist"></datalist></div>`;
+                } else if (field === "Project Name") {
+                    html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" list="projectNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Start typing for suggestions..."><datalist id="projectNameDatalist"></datalist></div>`;
                 } else {
                     html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
                 }
             });
             html += `</div>`;
         }
-        html += `<div class="overflow-x-auto border rounded-md"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-200">`;
-        html += `<tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Acceptance Conditions</th><th class="p-2 border">Cause of Defects</th></tr></thead><tbody>`;
+        html += `<div class="overflow-x-auto border rounded-md"><table class="min-w-full text-sm"><thead class="bg-gray-200"><tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Acceptance Conditions</th><th class="p-2 border">Cause of Defects</th></tr></thead><tbody>`;
         def.parameters.forEach((param, idx) => {
             const paramId = `p_${idx}`;
-            html += `<tr>`;
-            html += `<td class="border p-2 font-medium">${param}</td>`;
-            html += `<td class="border"><select id="rating_${paramId}" class="rating-select w-full p-1 border rounded">`;
-            def.ratingOptions.forEach(opt => html += `<option value="${opt}">${opt}</option>`);
-            html += `</select></td>`;
-            html += `<td class="border"><div class="cause-checkbox-group flex flex-wrap gap-2">`;
-            (def.causeFields || causeFields).forEach(cause => {
-                html += `<label><input type="checkbox" class="cause-check" data-param="${paramId}" value="${cause}"> ${cause}</label>`;
-            });
-            html += `</div></td>`;
-            html += `</tr>`;
+            html += `<tr><td class="border p-2 font-medium">${param}</td><td class="border"><select id="rating_${paramId}" class="w-full p-1 border rounded">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="border"><div class="flex flex-wrap gap-2">${(def.causeFields || causeFields).map(cause => `<label><input type="checkbox" class="cause-check" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
         });
         html += `</tbody></table></div>`;
         container.innerHTML = html;
+        refreshDatalistOptions(); // populate datalist with current suggestions
     }
 
     function switchProcess() { currentProcess = document.getElementById("processType").value; renderDynamicFields(); }
 
-    function getAcceptanceData() {
-        const def = getCurrentDef();
-        const data = {};
-        for (let i = 0; i < def.parameters.length; i++) {
-            const paramId = `p_${i}`;
-            const rating = document.getElementById(`rating_${paramId}`)?.value || '';
-            const causes = [];
-            document.querySelectorAll(`.cause-check[data-param="${paramId}"]:checked`).forEach(cb => causes.push(cb.value));
-            data[paramId] = { parameter: def.parameters[i], rating, causes };
-        }
-        return data;
-    }
-
+    // ============================================================
+    // DATA EXTRACTION / SETTING (unchanged)
+    // ============================================================
     function getExtraFields() {
+        if (currentProcess === "Incoming") {
+            const sourceRadio = document.querySelector('input[name="sourceItem"]:checked');
+            const procRadio = document.querySelector('input[name="procType"]:checked');
+            const prRadio = document.querySelector('input[name="prRequestedBy"]:checked');
+            const refDocs = Array.from(document.querySelectorAll('input[id^="refDoc"]:checked')).map(cb => cb.value);
+            return {
+                incoming_rev: {
+                    sourceItem: sourceRadio ? sourceRadio.value : "",
+                    sourceAddress: document.getElementById("sourceAddress")?.value || "",
+                    procurementType: procRadio ? (procRadio.value === "Other" ? document.getElementById("procTypeOther")?.value || "Other" : procRadio.value) : "",
+                    methodInspection: document.getElementById("methodInspection")?.value || "",
+                    prRequestedBy: prRadio ? (prRadio.value === "Other" ? document.getElementById("prRequestOther")?.value || "Other" : prRadio.value) : "",
+                    refDocuments: refDocs,
+                    refPagePR: document.getElementById("refPagePR")?.value || "",
+                    refPageProforma: document.getElementById("refPageProforma")?.value || "",
+                    refPageAgreement: document.getElementById("refPageAgreement")?.value || "",
+                    items: getIncomingItemsData(),
+                    reasonReject: document.getElementById("reasonReject")?.value || "",
+                    reasonConditional: document.getElementById("reasonConditional")?.value || "",
+                    inspectedBy: document.getElementById("inspectedBy")?.value || "",
+                    inspectedSign: document.getElementById("inspectedSign")?.value || "",
+                    inspectedDate: document.getElementById("inspectedDate")?.value || "",
+                    collabBy: document.getElementById("collabBy")?.value || "",
+                    collabSign: document.getElementById("collabSign")?.value || "",
+                    collabDate: document.getElementById("collabDate")?.value || "",
+                    approvedBy: document.getElementById("approvedBy")?.value || "",
+                    approvedSign: document.getElementById("approvedSign")?.value || "",
+                    approvedDate: document.getElementById("approvedDate")?.value || "",
+                    generalRemark: document.getElementById("generalRemark")?.value || ""
+                }
+            };
+        }
         const def = getCurrentDef();
         const extra = {};
         if (def.extraFields) {
@@ -476,8 +548,33 @@
         }
         return extra;
     }
-
     function setExtraFields(extra) {
+        if (currentProcess === "Incoming") {
+            const inc = extra.incoming_rev || {};
+            if (inc.sourceItem) document.querySelector(`input[name="sourceItem"][value="${inc.sourceItem}"]`).checked = true;
+            if (document.getElementById("sourceAddress")) document.getElementById("sourceAddress").value = inc.sourceAddress || "";
+            if (inc.procurementType) { const opt = document.querySelector(`input[name="procType"][value="${inc.procurementType}"]`); if(opt) opt.checked = true; else if(inc.procurementType && inc.procurementType !== "Direct" && inc.procurementType !== "Proforma" && inc.procurementType !== "Bid") { document.querySelector(`input[name="procType"][value="Other"]`).checked = true; document.getElementById("procTypeOther").value = inc.procurementType; } }
+            if (document.getElementById("methodInspection")) document.getElementById("methodInspection").value = inc.methodInspection || "";
+            if (inc.prRequestedBy) { const prRad = document.querySelector(`input[name="prRequestedBy"][value="${inc.prRequestedBy}"]`); if(prRad) prRad.checked = true; else if(inc.prRequestedBy && inc.prRequestedBy !== "PR Form" && inc.prRequestedBy !== "Letter" && inc.prRequestedBy !== "System") { document.querySelector(`input[name="prRequestedBy"][value="Other"]`).checked = true; document.getElementById("prRequestOther").value = inc.prRequestedBy; } }
+            if (inc.refDocuments) inc.refDocuments.forEach(v => { const cb = document.querySelector(`input[type="checkbox"][value="${v}"]`); if(cb) cb.checked = true; });
+            if (document.getElementById("refPagePR")) document.getElementById("refPagePR").value = inc.refPagePR || "";
+            if (document.getElementById("refPageProforma")) document.getElementById("refPageProforma").value = inc.refPageProforma || "";
+            if (document.getElementById("refPageAgreement")) document.getElementById("refPageAgreement").value = inc.refPageAgreement || "";
+            if (inc.items && inc.items.length) setIncomingItemsData(inc.items);
+            if (document.getElementById("reasonReject")) document.getElementById("reasonReject").value = inc.reasonReject || "";
+            if (document.getElementById("reasonConditional")) document.getElementById("reasonConditional").value = inc.reasonConditional || "";
+            if (document.getElementById("inspectedBy")) document.getElementById("inspectedBy").value = inc.inspectedBy || "";
+            if (document.getElementById("inspectedSign")) document.getElementById("inspectedSign").value = inc.inspectedSign || "";
+            if (document.getElementById("inspectedDate")) document.getElementById("inspectedDate").value = inc.inspectedDate || "";
+            if (document.getElementById("collabBy")) document.getElementById("collabBy").value = inc.collabBy || "";
+            if (document.getElementById("collabSign")) document.getElementById("collabSign").value = inc.collabSign || "";
+            if (document.getElementById("collabDate")) document.getElementById("collabDate").value = inc.collabDate || "";
+            if (document.getElementById("approvedBy")) document.getElementById("approvedBy").value = inc.approvedBy || "";
+            if (document.getElementById("approvedSign")) document.getElementById("approvedSign").value = inc.approvedSign || "";
+            if (document.getElementById("approvedDate")) document.getElementById("approvedDate").value = inc.approvedDate || "";
+            if (document.getElementById("generalRemark")) document.getElementById("generalRemark").value = inc.generalRemark || "";
+            return;
+        }
         const def = getCurrentDef();
         if (def.extraFields) {
             def.extraFields.forEach(field => {
@@ -487,198 +584,77 @@
             });
         }
     }
+    function getAcceptanceData() { if (currentProcess === "Incoming") return {}; const def = getCurrentDef(); const data = {}; for (let i=0; i<def.parameters.length; i++) { const paramId = `p_${i}`; const rating = document.getElementById(`rating_${paramId}`)?.value || ''; const causes = Array.from(document.querySelectorAll(`.cause-check[data-param="${paramId}"]:checked`)).map(cb => cb.value); data[paramId] = { parameter: def.parameters[i], rating, causes }; } return data; }
+    function setAcceptanceData(acceptance) { if (currentProcess === "Incoming") return; const def = getCurrentDef(); for (let i=0; i<def.parameters.length; i++) { const paramId = `p_${i}`; const data = acceptance[paramId]; if(data){ const ratingSelect = document.getElementById(`rating_${paramId}`); if(ratingSelect) ratingSelect.value = data.rating; document.querySelectorAll(`.cause-check[data-param="${paramId}"]`).forEach(cb => { cb.checked = data.causes && data.causes.includes(cb.value); }); } } }
 
-    function setAcceptanceData(acceptance) {
-        const def = getCurrentDef();
-        for (let i = 0; i < def.parameters.length; i++) {
-            const paramId = `p_${i}`;
-            const data = acceptance[paramId];
-            if (data) {
-                const ratingSelect = document.getElementById(`rating_${paramId}`);
-                if (ratingSelect) ratingSelect.value = data.rating;
-                const checkboxes = document.querySelectorAll(`.cause-check[data-param="${paramId}"]`);
-                checkboxes.forEach(cb => { cb.checked = data.causes && data.causes.includes(cb.value); });
-            }
-        }
+    // ============================================================
+    // COMMON UTILITIES (unchanged)
+    // ============================================================
+    function computeFailureCost() { const mat=+document.getElementById("defectedMaterialCost").value||0, lab=+document.getElementById("laborHours").value||0, sal=+document.getElementById("salaryPerHour").value||0, machH=+document.getElementById("machiningHours").value||0, machR=+document.getElementById("machiningCostPerHr").value||0, rework=+document.getElementById("reworkQty").value||0, reject=+document.getElementById("rejectQty").value||0, mult=(rework+reject)||1, total=(mat+lab*sal+machH*machR)*mult; document.getElementById("totalFailureCostDisplay").innerText=total.toFixed(2); document.getElementById("totalInternalFailureCost").value=total.toFixed(2); return total; }
+    function updateTotalTime(){ const s=document.getElementById("startTime").value, e=document.getElementById("endTime").value; if(s&&e){ let [sh,sm]=s.split(":").map(Number),[eh,em]=e.split(":").map(Number); let min=(eh*60+em)-(sh*60+sm); if(min<0)min+=1440; document.getElementById("totalTimeDisplay").innerText=`Total: ${min} min (${(min/60).toFixed(1)} hr)`; return min; } return 0; }
+    function resetForm() { document.getElementById("inspectionForm").reset(); renderDynamicFields(); document.getElementById("defectedMaterialCost").value=""; document.getElementById("laborHours").value=""; document.getElementById("salaryPerHour").value=""; document.getElementById("levelSelect").value=""; document.getElementById("machiningHours").value=""; document.getElementById("machiningCostPerHr").value=""; document.getElementById("machineDescriptionSelect").value=""; computeFailureCost(); document.getElementById("formMessage").innerHTML=""; isEditMode=false; editId=null; document.getElementById("editId").value=""; document.getElementById("isEditMode").value="false"; document.getElementById("processType").disabled=false; document.getElementById("saveBtn").innerHTML="✔ Save to Cloud"; document.getElementById("cancelEditBtn").classList.add("hidden"); if(engineerFromUrl) document.getElementById('qcEngineerName').value=currentEngineer; }
+    function cancelEdit(){ resetForm(); loadHistory(); }
+    const urlParams = new URLSearchParams(window.location.search); const engineerFromUrl = urlParams.get('engineer'); let currentEngineer = ''; if(engineerFromUrl){ currentEngineer=decodeURIComponent(engineerFromUrl); const f=document.getElementById('qcEngineerName'); f.value=currentEngineer; f.readOnly=true; f.classList.add('bg-gray-100');}
+    async function saveToBackend() { 
+        let engineerName = document.getElementById("qcEngineerName").value.trim(); 
+        if(!engineerName){ document.getElementById("formMessage").innerHTML='<span class="text-red-600">Please enter QC Engineer Name</span>'; return; } 
+        const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value; 
+        if(!sourceType){ document.getElementById("formMessage").innerHTML='<span class="text-red-600">Please select Source</span>'; return; } 
+        const processTypeText = document.getElementById("processType").options[document.getElementById("processType").selectedIndex].text; 
+        const acceptanceData = getAcceptanceData(); 
+        const extraFields = getExtraFields(); 
+        const payload = { process_type: processTypeText, username: engineerName, source_type: sourceType, outsource_institute: document.getElementById("outsourceInstitute").value, design_available: document.getElementById("designAvail").checked, mpp_available: document.getElementById("mppAvail").checked, operation_status: document.getElementById("operationStatus").value, shift: parseInt(document.querySelector('input[name="shift"]:checked')?.value)||null, operator_name: document.getElementById("operatorName").value, start_time: document.getElementById("startTime").value||null, end_time: document.getElementById("endTime").value||null, total_minutes: updateTotalTime(), acceptance_data: acceptanceData, extra_fields: extraFields, most_frequent_defects: document.getElementById("mostFrequentDefects").value, defect_correction_slip: document.getElementById("defectCorrectionSlip").value, cause_of_defects: document.getElementById("causeOfDefectsDetail").value, defected_material_cost: +document.getElementById("defectedMaterialCost").value||0, labor_hours: +document.getElementById("laborHours").value||0, salary_per_hour: +document.getElementById("salaryPerHour").value||0, level: document.getElementById("levelSelect").value, machining_hours: +document.getElementById("machiningHours").value||0, machining_cost_per_hr: +document.getElementById("machiningCostPerHr").value||0, total_internal_failure_cost: computeFailureCost(), delivered_qty: document.getElementById("deliveredQty").value||null, accepted_qty: document.getElementById("acceptedQty").value||null, rework_qty: document.getElementById("reworkQty").value||null, reject_qty: document.getElementById("rejectQty").value||null, conditional_accept_qty: document.getElementById("conditionalAcceptQty").value||null }; 
+        try { let url='/api/inspections', method='POST'; if(isEditMode && editId){ url=`/api/inspections/${editId}`; method='PUT'; } const resp=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!resp.ok)throw new Error((await resp.json()).error||'Unknown error'); document.getElementById("formMessage").innerHTML=`<span class="text-green-600">✓ Inspection ${isEditMode?'updated':'saved'} to cloud!</span>`; resetForm(); loadHistory(); } catch(err){ document.getElementById("formMessage").innerHTML=`<span class="text-red-600">Error: ${err.message}</span>`; } }
+    async function loadHistory(){ 
+        try{ const resp=await fetch('/api/inspections'); if(!resp.ok)throw new Error(); let data=await resp.json(); if(engineerFromUrl) data=data.filter(row=>row.username===currentEngineer); 
+            updateSuggestionsFromInspections(data);
+            const histDiv=document.getElementById("inspectionHistory"); 
+            if(!data.length) histDiv.innerHTML="<p class='text-gray-500'>No inspections found.</p>"; 
+            else histDiv.innerHTML=data.map(row=>`<div class="border-b py-2"><div class="flex justify-between"><div><span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><br><span class="text-sm">Process: ${row.process_type||'Rolling'}</span></div><button onclick="editInspection(${row.id})" class="text-blue-600 text-sm underline">Edit</button></div></div>`).join(""); 
+        } catch(err){ document.getElementById("inspectionHistory").innerHTML="<p class='text-red-500'>Error loading history</p>"; } 
     }
-
-    function resetForm() {
-        document.getElementById("inspectionForm").reset();
-        renderDynamicFields();
-        document.getElementById("defectedMaterialCost").value = "";
-        document.getElementById("laborHours").value = "";
-        document.getElementById("salaryPerHour").value = "";
-        document.getElementById("levelSelect").value = "";
-        document.getElementById("machiningHours").value = "";
-        document.getElementById("machiningCostPerHr").value = "";
-        document.getElementById("machineDescriptionSelect").value = "";
-        computeFailureCost();
-        document.getElementById("formMessage").innerHTML = "";
-        isEditMode = false;
-        editId = null;
-        document.getElementById("editId").value = "";
-        document.getElementById("isEditMode").value = "false";
-        document.getElementById("processType").disabled = false;
-        const saveBtn = document.getElementById("saveBtn");
-        saveBtn.innerHTML = "✔ Save to Cloud";
-        document.getElementById("cancelEditBtn").classList.add("hidden");
-        if (engineerFromUrl) document.getElementById('qcEngineerName').value = currentEngineer;
+    async function editInspection(id){ try{ const resp=await fetch(`/api/inspections/${id}`); if(!resp.ok)throw new Error(); const insp=await resp.json(); document.getElementById("machineDescriptionSelect").value=""; populateFormForEdit(insp); } catch(err){ document.getElementById("formMessage").innerHTML=`<span class="text-red-600">Error: ${err.message}</span>`; } }
+    function populateFormForEdit(inspection){ 
+        document.getElementById("qcEngineerName").value=inspection.username||""; 
+        document.getElementById("outsourceInstitute").value=inspection.outsource_institute||""; 
+        document.getElementById("designAvail").checked=inspection.design_available||false; 
+        document.getElementById("mppAvail").checked=inspection.mpp_available||false; 
+        document.getElementById("operationStatus").value=inspection.operation_status||"Holdup"; 
+        const sourceRadio=document.querySelector(`input[name="sourceType"][value="${inspection.source_type}"]`); if(sourceRadio)sourceRadio.checked=true; 
+        const shiftRadio=document.querySelector(`input[name="shift"][value="${inspection.shift}"]`); if(shiftRadio)shiftRadio.checked=true; 
+        document.getElementById("operatorName").value=inspection.operator_name||""; 
+        document.getElementById("startTime").value=inspection.start_time||""; 
+        document.getElementById("endTime").value=inspection.end_time||""; updateTotalTime(); 
+        document.getElementById("deliveredQty").value=inspection.delivered_qty??""; 
+        document.getElementById("acceptedQty").value=inspection.accepted_qty??""; 
+        document.getElementById("reworkQty").value=inspection.rework_qty??""; 
+        document.getElementById("rejectQty").value=inspection.reject_qty??""; 
+        document.getElementById("conditionalAcceptQty").value=inspection.conditional_accept_qty??""; 
+        document.getElementById("defectedMaterialCost").value=inspection.defected_material_cost??0; 
+        document.getElementById("laborHours").value=inspection.labor_hours??0; 
+        document.getElementById("salaryPerHour").value=inspection.salary_per_hour??0; 
+        document.getElementById("machiningHours").value=inspection.machining_hours??0; 
+        document.getElementById("machiningCostPerHr").value=inspection.machining_cost_per_hr??0; 
+        document.getElementById("levelSelect").value=inspection.level||""; 
+        document.getElementById("levelSelect").dispatchEvent(new Event('change')); computeFailureCost(); 
+        document.getElementById("mostFrequentDefects").value=inspection.most_frequent_defects||""; 
+        document.getElementById("defectCorrectionSlip").value=inspection.defect_correction_slip||""; 
+        document.getElementById("causeOfDefectsDetail").value=inspection.cause_of_defects||""; 
+        setExtraFields(inspection.extra_fields||{}); 
+        setAcceptanceData(inspection.acceptance_data||{}); 
+        const opt=Array.from(document.getElementById("processType").options).find(o=>o.text===inspection.process_type); 
+        if(opt){ document.getElementById("processType").value=opt.value; switchProcess(); } 
+        document.getElementById("processType").disabled=true; 
+        isEditMode=true; editId=inspection.id; 
+        document.getElementById("editId").value=inspection.id; 
+        document.getElementById("isEditMode").value="true"; 
+        document.getElementById("saveBtn").innerHTML="✔ Update to Cloud"; 
+        document.getElementById("cancelEditBtn").classList.remove("hidden"); 
     }
-
-    function cancelEdit() { resetForm(); loadHistory(); }
-
-    function computeFailureCost() {
-        const matCost = parseFloat(document.getElementById("defectedMaterialCost").value) || 0;
-        const laborHrs = parseFloat(document.getElementById("laborHours").value) || 0;
-        const salary = parseFloat(document.getElementById("salaryPerHour").value) || 0;
-        const machHrs = parseFloat(document.getElementById("machiningHours").value) || 0;
-        const machRate = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
-        const reworkQty = parseFloat(document.getElementById("reworkQty").value) || 0;
-        const rejectQty = parseFloat(document.getElementById("rejectQty").value) || 0;
-        const multiplier = (reworkQty + rejectQty) || 1;
-        const baseTotal = matCost + (laborHrs * salary) + (machHrs * machRate);
-        const total = baseTotal * multiplier;
-        document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
-        document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
-        return total;
-    }
-
-    function updateTotalTime() {
-        const start = document.getElementById("startTime").value, end = document.getElementById("endTime").value;
-        if (start && end) {
-            const [sh, sm] = start.split(":").map(Number), [eh, em] = end.split(":").map(Number);
-            let minutes = (eh*60+em) - (sh*60+sm);
-            if (minutes < 0) minutes += 1440;
-            document.getElementById("totalTimeDisplay").innerText = `Total: ${minutes} min (${(minutes/60).toFixed(1)} hr)`;
-            return minutes;
-        }
-        return 0;
-    }
-
-    async function saveToBackend() {
-        let engineerName = document.getElementById("qcEngineerName").value.trim();
-        if (!engineerName) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please enter QC Engineer Name</span>`; return; }
-        const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
-        if (!sourceType) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please select Source of Process Inspection</span>`; return; }
-        const processTypeText = document.getElementById("processType").options[document.getElementById("processType").selectedIndex].text;
-        const acceptanceData = getAcceptanceData();
-        const extraFields = getExtraFields();
-        const payload = {
-            process_type: processTypeText, username: engineerName, source_type: sourceType, outsource_institute: document.getElementById("outsourceInstitute").value,
-            design_available: document.getElementById("designAvail").checked, mpp_available: document.getElementById("mppAvail").checked,
-            operation_status: document.getElementById("operationStatus").value, shift: parseInt(document.querySelector('input[name="shift"]:checked')?.value) || null,
-            operator_name: document.getElementById("operatorName").value, start_time: document.getElementById("startTime").value || null,
-            end_time: document.getElementById("endTime").value || null, total_minutes: updateTotalTime(), acceptance_data: acceptanceData,
-            extra_fields: extraFields, most_frequent_defects: document.getElementById("mostFrequentDefects").value,
-            defect_correction_slip: document.getElementById("defectCorrectionSlip").value, cause_of_defects: document.getElementById("causeOfDefectsDetail").value,
-            defected_material_cost: parseFloat(document.getElementById("defectedMaterialCost").value) || 0,
-            labor_hours: parseFloat(document.getElementById("laborHours").value) || 0, salary_per_hour: parseFloat(document.getElementById("salaryPerHour").value) || 0,
-            level: document.getElementById("levelSelect").value, machining_hours: parseFloat(document.getElementById("machiningHours").value) || 0,
-            machining_cost_per_hr: parseFloat(document.getElementById("machiningCostPerHr").value) || 0, total_internal_failure_cost: computeFailureCost(),
-            delivered_qty: document.getElementById("deliveredQty").value || null, accepted_qty: document.getElementById("acceptedQty").value || null,
-            rework_qty: document.getElementById("reworkQty").value || null, reject_qty: document.getElementById("rejectQty").value || null,
-            conditional_accept_qty: document.getElementById("conditionalAcceptQty").value || null
-        };
-        try {
-            let url = '/api/inspections', method = 'POST';
-            if (isEditMode && editId) { url = `/api/inspections/${editId}`; method = 'PUT'; }
-            const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) throw new Error((await response.json()).error || 'Unknown error');
-            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection ${isEditMode ? 'updated' : 'saved'} to cloud!</span>`;
-            resetForm(); loadHistory();
-        } catch (err) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`; }
-    }
-
-    async function loadHistory() {
-        try {
-            const response = await fetch('/api/inspections');
-            if (!response.ok) throw new Error();
-            let data = await response.json();
-            if (engineerFromUrl) data = data.filter(row => row.username === currentEngineer);
-            const historyDiv = document.getElementById("inspectionHistory");
-            if (!data || data.length === 0) historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found for this engineer.</p>";
-            else historyDiv.innerHTML = data.map(row => `<div class="border-b py-2"><div class="flex justify-between items-center"><div><span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><br><span class="text-sm text-gray-600">Process: ${row.process_type || 'Rolling'}</span></div><button onclick="editInspection(${row.id})" class="text-blue-600 text-sm underline">Edit</button></div></div>`).join("");
-        } catch (err) { document.getElementById("inspectionHistory").innerHTML = "<p class='text-red-500'>Error loading history</p>"; }
-    }
-
-    async function editInspection(id) {
-        try {
-            const response = await fetch(`/api/inspections/${id}`);
-            if (!response.ok) throw new Error();
-            const inspection = await response.json();
-            document.getElementById("machineDescriptionSelect").value = ""; // not stored, avoid mismatch
-            populateFormForEdit(inspection);
-        } catch (err) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error loading inspection: ${err.message}</span>`; }
-    }
-
-    function populateFormForEdit(inspection) {
-        document.getElementById("qcEngineerName").value = inspection.username || "";
-        document.getElementById("outsourceInstitute").value = inspection.outsource_institute || "";
-        document.getElementById("designAvail").checked = inspection.design_available || false;
-        document.getElementById("mppAvail").checked = inspection.mpp_available || false;
-        document.getElementById("operationStatus").value = inspection.operation_status || "Holdup";
-        const sourceRadio = document.querySelector(`input[name="sourceType"][value="${inspection.source_type}"]`);
-        if (sourceRadio) sourceRadio.checked = true;
-        const shiftRadio = document.querySelector(`input[name="shift"][value="${inspection.shift}"]`);
-        if (shiftRadio) shiftRadio.checked = true;
-        document.getElementById("operatorName").value = inspection.operator_name || "";
-        document.getElementById("startTime").value = inspection.start_time || "";
-        document.getElementById("endTime").value = inspection.end_time || "";
-        updateTotalTime();
-        document.getElementById("deliveredQty").value = inspection.delivered_qty ?? "";
-        document.getElementById("acceptedQty").value = inspection.accepted_qty ?? "";
-        document.getElementById("reworkQty").value = inspection.rework_qty ?? "";
-        document.getElementById("rejectQty").value = inspection.reject_qty ?? "";
-        document.getElementById("conditionalAcceptQty").value = inspection.conditional_accept_qty ?? "";
-        document.getElementById("defectedMaterialCost").value = inspection.defected_material_cost ?? 0;
-        document.getElementById("laborHours").value = inspection.labor_hours ?? 0;
-        document.getElementById("salaryPerHour").value = inspection.salary_per_hour ?? 0;
-        document.getElementById("machiningHours").value = inspection.machining_hours ?? 0;
-        document.getElementById("machiningCostPerHr").value = inspection.machining_cost_per_hr ?? 0;
-        document.getElementById("levelSelect").value = inspection.level || "";
-        const levelEvent = new Event('change'); document.getElementById("levelSelect").dispatchEvent(levelEvent);
-        computeFailureCost();
-        document.getElementById("mostFrequentDefects").value = inspection.most_frequent_defects || "";
-        document.getElementById("defectCorrectionSlip").value = inspection.defect_correction_slip || "";
-        document.getElementById("causeOfDefectsDetail").value = inspection.cause_of_defects || "";
-        setExtraFields(inspection.extra_fields || {});
-        setAcceptanceData(inspection.acceptance_data || {});
-        const processOption = Array.from(document.getElementById("processType").options).find(opt => opt.text === inspection.process_type);
-        if (processOption) { document.getElementById("processType").value = processOption.value; switchProcess(); }
-        document.getElementById("processType").disabled = true;
-        isEditMode = true; editId = inspection.id;
-        document.getElementById("editId").value = inspection.id;
-        document.getElementById("isEditMode").value = "true";
-        const saveBtn = document.getElementById("saveBtn");
-        saveBtn.innerHTML = "✔ Update to Cloud";
-        document.getElementById("cancelEditBtn").classList.remove("hidden");
-    }
-
-    document.getElementById("levelSelect").addEventListener("change", function(e) {
-        const salaryField = document.getElementById("salaryPerHour");
-        const level = e.target.value;
-        if (level === "12") salaryField.value = 87.125;
-        else if (level === "13") salaryField.value = 90.1;
-        else if (level === "14") salaryField.value = 96.6;
-        else if (level === "custom") salaryField.value = "";
-        else salaryField.value = "";
-        computeFailureCost();
-    });
-    document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
-    document.getElementById("laborHours").addEventListener("input", computeFailureCost);
-    document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
-    document.getElementById("machiningHours").addEventListener("input", computeFailureCost);
-    document.getElementById("machiningCostPerHr").addEventListener("input", computeFailureCost);
-    document.getElementById("reworkQty").addEventListener("input", computeFailureCost);
-    document.getElementById("rejectQty").addEventListener("input", computeFailureCost);
-    document.getElementById("startTime").addEventListener("change", updateTotalTime);
-    document.getElementById("endTime").addEventListener("change", updateTotalTime);
-
-    document.addEventListener("DOMContentLoaded", () => { 
-        renderDynamicFields(); 
-        loadHistory();
-        populateMachineDropdown();
-    });
+    document.getElementById("levelSelect").addEventListener("change",function(e){ const lvl=e.target.value; const salField=document.getElementById("salaryPerHour"); if(lvl==="12") salField.value=87.125; else if(lvl==="13") salField.value=90.1; else if(lvl==="14") salField.value=96.6; else if(lvl==="custom") salField.value=""; else salField.value=""; computeFailureCost(); });
+    ["defectedMaterialCost","laborHours","salaryPerHour","machiningHours","machiningCostPerHr","reworkQty","rejectQty"].forEach(id=>document.getElementById(id)?.addEventListener("input",computeFailureCost));
+    document.getElementById("startTime")?.addEventListener("change",updateTotalTime); document.getElementById("endTime")?.addEventListener("change",updateTotalTime);
+    document.addEventListener("DOMContentLoaded",()=>{ renderDynamicFields(); loadHistory(); populateMachineDropdown(); });
 </script>
 </body>
 </html>
