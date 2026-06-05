@@ -21,6 +21,10 @@
 </head>
 <body class="bg-gray-100 font-sans">
 
+    <!-- Datalists for autocomplete -->
+    <datalist id="customerDatalist"></datalist>
+    <datalist id="projectDatalist"></datalist>
+
     <!-- Secret Number Overlay -->
     <div id="secretOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full">
@@ -42,7 +46,7 @@
                     <p class="text-sm font-semibold">Quality Assurance Directorate – Inspection Checklist</p>
                 </div>
                 <div class="text-right text-sm text-gray-600">
-                    <i class="fas fa-cloud-upload-alt"></i> Data saved via backend API
+                    <i class="fas fa-cloud-upload-alt"></i>
                 </div>
             </div>
 
@@ -210,7 +214,7 @@
     // ============================================================
     // SECRET NUMBER PROTECTION
     // ============================================================
-    const CORRECT_SECRET = "12345";   // CHANGE THIS
+    const CORRECT_SECRET = "012070505";   // CHANGE THIS
     if (sessionStorage.getItem('secretUnlocked') === 'true') {
         document.getElementById('secretOverlay').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
@@ -247,6 +251,32 @@
         document.getElementById('inspectedByName').value = currentEngineer;
     } else {
         currentEngineer = '';
+    }
+
+    // ============================================================
+    // DATALIST POPULATION (for Customer Name and Project Name)
+    // ============================================================
+    let allDataForDatalist = []; // will hold all inspections (unfiltered)
+    function updateDatalists() {
+        const customers = new Set();
+        const projects = new Set();
+        allDataForDatalist.forEach(insp => {
+            const extra = insp.extra_fields || {};
+            if (extra["Customer Name"]) customers.add(extra["Customer Name"]);
+            if (extra["Project Name"]) projects.add(extra["Project Name"]);
+            if (insp.customer_name) customers.add(insp.customer_name);
+            if (insp.project_name) projects.add(insp.project_name);
+        });
+        const customerList = Array.from(customers).sort();
+        const projectList = Array.from(projects).sort();
+        const customerDatalist = document.getElementById('customerDatalist');
+        const projectDatalist = document.getElementById('projectDatalist');
+        if (customerDatalist) {
+            customerDatalist.innerHTML = customerList.map(name => `<option value="${escapeHtml(name)}">`).join('');
+        }
+        if (projectDatalist) {
+            projectDatalist.innerHTML = projectList.map(name => `<option value="${escapeHtml(name)}">`).join('');
+        }
     }
 
     // ============================================================
@@ -299,7 +329,13 @@
             html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 border-b pb-4 mb-4">`;
             def.extraFields.forEach(field => {
                 const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
-                html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
+                if (field === "Customer Name") {
+                    html += `<div><label class="font-bold text-sm">${field}</label><input list="customerDatalist" type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" autocomplete="off"></div>`;
+                } else if (field === "Project Name") {
+                    html += `<div><label class="font-bold text-sm">${field}</label><input list="projectDatalist" type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" autocomplete="off"></div>`;
+                } else {
+                    html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
+                }
             });
             html += `</div>`;
         }
@@ -319,7 +355,7 @@
             html += `</div></td>`;
             html += `</tr>`;
         });
-        html += `</tbody><table></div>`;
+        html += `</tbody></table></div>`;
         container.innerHTML = html;
     }
 
@@ -477,7 +513,7 @@
         const machRate = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
         const reworkQty = parseFloat(document.getElementById("reworkQty").value) || 0;
         const rejectQty = parseFloat(document.getElementById("rejectQty").value) || 0;
-        const multiplier = (reworkQty + rejectQty) || 1;  // if zero, multiply by 1 (avoid zero total)
+        const multiplier = (reworkQty + rejectQty) || 1;
         const baseTotal = matCost + (laborHrs * salary) + (machHrs * machRate);
         const total = baseTotal * multiplier;
         document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
@@ -559,6 +595,9 @@
             const response = await fetch('/api/inspections');
             if (!response.ok) throw new Error();
             let data = await response.json();
+            // Store full dataset for datalist (before filtering by engineer)
+            allDataForDatalist = data;
+            updateDatalists(); // populate dropdown options from all inspections
             if (engineerFromUrl) {
                 data = data.filter(row => row.username === currentEngineer);
             }
@@ -603,5 +642,4 @@
     document.addEventListener("DOMContentLoaded", () => { renderDynamicFields(); loadHistory(); document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10); });
 </script>
 </body>
-</html> Customer Name, 
-Project Name remembered the last time list like drop list show
+</html>
