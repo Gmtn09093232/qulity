@@ -137,7 +137,7 @@
                     </div>
                 </div>
 
-                <!-- Dynamic process-specific fields -->
+                <!-- Dynamic process-specific fields (Workstation & Location are now dropdowns) -->
                 <div id="dynamicFieldsContainer"><div class="text-gray-500 text-center py-4">Loading inspection table...</div></div>
 
                 <!-- Quantity summary -->
@@ -286,6 +286,7 @@
 
     function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
+    // Modified renderDynamicFields: Work Station and Location become dropdowns
     function renderDynamicFields() {
         const def = getCurrentDef();
         const container = document.getElementById("dynamicFieldsContainer");
@@ -295,7 +296,34 @@
             html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 border-b pb-4 mb-4">`;
             def.extraFields.forEach(field => {
                 const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
-                html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
+                if (field === "Work Station") {
+                    // Dropdown for Workstation
+                    html += `<div><label class="font-bold text-sm">${field}</label>
+                        <select id="${safeId}" class="w-full border p-1 rounded text-sm">
+                            <option value="">-- Select Workstation --</option>
+                            <option value="machine shop">Machine Shop</option>
+                            <option value="fabrication">Fabrication</option>
+                            <option value="assembling">Assembling</option>
+                            <option value="forging">Forging</option>
+                            <option value="foundry">Foundry</option>
+                            <option value="wood shop">Wood Shop</option>
+                        </select>
+                    </div>`;
+                } else if (field === "Location") {
+                    // Dropdown for Location
+                    html += `<div><label class="font-bold text-sm">${field}</label>
+                        <select id="${safeId}" class="w-full border p-1 rounded text-sm">
+                            <option value="">-- Select Location --</option>
+                            <option value="bahir dar flexible">Bahir Dar Flexible</option>
+                            <option value="kombolcha">Kombolcha</option>
+                            <option value="transformer">Transformer</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>`;
+                } else {
+                    // Normal text input for other extra fields
+                    html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
+                }
             });
             html += `</div>`;
         }
@@ -340,7 +368,12 @@
         if (def.extraFields) {
             def.extraFields.forEach(field => {
                 const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
-                extra[field] = document.getElementById(id)?.value || '';
+                const el = document.getElementById(id);
+                if (el) {
+                    extra[field] = el.value;
+                } else {
+                    extra[field] = '';
+                }
             });
         }
         return extra;
@@ -352,7 +385,9 @@
             def.extraFields.forEach(field => {
                 const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                 const el = document.getElementById(id);
-                if (el && extra[field] !== undefined) el.value = extra[field];
+                if (el && extra[field] !== undefined) {
+                    el.value = extra[field];
+                }
             });
         }
     }
@@ -585,8 +620,7 @@
         }
     }
 
-    // [REMOVED] Event listener linking qcEngineerName to inspectedByName — no longer needed.
-    // Failure cost and time listeners remain intact.
+    // Event listeners
     document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
     document.getElementById("laborHours").addEventListener("input", computeFailureCost);
     document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
