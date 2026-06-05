@@ -78,7 +78,7 @@
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow p-4 mb-6">
         <h2 class="font-bold text-lg mb-3">Filters</h2>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm font-medium">Process Type</label>
                 <select id="filterProcess" class="w-full border rounded p-2 mt-1">
@@ -124,8 +124,8 @@
                     <option value="Misganew Shferaw">Misganew Shferaw</option>
                     <option value="Desalegn Alemu">Desalegn Alemu</option>
                     <option value="Esubalew Netsuh">Esubalew Netsuh</option>
-                    <option value="Yohannes Tadesse">Mahider Yemer</option>
-                    <option value="Yohannes Tadesse">Amare Alemzab</option>
+                    <option value="Mahider Yemer">Mahider Yemer</option>
+                    <option value="Amare Alemzab">Amare Alemzab</option>
                 </select>
             </div>
             <div>
@@ -141,6 +141,29 @@
             <div>
                 <label class="block text-sm font-medium">Date To</label>
                 <input type="date" id="filterDateTo" class="w-full border rounded p-2 mt-1">
+            </div>
+            <!-- NEW: Workstation Filter -->
+            <div>
+                <label class="block text-sm font-medium">Workstation</label>
+                <select id="filterWorkstation" class="w-full border rounded p-2 mt-1">
+                    <option value="">All Workstations</option>
+                    <option value="machine shop">Machine Shop</option>
+                    <option value="fabrication">Fabrication</option>
+                    <option value="assembling">Assembling</option>
+                    <option value="forging">Forging</option>
+                    <option value="foundry">Foundry</option>
+                    <option value="wood shop">Wood Shop</option>
+                </select>
+            </div>
+            <!-- NEW: Location Filter -->
+            <div>
+                <label class="block text-sm font-medium">Location</label>
+                <select id="filterLocation" class="w-full border rounded p-2 mt-1">
+                    <option value="">All Locations</option>
+                    <option value="bahir dar flexible">Bahir Dar Flexible</option>
+                    <option value="kombolcha transformer">Kombolcha Transformer</option>
+                    <option value="other">Other</option>
+                </select>
             </div>
         </div>
         <div class="mt-4 flex justify-end">
@@ -177,9 +200,26 @@
     let barChart = null;
     const validResults = ["Accepted", "Rework", "Reject", "Conditional Accepted"];
 
+    // Helper to get project name from extra_fields or direct property
     function getProjectName(insp) {
         if (insp.project_name) return insp.project_name;
         if (insp.extra_fields && insp.extra_fields["Project Name"]) return insp.extra_fields["Project Name"];
+        return '';
+    }
+
+    // Helper to get workstation from extra_fields
+    function getWorkstation(insp) {
+        if (insp.extra_fields && insp.extra_fields["Work Station"]) {
+            return insp.extra_fields["Work Station"].trim().toLowerCase();
+        }
+        return '';
+    }
+
+    // Helper to get location from extra_fields
+    function getLocation(insp) {
+        if (insp.extra_fields && insp.extra_fields["Location"]) {
+            return insp.extra_fields["Location"].trim().toLowerCase();
+        }
         return '';
     }
 
@@ -234,6 +274,8 @@
         const projectFilter = document.getElementById('filterProjectName').value;
         const dateFrom = document.getElementById('filterDateFrom').value;
         const dateTo = document.getElementById('filterDateTo').value;
+        const workstationFilter = document.getElementById('filterWorkstation').value;
+        const locationFilter = document.getElementById('filterLocation').value;
 
         let filtered = [...allInspections];
 
@@ -255,6 +297,14 @@
             const to = new Date(dateTo);
             to.setHours(23,59,59,999);
             filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to);
+        }
+        // Workstation filter
+        if (workstationFilter) {
+            filtered = filtered.filter(insp => getWorkstation(insp) === workstationFilter.toLowerCase());
+        }
+        // Location filter
+        if (locationFilter) {
+            filtered = filtered.filter(insp => getLocation(insp) === locationFilter.toLowerCase());
         }
 
         updateSummary(filtered);
