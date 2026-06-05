@@ -46,6 +46,10 @@
                 </div>
             </div>
 
+            <!-- Datalists for suggestions -->
+            <datalist id="customerDatalist"></datalist>
+            <datalist id="projectDatalist"></datalist>
+
             <!-- Inspection Form -->
             <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
                 <input type="hidden" id="editId" value="">
@@ -288,6 +292,39 @@
     let isEditMode = false;
     let editId = null;
 
+    // Global arrays for unique customer and project names (for datalist)
+    let customerNamesList = [];
+    let projectNamesList = [];
+
+    // Function to update datalists from all inspections
+    function updateDatalists() {
+        const customers = new Set();
+        const projects = new Set();
+        // Also consider existing extra_fields in current data
+        if (typeof allInspections !== 'undefined' && allInspections) {
+            allInspections.forEach(insp => {
+                const extra = insp.extra_fields || {};
+                if (extra["Customer Name"]) customers.add(extra["Customer Name"]);
+                if (extra["Project Name"]) projects.add(extra["Project Name"]);
+                // Also check dedicated columns if any
+                if (insp.customer_name) customers.add(insp.customer_name);
+                if (insp.project_name) projects.add(insp.project_name);
+            });
+        }
+        // Also include any values currently in the form (when editing) – they will be added automatically by the set.
+        customerNamesList = Array.from(customers).sort();
+        projectNamesList = Array.from(projects).sort();
+        
+        const customerDatalist = document.getElementById('customerDatalist');
+        const projectDatalist = document.getElementById('projectDatalist');
+        if (customerDatalist) {
+            customerDatalist.innerHTML = customerNamesList.map(name => `<option value="${escapeHtml(name)}">`).join('');
+        }
+        if (projectDatalist) {
+            projectDatalist.innerHTML = projectNamesList.map(name => `<option value="${escapeHtml(name)}">`).join('');
+        }
+    }
+
     function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
     function renderDynamicFields() {
@@ -299,7 +336,13 @@
             html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 border-b pb-4 mb-4">`;
             def.extraFields.forEach(field => {
                 const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
-                html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
+                if (field === "Customer Name") {
+                    html += `<div><label class="font-bold text-sm">${field}</label><input list="customerDatalist" type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" autocomplete="off"></div>`;
+                } else if (field === "Project Name") {
+                    html += `<div><label class="font-bold text-sm">${field}</label><input list="projectDatalist" type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" autocomplete="off"></div>`;
+                } else {
+                    html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
+                }
             });
             html += `</div>`;
         }
@@ -319,7 +362,7 @@
             html += `</div></td>`;
             html += `</tr>`;
         });
-        html += `</tbody><table></div>`;
+        html += `</tbody></table></div>`;
         container.innerHTML = html;
     }
 
@@ -477,7 +520,7 @@
         const machRate = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
         const reworkQty = parseFloat(document.getElementById("reworkQty").value) || 0;
         const rejectQty = parseFloat(document.getElementById("rejectQty").value) || 0;
-        const multiplier = (reworkQty + rejectQty) || 1;  // if zero, multiply by 1 (avoid zero total)
+        const multiplier = (reworkQty + rejectQty) || 1;
         const baseTotal = matCost + (laborHrs * salary) + (machHrs * machRate);
         const total = baseTotal * multiplier;
         document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
@@ -562,6 +605,11 @@
             if (engineerFromUrl) {
                 data = data.filter(row => row.username === currentEngineer);
             }
+            // Update datalists using all data (not filtered by engineer)
+            // We need the global allInspections variable. Let's store all data globally.
+            window.allInspections = data;
+            updateDatalists();
+            
             const historyDiv = document.getElementById("inspectionHistory");
             if (!data || data.length === 0) historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found for this engineer.</p>";
             else historyDiv.innerHTML = data.map(row => `
@@ -589,6 +637,7 @@
         }
     }
 
+    // Attach event listeners
     document.getElementById("qcEngineerName").addEventListener("input", () => document.getElementById("inspectedByName").value = document.getElementById("qcEngineerName").value);
     document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
     document.getElementById("laborHours").addEventListener("input", computeFailureCost);
@@ -600,6 +649,7 @@
     document.getElementById("startTime").addEventListener("change", updateTotalTime);
     document.getElementById("endTime").addEventListener("change", updateTotalTime);
 
+    // Initial load
     document.addEventListener("DOMContentLoaded", () => { renderDynamicFields(); loadHistory(); document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10); });
 </script>
 </body>
