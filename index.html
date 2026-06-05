@@ -89,8 +89,8 @@
                     </div>
                 </div>
 
-                <!-- Existing header fields -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
+                <!-- Existing header fields (Inspected By section removed) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
                     <div>
                         <label class="font-bold">Source of Process Inspection</label>
                         <div class="flex gap-4 mt-1">
@@ -111,10 +111,6 @@
                             <option value="Continue">Continue</option>
                             <option value="Ending">Ending</option>
                         </select>
-                    </div>
-                    <div>
-                        <label class="font-bold">Inspected By</label>
-                        <input type="text" id="inspectedByName" readonly class="w-full bg-gray-100 border p-1 rounded">
                     </div>
                 </div>
 
@@ -244,7 +240,7 @@
         engineerField.value = currentEngineer;
         engineerField.readOnly = true;
         engineerField.classList.add('bg-gray-100');
-        document.getElementById('inspectedByName').value = currentEngineer;
+        // NOTE: inspectedByName section removed — no assignment needed.
     } else {
         currentEngineer = '';
     }
@@ -319,7 +315,7 @@
             html += `</div></td>`;
             html += `</tr>`;
         });
-        html += `</tbody><table></div>`;
+        html += `</tbody></table></div>`;
         container.innerHTML = html;
     }
 
@@ -398,7 +394,7 @@
         document.getElementById("cancelEditBtn").classList.add("hidden");
         if (engineerFromUrl) {
             document.getElementById('qcEngineerName').value = currentEngineer;
-            document.getElementById('inspectedByName').value = currentEngineer;
+            // inspectedByName removed; no action needed.
         }
     }
 
@@ -589,7 +585,8 @@
         }
     }
 
-    document.getElementById("qcEngineerName").addEventListener("input", () => document.getElementById("inspectedByName").value = document.getElementById("qcEngineerName").value);
+    // [REMOVED] Event listener linking qcEngineerName to inspectedByName — no longer needed.
+    // Failure cost and time listeners remain intact.
     document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
     document.getElementById("laborHours").addEventListener("input", computeFailureCost);
     document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
@@ -603,4 +600,4 @@
     document.addEventListener("DOMContentLoaded", () => { renderDynamicFields(); loadHistory(); document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10); });
 </script>
 </body>
-</html> 
+</html>
