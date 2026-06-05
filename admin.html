@@ -2,440 +2,635 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Quality Inspections</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>QC Inspection | Amhara Metal Industry</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        .card-hover:hover { transform: translateY(-2px); transition: 0.2s; }
-        .chart-container { position: relative; height: 300px; width: 100%; }
+        @media print {
+            body * { visibility: hidden; }
+            #inspectionForm, #inspectionForm * { visibility: visible; }
+            #inspectionForm { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
+            .no-print { display: none; }
+        }
+        .rating-select { min-width: 100px; }
+        .cause-checkbox-group label { margin-right: 12px; font-size: 0.8rem; }
+        table th, table td { vertical-align: top; padding: 8px 6px; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
-<div class="max-w-7xl mx-auto p-4 md:p-6">
 
-    <!-- Header -->
-    <div class="bg-white rounded-xl shadow p-4 mb-6 flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold text-blue-900">📊 Quality Control Dashboard</h1>
-            <p class="text-gray-600">All Processes Inspection Summary</p>
-        </div>
-        <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-            <i class="fas fa-sync-alt"></i> Refresh
-        </button>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="summaryCards">
-        <div class="bg-white rounded-lg shadow p-4 card-hover">
-            <div class="text-gray-500 text-sm">Total Inspections</div>
-            <div class="text-3xl font-bold text-blue-600" id="totalCount">-</div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4 card-hover">
-            <div class="text-gray-500 text-sm">Total Inspection Time</div>
-            <div class="text-2xl font-bold text-green-600" id="totalTime">-</div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4 card-hover">
-            <div class="text-gray-500 text-sm">Pass Rate (Accepted)</div>
-            <div class="text-3xl font-bold text-green-600" id="passRate">-</div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4 card-hover">
-            <div class="text-gray-500 text-sm">Reject + Rework</div>
-            <div class="text-3xl font-bold text-red-600" id="failCount">-</div>
+    <!-- Secret Number Overlay -->
+    <div id="secretOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full">
+            <h2 class="text-xl font-bold text-center text-blue-800 mb-4">🔐 Enter Secret Number</h2>
+            <input type="password" id="secretInput" class="w-full border p-2 rounded mb-4 text-center" placeholder="Secret number" autofocus>
+            <button onclick="checkSecret()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">Submit</button>
+            <div id="secretError" class="text-red-500 text-sm mt-2 hidden text-center">Wrong secret number!</div>
         </div>
     </div>
 
-    <!-- Results Distribution: Table + Bar Chart (side by side) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <!-- Results Distribution Table (replaces Pie Chart) -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="font-bold text-lg mb-3">Results Distribution (Table)</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm border-collapse">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="p-2 border text-left">Result</th>
-                            <th class="p-2 border text-left">Count</th>
-                            <th class="p-2 border text-left">Percentage (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsTableBody">
-                        <tr><td colspan="3" class="text-center p-4">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <!-- Bar Chart (unchanged) -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="font-bold text-lg mb-2">Results Distribution (Bar)</h2>
-            <div class="chart-container">
-                <canvas id="resultBarChart"></canvas>
-            </div>
-        </div>
-    </div>
+    <!-- Main Content -->
+    <div id="mainContent" style="display: none;">
+        <div class="max-w-7xl mx-auto p-4 md:p-6">
 
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-        <h2 class="font-bold text-lg mb-3">Filters</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-sm font-medium">Process Type</label>
-                <select id="filterProcess" class="w-full border rounded p-2 mt-1">
-                    <option value="">All Processes</option>
-                    <option value="Punching Process">Punching Process</option>
-                    <option value="Rolling Process">Rolling Process</option>
-                    <option value="Bending Process">Bending Process</option>
-                    <option value="Welding Process">Welding Process</option>
-                    <option value="Pressing Process">Pressing Process</option>
-                    <option value="Milling Process">Milling Process</option>
-                    <option value="Casting Process">Casting Process</option>
-                    <option value="Pattern & Core Making">Pattern & Core Making</option>
-                    <option value="Assembling Process">Assembling Process</option>
-                    <option value="Testing Process">Testing Process</option>
-                    <option value="Painting Process">Painting Process</option>
-                    <option value="Packaging Process">Packaging Process</option>
-                    <option value="Shearing Operation">Shearing Operation</option>
-                    <option value="Lathe Operation">Lathe Operation</option>
-                    <option value="Drilling Process">Drilling Process</option>
-                    <option value="Boring & Honing">Boring & Honing</option>
-                    <option value="Grinding Process">Grinding Process</option>
-                    <option value="Forging Process">Forging Process</option>
-                    <option value="Molding Process">Molding Process</option>
-                    <option value="Polishing & Finishing">Polishing & Finishing</option>
-                    <option value="Gas Cutting Process">Gas Cutting Process</option>
-                    <option value="Assembling (Fasteners)">Assembling (Fasteners)</option>
-                    <option value="Hardening Process">Hardening Process</option>
-                    <option value="Tempering Process">Tempering Process</option>
-                    <option value="Coating Process">Coating Process</option>
-                </select>
+            <!-- Header -->
+            <div class="bg-white rounded-t-xl shadow p-4 mb-2 flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-blue-900">Amhara Metal Industry & Machine Technology Development Enterprise</h1>
+                    <p class="text-sm font-semibold">Quality Assurance Directorate – Inspection Checklist</p>
+                </div>
+                <div class="text-right text-sm text-gray-600">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium">Engineer Name</label>
-                <select id="filterEngineer" class="w-full border rounded p-2 mt-1">
-                    <option value="">All Engineers</option>
-                    <option value="Haileysus Wenda">Haileysus Wenda</option>
-                    <option value="Zelalem Mulu">Zelalem Mulu</option>
-                    <option value="Alemsew Azmeraw">Alemsew Azmeraw</option>
-                    <option value="Mengsit Alen">Mengsit Alen</option>
-                    <option value="Negatu Dires">Negatu Dires</option>
-                    <option value="Fentahun Teju">Fentahun Teju</option>
-                    <option value="Gizie Melkamu">Gizie Melkamu</option>
-                    <option value="Misganew Shferaw">Misganew Shferaw</option>
-                    <option value="Desalegn Alemu">Desalegn Alemu</option>
-                    <option value="Esubalew Netsuh">Esubalew Netsuh</option>
-                    <option value="Mahider Yemer">Mahider Yemer</option>
-                    <option value="Amare Alemzab">Amare Alemzab</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium">Project Name</label>
-                <select id="filterProjectName" class="w-full border rounded p-2 mt-1">
-                    <option value="">All Projects</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium">Date From</label>
-                <input type="date" id="filterDateFrom" class="w-full border rounded p-2 mt-1">
-            </div>
-            <div>
-                <label class="block text-sm font-medium">Date To</label>
-                <input type="date" id="filterDateTo" class="w-full border rounded p-2 mt-1">
-            </div>
-            <!-- NEW: Workstation Filter -->
-            <div>
-                <label class="block text-sm font-medium">Workstation</label>
-                <select id="filterWorkstation" class="w-full border rounded p-2 mt-1">
-                    <option value="">All Workstations</option>
-                    <option value="machine shop">Machine Shop</option>
-                    <option value="fabrication">Fabrication</option>
-                    <option value="assembling">Assembling</option>
-                    <option value="forging">Forging</option>
-                    <option value="foundry">Foundry</option>
-                    <option value="wood shop">Wood Shop</option>
-                </select>
-            </div>
-            <!-- NEW: Location Filter -->
-            <div>
-                <label class="block text-sm font-medium">Location</label>
-                <select id="filterLocation" class="w-full border rounded p-2 mt-1">
-                    <option value="">All Locations</option>
-                    <option value="bahir dar flexible">Bahir Dar Flexible</option>
-                    <option value="kombolcha transformer">Kombolcha Transformer</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-        </div>
-        <div class="mt-4 flex justify-end">
-            <button onclick="applyFilters()" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800">Apply Filters</button>
-        </div>
-    </div>
 
-    <!-- Data Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="p-3 text-left">Date & Time</th>
-                        <th class="p-3 text-left">Process</th>
-                        <th class="p-3 text-left">Project Name</th>
-                        <th class="p-3 text-left">Engineer</th>
-                        <th class="p-3 text-left">Result</th>
-                        <th class="p-3 text-left">Points</th>
-                        <th class="p-3 text-left">Operator</th>
-                    </tr>
-                </thead>
-                <tbody id="inspectionTableBody">
-                    <tr><td colspan="7" class="text-center p-4">Loading data...</td></tr>
-                </tbody>
-            </table>
+            <!-- Inspection Form -->
+            <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
+                <input type="hidden" id="editId" value="">
+                <input type="hidden" id="isEditMode" value="false">
+
+                <!-- Process Type Selector -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
+                    <div>
+                        <label class="font-bold">Process Type *</label>
+                        <select id="processType" class="w-full border p-2 rounded" onchange="switchProcess()">
+                            <option value="Punching">Punching Process</option>
+                            <option value="Rolling">Rolling Process</option>
+                            <option value="Bending">Bending Process</option>
+                            <option value="Welding">Welding Process</option>
+                            <option value="Pressing">Pressing Process</option>
+                            <option value="Milling">Milling Process</option>
+                            <option value="Casting">Casting Process</option>
+                            <option value="PatternCore">Pattern & Core Making</option>
+                            <option value="Assembling">Assembling Process</option>
+                            <option value="Testing">Testing Process</option>
+                            <option value="Painting">Painting Process</option>
+                            <option value="Packaging">Packaging Process</option>
+                            <option value="Shearing">Shearing Operation</option>
+                            <option value="Lathe">Lathe Operation</option>
+                            <option value="Drilling">Drilling Process</option>
+                            <option value="BoringHoning">Boring & Honing</option>
+                            <option value="Grinding">Grinding Process</option>
+                            <option value="Forging">Forging Process</option>
+                            <option value="Molding">Molding Process</option>
+                            <option value="Polishing">Polishing & Finishing</option>
+                            <option value="GasCutting">Gas Cutting Process</option>
+                            <option value="FastenersAssembly">Assembling (Fasteners)</option>
+                            <option value="Hardening">Hardening Process</option>
+                            <option value="Tempering">Tempering Process</option>
+                            <option value="Coating">Coating Process</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-bold">QC Engineer Name *</label>
+                        <input type="text" id="qcEngineerName" class="w-full border p-2 rounded" placeholder="e.g. Abebech Alemu" required>
+                    </div>
+                </div>
+
+                <!-- Existing header fields (Inspected By section removed) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
+                    <div>
+                        <label class="font-bold">Source of Process Inspection</label>
+                        <div class="flex gap-4 mt-1">
+                            <label><input type="radio" name="sourceType" value="Outsource" required> Outsource</label>
+                            <label><input type="radio" name="sourceType" value="Insource"> Insource</label>
+                        </div>
+                        <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="w-full border rounded p-1 mt-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="font-bold">Document Availability</label>
+                        <div class="flex gap-6">
+                            <label><input type="checkbox" id="designAvail"> Design</label>
+                            <label><input type="checkbox" id="mppAvail"> MPP</label>
+                        </div>
+                        <label class="font-bold mt-2 block">Operation Condition</label>
+                        <select id="operationStatus" class="w-full border p-1 rounded">
+                            <option value="Holdup">Holdup</option>
+                            <option value="Continue">Continue</option>
+                            <option value="Ending">Ending</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
+                    <div>
+                        <label class="font-bold">Shift Number</label>
+                        <div class="flex gap-4">
+                            <label><input type="radio" name="shift" value="1"> Shift 1</label>
+                            <label><input type="radio" name="shift" value="2"> Shift 2</label>
+                            <label><input type="radio" name="shift" value="3"> Shift 3</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="font-bold">Operator Name</label>
+                        <input type="text" id="operatorName" class="w-full border p-1 rounded">
+                    </div>
+                    <div>
+                        <label class="font-bold">Inspection Time</label>
+                        <div class="flex gap-2 text-sm">
+                            <input type="time" id="startTime" class="border p-1 rounded w-1/2"> 
+                            <input type="time" id="endTime" class="border p-1 rounded w-1/2">
+                        </div>
+                        <span id="totalTimeDisplay" class="text-xs text-gray-600">Total: -- min</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic process-specific fields (Workstation & Location are now dropdowns) -->
+                <div id="dynamicFieldsContainer"><div class="text-gray-500 text-center py-4">Loading inspection table...</div></div>
+
+                <!-- Quantity summary -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-2 bg-gray-50 p-3 rounded mt-4">
+                    <div><label class="font-bold">Delivered Qty</label><input type="number" id="deliveredQty" class="border p-1 rounded w-full"></div>
+                    <div><label class="font-bold">Accepted Qty</label><input type="number" id="acceptedQty" class="border p-1 rounded w-full"></div>
+                    <div><label class="font-bold">Rework Qty</label><input type="number" id="reworkQty" class="border p-1 rounded w-full"></div>
+                    <div><label class="font-bold">Reject Qty</label><input type="number" id="rejectQty" class="border p-1 rounded w-full"></div>
+                    <div><label class="font-bold">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="border p-1 rounded w-full"></div>
+                </div>
+
+                <!-- Internal Failure Costs -->
+                <div class="border p-4 rounded-md">
+                    <h3 class="font-bold text-lg">Internal Failure Costs</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                        <div><label>Defected Material Cost (ETB)</label> <input type="number" step="0.01" id="defectedMaterialCost" class="border p-1 rounded w-full"></div>
+                        <div><label>Labor Hours</label> <input type="number" step="0.5" id="laborHours" class="border p-1 rounded w-full"></div>
+                        <div>
+                            <label class="block">Level</label>
+                            <select id="levelSelect" class="border p-1 rounded w-full">
+                                <option value="">-- Select --</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Salary per Hour (ETB)</label>
+                            <input type="number" step="0.001" id="salaryPerHour" class="border p-1 rounded w-full" placeholder="Auto-fills by level">
+                        </div>
+                        <div><label>Machining Hours</label> <input type="number" step="0.5" id="machiningHours" class="border p-1 rounded w-full"></div>
+                        <div><label>Machining Cost per Hr (ETB)</label> <input type="number" step="0.01" id="machiningCostPerHr" class="border p-1 rounded w-full"></div>
+                    </div>
+                    <div class="mt-3 p-2 bg-gray-100 rounded"><span class="font-bold">Total Internal Failure Cost (ETB):</span> <span id="totalFailureCostDisplay">0.00</span>
+                        <input type="hidden" id="totalInternalFailureCost">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+                    <div><label class="font-bold">N.B The Most Frequent Defects</label><textarea id="mostFrequentDefects" rows="2" class="border p-1 w-full"></textarea></div>
+                    <div><label class="font-bold">Defect Correction Transfer Slip</label><input type="text" id="defectCorrectionSlip" class="border p-1 w-full"></div>
+                    <div class="md:col-span-2"><label class="font-bold">Cause of Defects (detailed)</label><textarea id="causeOfDefectsDetail" rows="2" class="border p-1 w-full"></textarea></div>
+                </div>
+
+                <div class="flex justify-end gap-4 no-print">
+                    <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
+                    <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded hidden">Cancel Edit</button>
+                    <button type="button" id="saveBtn" onclick="saveToBackend()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold">✔ Save to Cloud</button>
+                </div>
+                <div id="formMessage" class="text-center text-sm mt-2"></div>
+            </form>
+
+            <!-- Previous Inspections (filtered by current engineer) -->
+            <div class="mt-8 bg-white shadow rounded p-4 no-print">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-lg">📋 Previous Inspections</h3>
+                    <button onclick="loadHistory()" class="text-blue-600 text-sm underline">Refresh</button>
+                </div>
+                <div id="inspectionHistory" class="max-h-60 overflow-y-auto text-sm mt-2"></div>
+            </div>
         </div>
-        <div id="tableInfo" class="p-3 text-sm text-gray-500 border-t"></div>
     </div>
-</div>
 
 <script>
-    let allInspections = [];
-    let barChart = null;
-    const validResults = ["Accepted", "Rework", "Reject", "Conditional Accepted"];
-
-    // Helper to get project name from extra_fields or direct property
-    function getProjectName(insp) {
-        if (insp.project_name) return insp.project_name;
-        if (insp.extra_fields && insp.extra_fields["Project Name"]) return insp.extra_fields["Project Name"];
-        return '';
+    // ============================================================
+    // SECRET NUMBER PROTECTION
+    // ============================================================
+    const CORRECT_SECRET = "12345";   // CHANGE THIS
+    if (sessionStorage.getItem('secretUnlocked') === 'true') {
+        document.getElementById('secretOverlay').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+    } else {
+        document.getElementById('secretOverlay').style.display = 'flex';
+        document.getElementById('mainContent').style.display = 'none';
     }
 
-    // Helper to get workstation from extra_fields
-    function getWorkstation(insp) {
-        if (insp.extra_fields && insp.extra_fields["Work Station"]) {
-            return insp.extra_fields["Work Station"].trim().toLowerCase();
+    function checkSecret() {
+        const entered = document.getElementById('secretInput').value;
+        if (entered === CORRECT_SECRET) {
+            sessionStorage.setItem('secretUnlocked', 'true');
+            document.getElementById('secretOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            renderDynamicFields();
+            loadHistory();
+        } else {
+            document.getElementById('secretError').classList.remove('hidden');
         }
-        return '';
     }
 
-    // Helper to get location from extra_fields
-    function getLocation(insp) {
-        if (insp.extra_fields && insp.extra_fields["Location"]) {
-            return insp.extra_fields["Location"].trim().toLowerCase();
+    // ============================================================
+    // URL PARAMETER: auto‑fill engineer name
+    // ============================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const engineerFromUrl = urlParams.get('engineer');
+    let currentEngineer = '';
+    if (engineerFromUrl) {
+        currentEngineer = decodeURIComponent(engineerFromUrl);
+        const engineerField = document.getElementById('qcEngineerName');
+        engineerField.value = currentEngineer;
+        engineerField.readOnly = true;
+        engineerField.classList.add('bg-gray-100');
+        // NOTE: inspectedByName section removed — no assignment needed.
+    } else {
+        currentEngineer = '';
+    }
+
+    // ============================================================
+    // 25 PROCESS DEFINITIONS (same as before)
+    // ============================================================
+    const baseExtraFields = ["Customer Name", "Project Name", "Drawing No.", "Part Name", "Tag No.", "Work Station", "Location"];
+    const ratingOpts = ["Accepted", "Conditional Accept", "Rework", "Reject"];
+    const causeFields = ["Machine","Design","Operator","Methods","Material"];
+
+    const processDefinitions = {
+        Punching: { parameters: ["Material as Per Design", "Condition of Cracking", "Surface uniformity", "Dimensional accuracy as per Design", "Condition of Wrinkle", "Finishing Appearance without Burs"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Rolling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design", "Sharpness as per Design", "Shining of the work piece"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Bending: { parameters: ["Material as per Design", "Surface uniformity", "Condition of Cracking", "Condition of Wrinkle", "Dimensional Accuracy as per design"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Welding: { parameters: ["Material used as Per Design", "Condition of weld overlap", "Condition of weld crack & Under Cut", "Lack of welding bead uniformity", "Condition of Slag inclusion", "Condition of thermal distortion"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Pressing: { parameters: ["Material used as per Design", "wrinkling", "Earing", "Tearing", "surface Scratches", "Dimensional accuracy as per Design"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Milling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design", "Exact Sharpens of the Corners", "Shining of the work piece", "Finishing Appearance without Burs"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Casting: { parameters: ["Material used as Per Design", "Blow Hole & warpage", "Sand fusion", "Shrinkage porosity", "Misrun & Cold Shut", "Metal Penetration", "Slage Inclusion", "Hot Tear & Flashes", "Cut and washes"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        PatternCore: { parameters: ["Material", "Condition of surface & color coding", "Removal of Sharping Edge"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Assembling: { parameters: ["Material used as Per Design", "All assembly dimensions as per design", "Rigidity of welding assembly", "alignment for all part components", "Condition of ergonomics", "Availability of name plating"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Testing: { parameters: ["Condition of all parts assembled & alignments", "Function ability of the technology", "condition of test with & without load", "condition of Safety and hazardous"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Painting: { parameters: ["Condition of surface finish before painting", "Selection of Color Paint as per Design", "layer of painting as per design", "Bleeding & Blistering", "Lifting & Running", "Water Spotting", "Flaking & Crawling", "Wrinkling"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Packaging: { parameters: ["Condition and types of packaging systems", "Writing of Name, logo, Address of the Manufacturer & Brand", "Writing of Overall Size of the product and Package", "Writing Risky & hazardous Symbols", "Writing Qty, Net & gross weight of the product on packaging"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Shearing: { parameters: ["Material as per Design", "Dimensional accuracy as per Design", "Edge condition (no burrs)"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Lathe: { parameters: ["Material as per Design", "Dimensional accuracy (diameter, length)", "Surface finish", "Concentricity / roundness"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Drilling: { parameters: ["Material used as Per Design", "Proper drilling sequence", "Dimensional accuracy as per Design", "Finishing Appearance without Burs"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        BoringHoning: { parameters: ["Material as per Design", "Internal diameter accuracy", "Surface finish (bore)", "Roundness / cylindricity"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Grinding: { parameters: ["Material as per Design", "Surface finish (Ra value)", "Dimensional accuracy", "Absence of burn marks"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Forging: { parameters: ["Material grade as per Design", "Dimensional accuracy (length, width, height)", "Surface condition (no cracks or scale)", "Grain flow direction"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Molding: { parameters: ["Material mix as per specification", "Dimensional accuracy of mould", "Surface smoothness", "No porosity / voids"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Polishing: { parameters: ["Surface roughness (Ra) before polishing", "Final surface gloss / mirror finish", "No scratches / pitting", "Consistency over whole surface"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        GasCutting: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design", "Finishing Appearance without slag"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        FastenersAssembly: { parameters: ["Condition of part dimensions as per design", "Condition of sub & Overall assembly dimensions as per design", "Condition of fit & tolerance", "Condition proper electrical installation", "Condition inspect & test electrical equipment", "Condition of Rigidity & vibration", "Condition of availability of Name plating", "Condition of ergonomics"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Hardening: { parameters: ["Material grade", "Heating temperature uniformity", "Soaking time", "Hardness after quenching", "Decarburization layer"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Tempering: { parameters: ["Tempering temperature", "Holding time", "Final hardness", "Toughness", "Distortion"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields },
+        Coating: { parameters: ["Surface cleanliness before coating", "Coating thickness uniformity", "Adhesion strength", "Corrosion resistance", "Appearance (color, gloss)"], ratingOptions: ratingOpts, causeFields: causeFields, hasEngineering: false, extraFields: baseExtraFields }
+    };
+
+    let currentProcess = document.getElementById("processType").value;
+    let isEditMode = false;
+    let editId = null;
+
+    function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
+
+    // Modified renderDynamicFields: Work Station and Location become dropdowns
+    function renderDynamicFields() {
+        const def = getCurrentDef();
+        const container = document.getElementById("dynamicFieldsContainer");
+        if (!container) return;
+        let html = "";
+        if (def.extraFields && def.extraFields.length) {
+            html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 border-b pb-4 mb-4">`;
+            def.extraFields.forEach(field => {
+                const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                if (field === "Work Station") {
+                    // Dropdown for Workstation
+                    html += `<div><label class="font-bold text-sm">${field}</label>
+                        <select id="${safeId}" class="w-full border p-1 rounded text-sm">
+                            <option value="">-- Select Workstation --</option>
+                            <option value="machine shop">Machine Shop</option>
+                            <option value="fabrication">Fabrication</option>
+                            <option value="assembling">Assembling</option>
+                            <option value="forging">Forging</option>
+                            <option value="foundry">Foundry</option>
+                            <option value="wood shop">Wood Shop</option>
+                        </select>
+                    </div>`;
+                } else if (field === "Location") {
+                    // Dropdown for Location
+                    html += `<div><label class="font-bold text-sm">${field}</label>
+                        <select id="${safeId}" class="w-full border p-1 rounded text-sm">
+                            <option value="">-- Select Location --</option>
+                            <option value="bahir dar flexible">Bahir Dar Flexible</option>
+                            <option value="kombolcha transformer">Kombolcha Transformer</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>`;
+                } else {
+                    // Normal text input for other extra fields
+                    html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
+                }
+            });
+            html += `</div>`;
         }
-        return '';
+        html += `<div class="overflow-x-auto border rounded-md"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-200">`;
+        html += `<tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Acceptance Conditions</th><th class="p-2 border">Cause of Defects</th></tr></thead><tbody>`;
+        def.parameters.forEach((param, idx) => {
+            const paramId = `p_${idx}`;
+            html += `<tr>`;
+            html += `<td class="border p-2 font-medium">${param}</td>`;
+            html += `<td class="border"><select id="rating_${paramId}" class="rating-select w-full p-1 border rounded">`;
+            def.ratingOptions.forEach(opt => html += `<option value="${opt}">${opt}</option>`);
+            html += `</select></td>`;
+            html += `<td class="border"><div class="cause-checkbox-group flex flex-wrap gap-2">`;
+            (def.causeFields || causeFields).forEach(cause => {
+                html += `<label><input type="checkbox" class="cause-check" data-param="${paramId}" value="${cause}"> ${cause}</label>`;
+            });
+            html += `</div></td>`;
+            html += `</tr>`;
+        });
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
     }
 
-    async function fetchData() {
+    function switchProcess() { currentProcess = document.getElementById("processType").value; renderDynamicFields(); }
+
+    function getAcceptanceData() {
+        const def = getCurrentDef();
+        const data = {};
+        for (let i = 0; i < def.parameters.length; i++) {
+            const paramId = `p_${i}`;
+            const rating = document.getElementById(`rating_${paramId}`)?.value || '';
+            const causes = [];
+            document.querySelectorAll(`.cause-check[data-param="${paramId}"]:checked`).forEach(cb => causes.push(cb.value));
+            data[paramId] = { parameter: def.parameters[i], rating, causes };
+        }
+        return data;
+    }
+
+    function getExtraFields() {
+        const def = getCurrentDef();
+        const extra = {};
+        if (def.extraFields) {
+            def.extraFields.forEach(field => {
+                const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                const el = document.getElementById(id);
+                if (el) {
+                    extra[field] = el.value;
+                } else {
+                    extra[field] = '';
+                }
+            });
+        }
+        return extra;
+    }
+
+    function setExtraFields(extra) {
+        const def = getCurrentDef();
+        if (def.extraFields) {
+            def.extraFields.forEach(field => {
+                const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                const el = document.getElementById(id);
+                if (el && extra[field] !== undefined) {
+                    el.value = extra[field];
+                }
+            });
+        }
+    }
+
+    function setAcceptanceData(acceptance) {
+        const def = getCurrentDef();
+        for (let i = 0; i < def.parameters.length; i++) {
+            const paramId = `p_${i}`;
+            const data = acceptance[paramId];
+            if (data) {
+                const ratingSelect = document.getElementById(`rating_${paramId}`);
+                if (ratingSelect) ratingSelect.value = data.rating;
+                const checkboxes = document.querySelectorAll(`.cause-check[data-param="${paramId}"]`);
+                checkboxes.forEach(cb => {
+                    cb.checked = data.causes && data.causes.includes(cb.value);
+                });
+            }
+        }
+    }
+
+    function resetForm() {
+        document.getElementById("inspectionForm").reset();
+        renderDynamicFields();
+        document.getElementById("defectedMaterialCost").value = "";
+        document.getElementById("laborHours").value = "";
+        document.getElementById("salaryPerHour").value = "";
+        document.getElementById("levelSelect").value = "";
+        document.getElementById("machiningHours").value = "";
+        document.getElementById("machiningCostPerHr").value = "";
+        computeFailureCost();
+        document.getElementById("formMessage").innerHTML = "";
+        isEditMode = false;
+        editId = null;
+        document.getElementById("editId").value = "";
+        document.getElementById("isEditMode").value = "false";
+        document.getElementById("processType").disabled = false;
+        const saveBtn = document.getElementById("saveBtn");
+        saveBtn.innerHTML = "✔ Save to Cloud";
+        document.getElementById("cancelEditBtn").classList.add("hidden");
+        if (engineerFromUrl) {
+            document.getElementById('qcEngineerName').value = currentEngineer;
+            // inspectedByName removed; no action needed.
+        }
+    }
+
+    function cancelEdit() {
+        resetForm();
+        loadHistory();
+    }
+
+    function populateFormForEdit(inspection) {
+        document.getElementById("qcEngineerName").value = inspection.username || "";
+        document.getElementById("outsourceInstitute").value = inspection.outsource_institute || "";
+        document.getElementById("designAvail").checked = inspection.design_available || false;
+        document.getElementById("mppAvail").checked = inspection.mpp_available || false;
+        document.getElementById("operationStatus").value = inspection.operation_status || "Holdup";
+        const sourceRadio = document.querySelector(`input[name="sourceType"][value="${inspection.source_type}"]`);
+        if (sourceRadio) sourceRadio.checked = true;
+        const shiftRadio = document.querySelector(`input[name="shift"][value="${inspection.shift}"]`);
+        if (shiftRadio) shiftRadio.checked = true;
+        document.getElementById("operatorName").value = inspection.operator_name || "";
+        document.getElementById("startTime").value = inspection.start_time || "";
+        document.getElementById("endTime").value = inspection.end_time || "";
+        updateTotalTime();
+        document.getElementById("deliveredQty").value = inspection.delivered_qty ?? "";
+        document.getElementById("acceptedQty").value = inspection.accepted_qty ?? "";
+        document.getElementById("reworkQty").value = inspection.rework_qty ?? "";
+        document.getElementById("rejectQty").value = inspection.reject_qty ?? "";
+        document.getElementById("conditionalAcceptQty").value = inspection.conditional_accept_qty ?? "";
+        document.getElementById("defectedMaterialCost").value = inspection.defected_material_cost ?? 0;
+        document.getElementById("laborHours").value = inspection.labor_hours ?? 0;
+        document.getElementById("salaryPerHour").value = inspection.salary_per_hour ?? 0;
+        document.getElementById("machiningHours").value = inspection.machining_hours ?? 0;
+        document.getElementById("machiningCostPerHr").value = inspection.machining_cost_per_hr ?? 0;
+        document.getElementById("levelSelect").value = inspection.level || "";
+        const levelEvent = new Event('change');
+        document.getElementById("levelSelect").dispatchEvent(levelEvent);
+        computeFailureCost();
+        document.getElementById("mostFrequentDefects").value = inspection.most_frequent_defects || "";
+        document.getElementById("defectCorrectionSlip").value = inspection.defect_correction_slip || "";
+        document.getElementById("causeOfDefectsDetail").value = inspection.cause_of_defects || "";
+        const extra = inspection.extra_fields || {};
+        setExtraFields(extra);
+        const acceptance = inspection.acceptance_data || {};
+        setAcceptanceData(acceptance);
+        const processOption = Array.from(document.getElementById("processType").options).find(opt => opt.text === inspection.process_type);
+        if (processOption) {
+            document.getElementById("processType").value = processOption.value;
+            switchProcess();
+        }
+        document.getElementById("processType").disabled = true;
+        isEditMode = true;
+        editId = inspection.id;
+        document.getElementById("editId").value = inspection.id;
+        document.getElementById("isEditMode").value = "true";
+        const saveBtn = document.getElementById("saveBtn");
+        saveBtn.innerHTML = "✔ Update to Cloud";
+        document.getElementById("cancelEditBtn").classList.remove("hidden");
+    }
+
+    document.getElementById("levelSelect").addEventListener("change", function(e) {
+        const salaryField = document.getElementById("salaryPerHour");
+        const level = e.target.value;
+        if (level === "12") salaryField.value = 87.125;
+        else if (level === "13") salaryField.value = 90.1;
+        else if (level === "14") salaryField.value = 96.6;
+        else if (level === "custom") salaryField.value = "";
+        else salaryField.value = "";
+        computeFailureCost();
+    });
+
+    // Recompute total cost with multiplier (rework qty + reject qty)
+    function computeFailureCost() {
+        const matCost = parseFloat(document.getElementById("defectedMaterialCost").value) || 0;
+        const laborHrs = parseFloat(document.getElementById("laborHours").value) || 0;
+        const salary = parseFloat(document.getElementById("salaryPerHour").value) || 0;
+        const machHrs = parseFloat(document.getElementById("machiningHours").value) || 0;
+        const machRate = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
+        const reworkQty = parseFloat(document.getElementById("reworkQty").value) || 0;
+        const rejectQty = parseFloat(document.getElementById("rejectQty").value) || 0;
+        const multiplier = (reworkQty + rejectQty) || 1;  // if zero, multiply by 1 (avoid zero total)
+        const baseTotal = matCost + (laborHrs * salary) + (machHrs * machRate);
+        const total = baseTotal * multiplier;
+        document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
+        document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
+        return total;
+    }
+
+    function updateTotalTime() {
+        const start = document.getElementById("startTime").value, end = document.getElementById("endTime").value;
+        if (start && end) {
+            const [sh, sm] = start.split(":").map(Number), [eh, em] = end.split(":").map(Number);
+            let minutes = (eh*60+em) - (sh*60+sm);
+            if (minutes < 0) minutes += 1440;
+            document.getElementById("totalTimeDisplay").innerText = `Total: ${minutes} min (${(minutes/60).toFixed(1)} hr)`;
+            return minutes;
+        }
+        return 0;
+    }
+
+    async function saveToBackend() {
+        let engineerName = document.getElementById("qcEngineerName").value.trim();
+        if (!engineerName) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please enter QC Engineer Name</span>`; return; }
+        const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
+        if (!sourceType) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Please select Source of Process Inspection</span>`; return; }
+
+        const processTypeText = document.getElementById("processType").options[document.getElementById("processType").selectedIndex].text;
+        const acceptanceData = getAcceptanceData();
+        const extraFields = getExtraFields();
+
+        const payload = {
+            process_type: processTypeText,
+            username: engineerName,
+            source_type: sourceType,
+            outsource_institute: document.getElementById("outsourceInstitute").value,
+            design_available: document.getElementById("designAvail").checked,
+            mpp_available: document.getElementById("mppAvail").checked,
+            operation_status: document.getElementById("operationStatus").value,
+            shift: document.querySelector('input[name="shift"]:checked')?.value ? parseInt(document.querySelector('input[name="shift"]:checked').value) : null,
+            operator_name: document.getElementById("operatorName").value,
+            start_time: document.getElementById("startTime").value || null,
+            end_time: document.getElementById("endTime").value || null,
+            total_minutes: updateTotalTime(),
+            acceptance_data: acceptanceData,
+            extra_fields: extraFields,
+            most_frequent_defects: document.getElementById("mostFrequentDefects").value,
+            defect_correction_slip: document.getElementById("defectCorrectionSlip").value,
+            cause_of_defects: document.getElementById("causeOfDefectsDetail").value,
+            defected_material_cost: parseFloat(document.getElementById("defectedMaterialCost").value) || 0,
+            labor_hours: parseFloat(document.getElementById("laborHours").value) || 0,
+            salary_per_hour: parseFloat(document.getElementById("salaryPerHour").value) || 0,
+            level: document.getElementById("levelSelect").value,
+            machining_hours: parseFloat(document.getElementById("machiningHours").value) || 0,
+            machining_cost_per_hr: parseFloat(document.getElementById("machiningCostPerHr").value) || 0,
+            total_internal_failure_cost: computeFailureCost(),
+            delivered_qty: document.getElementById("deliveredQty").value || null,
+            accepted_qty: document.getElementById("acceptedQty").value || null,
+            rework_qty: document.getElementById("reworkQty").value || null,
+            reject_qty: document.getElementById("rejectQty").value || null,
+            conditional_accept_qty: document.getElementById("conditionalAcceptQty").value || null
+        };
+
+        try {
+            let url = '/api/inspections';
+            let method = 'POST';
+            if (isEditMode && editId) {
+                url = `/api/inspections/${editId}`;
+                method = 'PUT';
+            }
+            const response = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) throw new Error((await response.json()).error || 'Unknown error');
+            document.getElementById("formMessage").innerHTML = `<span class="text-green-600">✓ Inspection ${isEditMode ? 'updated' : 'saved'} to cloud!</span>`;
+            resetForm();
+            loadHistory();
+        } catch (err) { document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`; }
+    }
+
+    async function loadHistory() {
         try {
             const response = await fetch('/api/inspections');
-            if (!response.ok) throw new Error('Failed to fetch');
-            allInspections = await response.json();
-            updateProjectDropdown();
-            applyFilters();
+            if (!response.ok) throw new Error();
+            let data = await response.json();
+            if (engineerFromUrl) {
+                data = data.filter(row => row.username === currentEngineer);
+            }
+            const historyDiv = document.getElementById("inspectionHistory");
+            if (!data || data.length === 0) historyDiv.innerHTML = "<p class='text-gray-500'>No inspections found for this engineer.</p>";
+            else historyDiv.innerHTML = data.map(row => `
+                <div class="border-b py-2">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><br>
+                            <span class="text-sm text-gray-600">Process: ${row.process_type || 'Rolling'}</span>
+                        </div>
+                        <button onclick="editInspection(${row.id})" class="text-blue-600 text-sm underline">Edit</button>
+                    </div>
+                </div>
+            `).join("");
+        } catch (err) { document.getElementById("inspectionHistory").innerHTML = "<p class='text-red-500'>Error loading history</p>"; }
+    }
+
+    async function editInspection(id) {
+        try {
+            const response = await fetch(`/api/inspections/${id}`);
+            if (!response.ok) throw new Error();
+            const inspection = await response.json();
+            populateFormForEdit(inspection);
         } catch (err) {
-            console.error(err);
-            document.getElementById('inspectionTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-red-500 p-4">Error loading data</td></tr>';
+            document.getElementById("formMessage").innerHTML = `<span class="text-red-600">Error loading inspection: ${err.message}</span>`;
         }
     }
 
-    function updateProjectDropdown() {
-        const projectMap = new Map();
-        allInspections.forEach(insp => {
-            let proj = getProjectName(insp);
-            if (proj && proj.trim() !== '') {
-                proj = proj.trim();
-                if (!projectMap.has(proj)) {
-                    projectMap.set(proj, true);
-                }
-            }
-        });
-        const sorted = Array.from(projectMap.keys()).sort();
-        const select = document.getElementById('filterProjectName');
-        select.innerHTML = '<option value="">All Projects</option>';
-        sorted.forEach(proj => {
-            const option = document.createElement('option');
-            option.value = proj;
-            option.textContent = proj;
-            select.appendChild(option);
-        });
-    }
+    // Event listeners
+    document.getElementById("defectedMaterialCost").addEventListener("input", computeFailureCost);
+    document.getElementById("laborHours").addEventListener("input", computeFailureCost);
+    document.getElementById("salaryPerHour").addEventListener("input", computeFailureCost);
+    document.getElementById("machiningHours").addEventListener("input", computeFailureCost);
+    document.getElementById("machiningCostPerHr").addEventListener("input", computeFailureCost);
+    document.getElementById("reworkQty").addEventListener("input", computeFailureCost);
+    document.getElementById("rejectQty").addEventListener("input", computeFailureCost);
+    document.getElementById("startTime").addEventListener("change", updateTotalTime);
+    document.getElementById("endTime").addEventListener("change", updateTotalTime);
 
-    function formatTotalMinutes(totalMinutes) {
-        if (!totalMinutes || totalMinutes <= 0) return '0 min';
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        if (hours > 0) {
-            return `${totalMinutes} min (${hours}h ${minutes}m)`;
-        }
-        return `${totalMinutes} min`;
-    }
-
-    function applyFilters() {
-        const processFilter = document.getElementById('filterProcess').value;
-        const engineerFilter = document.getElementById('filterEngineer').value;
-        const projectFilter = document.getElementById('filterProjectName').value;
-        const dateFrom = document.getElementById('filterDateFrom').value;
-        const dateTo = document.getElementById('filterDateTo').value;
-        const workstationFilter = document.getElementById('filterWorkstation').value;
-        const locationFilter = document.getElementById('filterLocation').value;
-
-        let filtered = [...allInspections];
-
-        if (processFilter) {
-            filtered = filtered.filter(insp => insp.process_type === processFilter);
-        }
-        if (engineerFilter) {
-            filtered = filtered.filter(insp => insp.username && insp.username.toLowerCase() === engineerFilter.toLowerCase());
-        }
-        if (projectFilter) {
-            filtered = filtered.filter(insp => getProjectName(insp) === projectFilter);
-        }
-        if (dateFrom) {
-            const from = new Date(dateFrom);
-            from.setHours(0,0,0,0);
-            filtered = filtered.filter(insp => new Date(insp.submitted_at) >= from);
-        }
-        if (dateTo) {
-            const to = new Date(dateTo);
-            to.setHours(23,59,59,999);
-            filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to);
-        }
-        // Workstation filter
-        if (workstationFilter) {
-            filtered = filtered.filter(insp => getWorkstation(insp) === workstationFilter.toLowerCase());
-        }
-        // Location filter
-        if (locationFilter) {
-            filtered = filtered.filter(insp => getLocation(insp) === locationFilter.toLowerCase());
-        }
-
-        updateSummary(filtered);
-        updateResultsTable(filtered);
-        updateBarChart(filtered);
-        updateTable(filtered);
-    }
-
-    function updateSummary(data) {
-        const total = data.length;
-        const totalMinutes = data.reduce((sum, insp) => sum + (insp.total_minutes || 0), 0);
-        const acceptedCount = data.filter(insp => insp.result === 'Accepted').length;
-        const passRate = total === 0 ? 0 : ((acceptedCount / total) * 100).toFixed(1);
-        const failCount = data.filter(insp => insp.result === 'Reject' || insp.result === 'Rework').length;
-
-        document.getElementById('totalCount').innerText = total;
-        document.getElementById('totalTime').innerHTML = formatTotalMinutes(totalMinutes);
-        document.getElementById('passRate').innerText = `${passRate}%`;
-        document.getElementById('failCount').innerText = failCount;
-    }
-
-    function updateResultsTable(data) {
-        const counts = { Accepted: 0, Rework: 0, Reject: 0, 'Conditional Accepted': 0 };
-        let totalValid = 0;
-        data.forEach(insp => {
-            const res = insp.result;
-            if (res && validResults.includes(res)) {
-                counts[res]++;
-                totalValid++;
-            }
-        });
-
-        const tbody = document.getElementById('resultsTableBody');
-        if (totalValid === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4">No matching inspections</td></tr>';
-            return;
-        }
-
-        const rows = validResults.map(result => {
-            const count = counts[result];
-            const percentage = ((count / totalValid) * 100).toFixed(1);
-            return `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-2 border">${result}</td>
-                    <td class="p-2 border">${count}</td>
-                    <td class="p-2 border">${percentage}%</td>
-                </tr>
-            `;
-        }).join('');
-        tbody.innerHTML = rows;
-    }
-
-    function updateBarChart(data) {
-        const results = { Accepted: 0, Rework: 0, Reject: 0, 'Conditional Accepted': 0 };
-        data.forEach(insp => {
-            const res = insp.result;
-            if (res && validResults.includes(res)) {
-                results[res]++;
-            }
-        });
-        const labels = validResults;
-        const values = [results.Accepted, results.Rework, results.Reject, results['Conditional Accepted']];
-        const colors = ['#2ecc71', '#f39c12', '#e74c3c', '#3498db'];
-
-        const ctx = document.getElementById('resultBarChart').getContext('2d');
-        if (barChart) barChart.destroy();
-        barChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Number of Inspections',
-                    data: values,
-                    backgroundColor: colors,
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Count' }, stepSize: 1 },
-                    x: { title: { display: true, text: 'Result' } }
-                }
-            }
-        });
-    }
-
-    function updateTable(data) {
-        const tbody = document.getElementById('inspectionTableBody');
-        if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">No inspections match filters</td></tr>';
-            document.getElementById('tableInfo').innerText = 'Showing 0 records';
-            return;
-        }
-
-        tbody.innerHTML = data.map(insp => {
-            const processDisplay = insp.process_type || 'Rolling Process';
-            const projectName = getProjectName(insp) || '-';
-            return `
-            <tr class="border-b hover:bg-gray-50">
-                <td class="p-3">${new Date(insp.submitted_at).toLocaleString()}</td>
-                <td class="p-3">${escapeHtml(processDisplay)}</td>
-                <td class="p-3">${escapeHtml(projectName)}</td>
-                <td class="p-3">${escapeHtml(insp.username) || '-'}</td>
-                <td class="p-3">
-                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(insp.result)}">${insp.result || 'N/A'}</span>
-                </td>
-                <td class="p-3">${insp.cumulative_points ?? '-'}</td>
-                <td class="p-3">${escapeHtml(insp.operator_name) || '-'}</td>
-            </tr>`;
-        }).join('');
-        document.getElementById('tableInfo').innerText = `Showing ${data.length} of ${allInspections.length} inspections`;
-    }
-
-    function getResultColor(result) {
-        switch(result) {
-            case 'Accepted': return 'bg-green-100 text-green-800';
-            case 'Rework': return 'bg-yellow-100 text-yellow-800';
-            case 'Reject': return 'bg-red-100 text-red-800';
-            case 'Conditional Accepted': return 'bg-blue-100 text-blue-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
-    }
-
-    fetchData();
+    document.addEventListener("DOMContentLoaded", () => { renderDynamicFields(); loadHistory(); document.getElementById("inspectionDate").value = new Date().toISOString().slice(0,10); });
 </script>
 </body>
 </html>
