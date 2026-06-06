@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Inspection Report | Amhara Metal Industry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            .report-container, .report-container * { visibility: visible; }
+            .report-container { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
+            .no-print { display: none; }
+        }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background-color: #f3f4f6; font-weight: 600; }
+        tr:hover { background-color: #f9fafb; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div class="max-w-7xl mx-auto p-4 md:p-6">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-blue-900">📋 Inspection Report</h1>
+            <p class="text-gray-600">Drawing, Part & Quantity details – filter by project</p>
+        </div>
+        <div class="flex gap-3 no-print">
+            <input type="text" id="searchInput" placeholder="Search any field..." class="border rounded-lg px-3 py-2 w-64 text-sm">
+            <button onclick="copyTableToClipboard()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-copy"></i> Copy Table</button>
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-print"></i> Print</button>
+            <button onclick="fetchReportData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+    </div>
+
+    <!-- Project Name Filter Dropdown (outside table) -->
+    <div class="bg-white rounded-lg shadow p-4 mb-4 no-print">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Project Name</label>
+        <select id="projectFilterSelect" class="border rounded-lg px-3 py-2 w-full md:w-80">
+            <option value="">All Projects</option>
+        </select>
+    </div>
+
+    <!-- Report Table (Project Name column removed) -->
+    <div class="bg-white rounded-xl shadow overflow-hidden report-container">
+        <div class="table-wrapper">
+            <table id="reportTable" class="min-w-full text-sm">
+                <thead>
+                    <tr>
+                        <th>Drawing No.</th>
+                        <th>Part Name</th>
+                        <th>Delivered Qty</th>
+                        <th>Accepted Qty</th>
+                        <th>Rework Qty</th>
+                        <th>Reject Qty</th>
+                        <th>Conditional Accept</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                    <tr><td colspan="7" class="text-center py-8 text-gray-500">Loading data......</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="reportInfo" class="p-3 text-sm text-gray-500 border-t flex justify-between items-center no-print">
+            <span>Loading...</span>
+            <span id="recordCount"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Helper: safely get nested extra fields
+    function getExtraField(inspection, fieldName) {
+        if (inspection.extra_fields && inspection.extra_fields[fieldName]) {
+            return inspection.extra_fields[fieldName].trim();
+        }
+        return '';
+    }
+
+    // Helper: get project name (fallback from extra_fields or direct)
+    function getProjectName(inspection) {
+        if (inspection.project_name) return inspection.project_name.trim();
+        return getExtraField(inspection, 'Project Name');
+    }
+
+    // Store all raw rows and unique projects
+    let allReportRows = [];
+    let uniqueProjects = new Set();
+
+    // Main fetch and render
+    async function fetchReportData() {
+        const tbody = document.getElementById('reportTableBody');
+        const infoSpan = document.getElementById('reportInfo');
+        const recordCountSpan = document.getElementById('recordCount');
+        try {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">Fetching inspections...</td></tr>';
+            const response = await fetch('/api/inspections');
+            if (!response.ok) throw new Error('Failed to fetch data');
+            const inspections = await response.json();
+            
+            // Build rows array and collect unique project names
+            const rows = [];
+            uniqueProjects.clear();
+            for (const insp of inspections) {
+                const projectName = getProjectName(insp) || '';
+                if (projectName) uniqueProjects.add(projectName);
+                
+                const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
+                const partName = getExtraField(insp, 'Part Name') || '-';
+                const deliveredQty = (insp.delivered_qty !== undefined && insp.delivered_qty !== null && insp.delivered_qty !== '') ? Number(insp.delivered_qty).toLocaleString() : '-';
+                const acceptedQty = (insp.accepted_qty !== undefined && insp.accepted_qty !== null && insp.accepted_qty !== '') ? Number(insp.accepted_qty).toLocaleString() : '-';
+                const reworkQty = (insp.rework_qty !== undefined && insp.rework_qty !== null && insp.rework_qty !== '') ? Number(insp.rework_qty).toLocaleString() : '-';
+                const rejectQty = (insp.reject_qty !== undefined && insp.reject_qty !== null && insp.reject_qty !== '') ? Number(insp.reject_qty).toLocaleString() : '-';
+                const conditionalAccept = (insp.conditional_accept_qty !== undefined && insp.conditional_accept_qty !== null && insp.conditional_accept_qty !== '') ? Number(insp.conditional_accept_qty).toLocaleString() : '-';
+                
+                rows.push({
+                    projectName,
+                    drawingNo,
+                    partName,
+                    deliveredQty,
+                    acceptedQty,
+                    reworkQty,
+                    rejectQty,
+                    conditionalAccept,
+                    raw: `${projectName} ${drawingNo} ${partName} ${deliveredQty} ${acceptedQty} ${reworkQty} ${rejectQty} ${conditionalAccept}`.toLowerCase()
+                });
+            }
+            
+            // Populate project dropdown
+            const projectSelect = document.getElementById('projectFilterSelect');
+            projectSelect.innerHTML = '<option value="">All Projects</option>';
+            [...uniqueProjects].sort().forEach(proj => {
+                projectSelect.innerHTML += `<option value="${escapeHtml(proj)}">${escapeHtml(proj)}</option>`;
+            });
+            
+            // Store rows globally and apply filters
+            allReportRows = rows;
+            applyFilters();
+            
+            const total = rows.length;
+            recordCountSpan.innerText = `Total records: ${total}`;
+            infoSpan.innerHTML = `<span>✅ Loaded ${total} inspections</span>`;
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-500">Error loading data. Make sure backend API is running at /api/inspections</td></tr>';
+            infoSpan.innerHTML = '<span class="text-red-500">Error loading data</span>';
+        }
+    }
+    
+    function applyFilters() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const selectedProject = document.getElementById('projectFilterSelect').value;
+        
+        let filtered = allReportRows;
+        if (selectedProject) {
+            filtered = filtered.filter(row => row.projectName === selectedProject);
+        }
+        if (searchTerm) {
+            filtered = filtered.filter(row => row.raw.includes(searchTerm));
+        }
+        renderTable(filtered);
+        const countSpan = document.getElementById('recordCount');
+        if (countSpan) countSpan.innerText = `Showing ${filtered.length} of ${allReportRows.length} records`;
+    }
+    
+    function renderTable(rows) {
+        const tbody = document.getElementById('reportTableBody');
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No matching records</td></tr>';
+            return;
+        }
+        tbody.innerHTML = rows.map(row => `
+            <tr>
+                <td class="border-b">${escapeHtml(row.drawingNo)}</td>
+                <td class="border-b">${escapeHtml(row.partName)}</td>
+                <td class="border-b text-right">${row.deliveredQty}</td>
+                <td class="border-b text-right">${row.acceptedQty}</td>
+                <td class="border-b text-right">${row.reworkQty}</td>
+                <td class="border-b text-right">${row.rejectQty}</td>
+                <td class="border-b text-right">${row.conditionalAccept}</td>
+            </tr>
+        `).join('');
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    // Copy table data to clipboard (tab-separated, without project name column)
+    async function copyTableToClipboard() {
+        const rows = document.querySelectorAll('#reportTable tbody tr');
+        if (!rows.length || (rows.length === 1 && rows[0].innerText.includes('No matching'))) {
+            alert('No data to copy');
+            return;
+        }
+        // Header without Project Name
+        let csvContent = "Drawing No.\tPart Name\tDelivered Qty\tAccepted Qty\tRework Qty\tReject Qty\tConditional Accept\n";
+        for (let row of rows) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length === 7) {
+                const line = Array.from(cells).map(cell => cell.innerText.trim()).join('\t');
+                csvContent += line + '\n';
+            }
+        }
+        try {
+            await navigator.clipboard.writeText(csvContent);
+            alert('Table copied to clipboard (tab-separated, paste into Excel)');
+        } catch (err) {
+            alert('Copy failed: ' + err);
+        }
+    }
+    
+    // Event listeners for filters
+    document.getElementById('searchInput').addEventListener('input', function() {
+        if (allReportRows.length) applyFilters();
+    });
+    document.getElementById('projectFilterSelect').addEventListener('change', function() {
+        if (allReportRows.length) applyFilters();
+    });
+    
+    // Initial load
+    fetchReportData();
+</script>
+</body>
+</html>
