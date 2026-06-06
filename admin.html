@@ -64,6 +64,27 @@
         </div>
     </div>
 
+    <!-- ======= NEW: Quantity Summary Table (Delivered, Accepted, Rework, Reject, Conditional Accept) ======= -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <h2 class="font-bold text-lg mb-3">📦 Quantity Summary (Sum of Quantities)</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm border-collapse">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-2 border text-left">Delivered Qty</th>
+                        <th class="p-2 border text-left">Accepted Qty</th>
+                        <th class="p-2 border text-left">Rework Qty</th>
+                        <th class="p-2 border text-left">Reject Qty</th>
+                        <th class="p-2 border text-left">Conditional Accept Qty</th>
+                    </tr>
+                </thead>
+                <tbody id="quantitySummaryBody">
+                    <tr><td colspan="5" class="text-center p-4">-</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow p-4 mb-6">
         <h2 class="font-bold text-lg mb-3">Filters</h2>
@@ -167,6 +188,7 @@
         updateSummary(filtered);
         updateResultsTable(filtered);
         updateBarChart(filtered);
+        updateQuantitySummary(filtered);   // NEW: update quantity summary table
         updateTable(filtered);
     }
 
@@ -199,6 +221,35 @@
         barChart = new Chart(ctx, { type:'bar', data:{ labels:validResults, datasets:[{ label:'Number of Inspections', data:[results.Accepted, results.Rework, results.Reject, results['Conditional Accepted']], backgroundColor:['#2ecc71','#f39c12','#e74c3c','#3498db'], borderRadius:6 }] }, options:{ responsive:true, maintainAspectRatio:true, scales:{ y:{ beginAtZero:true, title:{ display:true, text:'Count' }, stepSize:1 } } } });
     }
 
+    // ========= NEW: Update Quantity Summary Table =========
+    function updateQuantitySummary(data) {
+        let sumDelivered = 0;
+        let sumAccepted = 0;
+        let sumRework = 0;
+        let sumReject = 0;
+        let sumConditional = 0;
+
+        data.forEach(insp => {
+            // delivered_qty, accepted_qty, rework_qty, reject_qty, conditional_accept_qty are part of inspection object
+            if (insp.delivered_qty && !isNaN(parseFloat(insp.delivered_qty))) sumDelivered += parseFloat(insp.delivered_qty);
+            if (insp.accepted_qty && !isNaN(parseFloat(insp.accepted_qty))) sumAccepted += parseFloat(insp.accepted_qty);
+            if (insp.rework_qty && !isNaN(parseFloat(insp.rework_qty))) sumRework += parseFloat(insp.rework_qty);
+            if (insp.reject_qty && !isNaN(parseFloat(insp.reject_qty))) sumReject += parseFloat(insp.reject_qty);
+            if (insp.conditional_accept_qty && !isNaN(parseFloat(insp.conditional_accept_qty))) sumConditional += parseFloat(insp.conditional_accept_qty);
+        });
+
+        const tbody = document.getElementById('quantitySummaryBody');
+        tbody.innerHTML = `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-2 border font-semibold">${sumDelivered.toLocaleString()}</td>
+                <td class="p-2 border font-semibold text-green-700">${sumAccepted.toLocaleString()}</td>
+                <td class="p-2 border font-semibold text-yellow-700">${sumRework.toLocaleString()}</td>
+                <td class="p-2 border font-semibold text-red-700">${sumReject.toLocaleString()}</td>
+                <td class="p-2 border font-semibold text-blue-700">${sumConditional.toLocaleString()}</td>
+            </tr>
+        `;
+    }
+
     function updateTable(data) {
         const tbody = document.getElementById('inspectionTableBody');
         if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">No inspections match filters</td></tr>'; document.getElementById('tableInfo').innerText = 'Showing 0 records'; return; }
@@ -211,7 +262,7 @@
                 <td class="p-3"><span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(i.result)}">${i.result || 'N/A'}</span></td>
                 <td class="p-3">${i.cumulative_points ?? '-'}</td>
                 <td class="p-3">${escapeHtml(i.operator_name) || '-'}</td>
-            </tr>`).join('');
+            </td>`).join('');
         document.getElementById('tableInfo').innerText = `Showing ${data.length} of ${allInspections.length} inspections`;
     }
 
