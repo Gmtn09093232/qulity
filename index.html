@@ -216,12 +216,12 @@
     }
 
     // ============================================================
-    // GLOBAL SUGGESTIONS (Customer & Project names from all inspections)
+    // GLOBAL SUGGESTIONS (Customer & Project names from ALL inspections - cross‑engineer)
     // ============================================================
     let allCustomerNames = new Set();
     let allProjectNames = new Set();
 
-    // Function to update suggestions from inspections array
+    // Function to update suggestions from inspections array (uses all inspections, not filtered by engineer)
     function updateSuggestionsFromInspections(inspections) {
         allCustomerNames.clear();
         allProjectNames.clear();
@@ -234,9 +234,7 @@
             if (extra["Project Name"] && typeof extra["Project Name"] === "string") {
                 allProjectNames.add(extra["Project Name"].trim());
             }
-            // Also check inside incoming_rev structure (if any) - but incoming has no customer/project fields
         }
-        // Refresh datalist options if those fields are currently rendered
         refreshDatalistOptions();
     }
 
@@ -344,7 +342,7 @@
     }
 
     // ============================================================
-    // STANDARD PROCESS DEFINITIONS
+    // STANDARD PROCESS DEFINITIONS (unchanged)
     // ============================================================
     const baseExtraFields = ["Customer Name", "Project Name", "Drawing No.", "Part Name", "Tag No.", "Work Station", "Location"];
     const ratingOpts = ["Accepted", "Conditional Accept", "Rework", "Reject"];
@@ -495,7 +493,7 @@
         });
         html += `</tbody></table></div>`;
         container.innerHTML = html;
-        refreshDatalistOptions(); // populate datalist with current suggestions
+        refreshDatalistOptions(); // populate datalist with current suggestions (cross‑engineer)
     }
 
     function switchProcess() { currentProcess = document.getElementById("processType").value; renderDynamicFields(); }
@@ -605,12 +603,23 @@
         const extraFields = getExtraFields(); 
         const payload = { process_type: processTypeText, username: engineerName, source_type: sourceType, outsource_institute: document.getElementById("outsourceInstitute").value, design_available: document.getElementById("designAvail").checked, mpp_available: document.getElementById("mppAvail").checked, operation_status: document.getElementById("operationStatus").value, shift: parseInt(document.querySelector('input[name="shift"]:checked')?.value)||null, operator_name: document.getElementById("operatorName").value, start_time: document.getElementById("startTime").value||null, end_time: document.getElementById("endTime").value||null, total_minutes: updateTotalTime(), acceptance_data: acceptanceData, extra_fields: extraFields, most_frequent_defects: document.getElementById("mostFrequentDefects").value, defect_correction_slip: document.getElementById("defectCorrectionSlip").value, cause_of_defects: document.getElementById("causeOfDefectsDetail").value, defected_material_cost: +document.getElementById("defectedMaterialCost").value||0, labor_hours: +document.getElementById("laborHours").value||0, salary_per_hour: +document.getElementById("salaryPerHour").value||0, level: document.getElementById("levelSelect").value, machining_hours: +document.getElementById("machiningHours").value||0, machining_cost_per_hr: +document.getElementById("machiningCostPerHr").value||0, total_internal_failure_cost: computeFailureCost(), delivered_qty: document.getElementById("deliveredQty").value||null, accepted_qty: document.getElementById("acceptedQty").value||null, rework_qty: document.getElementById("reworkQty").value||null, reject_qty: document.getElementById("rejectQty").value||null, conditional_accept_qty: document.getElementById("conditionalAcceptQty").value||null }; 
         try { let url='/api/inspections', method='POST'; if(isEditMode && editId){ url=`/api/inspections/${editId}`; method='PUT'; } const resp=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!resp.ok)throw new Error((await resp.json()).error||'Unknown error'); document.getElementById("formMessage").innerHTML=`<span class="text-green-600">✓ Inspection ${isEditMode?'updated':'saved'} to cloud!</span>`; resetForm(); loadHistory(); } catch(err){ document.getElementById("formMessage").innerHTML=`<span class="text-red-600">Error: ${err.message}</span>`; } }
+    
+    // ============================================================
+    // LOAD HISTORY: uses ALL inspections for suggestions, but only current engineer's for display
+    // ============================================================
     async function loadHistory(){ 
-        try{ const resp=await fetch('/api/inspections'); if(!resp.ok)throw new Error(); let data=await resp.json(); if(engineerFromUrl) data=data.filter(row=>row.username===currentEngineer); 
-            updateSuggestionsFromInspections(data);
+        try{ 
+            const resp=await fetch('/api/inspections'); 
+            if(!resp.ok)throw new Error(); 
+            let allData=await resp.json();
+            // Update suggestions using ALL inspections (cross‑engineer)
+            updateSuggestionsFromInspections(allData);
+            // For history display, filter by current engineer if engineerFromUrl is set
+            let displayData = allData;
+            if(engineerFromUrl) displayData = displayData.filter(row=>row.username===currentEngineer);
             const histDiv=document.getElementById("inspectionHistory"); 
-            if(!data.length) histDiv.innerHTML="<p class='text-gray-500'>No inspections found.</p>"; 
-            else histDiv.innerHTML=data.map(row=>`<div class="border-b py-2"><div class="flex justify-between"><div><span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><br><span class="text-sm">Process: ${row.process_type||'Rolling'}</span></div><button onclick="editInspection(${row.id})" class="text-blue-600 text-sm underline">Edit</button></div></div>`).join(""); 
+            if(!displayData.length) histDiv.innerHTML="<p class='text-gray-500'>No inspections found.</p>"; 
+            else histDiv.innerHTML=displayData.map(row=>`<div class="border-b py-2"><div class="flex justify-between"><div><span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><br><span class="text-sm">Process: ${row.process_type||'Rolling'}</span></div><button onclick="editInspection(${row.id})" class="text-blue-600 text-sm underline">Edit</button></div></div>`).join(""); 
         } catch(err){ document.getElementById("inspectionHistory").innerHTML="<p class='text-red-500'>Error loading history</p>"; } 
     }
     async function editInspection(id){ try{ const resp=await fetch(`/api/inspections/${id}`); if(!resp.ok)throw new Error(); const insp=await resp.json(); document.getElementById("machineDescriptionSelect").value=""; populateFormForEdit(insp); } catch(err){ document.getElementById("formMessage").innerHTML=`<span class="text-red-600">Error: ${err.message}</span>`; } }
