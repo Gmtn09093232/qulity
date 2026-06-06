@@ -46,7 +46,9 @@ app.get('/admin', (req, res) => {
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
-
+app.get('/list', (req, res) => {
+  res.sendFile(path.join(__dirname, 'list.html'));
+});
 // GET a single inspection by ID
 app.get('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
