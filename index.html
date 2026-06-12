@@ -108,7 +108,7 @@
                     </div>
                 </div>
 
-                <!-- Existing header fields (source, docs, shift, etc.) -->
+                <!-- Existing header fields -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
                     <div>
                         <label class="font-bold">Source of Process Inspection</label>
@@ -233,7 +233,7 @@
     }
 
     // ============================================================
-    // SINGLE CAMERA + OCR FOR ALL 4 FIELDS (Client, Title, DWG No., Part)
+    // OCR SCANNING (unchanged)
     // ============================================================
     async function scanDocumentAndFill() {
         const fileInput = document.createElement('input');
@@ -279,7 +279,6 @@
     function parseFieldsFromText(fullText) {
         const result = { clientName: '', projectTitle: '', drawingNo: '', partName: '' };
         const lines = fullText.split(/\r?\n/);
-        // patterns for "Client Name", "Title", "DWG No.", "Part Name"
         const patterns = {
             clientName: [/Client\s*Name\s*[:;]\s*(.+)/i, /Customer\s*Name\s*[:;]\s*(.+)/i, /Client\s*[:;]\s*(.+)/i],
             projectTitle: [/Title\s*[:;]\s*(.+)/i, /Project\s*Title\s*[:;]\s*(.+)/i, /Project\s*Name\s*[:;]\s*(.+)/i, /Project\s*[:;]\s*(.+)/i],
@@ -303,7 +302,7 @@
     }
 
     // ============================================================
-    // GLOBAL SUGGESTIONS (for Client & Title)
+    // GLOBAL SUGGESTIONS
     // ============================================================
     let allClientNames = new Set();
     let allProjectTitles = new Set();
@@ -345,40 +344,103 @@
     }
 
     // ============================================================
-    // MACHINERY MASTER (unchanged)
+    // COMPLETE MACHINERY MASTER (69 machines from Excel)
+    // Each entry: { desc, rate } where rate = (Total Fixed + Total Operating) / Total Hours
+    // Values derived from the provided "Consolidated Machinery Cost Rates 2 in 1.xlsx"
     // ============================================================
     const machineryMaster = [
-        { desc: "Power hack saw", fixed: 1693.44, operating: 24876.46, hours: 1767, rate: (1693.44+24876.46)/1767 },
-        { desc: "Medium duty lathe machine, Conventional", fixed: 13539.12, operating: 52982.93, hours: 1767, rate: (13539.12+52982.93)/1767 },
-        { desc: "CNC precision lathe machine", fixed: 26705.6, operating: 73136.89, hours: 1767, rate: (26705.6+73136.89)/1767 },
-        { desc: "CNC heavy duty precision lathe machine", fixed: 78431.06, operating: 171904.99, hours: 1767, rate: (78431.06+171904.99)/1767 },
-        { desc: "Double column VTC", fixed: 89255.26, operating: 223282.18, hours: 1522, rate: (89255.26+223282.18)/1522 },
-        { desc: "Universal milling machine, conventional", fixed: 7718.89, operating: 34658.23, hours: 1522, rate: (7718.89+34658.23)/1522 },
-        { desc: "CNC universal milling machine", fixed: 43119.34, operating: 77600.85, hours: 1522, rate: (43119.34+77600.85)/1522 },
-        { desc: "Hydraulic vertical slotting machine", fixed: 43917.85, operating: 78121.05, hours: 1522, rate: (43917.85+78121.05)/1522 },
-        { desc: "NC Horizontal milling machine", fixed: 62954.94, operating: 91573.22, hours: 1522, rate: (62954.94+91573.22)/1522 },
-        { desc: "Electrical discharge machine EDM", fixed: 17389.69, operating: 24547.62, hours: 736, rate: (17389.69+24547.62)/736 },
-        { desc: "CNC wire cutting EDM Machine", fixed: 13308.44, operating: 22588.04, hours: 736, rate: (13308.44+22588.04)/736 },
-        { desc: "Pedestal grinding machine", fixed: 310.53, operating: 7844.46, hours: 1227, rate: (310.53+7844.46)/1227 },
-        { desc: "Universal cylindrical grinding m/c", fixed: 17922.03, operating: 44474.64, hours: 1522, rate: (17922.03+44474.64)/1522 },
-        { desc: "Surface grinding machine", fixed: 12070.58, operating: 37225.39, hours: 1522, rate: (12070.58+37225.39)/1522 },
-        { desc: "CNC horizontal surface grinder", fixed: 33714.71, operating: 53078.12, hours: 1522, rate: (33714.71+53078.12)/1522 },
-        { desc: "CNC external grinder machine", fixed: 41522.33, operating: 48115.07, hours: 1522, rate: (41522.33+48115.07)/1522 },
-        { desc: "CNC Cylindrical inside grinder machine", fixed: 50572.06, operating: 84805.11, hours: 1522, rate: (50572.06+84805.11)/1522 },
-        { desc: "5-axis CNC tool grinding machine", fixed: 102031.36, operating: 124842.37, hours: 1522, rate: (102031.36+124842.37)/1522 },
-        { desc: "Radial drilling machine", fixed: 24842.42, operating: 63559.86, hours: 1620, rate: (24842.42+63559.86)/1620 },
-        { desc: "Deep hole drilling & boring", fixed: 90980.03, operating: 278946.66, hours: 1620, rate: (90980.03+278946.66)/1620 }
+        { desc: "Power hack saw", rate: (1693.44 + 24876.46) / 1767 },
+        { desc: "Medium duty lathe machine, Conventional", rate: (13539.12 + 52982.93) / 1767 },
+        { desc: "CNC precision lathe machine", rate: (26705.6 + 73136.89) / 1767 },
+        { desc: "CNC heavy duty precision lathe machine", rate: (78431.06 + 171904.99) / 1767 },
+        { desc: "Double column VTC", rate: (89255.26 + 223282.18) / 1522 },
+        { desc: "Universal milling machine, conventional", rate: (7718.89 + 34658.23) / 1522 },
+        { desc: "CNC universal milling machine", rate: (43119.34 + 77600.85) / 1522 },
+        { desc: "Hydraulic vertical slotting machine", rate: (43917.85 + 78121.05) / 1522 },
+        { desc: "NC Horizontal milling machine", rate: (62954.94 + 91573.22) / 1522 },
+        { desc: "Electrical discharge machine EDM", rate: (17389.69 + 24547.62) / 736 },
+        { desc: "CNC wire cutting EDM Machine", rate: (13308.44 + 22588.04) / 736 },
+        { desc: "Pedestal grinding machine", rate: (310.53 + 7844.46) / 1227 },
+        { desc: "Universal cylindrical grinding m/c", rate: (17922.03 + 44474.64) / 1522 },
+        { desc: "Surface grinding machine", rate: (12070.58 + 37225.39) / 1522 },
+        { desc: "CNC horizontal surface grinder", rate: (33714.71 + 53078.12) / 1522 },
+        { desc: "CNC external grinder machine", rate: (41522.33 + 48115.07) / 1522 },
+        { desc: "CNC Cylindrical inside grinder machine", rate: (50572.06 + 84805.11) / 1522 },
+        { desc: "5-axis CNC tool grinding machine", rate: (102031.36 + 124842.37) / 1522 },
+        { desc: "Radial drilling machine", rate: (24842.42 + 63559.86) / 1620 },
+        { desc: "Deep hole drilling & boring", rate: (90980.03 + 278946.66) / 1620 },
+        { desc: "Three axis gun and BTA drilling", rate: (208498.86 + 473226.13) / 1620 },
+        { desc: "Deep hole honing", rate: (54249.66 + 106996.73) / 1620 },
+        { desc: "Vertical honing machine", rate: (5305.63 + 25910.68) / 1620 },
+        { desc: "Pneumatic spot welding machine", rate: (5850.57 + 71953.92) / 1424 },
+        { desc: "MIG welding machine (CEMONT)", rate: (360.04 + 44543.16) / 1816 },
+        { desc: "TIG welding machine (KLYUE)", rate: (360.04 + 36391.32) / 1816 },
+        { desc: "Arc welding machine (CEMONT)", rate: (360.04 + 70974.89) / 1816 },
+        { desc: "Submerged arc welding machine", rate: (6075.59 + 144254.31) / 1816 },
+        { desc: "Heavy duty hydraulic shear machine", rate: (11977.59 + 40764.97) / 1669 },
+        { desc: "Hydraulic sheet metal bending machine", rate: (55249.54 + 165016.83) / 1620 },
+        { desc: "CNC Hydraulic four roller Plate rolling", rate: (35773.08 + 47918.73) / 1620 },
+        { desc: "Hydraulic combination shearing and punching machine", rate: (5678.27 + 14469.1) / 1424 },
+        { desc: "Automatic pipe bending machine", rate: (60615.5 + 80514.84) / 1620 },
+        { desc: "Automatic profile bending machine", rate: (25140.53 + 36569.87) / 1424 },
+        { desc: "Automatic tube pipe hole flame cutter", rate: (1987.39 + 17146.02) / 1424 },
+        { desc: "Gantry type CNC plasma metal cutting machine", rate: (95394.88 + 275812.66) / 1424 },
+        { desc: "Hydraulic plate bending machine", rate: (109704.12 + 321687.29) / 1620 },
+        { desc: "CNC laser cutting machine", rate: (113494.36 + 86076.62) / 1227 },
+        { desc: "Hydraulic CNC turret punch machine", rate: (65822.47 + 90240.45) / 1227 },
+        { desc: "Pneumatic forging hammer machine", rate: (15615.23 + 71572.02) / 1620 },
+        { desc: "Forging hydraulic press machine", rate: (37164.26 + 56125.88) / 1424 },
+        { desc: "Portable polishing machine", rate: (39.93 + 4618.04) / 491 },
+        { desc: "Hydraulic press", rate: (2040.63 + 7884.41) / 491 },
+        { desc: "High pressure water jet cleaning machine", rate: (621.06 + 9713.98) / 491 },
+        { desc: "Automatic hose crimping machine", rate: (3482.2 + 5093.5) / 491 },
+        { desc: "Name plate printing machine", rate: (6558.4 + 6206.5) / 491 },
+        { desc: "Floor drilling machine", rate: (4400.66 + 14162.03) / 1227 },
+        { desc: "CNC hydraulic Guillotine shear", rate: (6444.75 + 88123.03) / 1620 },
+        { desc: "100T Punching Machine", rate: (3069.23 + 30869.16) / 1473 },
+        { desc: "160T punching Machine", rate: (5780.15 + 39306.75) / 1375 },
+        { desc: "Electrical Furnace and Annealing", rate: (54733.08 + 2398165.57) / 1767 },
+        { desc: "80T punching Machine", rate: (1732.78 + 21649.59) / 1473 },
+        { desc: "400T four column hydraulic press", rate: (4220.52 + 45234.71) / 1080 },
+        { desc: "Blast and painting equipment", rate: (23020.03 + 228189) / 1620 },
+        { desc: "150kg pneumatic hammer", rate: (2250.24 + 47102.48) / 1473 },
+        { desc: "400kg pneumatic hammer", rate: (6812.61 + 88803.68) / 1375 },
+        { desc: "300T friction screw press", rate: (7379.28 + 40806.48) / 933 },
+        { desc: "630T forge rolling machine", rate: (44958.07 + 135050.87) / 933 },
+        { desc: "100T friction screw press", rate: (3560.69 + 18387.16) / 1080 },
+        { desc: "3m3 air press machine", rate: (2516.21 + 30506.58) / 835 },
+        { desc: "Polish machine", rate: (144.01 + 6236.55) / 1080 },
+        { desc: "Edging machine", rate: (144.01 + 7080.27) / 1227 },
+        { desc: "Ferrous sand casting plant", rate: (-707583.02 + 9712306.76) / 1767 },
+        { desc: "Non-ferrous sand casting plant", rate: (-640918.65 + 5694741.95) / 1767 },
+        { desc: "gear hobbing", rate: (27291.17 + 62811.27) / 1620 },
+        { desc: "CNC hand bench drill", rate: (11925.78 + 133416.96) / 1620 },
+        { desc: "Abrasive water jet cutting machine", rate: (38157.59 + 109927.35) / 1080 },
+        { desc: "Pantograph Engraving Machine", rate: (1658.05 + 5337.33) / 1227 },
+        { desc: "Tank End (dish head) Making Machine", rate: (74492.47 + 73296.73) / 1375 }
     ];
+
     function populateMachineDropdown() {
         const selectEl = document.getElementById("machineDescriptionSelect");
         if (!selectEl) return;
         selectEl.innerHTML = '<option value="">-- Select Machine --</option>';
-        machineryMaster.forEach(m => { const opt = document.createElement("option"); opt.value = m.rate.toFixed(4); opt.textContent = m.desc; selectEl.appendChild(opt); });
-        selectEl.addEventListener("change", function() { const rate = parseFloat(this.value); if (!isNaN(rate) && this.value) { document.getElementById("machiningCostPerHr").value = rate.toFixed(2); computeFailureCost(); } });
+        machineryMaster.forEach(m => { 
+            const opt = document.createElement("option"); 
+            opt.value = m.rate.toFixed(4); 
+            opt.textContent = m.desc; 
+            selectEl.appendChild(opt); 
+        });
+        selectEl.addEventListener("change", function() { 
+            const rate = parseFloat(this.value); 
+            if (!isNaN(rate) && this.value) { 
+                document.getElementById("machiningCostPerHr").value = rate.toFixed(2); 
+                computeFailureCost(); 
+            } 
+        });
     }
 
     // ============================================================
-    // PROCESS DEFINITIONS (internal keys remain "Customer Name", "Project Name", "Drawing No.")
+    // PROCESS DEFINITIONS (unchanged)
     // ============================================================
     const baseExtraFields = ["Customer Name", "Project Name", "Drawing No.", "Part Name", "Tag No.", "Work Station", "Location"];
     const ratingOpts = ["Accepted", "Conditional Accept", "Rework", "Reject"];
@@ -414,12 +476,12 @@
     let isEditMode = false, editId = null;
     function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
-    // Simplified Incoming render (placeholder, but functional)
+    // Simplified Incoming render (keeping as per original)
     function renderIncomingForm() { return `<div class="border p-3 text-gray-500">Incoming inspection form (full version with items table present).</div>`; }
     function addIncomingItemRow() {}
     
     // ============================================================
-    // RENDER DYNAMIC FIELDS (UI shows "Client Name", "Title", "DWG No.")
+    // RENDER DYNAMIC FIELDS
     // ============================================================
     function renderDynamicFields() {
         const container = document.getElementById("dynamicFieldsContainer");
@@ -464,7 +526,7 @@
     }
     function switchProcess() { currentProcess = document.getElementById("processType").value; renderDynamicFields(); }
     
-    // Helper functions (get/set extra fields, acceptance, cost etc.)
+    // Helper functions (unchanged)
     function getExtraFields() { if (currentProcess === "Incoming") return {}; const def = getCurrentDef(); const extra = {}; if (def.extraFields) { def.extraFields.forEach(field => { const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_'); const el = document.getElementById(id); if (el) extra[field] = el.value; }); } return extra; }
     function setExtraFields(extra) { if (currentProcess === "Incoming") return; const def = getCurrentDef(); if (def.extraFields) { def.extraFields.forEach(field => { const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_'); const el = document.getElementById(id); if (el && extra[field] !== undefined) el.value = extra[field]; }); } }
     function getAcceptanceData() { if (currentProcess === "Incoming") return {}; const def = getCurrentDef(); const data = {}; for (let i=0; i<def.parameters.length; i++) { const paramId = `p_${i}`; const rating = document.getElementById(`rating_${paramId}`)?.value || ''; const causes = Array.from(document.querySelectorAll(`.cause-check[data-param="${paramId}"]:checked`)).map(cb => cb.value); data[paramId] = { parameter: def.parameters[i], rating, causes }; } return data; }
@@ -474,7 +536,17 @@
     function resetForm() { document.getElementById("inspectionForm").reset(); renderDynamicFields(); document.getElementById("defectedMaterialCost").value=""; document.getElementById("laborHours").value=""; document.getElementById("salaryPerHour").value=""; document.getElementById("levelSelect").value=""; document.getElementById("machiningHours").value=""; document.getElementById("machiningCostPerHr").value=""; document.getElementById("machineDescriptionSelect").value=""; computeFailureCost(); document.getElementById("formMessage").innerHTML=""; isEditMode=false; editId=null; document.getElementById("editId").value=""; document.getElementById("isEditMode").value="false"; document.getElementById("processType").disabled=false; document.getElementById("saveBtn").innerHTML="✔ Save to Cloud"; document.getElementById("cancelEditBtn").classList.add("hidden"); if(engineerFromUrl) document.getElementById('qcEngineerName').value=currentEngineer; }
     function cancelEdit(){ resetForm(); loadHistory(); }
     const urlParams = new URLSearchParams(window.location.search); const engineerFromUrl = urlParams.get('engineer'); let currentEngineer = ''; if(engineerFromUrl){ currentEngineer=decodeURIComponent(engineerFromUrl); const f=document.getElementById('qcEngineerName'); f.value=currentEngineer; f.readOnly=true; f.classList.add('bg-gray-100');}
-    async function saveToBackend() { let engineerName = document.getElementById("qcEngineerName").value.trim(); if(!engineerName){ document.getElementById("formMessage").innerHTML='<span class="text-red-600">Please enter QC Engineer Name</span>'; return; } const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value; if(!sourceType){ document.getElementById("formMessage").innerHTML='<span class="text-red-600">Please select Source</span>'; return; } const processTypeText = document.getElementById("processType").options[document.getElementById("processType").selectedIndex].text; const acceptanceData = getAcceptanceData(); const extraFields = getExtraFields(); const payload = { process_type: processTypeText, username: engineerName, source_type: sourceType, outsource_institute: document.getElementById("outsourceInstitute").value, design_available: document.getElementById("designAvail").checked, mpp_available: document.getElementById("mppAvail").checked, operation_status: document.getElementById("operationStatus").value, shift: parseInt(document.querySelector('input[name="shift"]:checked')?.value)||null, operator_name: document.getElementById("operatorName").value, start_time: document.getElementById("startTime").value||null, end_time: document.getElementById("endTime").value||null, total_minutes: updateTotalTime(), acceptance_data: acceptanceData, extra_fields: extraFields, most_frequent_defects: document.getElementById("mostFrequentDefects").value, defect_correction_slip: document.getElementById("defectCorrectionSlip").value, cause_of_defects: document.getElementById("causeOfDefectsDetail").value, defected_material_cost: +document.getElementById("defectedMaterialCost").value||0, labor_hours: +document.getElementById("laborHours").value||0, salary_per_hour: +document.getElementById("salaryPerHour").value||0, level: document.getElementById("levelSelect").value, machining_hours: +document.getElementById("machiningHours").value||0, machining_cost_per_hr: +document.getElementById("machiningCostPerHr").value||0, total_internal_failure_cost: computeFailureCost(), delivered_qty: document.getElementById("deliveredQty").value||null, accepted_qty: document.getElementById("acceptedQty").value||null, rework_qty: document.getElementById("reworkQty").value||null, reject_qty: document.getElementById("rejectQty").value||null, conditional_accept_qty: document.getElementById("conditionalAcceptQty").value||null }; try { let url='/api/inspections', method='POST'; if(isEditMode && editId){ url=`/api/inspections/${editId}`; method='PUT'; } const resp=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!resp.ok)throw new Error((await resp.json()).error||'Unknown error'); document.getElementById("formMessage").innerHTML=`<span class="text-green-600">✓ Inspection ${isEditMode?'updated':'saved'} to cloud!</span>`; resetForm(); loadHistory(); } catch(err){ document.getElementById("formMessage").innerHTML=`<span class="text-red-600">Error: ${err.message}</span>`; } }
+    async function saveToBackend() { 
+        let engineerName = document.getElementById("qcEngineerName").value.trim(); 
+        if(!engineerName){ document.getElementById("formMessage").innerHTML='<span class="text-red-600">Please enter QC Engineer Name</span>'; return; } 
+        const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value; 
+        if(!sourceType){ document.getElementById("formMessage").innerHTML='<span class="text-red-600">Please select Source</span>'; return; } 
+        const processTypeText = document.getElementById("processType").options[document.getElementById("processType").selectedIndex].text; 
+        const acceptanceData = getAcceptanceData(); 
+        const extraFields = getExtraFields(); 
+        const payload = { process_type: processTypeText, username: engineerName, source_type: sourceType, outsource_institute: document.getElementById("outsourceInstitute").value, design_available: document.getElementById("designAvail").checked, mpp_available: document.getElementById("mppAvail").checked, operation_status: document.getElementById("operationStatus").value, shift: parseInt(document.querySelector('input[name="shift"]:checked')?.value)||null, operator_name: document.getElementById("operatorName").value, start_time: document.getElementById("startTime").value||null, end_time: document.getElementById("endTime").value||null, total_minutes: updateTotalTime(), acceptance_data: acceptanceData, extra_fields: extraFields, most_frequent_defects: document.getElementById("mostFrequentDefects").value, defect_correction_slip: document.getElementById("defectCorrectionSlip").value, cause_of_defects: document.getElementById("causeOfDefectsDetail").value, defected_material_cost: +document.getElementById("defectedMaterialCost").value||0, labor_hours: +document.getElementById("laborHours").value||0, salary_per_hour: +document.getElementById("salaryPerHour").value||0, level: document.getElementById("levelSelect").value, machining_hours: +document.getElementById("machiningHours").value||0, machining_cost_per_hr: +document.getElementById("machiningCostPerHr").value||0, total_internal_failure_cost: computeFailureCost(), delivered_qty: document.getElementById("deliveredQty").value||null, accepted_qty: document.getElementById("acceptedQty").value||null, rework_qty: document.getElementById("reworkQty").value||null, reject_qty: document.getElementById("rejectQty").value||null, conditional_accept_qty: document.getElementById("conditionalAcceptQty").value||null }; 
+        try { let url='/api/inspections', method='POST'; if(isEditMode && editId){ url=`/api/inspections/${editId}`; method='PUT'; } const resp=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!resp.ok)throw new Error((await resp.json()).error||'Unknown error'); document.getElementById("formMessage").innerHTML=`<span class="text-green-600">✓ Inspection ${isEditMode?'updated':'saved'} to cloud!</span>`; resetForm(); loadHistory(); } catch(err){ document.getElementById("formMessage").innerHTML=`<span class="text-red-600">Error: ${err.message}</span>`; } 
+    }
     async function loadHistory(){ try{ const resp=await fetch('/api/inspections'); if(!resp.ok)throw new Error(); let allData=await resp.json(); updateSuggestionsFromInspections(allData); let displayData = allData; if(engineerFromUrl) displayData = displayData.filter(row=>row.username===currentEngineer); const histDiv=document.getElementById("inspectionHistory"); if(!displayData.length) histDiv.innerHTML="<p class='text-gray-500'>No inspections found.</p>"; else histDiv.innerHTML=displayData.map(row=>`<div class="border-b py-2"><div class="flex justify-between"><div><span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><br><span class="text-sm">Process: ${row.process_type||'Rolling'}</span></div><button onclick="editInspection(${row.id})" class="text-blue-600 text-sm underline">Edit</button></div></div>`).join(""); } catch(err){ document.getElementById("inspectionHistory").innerHTML="<p class='text-red-500'>Error loading history</p>"; } }
     async function editInspection(id){ try{ const resp=await fetch(`/api/inspections/${id}`); if(!resp.ok)throw new Error(); const insp=await resp.json(); document.getElementById("machineDescriptionSelect").value=""; populateFormForEdit(insp); } catch(err){ document.getElementById("formMessage").innerHTML=`<span class="text-red-600">Error: ${err.message}</span>`; } }
     function populateFormForEdit(inspection){ document.getElementById("qcEngineerName").value=inspection.username||""; document.getElementById("outsourceInstitute").value=inspection.outsource_institute||""; document.getElementById("designAvail").checked=inspection.design_available||false; document.getElementById("mppAvail").checked=inspection.mpp_available||false; document.getElementById("operationStatus").value=inspection.operation_status||"Holdup"; const sourceRadio=document.querySelector(`input[name="sourceType"][value="${inspection.source_type}"]`); if(sourceRadio)sourceRadio.checked=true; const shiftRadio=document.querySelector(`input[name="shift"][value="${inspection.shift}"]`); if(shiftRadio)shiftRadio.checked=true; document.getElementById("operatorName").value=inspection.operator_name||""; document.getElementById("startTime").value=inspection.start_time||""; document.getElementById("endTime").value=inspection.end_time||""; updateTotalTime(); document.getElementById("deliveredQty").value=inspection.delivered_qty??""; document.getElementById("acceptedQty").value=inspection.accepted_qty??""; document.getElementById("reworkQty").value=inspection.rework_qty??""; document.getElementById("rejectQty").value=inspection.reject_qty??""; document.getElementById("conditionalAcceptQty").value=inspection.conditional_accept_qty??""; document.getElementById("defectedMaterialCost").value=inspection.defected_material_cost??0; document.getElementById("laborHours").value=inspection.labor_hours??0; document.getElementById("salaryPerHour").value=inspection.salary_per_hour??0; document.getElementById("machiningHours").value=inspection.machining_hours??0; document.getElementById("machiningCostPerHr").value=inspection.machining_cost_per_hr??0; document.getElementById("levelSelect").value=inspection.level||""; computeFailureCost(); document.getElementById("mostFrequentDefects").value=inspection.most_frequent_defects||""; document.getElementById("defectCorrectionSlip").value=inspection.defect_correction_slip||""; document.getElementById("causeOfDefectsDetail").value=inspection.cause_of_defects||""; setExtraFields(inspection.extra_fields||{}); setAcceptanceData(inspection.acceptance_data||{}); const opt=Array.from(document.getElementById("processType").options).find(o=>o.text===inspection.process_type); if(opt){ document.getElementById("processType").value=opt.value; switchProcess(); } document.getElementById("processType").disabled=true; isEditMode=true; editId=inspection.id; document.getElementById("editId").value=inspection.id; document.getElementById("isEditMode").value="true"; document.getElementById("saveBtn").innerHTML="✔ Update to Cloud"; document.getElementById("cancelEditBtn").classList.remove("hidden"); }
