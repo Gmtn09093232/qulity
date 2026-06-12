@@ -49,7 +49,8 @@ app.get('/login', (req, res) => {
 app.get('/list', (req, res) => {
   res.sendFile(path.join(__dirname, 'list.html'));
 });
-app.get('/list', (req, res) => {
+// NEW: route for Project Follow-Up page (up.html)
+app.get('/up', (req, res) => {
   res.sendFile(path.join(__dirname, 'up.html'));
 });
 
@@ -72,7 +73,7 @@ app.put('/api/inspections/:id', async (req, res) => {
     ...req.body,
     submitted_at: new Date()  // update timestamp on edit
   };
-  // Extract dedicated columns from extra_fields (as before)
+  // Extract dedicated columns from extra_fields
   const extra = req.body.extra_fields || {};
   inspectionData.customer_name = extra["Customer Name"] || null;
   inspectionData.project_name = extra["Project Name"] || null;
@@ -182,7 +183,7 @@ app.get('/api/inspections', async (req, res) => {
   res.json(data);
 });
 
-// POST a new inspection (public) – MODIFIED TO EXTRACT DEDICATED COLUMNS
+// POST a new inspection (public) – extracts dedicated columns
 app.post('/api/inspections', async (req, res) => {
   const extra = req.body.extra_fields || {};
   
