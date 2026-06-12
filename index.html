@@ -304,16 +304,19 @@
     }
 
     // ============================================================
-    // GLOBAL SUGGESTIONS
+    // GLOBAL SUGGESTIONS (Client, Title, Subtitle)
     // ============================================================
     let allClientNames = new Set();
     let allProjectTitles = new Set();
+    let allSubtitles = new Set();
+
     function updateSuggestionsFromInspections(inspections) {
-        allClientNames.clear(); allProjectTitles.clear();
+        allClientNames.clear(); allProjectTitles.clear(); allSubtitles.clear();
         for (const insp of inspections) {
             const extra = insp.extra_fields || {};
             if (extra["Customer Name"]) allClientNames.add(extra["Customer Name"].trim());
             if (extra["Project Name"]) allProjectTitles.add(extra["Project Name"].trim());
+            if (extra["Subtitle"]) allSubtitles.add(extra["Subtitle"].trim());
         }
         refreshDatalistOptions();
     }
@@ -322,6 +325,8 @@
         if (clientDL) { clientDL.innerHTML = ""; Array.from(allClientNames).sort().forEach(n => { let o = document.createElement("option"); o.value = n; clientDL.appendChild(o); }); }
         const titleDL = document.getElementById("projectNameDatalist");
         if (titleDL) { titleDL.innerHTML = ""; Array.from(allProjectTitles).sort().forEach(n => { let o = document.createElement("option"); o.value = n; titleDL.appendChild(o); }); }
+        const subtitleDL = document.getElementById("subtitleDatalist");
+        if (subtitleDL) { subtitleDL.innerHTML = ""; Array.from(allSubtitles).sort().forEach(n => { let o = document.createElement("option"); o.value = n; subtitleDL.appendChild(o); }); }
     }
 
     // ============================================================
@@ -407,9 +412,9 @@
     }
 
     // ============================================================
-    // PROCESS DEFINITIONS
+    // PROCESS DEFINITIONS (added "Subtitle" to extraFields)
     // ============================================================
-    const baseExtraFields = ["Customer Name", "Project Name", "Drawing No.", "Part Name", "Tag No.", "Work Station", "Location"];
+    const baseExtraFields = ["Customer Name", "Project Name", "Subtitle", "Drawing No.", "Part Name", "Tag No.", "Work Station", "Location"];
     const ratingOpts = ["Accepted", "Conditional Accept", "Rework", "Reject"];
     const causeFields = ["Machine","Design","Operator","Methods","Material"];
     const processDefinitions = {
@@ -444,7 +449,7 @@
     function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
     // ============================================================
-    // FULL INCOMING INSPECTION FORM WITH TABLE
+    // FULL INCOMING INSPECTION FORM WITH TABLE (unchanged)
     // ============================================================
     function renderIncomingForm() {
         return `
@@ -515,7 +520,7 @@
     }
 
     // ============================================================
-    // RENDER DYNAMIC FIELDS
+    // RENDER DYNAMIC FIELDS (added Subtitle field)
     // ============================================================
     function renderDynamicFields() {
         const container = document.getElementById("dynamicFieldsContainer");
@@ -537,6 +542,7 @@
                     else if (field === "Location") html += `<div><label class="font-bold text-sm">Location</label><select id="${safeId}" class="w-full border p-1 rounded text-sm"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
                     else if (field === "Customer Name") html += `<div><label class="font-bold text-sm">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan"><datalist id="customerNameDatalist"></datalist></div>`;
                     else if (field === "Project Name") html += `<div><label class="font-bold text-sm">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan"><datalist id="projectNameDatalist"></datalist></div>`;
+                    else if (field === "Subtitle") html += `<div><label class="font-bold text-sm">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="w-full border p-1 rounded text-sm" placeholder="e.g. Phase 1, Revision A"><datalist id="subtitleDatalist"></datalist></div>`;
                     else if (field === "Drawing No.") html += `<div><label class="font-bold text-sm">DWG No.</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan"></div>`;
                     else if (field === "Part Name") html += `<div><label class="font-bold text-sm">Part Name</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan"></div>`;
                     else html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
@@ -557,11 +563,10 @@
     function switchProcess() { currentProcess = document.getElementById("processType").value; renderDynamicFields(); }
 
     // ============================================================
-    // COMMON UTILITIES
+    // COMMON UTILITIES (no changes needed for Subtitle, already handled by extraFields)
     // ============================================================
     function getExtraFields() { 
         if (currentProcess === "Incoming") {
-            // For incoming, store items and other fields inside extra_fields
             return {
                 incoming_items: getIncomingItemsData(),
                 sourceAddress: document.getElementById("sourceAddress")?.value || "",
@@ -572,7 +577,6 @@
                 inspectedBy: document.getElementById("inspectedBy")?.value || "",
                 approvedBy: document.getElementById("approvedBy")?.value || "",
                 generalRemark: document.getElementById("generalRemark")?.value || "",
-                // also capture other incoming specific fields
                 sourceItem: document.querySelector('input[name="sourceItem"]:checked')?.value || "",
                 prRequestedBy: document.querySelector('input[name="prRequestedBy"]:checked')?.value || "",
                 refDocs: { pr: document.getElementById("refPagePR")?.value, proforma: document.getElementById("refPageProforma")?.value, agreement: document.getElementById("refPageAgreement")?.value }
