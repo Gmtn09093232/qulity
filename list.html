@@ -12,123 +12,233 @@
             .report-container, .report-container * { visibility: visible; }
             .report-container { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
             .no-print { display: none; }
+            .summary-cards { display: none; }
+            .filter-bar, .action-buttons { display: none; }
+            table th, table td { padding: 6px; }
         }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-        th { background-color: #f3f4f6; font-weight: 600; }
-        tr:hover { background-color: #f9fafb; }
+        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background-color: #f1f5f9; position: sticky; top: 0; z-index: 10; padding: 12px 10px; font-weight: 600; color: #0f172a; }
+        td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background-color: #f8fafc; }
+        .summary-card { transition: all 0.2s; border-radius: 1rem; }
+        .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .filter-input:focus { outline: none; ring: 2px solid #3b82f6; border-color: transparent; }
+        /* loading spinner */
+        .loader {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 0.8s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
 
 <div class="max-w-7xl mx-auto p-4 md:p-6">
     <!-- Header -->
-    <div class="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap justify-between items-center">
+    <div class="bg-white rounded-2xl shadow-md p-5 mb-6 flex flex-wrap justify-between items-center border border-gray-100">
         <div>
-            <h1 class="text-2xl font-bold text-blue-900">📋 Inspection Report</h1>
-            <p class="text-gray-600">Drawing, Part & Quantity details – filter by project</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-clipboard-list text-blue-600"></i> 
+                Inspection Report
+            </h1>
+            <p class="text-gray-500 text-sm mt-1">Drawing, Part & Quantity details – filter & export</p>
         </div>
-        <div class="flex gap-3 no-print">
-            <input type="text" id="searchInput" placeholder="Search any field..." class="border rounded-lg px-3 py-2 w-64 text-sm">
-            <button onclick="copyTableToClipboard()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-copy"></i> Copy Table</button>
-            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-print"></i> Print</button>
-            <button onclick="fetchReportData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-sync-alt"></i> Refresh</button>
+        <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
+            <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                <i class="fas fa-file-excel"></i> Excel
+            </button>
+            <button onclick="copyTableToClipboard()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                <i class="fas fa-copy"></i> Copy
+            </button>
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <button onclick="fetchReportData()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
         </div>
     </div>
 
-    <!-- Project Name Filter Dropdown (outside table) -->
-    <div class="bg-white rounded-lg shadow p-4 mb-4 no-print">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Project Name</label>
-        <select id="projectFilterSelect" class="border rounded-lg px-3 py-2 w-full md:w-80">
-            <option value="">All Projects</option>
-        </select>
+    <!-- Summary Cards (Key Metrics) -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 no-print">
+        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div><i class="fa-solid fa-cubes text-2xl text-blue-500"></i></div>
+                <span class="text-xs text-gray-400">Total</span>
+            </div>
+            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalDeliveredSum">0</p>
+            <p class="text-xs text-gray-500">Delivered Qty</p>
+        </div>
+        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div><i class="fa-solid fa-check-circle text-2xl text-emerald-500"></i></div>
+            </div>
+            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalAcceptedSum">0</p>
+            <p class="text-xs text-gray-500">Accepted</p>
+        </div>
+        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div><i class="fa-solid fa-rotate-left text-2xl text-amber-500"></i></div>
+            </div>
+            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalReworkSum">0</p>
+            <p class="text-xs text-gray-500">Rework</p>
+        </div>
+        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div><i class="fa-solid fa-ban text-2xl text-red-500"></i></div>
+            </div>
+            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalRejectSum">0</p>
+            <p class="text-xs text-gray-500">Reject</p>
+        </div>
+        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div><i class="fa-solid fa-flag-checkered text-2xl text-purple-500"></i></div>
+            </div>
+            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalConditionalSum">0</p>
+            <p class="text-xs text-gray-500">Conditional</p>
+        </div>
     </div>
 
-    <!-- Report Table (Project Name column removed) -->
-    <div class="bg-white rounded-xl shadow overflow-hidden report-container">
+    <!-- Filter Bar (Project + Search) -->
+    <div class="bg-white rounded-xl shadow-sm p-4 mb-5 no-print flex flex-col md:flex-row gap-4 items-end">
+        <div class="flex-1">
+            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-folder-open mr-1"></i> Filter by Project</label>
+            <select id="projectFilterSelect" class="filter-input w-full md:w-80 border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
+                <option value="">All Projects</option>
+            </select>
+        </div>
+        <div class="flex-1">
+            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-magnifying-glass mr-1"></i> Search (Drawing, Part, Qty)</label>
+            <input type="text" id="searchInput" placeholder="Type anything..." class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
+        </div>
+        <div>
+            <button id="clearFiltersBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2">
+                <i class="fas fa-eraser"></i> Clear filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Table Container -->
+    <div class="bg-white rounded-2xl shadow-md overflow-hidden report-container border border-gray-100">
         <div class="table-wrapper">
-            <table id="reportTable" class="min-w-full text-sm">
+            <table id="reportTable" class="min-w-full">
                 <thead>
-                    <tr>
-                        <th>Drawing No.</th>
-                        <th>Part Name</th>
-                        <th>Delivered Qty</th>
-                        <th>Accepted Qty</th>
-                        <th>Rework Qty</th>
-                        <th>Reject Qty</th>
-                        <th>Conditional Accept</th>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left">📄 Drawing No.</th>
+                        <th class="text-left">🔧 Part Name</th>
+                        <th class="text-right">📦 Delivered</th>
+                        <th class="text-right">✅ Accepted</th>
+                        <th class="text-right">🔄 Rework</th>
+                        <th class="text-right">❌ Reject</th>
+                        <th class="text-right">⚠️ Conditional</th>
                     </tr>
                 </thead>
                 <tbody id="reportTableBody">
-                    <tr><td colspan="7" class="text-center py-8 text-gray-500">Loading data......</td></tr>
+                    <tr><td colspan="7" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections...</p></td></tr>
                 </tbody>
             </table>
         </div>
-        <div id="reportInfo" class="p-3 text-sm text-gray-500 border-t flex justify-between items-center no-print">
-            <span>Loading...</span>
-            <span id="recordCount"></span>
+        <div id="reportInfo" class="p-4 text-sm text-gray-500 border-t border-gray-100 flex justify-between items-center bg-gray-50 no-print">
+            <span><i class="fa-regular fa-chart-line"></i> <span id="recordStatus">Ready</span></span>
+            <span id="recordCount" class="font-medium"></span>
         </div>
     </div>
 </div>
 
 <script>
-    // Helper: safely get nested extra fields
+    // ---------- Helper functions ----------
     function getExtraField(inspection, fieldName) {
-        if (inspection.extra_fields && inspection.extra_fields[fieldName]) {
-            return inspection.extra_fields[fieldName].trim();
-        }
-        return '';
+        return inspection.extra_fields?.[fieldName]?.trim() || '';
     }
 
-    // Helper: get project name (fallback from extra_fields or direct)
     function getProjectName(inspection) {
         if (inspection.project_name) return inspection.project_name.trim();
         return getExtraField(inspection, 'Project Name');
     }
 
-    // Store all raw rows and unique projects
-    let allReportRows = [];
+    let allReportRows = [];      // store full rows
     let uniqueProjects = new Set();
 
-    // Main fetch and render
+    // Format quantity display (handle null/undefined/empty)
+    function formatQty(value) {
+        if (value === undefined || value === null || value === '') return '-';
+        const num = Number(value);
+        return isNaN(num) ? '-' : num.toLocaleString();
+    }
+
+    // Compute numeric value for summaries
+    function numericQty(value) {
+        if (value === undefined || value === null || value === '') return 0;
+        const num = Number(value);
+        return isNaN(num) ? 0 : num;
+    }
+
+    // Fetch data and update UI
     async function fetchReportData() {
         const tbody = document.getElementById('reportTableBody');
-        const infoSpan = document.getElementById('reportInfo');
-        const recordCountSpan = document.getElementById('recordCount');
+        const statusSpan = document.getElementById('recordStatus');
         try {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">Fetching inspections...</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></td></tr>`;
+            statusSpan.innerText = 'Loading...';
             const response = await fetch('/api/inspections');
-            if (!response.ok) throw new Error('Failed to fetch data');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const inspections = await response.json();
             
-            // Build rows array and collect unique project names
+            // Build rows and collect projects
             const rows = [];
             uniqueProjects.clear();
+            let sumDelivered = 0, sumAccepted = 0, sumRework = 0, sumReject = 0, sumConditional = 0;
+            
             for (const insp of inspections) {
                 const projectName = getProjectName(insp) || '';
                 if (projectName) uniqueProjects.add(projectName);
                 
                 const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
                 const partName = getExtraField(insp, 'Part Name') || '-';
-                const deliveredQty = (insp.delivered_qty !== undefined && insp.delivered_qty !== null && insp.delivered_qty !== '') ? Number(insp.delivered_qty).toLocaleString() : '-';
-                const acceptedQty = (insp.accepted_qty !== undefined && insp.accepted_qty !== null && insp.accepted_qty !== '') ? Number(insp.accepted_qty).toLocaleString() : '-';
-                const reworkQty = (insp.rework_qty !== undefined && insp.rework_qty !== null && insp.rework_qty !== '') ? Number(insp.rework_qty).toLocaleString() : '-';
-                const rejectQty = (insp.reject_qty !== undefined && insp.reject_qty !== null && insp.reject_qty !== '') ? Number(insp.reject_qty).toLocaleString() : '-';
-                const conditionalAccept = (insp.conditional_accept_qty !== undefined && insp.conditional_accept_qty !== null && insp.conditional_accept_qty !== '') ? Number(insp.conditional_accept_qty).toLocaleString() : '-';
+                const deliveredRaw = insp.delivered_qty;
+                const acceptedRaw = insp.accepted_qty;
+                const reworkRaw = insp.rework_qty;
+                const rejectRaw = insp.reject_qty;
+                const conditionalRaw = insp.conditional_accept_qty;
+                
+                const delivered = formatQty(deliveredRaw);
+                const accepted = formatQty(acceptedRaw);
+                const rework = formatQty(reworkRaw);
+                const reject = formatQty(rejectRaw);
+                const conditional = formatQty(conditionalRaw);
+                
+                // numeric for totals
+                sumDelivered += numericQty(deliveredRaw);
+                sumAccepted += numericQty(acceptedRaw);
+                sumRework += numericQty(reworkRaw);
+                sumReject += numericQty(rejectRaw);
+                sumConditional += numericQty(conditionalRaw);
                 
                 rows.push({
                     projectName,
                     drawingNo,
                     partName,
-                    deliveredQty,
-                    acceptedQty,
-                    reworkQty,
-                    rejectQty,
-                    conditionalAccept,
-                    raw: `${projectName} ${drawingNo} ${partName} ${deliveredQty} ${acceptedQty} ${reworkQty} ${rejectQty} ${conditionalAccept}`.toLowerCase()
+                    delivered,
+                    accepted,
+                    rework,
+                    reject,
+                    conditional,
+                    rawSearch: `${projectName} ${drawingNo} ${partName} ${delivered} ${accepted} ${rework} ${reject} ${conditional}`.toLowerCase()
                 });
             }
+            
+            // Update summary cards
+            document.getElementById('totalDeliveredSum').innerText = sumDelivered.toLocaleString();
+            document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
+            document.getElementById('totalReworkSum').innerText = sumRework.toLocaleString();
+            document.getElementById('totalRejectSum').innerText = sumReject.toLocaleString();
+            document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
             
             // Populate project dropdown
             const projectSelect = document.getElementById('projectFilterSelect');
@@ -137,55 +247,55 @@
                 projectSelect.innerHTML += `<option value="${escapeHtml(proj)}">${escapeHtml(proj)}</option>`;
             });
             
-            // Store rows globally and apply filters
             allReportRows = rows;
             applyFilters();
-            
-            const total = rows.length;
-            recordCountSpan.innerText = `Total records: ${total}`;
-            infoSpan.innerHTML = `<span>✅ Loaded ${total} inspections</span>`;
+            statusSpan.innerText = `✅ Loaded ${rows.length} records`;
         } catch (err) {
             console.error(err);
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-500">Error loading data. Make sure backend API is running at /api/inspections</td></tr>';
-            infoSpan.innerHTML = '<span class="text-red-500">Error loading data</span>';
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
+            statusSpan.innerText = '❌ Error';
         }
     }
     
+    // Apply search + project filter
     function applyFilters() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const selectedProject = document.getElementById('projectFilterSelect').value;
         
-        let filtered = allReportRows;
+        let filtered = [...allReportRows];
         if (selectedProject) {
             filtered = filtered.filter(row => row.projectName === selectedProject);
         }
         if (searchTerm) {
-            filtered = filtered.filter(row => row.raw.includes(searchTerm));
+            filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
         }
         renderTable(filtered);
         const countSpan = document.getElementById('recordCount');
-        if (countSpan) countSpan.innerText = `Showing ${filtered.length} of ${allReportRows.length} records`;
+        const total = allReportRows.length;
+        countSpan.innerText = `Showing ${filtered.length} of ${total} records`;
     }
     
+    // Render table rows
     function renderTable(rows) {
         const tbody = document.getElementById('reportTableBody');
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No matching records</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
             return;
         }
         tbody.innerHTML = rows.map(row => `
-            <tr>
-                <td class="border-b">${escapeHtml(row.drawingNo)}</td>
-                <td class="border-b">${escapeHtml(row.partName)}</td>
-                <td class="border-b text-right">${row.deliveredQty}</td>
-                <td class="border-b text-right">${row.acceptedQty}</td>
-                <td class="border-b text-right">${row.reworkQty}</td>
-                <td class="border-b text-right">${row.rejectQty}</td>
-                <td class="border-b text-right">${row.conditionalAccept}</td>
+            <tr class="hover:bg-gray-50 transition">
+                <td class="font-mono text-sm">${escapeHtml(row.drawingNo)}</td>
+                <td class="font-medium">${escapeHtml(row.partName)}</td>
+                <td class="text-right tabular-nums">${row.delivered}</td>
+                <td class="text-right tabular-nums text-emerald-700">${row.accepted}</td>
+                <td class="text-right tabular-nums text-amber-600">${row.rework}</td>
+                <td class="text-right tabular-nums text-red-600">${row.reject}</td>
+                <td class="text-right tabular-nums text-purple-600">${row.conditional}</td>
             </tr>
         `).join('');
     }
     
+    // Helper: escape HTML
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -196,14 +306,55 @@
         });
     }
     
-    // Copy table data to clipboard (tab-separated, without project name column)
+    // Export to Excel (CSV with .xls extension, proper encoding)
+    function exportToExcel() {
+        const searchTerm = document.getElementById('searchInput').value;
+        const selectedProject = document.getElementById('projectFilterSelect').value;
+        let dataToExport = [...allReportRows];
+        if (selectedProject) dataToExport = dataToExport.filter(row => row.projectName === selectedProject);
+        if (searchTerm) dataToExport = dataToExport.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
+        
+        if (dataToExport.length === 0) {
+            alert('No data to export. Adjust filters.');
+            return;
+        }
+        
+        // Create header row (no project column in export)
+        const headers = ['Drawing No.', 'Part Name', 'Delivered Qty', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept'];
+        const csvRows = [];
+        csvRows.push(headers.join(','));
+        
+        for (const row of dataToExport) {
+            const values = [
+                `"${(row.drawingNo || '').replace(/"/g, '""')}"`,
+                `"${(row.partName || '').replace(/"/g, '""')}"`,
+                row.delivered,
+                row.accepted,
+                row.rework,
+                row.reject,
+                row.conditional
+            ];
+            csvRows.push(values.join(','));
+        }
+        
+        const blob = new Blob(["\uFEFF" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.setAttribute('download', 'inspection_report.xls');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    
+    // Copy table to clipboard (tab-separated for Excel)
     async function copyTableToClipboard() {
         const rows = document.querySelectorAll('#reportTable tbody tr');
         if (!rows.length || (rows.length === 1 && rows[0].innerText.includes('No matching'))) {
             alert('No data to copy');
             return;
         }
-        // Header without Project Name
         let csvContent = "Drawing No.\tPart Name\tDelivered Qty\tAccepted Qty\tRework Qty\tReject Qty\tConditional Accept\n";
         for (let row of rows) {
             const cells = row.querySelectorAll('td');
@@ -214,19 +365,23 @@
         }
         try {
             await navigator.clipboard.writeText(csvContent);
-            alert('Table copied to clipboard (tab-separated, paste into Excel)');
+            alert('✅ Table copied to clipboard (tab-separated, ready for Excel)');
         } catch (err) {
-            alert('Copy failed: ' + err);
+            alert('❌ Copy failed: ' + err);
         }
     }
     
-    // Event listeners for filters
-    document.getElementById('searchInput').addEventListener('input', function() {
-        if (allReportRows.length) applyFilters();
-    });
-    document.getElementById('projectFilterSelect').addEventListener('change', function() {
-        if (allReportRows.length) applyFilters();
-    });
+    // Clear filters
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('projectFilterSelect').value = '';
+        applyFilters();
+    }
+    
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('input', () => { if (allReportRows.length) applyFilters(); });
+    document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
+    document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
     
     // Initial load
     fetchReportData();
