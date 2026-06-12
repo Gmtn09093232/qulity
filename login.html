@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>QC Inspection Dashboard | Amhara Metal Industry</title>
+    <title>QC Dashboard | Amhara Metal Industry</title>
     <!-- Tailwind + Font Awesome + Chart.js -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -17,6 +17,8 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .filter-select, .filter-input { border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; font-size: 0.875rem; background-color: white; }
+        .filter-select:focus, .filter-input:focus { outline: none; ring: 2px solid #3b82f6; border-color: transparent; }
     </style>
 </head>
 <body class="antialiased">
@@ -34,13 +36,46 @@
                 <p class="text-slate-500 text-sm mt-1">Real‑time quality metrics & process performance</p>
             </div>
             <div class="flex items-center gap-3">
-                <div class="bg-white px-4 py-2 rounded-xl shadow-sm text-sm flex items-center gap-2">
-                    <i class="fa-regular fa-calendar-alt text-indigo-500"></i>
-                    <span class="font-medium text-slate-700" id="periodLabel">Last 30 days</span>
-                </div>
                 <button onclick="refreshDashboard()" class="bg-white hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm text-sm font-medium text-blue-700 transition flex items-center gap-2">
                     <i class="fa-solid fa-rotate-right"></i> Refresh
                 </button>
+            </div>
+        </div>
+
+        <!-- FILTERS SECTION (Project, Title, Engineer, Date Range) -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-slate-100">
+            <div class="flex flex-wrap items-end gap-4">
+                <div class="flex-1 min-w-[160px]">
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Filter by Project (Client)</label>
+                    <select id="filterProject" class="filter-select w-full">
+                        <option value="">All Projects</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[160px]">
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Filter by Title (Project Name)</label>
+                    <select id="filterTitle" class="filter-select w-full">
+                        <option value="">All Titles</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[160px]">
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Filter by QC Engineer</label>
+                    <select id="filterEngineer" class="filter-select w-full">
+                        <option value="">All Engineers</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Date From</label>
+                    <input type="date" id="filterDateFrom" class="filter-input w-full">
+                </div>
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Date To</label>
+                    <input type="date" id="filterDateTo" class="filter-input w-full">
+                </div>
+                <div>
+                    <button onclick="clearAllFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2">
+                        <i class="fas fa-eraser"></i> Clear Filters
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -51,7 +86,7 @@
                     <div>
                         <p class="text-slate-500 text-sm font-medium">Total Inspections</p>
                         <p class="text-3xl font-bold text-slate-800 mt-1" id="totalInspections">—</p>
-                        <p class="text-xs text-slate-400 mt-1">last 30 days</p>
+                        <p class="text-xs text-slate-400 mt-1">filtered records</p>
                     </div>
                     <div class="h-10 w-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
                         <i class="fa-solid fa-chart-simple"></i>
@@ -73,7 +108,7 @@
                     <div>
                         <p class="text-slate-500 text-sm font-medium">Overall Acceptance</p>
                         <p class="text-3xl font-bold text-emerald-700 mt-1" id="acceptedPct">—%</p>
-                        <p class="text-xs text-slate-400 mt-1">of total inspected</p>
+                        <p class="text-xs text-slate-400 mt-1">of filtered</p>
                     </div>
                     <div class="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
                         <i class="fa-solid fa-check-circle"></i>
@@ -110,7 +145,6 @@
 
         <!-- CHARTS ROW: Defect causes + Process performance -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- Top defect causes (horizontal bar / pie) -->
             <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-100">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="font-semibold text-slate-800 text-lg"><i class="fa-solid fa-bug text-red-400 mr-2"></i> Top Defect Causes</h2>
@@ -120,7 +154,6 @@
                 <div class="mt-3 text-xs text-center text-slate-500">Machine, Operator, Material, Method, Design</div>
             </div>
 
-            <!-- Process type acceptance rate (horizontal bar) -->
             <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-100">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="font-semibold text-slate-800 text-lg"><i class="fa-solid fa-industry mr-2 text-blue-500"></i> Process Performance</h2>
@@ -130,7 +163,7 @@
             </div>
         </div>
 
-        <!-- SECOND ROW: Monthly trend & Category spending (QC style: inspections over time) -->
+        <!-- SECOND ROW: Trend + Outcome -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-100">
                 <h2 class="font-semibold text-slate-800 text-lg mb-4"><i class="fa-solid fa-chart-line text-indigo-500 mr-2"></i> Inspections Trend (last 6 weeks)</h2>
@@ -152,7 +185,7 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="px-5 pt-4 pb-2 flex justify-between items-center flex-wrap gap-2 border-b border-slate-100">
                 <h2 class="font-semibold text-slate-800 text-lg"><i class="fa-regular fa-clock mr-2 text-slate-500"></i> Recent Inspections</h2>
-                <span class="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-full">latest 10 records</span>
+                <span class="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-full">latest 10 (filtered)</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
@@ -172,19 +205,15 @@
                 </table>
             </div>
         </div>
-
-        <!-- small footer note -->
-        <div class="text-center text-xs text-slate-400 mt-6">Live data from inspection API · Auto-updates on refresh</div>
+        <div class="text-center text-xs text-slate-400 mt-6">Live data from inspection API · Filters affect all metrics & charts</div>
     </div>
 
     <script>
-        // ---------- Global Chart instances ----------
-        let causeChartObj = null;
-        let processChartObj = null;
-        let trendChartObj = null;
-        let outcomeChartObj = null;
-
-        // ---------- Helper: compute aggregated metrics from inspections ----------
+        // ---------- Global variables ----------
+        let allInspections = [];          // store original data
+        let causeChartObj = null, processChartObj = null, trendChartObj = null, outcomeChartObj = null;
+        
+        // ---------- Helper: fetch inspections from API or mock ----------
         async function fetchInspections() {
             try {
                 const response = await fetch('/api/inspections');
@@ -193,22 +222,20 @@
                 return data;
             } catch (err) {
                 console.warn('Using mock data (API unavailable)', err);
-                // Provide realistic mock data for demonstration (simulates QC environment)
                 return generateMockInspections();
             }
         }
 
+        // generate realistic mock data (same as before but with consistent fields)
         function generateMockInspections() {
             const mock = [];
             const processes = ["Punching","Welding","Rolling","Casting","Assembling","Lathe","Painting","Testing"];
             const engineers = ["Abebech A.", "Mekdes T.", "Biruk D.", "Selam W.", "Henok M."];
             const clients = ["DEF Metal PLC", "AA Manufacturing", "Bishoftu Tech", "Addis Industry", "Kombolcha Steel"];
             const titles = ["Bridge Bracket", "Chassis Frame", "Gear Housing", "Hydraulic Cylinder", "Tower Flange"];
-            
-            // generate 45 inspections over last 60 days
             for (let i = 0; i < 48; i++) {
                 const date = new Date();
-                date.setDate(date.getDate() - Math.floor(Math.random() * 60));
+                date.setDate(date.getDate() - Math.floor(Math.random() * 90));
                 const process = processes[Math.floor(Math.random() * processes.length)];
                 const accepted = Math.random() > 0.3;
                 let rating = "Accepted";
@@ -222,7 +249,6 @@
                 const reworkQty = rating === "Rework" ? Math.floor(Math.random() * 5) + 1 : 0;
                 const rejectQty = rating === "Reject" ? Math.floor(Math.random() * 3) + 1 : 0;
                 const failureCost = (reworkQty + rejectQty) * (Math.random() * 800 + 200);
-                // acceptance data - cause simulation
                 const causes = [];
                 if (rating !== "Accepted") {
                     const causeList = ["Machine","Operator","Material","Method","Design"];
@@ -230,7 +256,6 @@
                     for (let c=0; c<numCauses; c++) causes.push(causeList[Math.floor(Math.random()*causeList.length)]);
                 }
                 const acceptance_data = {};
-                // dummy acceptance structure for parameters
                 for (let p=0; p<3; p++) {
                     acceptance_data[`p_${p}`] = { rating: rating, causes: causes };
                 }
@@ -253,44 +278,104 @@
                     conditional_accept_qty: rating === "Conditional Accept" ? 12 : 0
                 });
             }
-            // sort by date desc
             mock.sort((a,b) => new Date(b.submitted_at) - new Date(a.submitted_at));
             return mock;
         }
 
-        // dashboard computation & UI update
-        async function refreshDashboard() {
-            const inspections = await fetchInspections();
+        // ---------- Populate filter dropdowns from full dataset ----------
+        function populateFilterOptions(inspections) {
+            const projectsSet = new Set();
+            const titlesSet = new Set();
+            const engineersSet = new Set();
+            for (const insp of inspections) {
+                const client = insp.extra_fields?.['Customer Name'];
+                if (client) projectsSet.add(client);
+                const title = insp.extra_fields?.['Project Name'];
+                if (title) titlesSet.add(title);
+                if (insp.username) engineersSet.add(insp.username);
+            }
+            const projectSelect = document.getElementById('filterProject');
+            projectSelect.innerHTML = '<option value="">All Projects</option>';
+            [...projectsSet].sort().forEach(p => { projectSelect.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`; });
+            
+            const titleSelect = document.getElementById('filterTitle');
+            titleSelect.innerHTML = '<option value="">All Titles</option>';
+            [...titlesSet].sort().forEach(t => { titleSelect.innerHTML += `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`; });
+            
+            const engineerSelect = document.getElementById('filterEngineer');
+            engineerSelect.innerHTML = '<option value="">All Engineers</option>';
+            [...engineersSet].sort().forEach(e => { engineerSelect.innerHTML += `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`; });
+        }
+
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+        // ---------- Filter the inspections based on current UI filters ----------
+        function getFilteredInspections() {
+            const projectFilter = document.getElementById('filterProject').value;
+            const titleFilter = document.getElementById('filterTitle').value;
+            const engineerFilter = document.getElementById('filterEngineer').value;
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            
+            let filtered = [...allInspections];
+            if (projectFilter) {
+                filtered = filtered.filter(insp => (insp.extra_fields?.['Customer Name'] || '') === projectFilter);
+            }
+            if (titleFilter) {
+                filtered = filtered.filter(insp => (insp.extra_fields?.['Project Name'] || '') === titleFilter);
+            }
+            if (engineerFilter) {
+                filtered = filtered.filter(insp => (insp.username || '') === engineerFilter);
+            }
+            if (dateFrom) {
+                const fromDate = new Date(dateFrom);
+                fromDate.setHours(0,0,0,0);
+                filtered = filtered.filter(insp => new Date(insp.submitted_at) >= fromDate);
+            }
+            if (dateTo) {
+                const toDate = new Date(dateTo);
+                toDate.setHours(23,59,59,999);
+                filtered = filtered.filter(insp => new Date(insp.submitted_at) <= toDate);
+            }
+            return filtered;
+        }
+
+        // ---------- Compute and render all dashboard components based on filtered data ----------
+        function renderDashboardWithFilters() {
+            const inspections = getFilteredInspections();
             if (!inspections.length) {
+                // show zeros
                 document.getElementById("totalInspections").innerText = "0";
+                document.getElementById("acceptedPct").innerHTML = "0%";
+                document.getElementById("nonConformingPct").innerHTML = "0%";
+                document.getElementById("avgFailureCost").innerHTML = "0 ETB";
+                document.getElementById("acceptRateValue").innerHTML = "0%";
+                document.getElementById("acceptRateBar").style.width = "0%";
+                // clear charts
+                if (causeChartObj) causeChartObj.destroy();
+                if (processChartObj) processChartObj.destroy();
+                if (trendChartObj) trendChartObj.destroy();
+                if (outcomeChartObj) outcomeChartObj.destroy();
+                document.getElementById('recentTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">No records match filters</td></tr>';
                 return;
             }
             
-            // 1. total inspections
             const total = inspections.length;
             document.getElementById("totalInspections").innerText = total;
             
-            // compute acceptance / rework / reject rates from latest acceptance_data per inspection
-            let acceptedCount = 0;
-            let reworkCount = 0;
-            let rejectCount = 0;
-            let conditionalCount = 0;
+            let acceptedCount = 0, reworkCount = 0, rejectCount = 0, conditionalCount = 0;
             let totalFailureSum = 0;
             let causeFrequency = { "Machine":0, "Operator":0, "Material":0, "Method":0, "Design":0 };
-            
-            // process performance map: process -> { total, accepted }
             const processMap = new Map();
             
             for (const insp of inspections) {
                 const accData = insp.acceptance_data || {};
                 let inspectionRating = "Unknown";
-                // determine overall rating: we look at first parameter rating (or majority)
                 const paramKeys = Object.keys(accData);
                 if (paramKeys.length > 0) {
                     const firstRating = accData[paramKeys[0]]?.rating;
                     if (firstRating) inspectionRating = firstRating;
                 } else {
-                    // fallback using quantity fields
                     if (insp.accepted_qty > 0 && insp.rework_qty === 0 && insp.reject_qty === 0) inspectionRating = "Accepted";
                     else if (insp.rework_qty > 0) inspectionRating = "Rework";
                     else if (insp.reject_qty > 0) inspectionRating = "Reject";
@@ -301,11 +386,8 @@
                 else if (inspectionRating === "Reject") rejectCount++;
                 else if (inspectionRating === "Conditional Accept") conditionalCount++;
                 
-                // aggregate failure cost
-                const cost = insp.total_internal_failure_cost || 0;
-                totalFailureSum += cost;
+                totalFailureSum += insp.total_internal_failure_cost || 0;
                 
-                // process performance
                 const process = insp.process_type || "General";
                 if (!processMap.has(process)) processMap.set(process, { total:0, accepted:0 });
                 const procData = processMap.get(process);
@@ -313,12 +395,10 @@
                 if (inspectionRating === "Accepted") procData.accepted += 1;
                 processMap.set(process, procData);
                 
-                // cause frequency (aggregate from acceptance_data)
                 for (const key in accData) {
                     const causes = accData[key]?.causes || [];
                     for (const cause of causes) {
                         if (causeFrequency.hasOwnProperty(cause)) causeFrequency[cause] += 1;
-                        else if (cause === "Machine" || cause === "Operator" || cause === "Material" || cause === "Method" || cause === "Design") causeFrequency[cause] += 1;
                     }
                 }
             }
@@ -326,14 +406,13 @@
             const acceptedPct = total ? ((acceptedCount / total)*100).toFixed(1) : 0;
             const nonConforming = total ? (((reworkCount+rejectCount)/total)*100).toFixed(1) : 0;
             const avgFailure = total ? (totalFailureSum / total).toFixed(0) : 0;
-            
             document.getElementById("acceptedPct").innerHTML = `${acceptedPct}%`;
             document.getElementById("nonConformingPct").innerHTML = `${nonConforming}%`;
             document.getElementById("avgFailureCost").innerHTML = `${avgFailure} ETB`;
             document.getElementById("acceptRateValue").innerHTML = `${acceptedPct}%`;
             document.getElementById("acceptRateBar").style.width = `${acceptedPct}%`;
             
-            // Prepare cause chart data
+            // Defect cause chart
             const causeLabels = Object.keys(causeFrequency);
             const causeValues = causeLabels.map(l => causeFrequency[l]);
             if (causeChartObj) causeChartObj.destroy();
@@ -344,7 +423,7 @@
                 options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
             });
             
-            // Process performance (top 6 by volume)
+            // Process performance (top 6)
             let procArray = Array.from(processMap.entries()).map(([name, data]) => ({ name, acceptRate: (data.accepted/data.total)*100, total: data.total }));
             procArray.sort((a,b) => b.total - a.total);
             const topProcesses = procArray.slice(0,6);
@@ -356,7 +435,7 @@
                 options: { scales: { y: { max: 100, title: { display: true, text: '%' } } }, maintainAspectRatio: true }
             });
             
-            // Trend (weekly inspections)
+            // Weekly trend (based on filtered data, last 6 weeks)
             const weeklyData = new Array(6).fill(0);
             const now = new Date();
             for (const insp of inspections) {
@@ -376,7 +455,7 @@
                 options: { responsive: true, maintainAspectRatio: true }
             });
             
-            // outcome pie
+            // Outcome pie
             if (outcomeChartObj) outcomeChartObj.destroy();
             const outcomeCtx = document.getElementById('outcomeChart').getContext('2d');
             outcomeChartObj = new Chart(outcomeCtx, {
@@ -385,11 +464,11 @@
                 options: { cutout: '60%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } }, maintainAspectRatio: true }
             });
             
-            // Render recent inspections table (latest 10)
+            // Recent table (filtered, top 10)
             const recent = inspections.slice(0,10);
             const tbody = document.getElementById('recentTableBody');
             if (recent.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-slate-400">No inspections found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-slate-400">No matching records</td></tr>';
                 return;
             }
             tbody.innerHTML = recent.map(insp => {
@@ -399,7 +478,6 @@
                 const client = insp.extra_fields?.['Customer Name'] || '—';
                 const title = insp.extra_fields?.['Project Name'] || '—';
                 let status = '—';
-                // derive from acceptance data or quantities
                 const accData = insp.acceptance_data || {};
                 const firstParam = Object.values(accData)[0];
                 if (firstParam?.rating) status = firstParam.rating;
@@ -413,18 +491,50 @@
                     <td class="px-5 py-3 text-slate-600">${date}</td>
                     <td class="px-5 py-3 font-medium text-slate-700">${process}</td>
                     <td class="px-5 py-3 text-slate-600">${engineer}</td>
-                    <td class="px-5 py-3"><span class="text-xs font-mono">${client}</span><br><span class="text-xs text-slate-400">${title}</span></td>
+                    <td class="px-5 py-3"><span class="text-xs font-mono">${escapeHtml(client)}</span><br><span class="text-xs text-slate-400">${escapeHtml(title)}</span></td>
                     <td class="px-5 py-3 text-center"><span class="text-xs px-2 py-1 rounded-full ${statusColor} font-medium">${status}</span></td>
                     <td class="px-5 py-3 text-right font-mono text-slate-700">${failureCost} ETB</td>
                 </tr>`;
             }).join('');
         }
         
-        // initial load + auto refresh
+        // ---------- Apply filters and update dashboard ----------
+        function applyFiltersAndRender() {
+            renderDashboardWithFilters();
+        }
+        
+        // ---------- Clear all filters and refresh ----------
+        function clearAllFilters() {
+            document.getElementById('filterProject').value = '';
+            document.getElementById('filterTitle').value = '';
+            document.getElementById('filterEngineer').value = '';
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            renderDashboardWithFilters();
+        }
+        
+        // ---------- Main refresh: fetch data, populate filters, then render ----------
+        async function refreshDashboard() {
+            const data = await fetchInspections();
+            allInspections = data;
+            populateFilterOptions(allInspections);
+            renderDashboardWithFilters();
+        }
+        
+        // attach event listeners to filter inputs
+        function bindFilterEvents() {
+            document.getElementById('filterProject').addEventListener('change', applyFiltersAndRender);
+            document.getElementById('filterTitle').addEventListener('change', applyFiltersAndRender);
+            document.getElementById('filterEngineer').addEventListener('change', applyFiltersAndRender);
+            document.getElementById('filterDateFrom').addEventListener('change', applyFiltersAndRender);
+            document.getElementById('filterDateTo').addEventListener('change', applyFiltersAndRender);
+        }
+        
+        // initial load
         window.addEventListener('DOMContentLoaded', () => {
+            bindFilterEvents();
             refreshDashboard();
-            // optional auto-refresh every 60s
-            setInterval(refreshDashboard, 60000);
+            setInterval(refreshDashboard, 60000); // auto refresh every 60 sec
         });
     </script>
 </body>
