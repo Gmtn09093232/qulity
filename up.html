@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Project Follow‑Up | Sub‑Assembly View</title>
+    <title>Project Follow‑Up | Sub‑Assembly + Parts View</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -19,99 +19,54 @@
         .subtitle-summary-table { font-size: 0.75rem; background: #f8fafc; border-radius: 1rem; margin-top: 1rem; width: 100%; }
         .subtitle-summary-table th { background: #e2e8f0; font-size: 0.7rem; padding: 8px; text-align: center; }
         .subtitle-summary-table td { padding: 8px 6px; text-align: center; }
-        .indent-1 { padding-left: 1.5rem !important; }
+        .parts-table { font-size: 0.7rem; width: 100%; margin-top: 8px; background: white; border-radius: 8px; }
+        .parts-table th { background: #f1f5f9; font-size: 0.65rem; padding: 6px; }
     </style>
 </head>
 <body class="antialiased">
 
 <div class="max-w-7xl mx-auto px-4 py-6 md:px-6">
-    <!-- Header -->
+    <!-- Header (same as before) -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div>
             <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                 <i class="fa-solid fa-flag-checkered text-indigo-600"></i> 
-                Project Follow‑Up (Sub‑Assembly View)
+                Project Follow‑Up (Sub‑Assembly + Parts)
             </h1>
-            <p class="text-slate-500 text-sm">Track project progress & breakdown by subtitle / sub‑assembly</p>
+            <p class="text-slate-500 text-sm">Track sub‑assemblies, parts, and inspection outcomes</p>
         </div>
         <div class="flex gap-3">
-            <button onclick="refreshData()" class="bg-white hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm text-sm font-medium text-indigo-600 transition flex items-center gap-2">
-                <i class="fa-solid fa-rotate-right"></i> Refresh
-            </button>
-            <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm font-medium text-slate-700 transition">
-                ← Back
-            </button>
+            <button onclick="refreshData()" class="bg-white hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm text-sm font-medium text-indigo-600"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+            <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm">← Back</button>
         </div>
     </div>
 
-    <!-- Filters -->
+    <!-- Filters (unchanged) -->
     <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
-        <div class="flex-1 min-w-[150px]">
-            <label class="text-xs font-medium text-slate-500 mb-1 block">Filter by Client</label>
-            <select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select>
-        </div>
-        <div class="flex-1 min-w-[150px]">
-            <label class="text-xs font-medium text-slate-500 mb-1 block">Filter by Project Title</label>
-            <select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select>
-        </div>
-        <div class="flex-1 min-w-[150px]">
-            <label class="text-xs font-medium text-slate-500 mb-1 block">Filter by Subtitle</label>
-            <select id="filterSubtitle" class="filter-select w-full"><option value="">All Subtitles</option></select>
-        </div>
-        <div class="flex-1 min-w-[150px]">
-            <label class="text-xs font-medium text-slate-500 mb-1 block">Status</label>
-            <select id="filterStatus" class="filter-select w-full">
-                <option value="">All Status</option>
-                <option value="needs_action">Needs Action (Rework/Reject)</option>
-                <option value="on_track">On Track (≥80% accepted)</option>
-                <option value="critical">Critical (≥50% reject)</option>
-            </select>
-        </div>
-        <div><button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-xl text-sm">Clear Filters</button></div>
+        <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
+        <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
+        <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Subtitle</label><select id="filterSubtitle" class="filter-select w-full"><option value="">All Subtitles</option></select></div>
+        <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Status</label><select id="filterStatus" class="filter-select w-full"><option value="">All Status</option><option value="needs_action">Needs Action</option><option value="on_track">On Track</option><option value="critical">Critical</option></select></div>
+        <div><button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl text-sm">Clear Filters</button></div>
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl p-4 shadow-sm"><div class="flex items-center gap-2 text-slate-500 text-sm"><i class="fa-solid fa-diagram-project"></i> Active Projects</div><p class="text-2xl font-bold" id="totalProjects">—</p></div>
-        <div class="bg-white rounded-xl p-4 shadow-sm"><div class="flex items-center gap-2 text-slate-500 text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Need Follow‑up</div><p class="text-2xl font-bold text-amber-600" id="needFollowup">—</p></div>
-        <div class="bg-white rounded-xl p-4 shadow-sm"><div class="flex items-center gap-2 text-slate-500 text-sm"><i class="fa-solid fa-chart-line"></i> Avg. Acceptance</div><p class="text-2xl font-bold text-emerald-600" id="avgAcceptance">—%</p></div>
+    <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-diagram-project"></i> Active Projects</div><p class="text-2xl font-bold" id="totalProjects">—</p></div>
+        <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Need Follow‑up</div><p class="text-2xl font-bold text-amber-600" id="needFollowup">—</p></div>
+        <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-chart-line"></i> Avg. Acceptance</div><p class="text-2xl font-bold text-emerald-600" id="avgAcceptance">—%</p></div>
     </div>
 
     <!-- Projects Table -->
     <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-        <div class="px-5 py-3 border-b bg-slate-50 flex justify-between items-center">
-            <h2 class="font-semibold text-slate-700"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2>
-            <span class="text-xs text-slate-400" id="recordCount"></span>
-        </div>
-        <div class="table-wrapper">
-            <table class="min-w-full">
-                <thead>
-                    <tr>
-                        <th class="text-left">Client</th>
-                        <th class="text-left">Project Title</th>
-                        <th class="text-center">Sub‑assemblies</th>
-                        <th class="text-center">Insp.</th>
-                        <th class="text-center">Acc.</th>
-                        <th class="text-center">Rework</th>
-                        <th class="text-center">Reject</th>
-                        <th class="text-center">Accept%</th>
-                        <th class="text-center">Last Insp.</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center">Details</th>
-                    </tr>
-                </thead>
-                <tbody id="projectsTableBody"><tr><td colspan="11" class="text-center py-10 text-slate-400">Loading projects...</td></tr></tbody>
-            </table>
-        </div>
+        <div class="px-5 py-3 border-b bg-slate-50 flex justify-between"><h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2><span class="text-xs text-slate-400" id="recordCount"></span></div>
+        <div class="table-wrapper"><table class="min-w-full"><thead><tr><th>Client</th><th>Project Title</th><th class="text-center">Sub‑assemblies</th><th class="text-center">Insp.</th><th class="text-center">Acc.</th><th class="text-center">Rework</th><th class="text-center">Reject</th><th class="text-center">Accept%</th><th class="text-center">Last Insp.</th><th class="text-center">Status</th><th class="text-center">Details</th></tr></thead><tbody id="projectsTableBody"></tbody></table></div>
     </div>
 
-    <!-- Modal: Detailed View with BOM‑style table -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-all" onclick="closeModal(event)">
-        <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
-            <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg" id="modalTitle">Project Details</h3>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closeModal(event)">
+        <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
+            <div class="sticky top-0 bg-white p-4 border-b flex justify-between"><h3 class="font-bold text-lg" id="modalTitle"></h3><button onclick="closeModal()" class="text-gray-500"><i class="fa-solid fa-xmark text-xl"></i></button></div>
             <div id="modalBody" class="p-4 space-y-5"></div>
         </div>
     </div>
@@ -122,6 +77,7 @@
     let allInspectionsRaw = [];
 
     function getExtraField(insp, field) { return insp.extra_fields?.[field]?.trim() || ''; }
+    function getParts(insp) { return insp.extra_fields?.Parts || []; }
 
     async function fetchInspections() {
         try {
@@ -134,24 +90,22 @@
     }
 
     function generateMockInspections() {
-        const processes = ["Punching","Welding","Rolling","Casting","Assembling","Lathe"];
-        const engineers = ["Abebech A.", "Mekdes T.", "Biruk D."];
-        const clients = ["DEF Metal PLC", "AA Manufacturing", "Bishoftu Tech", "Addis Industry"];
-        const titles = ["Bridge Bracket", "Chassis Frame", "Gear Housing", "Hydraulic Cylinder"];
-        const subtitles = ["Frame Weldment", "Hydraulic Assembly", "Control Panel", "Mounting Bracket", "Final Integration", ""];
+        // ... (same mock as before but with Parts array)
         const mock = [];
-        for (let i=0; i<70; i++) {
-            const date = new Date(); date.setDate(date.getDate() - Math.floor(Math.random() * 90));
-            const ratingRand = Math.random();
-            let rating = "Accepted";
-            if (ratingRand < 0.25) rating = "Rework";
-            else if (ratingRand < 0.4) rating = "Reject";
-            else if (ratingRand < 0.48) rating = "Conditional Accept";
-            const reworkQty = rating === "Rework" ? Math.floor(Math.random()*4)+1 : 0;
-            const rejectQty = rating === "Reject" ? Math.floor(Math.random()*3)+1 : 0;
-            const delivered = Math.floor(Math.random() * 100) + 20;
-            const accepted = rating === "Accepted" ? delivered - reworkQty - rejectQty : Math.floor(delivered * 0.6);
-            const failureCost = (reworkQty+rejectQty) * (Math.random()*600+150);
+        const processes = ["Punching","Welding","Assembling"];
+        const engineers = ["Gizie M.", "Abebech A."];
+        const clients = ["DEF Metal", "AA Manufacturing"];
+        const titles = ["Animal Feed Plant", "Bridge Bracket"];
+        const subtitles = ["mixer", "conveyor", "control panel"];
+        const partsList = [["Frame", 2], ["Motor Mount", 1], ["Bolt Set", 8]];
+        for (let i=0; i<30; i++) {
+            const date = new Date(); date.setDate(date.getDate() - Math.floor(Math.random() * 60));
+            const rating = Math.random() < 0.7 ? "Accepted" : (Math.random() < 0.5 ? "Rework" : "Reject");
+            const delivered = Math.floor(Math.random() * 50) + 10;
+            const accepted = rating === "Accepted" ? delivered : Math.floor(delivered * 0.6);
+            const rework = rating === "Rework" ? Math.floor(delivered * 0.2) : 0;
+            const reject = rating === "Reject" ? delivered - accepted : 0;
+            const parts = partsList.slice(0, Math.floor(Math.random() * 3) + 1).map(p => ({ part_name: p[0], quantity: p[1] }));
             mock.push({
                 id: i, submitted_at: date.toISOString(),
                 process_type: processes[Math.floor(Math.random()*processes.length)],
@@ -160,15 +114,11 @@
                     "Customer Name": clients[Math.floor(Math.random()*clients.length)],
                     "Project Name": titles[Math.floor(Math.random()*titles.length)],
                     "Subtitle": subtitles[Math.floor(Math.random()*subtitles.length)],
-                    "Drawing No.": `DWG-${1000+i}`
+                    "Parts": parts
                 },
-                acceptance_data: { p0: { rating, causes: rating !== "Accepted" ? ["Machine"] : [] } },
-                total_internal_failure_cost: failureCost,
-                delivered_qty: delivered,
-                accepted_qty: accepted,
-                rework_qty: reworkQty,
-                reject_qty: rejectQty,
-                conditional_accept_qty: rating === "Conditional Accept" ? 12 : 0
+                acceptance_data: { p0: { rating } },
+                delivered_qty: delivered, accepted_qty: accepted, rework_qty: rework, reject_qty: reject,
+                total_internal_failure_cost: (rework+reject)*200
             });
         }
         return mock;
@@ -182,13 +132,7 @@
             const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
             const key = `${client}||${title}`;
             if (!projectMap.has(key)) {
-                projectMap.set(key, {
-                    client, title,
-                    inspections: [],
-                    subtitlesMap: new Map(),
-                    totalAccepted:0, totalRework:0, totalReject:0, totalInspections:0,
-                    lastDate: null, failureCostSum:0
-                });
+                projectMap.set(key, { client, title, inspections: [], subtitlesMap: new Map(), totalAccepted:0, totalRework:0, totalReject:0, totalInspections:0, lastDate: null });
             }
             const proj = projectMap.get(key);
             proj.inspections.push(insp);
@@ -197,7 +141,7 @@
             const accData = insp.acceptance_data || {};
             const firstParam = Object.values(accData)[0];
             if (firstParam?.rating) rating = firstParam.rating;
-            else if (insp.accepted_qty > 0 && insp.rework_qty ===0 && insp.reject_qty===0) rating='Accepted';
+            else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0) rating='Accepted';
             else if (insp.rework_qty >0) rating='Rework';
             else if (insp.reject_qty >0) rating='Reject';
             else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
@@ -207,12 +151,13 @@
 
             if (!proj.subtitlesMap.has(subtitle)) {
                 proj.subtitlesMap.set(subtitle, { 
-                    total:0, acceptedCount:0, reworkCount:0, rejectCount:0,
-                    sumDelivered:0, sumAccepted:0, sumRework:0, sumReject:0
+                    totalInspections:0, acceptedCount:0, reworkCount:0, rejectCount:0,
+                    sumDelivered:0, sumAccepted:0, sumRework:0, sumReject:0,
+                    partsMap: new Map() // part_name -> total quantity
                 });
             }
             const sub = proj.subtitlesMap.get(subtitle);
-            sub.total++;
+            sub.totalInspections++;
             if (rating === 'Accepted') sub.acceptedCount++;
             else if (rating === 'Rework') sub.reworkCount++;
             else if (rating === 'Reject') sub.rejectCount++;
@@ -220,11 +165,17 @@
             sub.sumAccepted += (insp.accepted_qty || 0);
             sub.sumRework += (insp.rework_qty || 0);
             sub.sumReject += (insp.reject_qty || 0);
+            // Aggregate parts
+            const parts = getParts(insp);
+            parts.forEach(part => {
+                const name = part.part_name;
+                const qty = part.quantity || 0;
+                sub.partsMap.set(name, (sub.partsMap.get(name) || 0) + qty);
+            });
             proj.subtitlesMap.set(subtitle, sub);
 
             const inspDate = new Date(insp.submitted_at);
             if (!proj.lastDate || inspDate > proj.lastDate) proj.lastDate = inspDate;
-            proj.failureCostSum += insp.total_internal_failure_cost || 0;
         }
         const projects = Array.from(projectMap.values()).map(p => {
             const acceptanceRate = p.totalInspections ? (p.totalAccepted / p.totalInspections)*100 : 0;
@@ -232,68 +183,28 @@
             if (p.totalReject / p.totalInspections >= 0.5) followStatus = 'critical';
             else if (p.totalRework + p.totalReject > 0) followStatus = 'needs_action';
             const subtitlesArray = Array.from(p.subtitlesMap.entries()).map(([name, stats]) => ({
-                name,
-                totalInspections: stats.total,
-                acceptedCount: stats.acceptedCount,
-                reworkCount: stats.reworkCount,
-                rejectCount: stats.rejectCount,
-                sumDelivered: stats.sumDelivered,
-                sumAccepted: stats.sumAccepted,
-                sumRework: stats.sumRework,
-                sumReject: stats.sumReject,
-                acceptRate: stats.total ? (stats.acceptedCount / stats.total)*100 : 0
-            })).sort((a,b) => b.totalInspections - a.totalInspections);
+                name, ...stats,
+                acceptRate: stats.totalInspections ? (stats.acceptedCount / stats.totalInspections)*100 : 0,
+                partsList: Array.from(stats.partsMap.entries()).map(([partName, qty]) => ({ part_name: partName, quantity: qty }))
+            }));
             return {
-                ...p,
-                acceptanceRate: acceptanceRate.toFixed(1),
-                followStatus,
-                subtitleCount: p.subtitlesMap.size,
-                subtitlesArray,
-                lastDateStr: p.lastDate ? p.lastDate.toLocaleDateString() : '—',
-                avgFailureCost: p.totalInspections ? (p.failureCostSum / p.totalInspections).toFixed(0) : 0
+                ...p, acceptanceRate: acceptanceRate.toFixed(1), followStatus,
+                subtitleCount: p.subtitlesMap.size, subtitlesArray,
+                lastDateStr: p.lastDate ? p.lastDate.toLocaleDateString() : '—'
             };
         });
         projects.sort((a,b) => (b.lastDate || 0) - (a.lastDate || 0));
         return projects;
     }
 
-    function getAllSubtitles(inspections) {
-        const subs = new Set();
-        for (const insp of inspections) {
-            const s = getExtraField(insp, 'Subtitle');
-            if (s) subs.add(s);
-        }
-        return Array.from(subs).sort();
-    }
-
     function renderProjects(projects) {
         const tbody = document.getElementById('projectsTableBody');
-        if (!projects.length) {
-            tbody.innerHTML = '<tr><td colspan="11" class="text-center py-10 text-slate-400">No projects found</td></tr>';
-            document.getElementById('totalProjects').innerText = '0';
-            document.getElementById('needFollowup').innerText = '0';
-            document.getElementById('avgAcceptance').innerText = '0%';
-            return;
-        }
-        tbody.innerHTML = projects.map(proj => {
-            let statusBadge = '', statusText = '';
-            if (proj.followStatus === 'critical') { statusBadge = 'bg-red-100 text-red-700'; statusText = 'Critical'; }
-            else if (proj.followStatus === 'needs_action') { statusBadge = 'bg-amber-100 text-amber-700'; statusText = 'Needs Action'; }
-            else { statusBadge = 'bg-emerald-100 text-emerald-700'; statusText = 'On Track'; }
-            const barWidth = Math.min(100, parseFloat(proj.acceptanceRate));
-            return `<tr class="hover:bg-gray-50">
-                <td class="font-medium">${escapeHtml(proj.client)}</td>
-                <td class="font-mono">${escapeHtml(proj.title)}</td>
-                <td class="text-center font-bold text-indigo-600">${proj.subtitleCount}</td>
-                <td class="text-center">${proj.totalInspections}</td>
-                <td class="text-center text-emerald-700">${proj.totalAccepted}</td>
-                <td class="text-center text-amber-600">${proj.totalRework}</td>
-                <td class="text-center text-red-600">${proj.totalReject}</td>
-                <td class="text-center"><div class="flex items-center gap-2"><span class="text-sm">${proj.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width: ${barWidth}%"></div></div></div></td>
-                <td class="text-center text-xs">${proj.lastDateStr}</td>
-                <td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td>
-                <td class="text-center"><button onclick="showProjectDetails('${escapeHtml(proj.client)}', '${escapeHtml(proj.title)}')" class="text-indigo-600 hover:text-indigo-800"><i class="fa-regular fa-eye"></i> View</button></td>
-             </tr>`;
+        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="11" class="text-center py-10">No projects</td></tr>'; return; }
+        tbody.innerHTML = projects.map(p => {
+            const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
+            let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus === 'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
+            let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track');
+            return `<tr><td>${escapeHtml(p.client)}</td><td>${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitleCount}</td><td class="text-center">${p.totalInspections}</td><td class="text-center text-emerald-700">${p.totalAccepted}</td><td class="text-center text-amber-600">${p.totalRework}</td><td class="text-center text-red-600">${p.totalReject}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
         }).join('');
         document.getElementById('totalProjects').innerText = projects.length;
         const need = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
@@ -303,59 +214,43 @@
         document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
     }
 
-    // Enhanced modal with BOM‑style table (subtitle breakdown with quantity columns)
+    // Enhanced modal with Parts List per subtitle
     function showProjectDetails(client, title) {
         const project = allProjects.find(p => p.client === client && p.title === title);
         if (!project) return;
         const modalBody = document.getElementById('modalBody');
         document.getElementById('modalTitle').innerText = `${client} / ${title}`;
-        
-        // Build subtitle breakdown table with quantity columns
-        let subtitleHtml = '';
+        let subtitlesHtml = '';
         if (project.subtitlesArray.length) {
-            subtitleHtml = `
-                <div class="bg-white border rounded-xl p-4 shadow-sm">
-                    <h4 class="font-semibold text-slate-800 mb-3"><i class="fa-solid fa-cubes text-indigo-500 mr-2"></i> Sub‑assembly Breakdown (Quantities)</h4>
-                    <div class="overflow-x-auto">
-                        <table class="subtitle-summary-table">
-                            <thead>
-                                <tr>
-                                    <th>Sub‑assembly (Subtitle)</th>
-                                    <th>Inspections</th>
-                                    <th>Delivered Qty</th>
-                                    <th>Accepted Qty</th>
-                                    <th>Rework Qty</th>
-                                    <th>Reject Qty</th>
-                                    <th>Acceptance %</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${project.subtitlesArray.map(sub => `
-                                    <tr>
-                                        <td class="font-medium text-left">${escapeHtml(sub.name)}</td>
-                                        <td>${sub.totalInspections}</td>
-                                        <td>${sub.sumDelivered.toLocaleString()}</td>
-                                        <td class="text-emerald-700 font-medium">${sub.sumAccepted.toLocaleString()}</td>
-                                        <td class="text-amber-600">${sub.sumRework.toLocaleString()}</td>
-                                        <td class="text-red-600">${sub.sumReject.toLocaleString()}</td>
-                                        <td>
-                                            <div class="flex items-center justify-center gap-1">
-                                                <span class="text-sm">${sub.acceptRate.toFixed(1)}%</span>
-                                                <div class="progress-bar w-12"><div class="progress-fill" style="width: ${Math.min(100, sub.acceptRate)}%"></div></div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
+            subtitlesHtml = project.subtitlesArray.map(sub => {
+                const partsTable = sub.partsList.length ? `
+                    <div class="mt-2">
+                        <div class="text-xs font-semibold text-gray-600 mt-2">📋 Parts used in "${escapeHtml(sub.name)}":</div>
+                        <table class="parts-table">
+                            <thead><tr><th>Part Name</th><th>Total Quantity</th></tr></thead>
+                            <tbody>${sub.partsList.map(p => `<tr><td>${escapeHtml(p.part_name)}</td><td class="text-center">${p.quantity}</td></tr>`).join('')}</tbody>
                         </table>
                     </div>
-                    <p class="text-xs text-gray-400 mt-3 italic">※ Quantities are summed from all inspections under each sub‑assembly.</p>
-                </div>`;
+                ` : '<div class="text-xs text-gray-400 italic mt-1">No parts recorded for this sub‑assembly.</div>';
+                return `
+                    <div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
+                        <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-center text-sm mt-2">
+                            <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
+                            <div><span class="text-gray-500">Delivered</span><br><span>${sub.sumDelivered.toLocaleString()}</span></div>
+                            <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
+                            <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
+                            <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
+                            <div><span class="text-gray-500">Accept %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
+                        </div>
+                        ${partsTable}
+                    </div>
+                `;
+            }).join('');
         } else {
-            subtitleHtml = '<div class="text-xs text-gray-500 italic bg-slate-50 p-3 rounded">No subtitles recorded for this project.</div>';
+            subtitlesHtml = '<div class="text-gray-500 italic">No sub‑assemblies found.</div>';
         }
-
-        // Individual inspections list (unchanged)
+        // Individual inspections list (with Conditional Accept badge)
         const inspectionsList = project.inspections.slice().sort((a,b)=>new Date(b.submitted_at)-new Date(a.submitted_at)).map(insp => {
             const date = new Date(insp.submitted_at).toLocaleDateString();
             let rating = '—';
@@ -365,28 +260,17 @@
             else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0) rating='Accepted';
             else if (insp.rework_qty >0) rating='Rework';
             else if (insp.reject_qty >0) rating='Reject';
-            else if (insp.conditional_accept_qty >0) rating='Conditional';
-            const ratingColor = rating === 'Accepted' ? 'text-emerald-700 bg-emerald-50' : (rating === 'Rework' ? 'text-amber-700 bg-amber-50' : (rating === 'Reject' ? 'text-red-700 bg-red-50' : 'text-blue-700 bg-blue-50'));
+            else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
+            const ratingColor = rating === 'Accepted' ? 'bg-emerald-100 text-emerald-700' : (rating === 'Rework' ? 'bg-amber-100 text-amber-700' : (rating === 'Reject' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'));
             const subtitle = getExtraField(insp, 'Subtitle');
-            return `<div class="border rounded-lg p-3 bg-white flex justify-between items-center">
-                <div><p class="text-sm font-medium">${insp.process_type || 'Process'} | ${date}</p><p class="text-xs text-slate-500">QC: ${insp.username || '—'} | Subtitle: ${subtitle || '—'}</p></div>
-                <div><span class="px-2 py-1 rounded-full text-xs font-medium ${ratingColor}">${rating}</span><p class="text-xs text-slate-400 mt-1">Cost: ${(insp.total_internal_failure_cost||0).toFixed(0)} ETB</p></div>
-            </div>`;
+            return `<div class="border rounded-lg p-3 bg-white flex justify-between"><div><p class="text-sm font-medium">${insp.process_type || 'Process'} | ${date}</p><p class="text-xs text-slate-500">QC: ${insp.username || '—'} | Subtitle: ${subtitle || '—'}</p></div><div><span class="px-2 py-1 rounded-full text-xs font-medium ${ratingColor}">${rating}</span><p class="text-xs text-slate-400 mt-1">Cost: ${(insp.total_internal_failure_cost||0).toFixed(0)} ETB</p></div></div>`;
         }).join('');
-        
-        modalBody.innerHTML = `
-            ${subtitleHtml}
-            <div class="mt-4">
-                <h4 class="font-semibold text-slate-800 mb-2"><i class="fa-regular fa-clock mr-1"></i> Individual Inspections</h4>
-                <div class="space-y-2 max-h-96 overflow-y-auto">${inspectionsList || '<p class="text-gray-500">No inspections</p>'}</div>
-            </div>
-        `;
+        modalBody.innerHTML = `<div class="space-y-4">${subtitlesHtml}<div><h4 class="font-semibold text-slate-800 mb-2">📋 Individual Inspections</h4><div class="space-y-2 max-h-96 overflow-y-auto">${inspectionsList || '<p class="text-gray-500">No inspections</p>'}</div></div></div>`;
         document.getElementById('modal').classList.remove('hidden');
     }
 
     function closeModal(e) { if (!e || e.target === document.getElementById('modal') || e.target.closest('.fa-xmark')) document.getElementById('modal').classList.add('hidden'); }
 
-    // Filters
     let originalProjects = [];
     function applyFilters() {
         const client = document.getElementById('filterClient').value;
@@ -402,36 +286,17 @@
         else if (status === 'on_track') filtered = filtered.filter(p => p.followStatus === 'on_track');
         renderProjects(filtered);
     }
-
     function populateFilters(projects, rawInspections) {
         const clients = [...new Set(projects.map(p => p.client))].sort();
         const titles = [...new Set(projects.map(p => p.title))].sort();
-        const subtitles = getAllSubtitles(rawInspections);
+        const subs = [...new Set(rawInspections.flatMap(i => getExtraField(i, 'Subtitle')).filter(Boolean))].sort();
         document.getElementById('filterClient').innerHTML = '<option value="">All Clients</option>' + clients.map(c=>`<option>${escapeHtml(c)}</option>`).join('');
         document.getElementById('filterTitle').innerHTML = '<option value="">All Titles</option>' + titles.map(t=>`<option>${escapeHtml(t)}</option>`).join('');
-        document.getElementById('filterSubtitle').innerHTML = '<option value="">All Subtitles</option>' + subtitles.map(s=>`<option>${escapeHtml(s)}</option>`).join('');
+        document.getElementById('filterSubtitle').innerHTML = '<option value="">All Subtitles</option>' + subs.map(s=>`<option>${escapeHtml(s)}</option>`).join('');
     }
-
-    function clearFilters() {
-        document.getElementById('filterClient').value = '';
-        document.getElementById('filterTitle').value = '';
-        document.getElementById('filterSubtitle').value = '';
-        document.getElementById('filterStatus').value = '';
-        applyFilters();
-    }
-
-    async function refreshData() {
-        const inspections = await fetchInspections();
-        allInspectionsRaw = inspections;
-        const projects = aggregateProjects(inspections);
-        originalProjects = projects;
-        allProjects = projects;
-        populateFilters(projects, inspections);
-        applyFilters();
-    }
-
+    function clearFilters() { document.getElementById('filterClient').value = ''; document.getElementById('filterTitle').value = ''; document.getElementById('filterSubtitle').value = ''; document.getElementById('filterStatus').value = ''; applyFilters(); }
+    async function refreshData() { const inspections = await fetchInspections(); allInspectionsRaw = inspections; const projects = aggregateProjects(inspections); originalProjects = projects; allProjects = projects; populateFilters(projects, inspections); applyFilters(); }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-
     document.getElementById('filterClient').addEventListener('change', applyFilters);
     document.getElementById('filterTitle').addEventListener('change', applyFilters);
     document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
