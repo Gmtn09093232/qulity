@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Project Follow‑Up | Amhara Metal Industry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
+        .follow-card { transition: all 0.2s; border-radius: 1.25rem; }
+        .follow-card:hover { transform: translateY(-2px); box-shadow: 0 12px 20px -12px rgba(0,0,0,0.1); }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+        .progress-bar { height: 6px; border-radius: 10px; background-color: #e2e8f0; }
+        .progress-fill { height: 6px; border-radius: 10px; background-color: #10b981; }
+        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background-color: #f8fafc; padding: 12px 10px; font-weight: 600; color: #1e293b; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 12px 10px; border-bottom: 1px solid #eef2f6; vertical-align: middle; }
+        .detail-row { background-color: #fefce8; cursor: pointer; }
+        .detail-content { background-color: #f9fafb; padding: 1rem; border-radius: 1rem; margin-top: 0.5rem; display: none; }
+        .detail-content.show { display: block; }
+        .filter-select, .filter-input { border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; font-size: 0.875rem; background-color: white; }
+    </style>
+</head>
+<body class="antialiased">
+
+<div class="max-w-7xl mx-auto px-4 py-6 md:px-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-flag-checkered text-indigo-600"></i> 
+                Project Follow‑Up
+            </h1>
+            <p class="text-slate-500 text-sm">Track inspection progress, rework, and acceptance per project</p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="refreshData()" class="bg-white hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm text-sm font-medium text-indigo-600 transition flex items-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> Refresh
+            </button>
+            <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm font-medium text-slate-700 transition">
+                ← Back to Inspection
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters (Project name, Client) -->
+    <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[180px]">
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Filter by Client</label>
+            <select id="filterClient" class="filter-select w-full">
+                <option value="">All Clients</option>
+            </select>
+        </div>
+        <div class="flex-1 min-w-[180px]">
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Filter by Project Title</label>
+            <select id="filterTitle" class="filter-select w-full">
+                <option value="">All Titles</option>
+            </select>
+        </div>
+        <div class="flex-1 min-w-[180px]">
+            <label class="text-xs font-medium text-slate-500 mb-1 block">Status</label>
+            <select id="filterStatus" class="filter-select w-full">
+                <option value="">All Status</option>
+                <option value="needs_action">Needs Action (Rework/Reject)</option>
+                <option value="on_track">On Track (≥80% accepted)</option>
+                <option value="critical">Critical (≥50% reject)</option>
+            </select>
+        </div>
+        <div>
+            <button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-xl text-sm transition">Clear Filters</button>
+        </div>
+    </div>
+
+    <!-- Summary Cards (optional) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+            <div class="flex items-center gap-2 text-slate-500 text-sm"><i class="fa-solid fa-diagram-project"></i> Active Projects</div>
+            <p class="text-2xl font-bold text-slate-800" id="totalProjects">—</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+            <div class="flex items-center gap-2 text-slate-500 text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Need Follow‑up</div>
+            <p class="text-2xl font-bold text-amber-600" id="needFollowup">—</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+            <div class="flex items-center gap-2 text-slate-500 text-sm"><i class="fa-solid fa-chart-line"></i> Avg. Acceptance</div>
+            <p class="text-2xl font-bold text-emerald-600" id="avgAcceptance">—%</p>
+        </div>
+    </div>
+
+    <!-- Projects Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <h2 class="font-semibold text-slate-700"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2>
+            <span class="text-xs text-slate-400" id="recordCount"></span>
+        </div>
+        <div class="table-wrapper">
+            <table class="min-w-full">
+                <thead>
+                    <tr>
+                        <th class="text-left">Client</th>
+                        <th class="text-left">Project Title</th>
+                        <th class="text-center">Inspections</th>
+                        <th class="text-center">Accepted</th>
+                        <th class="text-center">Rework</th>
+                        <th class="text-center">Reject</th>
+                        <th class="text-center">Acceptance %</th>
+                        <th class="text-center">Last Inspection</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Details</th>
+                    </tr>
+                </thead>
+                <tbody id="projectsTableBody">
+                    <tr><td colspan="10" class="text-center py-10 text-slate-400">Loading projects...</td><th
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for detailed inspection list (simple overlay) -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-all" onclick="closeModal(event)">
+        <div class="bg-white rounded-2xl max-w-3xl w-full mx-4 max-h-[80vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
+            <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg" id="modalTitle">Inspections for Project</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div id="modalBody" class="p-4">
+                <div class="space-y-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let allProjects = [];  // store aggregated project data
+
+    // Helper: get extra field
+    function getExtraField(insp, field) {
+        return insp.extra_fields?.[field]?.trim() || '';
+    }
+
+    // Fetch data from API
+    async function fetchInspections() {
+        try {
+            const res = await fetch('/api/inspections');
+            if (!res.ok) throw new Error('API unavailable');
+            return await res.json();
+        } catch (err) {
+            console.warn('Using mock data', err);
+            return generateMockInspections();
+        }
+    }
+
+    // Mock data (consistent with dashboard)
+    function generateMockInspections() {
+        const processes = ["Punching","Welding","Rolling","Casting","Assembling","Lathe"];
+        const engineers = ["Abebech A.", "Mekdes T.", "Biruk D."];
+        const clients = ["DEF Metal PLC", "AA Manufacturing", "Bishoftu Tech", "Addis Industry"];
+        const titles = ["Bridge Bracket", "Chassis Frame", "Gear Housing", "Hydraulic Cylinder", "Tower Flange"];
+        const mock = [];
+        for (let i=0; i<45; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - Math.floor(Math.random() * 90));
+            const ratingRand = Math.random();
+            let rating = "Accepted";
+            if (ratingRand < 0.25) rating = "Rework";
+            else if (ratingRand < 0.4) rating = "Reject";
+            else if (ratingRand < 0.48) rating = "Conditional Accept";
+            const reworkQty = rating === "Rework" ? Math.floor(Math.random()*4)+1 : 0;
+            const rejectQty = rating === "Reject" ? Math.floor(Math.random()*3)+1 : 0;
+            const failureCost = (reworkQty+rejectQty) * (Math.random()*600+150);
+            const acceptance_data = { p0: { rating, causes: rating !== "Accepted" ? ["Machine"] : [] } };
+            mock.push({
+                id: i,
+                submitted_at: date.toISOString(),
+                process_type: processes[Math.floor(Math.random()*processes.length)],
+                username: engineers[Math.floor(Math.random()*engineers.length)],
+                extra_fields: {
+                    "Customer Name": clients[Math.floor(Math.random()*clients.length)],
+                    "Project Name": titles[Math.floor(Math.random()*titles.length)],
+                    "Drawing No.": `DWG-${1000+i}`
+                },
+                acceptance_data: acceptance_data,
+                total_internal_failure_cost: failureCost,
+                delivered_qty: 50 + Math.floor(Math.random()*80),
+                accepted_qty: rating === "Accepted" ? 45 : (rating === "Rework" ? 30 : 10),
+                rework_qty: reworkQty,
+                reject_qty: rejectQty,
+                conditional_accept_qty: rating === "Conditional Accept" ? 12 : 0
+            });
+        }
+        return mock;
+    }
+
+    // Aggregate inspections into projects (key = client|title)
+    function aggregateProjects(inspections) {
+        const projectMap = new Map(); // key = `${client}||${title}`
+        for (const insp of inspections) {
+            const client = getExtraField(insp, 'Customer Name') || 'Unknown Client';
+            const title = getExtraField(insp, 'Project Name') || 'Untitled';
+            const key = `${client}||${title}`;
+            if (!projectMap.has(key)) {
+                projectMap.set(key, {
+                    client, title,
+                    inspections: [],
+                    totalAccepted: 0, totalRework: 0, totalReject: 0, totalConditional: 0,
+                    totalInspections: 0,
+                    lastDate: null,
+                    failureCostSum: 0
+                });
+            }
+            const proj = projectMap.get(key);
+            proj.inspections.push(insp);
+            proj.totalInspections++;
+            // Determine rating from acceptance data or fallback
+            let rating = 'Unknown';
+            const accData = insp.acceptance_data || {};
+            const firstParam = Object.values(accData)[0];
+            if (firstParam?.rating) rating = firstParam.rating;
+            else if (insp.accepted_qty > 0 && insp.rework_qty === 0 && insp.reject_qty === 0) rating = 'Accepted';
+            else if (insp.rework_qty > 0) rating = 'Rework';
+            else if (insp.reject_qty > 0) rating = 'Reject';
+            else if (insp.conditional_accept_qty > 0) rating = 'Conditional Accept';
+            
+            if (rating === 'Accepted') proj.totalAccepted++;
+            else if (rating === 'Rework') proj.totalRework++;
+            else if (rating === 'Reject') proj.totalReject++;
+            else if (rating === 'Conditional Accept') proj.totalConditional++;
+            
+            const inspDate = new Date(insp.submitted_at);
+            if (!proj.lastDate || inspDate > proj.lastDate) proj.lastDate = inspDate;
+            proj.failureCostSum += (insp.total_internal_failure_cost || 0);
+        }
+        // convert map to array and compute acceptance rate
+        const projects = Array.from(projectMap.values()).map(p => {
+            const acceptanceRate = p.totalInspections ? ((p.totalAccepted / p.totalInspections)*100) : 0;
+            let followStatus = 'on_track';
+            if (p.totalReject / p.totalInspections >= 0.5) followStatus = 'critical';
+            else if (p.totalRework + p.totalReject > 0) followStatus = 'needs_action';
+            else if (acceptanceRate >= 80) followStatus = 'on_track';
+            return {
+                ...p,
+                acceptanceRate: acceptanceRate.toFixed(1),
+                followStatus,
+                lastDateStr: p.lastDate ? p.lastDate.toLocaleDateString() : '—',
+                avgFailureCost: p.totalInspections ? (p.failureCostSum / p.totalInspections).toFixed(0) : 0
+            };
+        });
+        // sort by last inspection desc
+        projects.sort((a,b) => (b.lastDate || 0) - (a.lastDate || 0));
+        return projects;
+    }
+
+    // Render table, also populate filter dropdowns
+    function renderProjects(projects) {
+        const tbody = document.getElementById('projectsTableBody');
+        if (!projects.length) {
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400">No projects found</td></tr>';
+            document.getElementById('totalProjects').innerText = '0';
+            document.getElementById('needFollowup').innerText = '0';
+            document.getElementById('avgAcceptance').innerText = '0%';
+            return;
+        }
+        tbody.innerHTML = projects.map(proj => {
+            let statusBadge = '', statusText = '';
+            if (proj.followStatus === 'critical') { statusBadge = 'bg-red-100 text-red-700'; statusText = 'Critical'; }
+            else if (proj.followStatus === 'needs_action') { statusBadge = 'bg-amber-100 text-amber-700'; statusText = 'Needs Action'; }
+            else { statusBadge = 'bg-emerald-100 text-emerald-700'; statusText = 'On Track'; }
+            
+            const acceptancePercent = parseFloat(proj.acceptanceRate);
+            const barWidth = Math.min(100, acceptancePercent);
+            return `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="font-medium">${escapeHtml(proj.client)}</td>
+                    <td class="font-mono text-sm">${escapeHtml(proj.title)}</td>
+                    <td class="text-center">${proj.totalInspections}</td>
+                    <td class="text-center text-emerald-700">${proj.totalAccepted}</td>
+                    <td class="text-center text-amber-600">${proj.totalRework}</td>
+                    <td class="text-center text-red-600">${proj.totalReject}</td>
+                    <td class="text-center">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium">${proj.acceptanceRate}%</span>
+                            <div class="progress-bar w-16"><div class="progress-fill" style="width: ${barWidth}%"></div></div>
+                        </div>
+                    </td>
+                    <td class="text-center text-xs text-slate-500">${proj.lastDateStr}</td>
+                    <td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td>
+                    <td class="text-center">
+                        <button onclick="showProjectDetails('${escapeHtml(proj.client)}', '${escapeHtml(proj.title)}')" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                            <i class="fa-regular fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        // update summary stats
+        document.getElementById('totalProjects').innerText = projects.length;
+        const needFollowupCount = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
+        document.getElementById('needFollowup').innerText = needFollowupCount;
+        const avgAcc = projects.reduce((sum, p) => sum + parseFloat(p.acceptanceRate), 0) / (projects.length || 1);
+        document.getElementById('avgAcceptance').innerText = avgAcc.toFixed(1) + '%';
+        document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
+    }
+
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    // show modal with all inspections for a specific project
+    function showProjectDetails(client, title) {
+        const project = allProjects.find(p => p.client === client && p.title === title);
+        if (!project) return;
+        const inspections = project.inspections.slice().sort((a,b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+        const modalBody = document.getElementById('modalBody');
+        const modalTitle = document.getElementById('modalTitle');
+        modalTitle.innerText = `${client} / ${title}`;
+        modalBody.innerHTML = `
+            <div class="space-y-3">
+                ${inspections.map(insp => {
+                    const date = new Date(insp.submitted_at).toLocaleDateString();
+                    let rating = '—';
+                    const accData = insp.acceptance_data || {};
+                    const firstParam = Object.values(accData)[0];
+                    if (firstParam?.rating) rating = firstParam.rating;
+                    else if (insp.accepted_qty > 0 && insp.rework_qty === 0 && insp.reject_qty ===0) rating = 'Accepted';
+                    else if (insp.rework_qty > 0) rating = 'Rework';
+                    else if (insp.reject_qty > 0) rating = 'Reject';
+                    else if (insp.conditional_accept_qty > 0) rating = 'Conditional';
+                    const ratingColor = rating === 'Accepted' ? 'text-emerald-700 bg-emerald-50' : (rating === 'Rework' ? 'text-amber-700 bg-amber-50' : (rating === 'Reject' ? 'text-red-700 bg-red-50' : 'text-blue-700 bg-blue-50'));
+                    return `
+                        <div class="border rounded-lg p-3 bg-white shadow-sm flex justify-between items-center">
+                            <div>
+                                <p class="text-sm font-medium">${insp.process_type || 'Process'} | ${date}</p>
+                                <p class="text-xs text-slate-500">QC: ${insp.username || '—'} | Drawing: ${getExtraField(insp, 'Drawing No.') || '—'}</p>
+                            </div>
+                            <div>
+                                <span class="px-2 py-1 rounded-full text-xs font-medium ${ratingColor}">${rating}</span>
+                                <p class="text-xs text-slate-400 mt-1">Cost: ${(insp.total_internal_failure_cost || 0).toFixed(0)} ETB</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function closeModal(event) { if (!event || event.target === document.getElementById('modal') || event.target.closest('.fa-xmark')) document.getElementById('modal').classList.add('hidden'); }
+    
+    // Filter projects based on UI
+    let originalProjects = [];
+    function applyFilters() {
+        const clientFilter = document.getElementById('filterClient').value;
+        const titleFilter = document.getElementById('filterTitle').value;
+        const statusFilter = document.getElementById('filterStatus').value;
+        let filtered = [...originalProjects];
+        if (clientFilter) filtered = filtered.filter(p => p.client === clientFilter);
+        if (titleFilter) filtered = filtered.filter(p => p.title === titleFilter);
+        if (statusFilter === 'needs_action') filtered = filtered.filter(p => p.followStatus === 'needs_action');
+        else if (statusFilter === 'critical') filtered = filtered.filter(p => p.followStatus === 'critical');
+        else if (statusFilter === 'on_track') filtered = filtered.filter(p => p.followStatus === 'on_track');
+        renderProjects(filtered);
+    }
+
+    // populate client & title dropdowns from all projects
+    function populateFilters(projects) {
+        const clients = [...new Set(projects.map(p => p.client))].sort();
+        const titles = [...new Set(projects.map(p => p.title))].sort();
+        const clientSelect = document.getElementById('filterClient');
+        const titleSelect = document.getElementById('filterTitle');
+        clientSelect.innerHTML = '<option value="">All Clients</option>' + clients.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        titleSelect.innerHTML = '<option value="">All Titles</option>' + titles.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+    }
+
+    function clearFilters() {
+        document.getElementById('filterClient').value = '';
+        document.getElementById('filterTitle').value = '';
+        document.getElementById('filterStatus').value = '';
+        applyFilters();
+    }
+
+    async function refreshData() {
+        const inspections = await fetchInspections();
+        const projects = aggregateProjects(inspections);
+        originalProjects = projects;
+        allProjects = projects; // for modal detail
+        populateFilters(projects);
+        applyFilters(); // this calls renderProjects with filtered array
+    }
+    
+    // initial load
+    refreshData();
+    // attach filter listeners
+    document.getElementById('filterClient').addEventListener('change', applyFilters);
+    document.getElementById('filterTitle').addEventListener('change', applyFilters);
+    document.getElementById('filterStatus').addEventListener('change', applyFilters);
+    // close modal on escape
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
