@@ -16,8 +16,10 @@
         th { background-color: #f8fafc; padding: 12px 10px; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
         td { padding: 12px 10px; border-bottom: 1px solid #eef2f6; vertical-align: middle; }
         .filter-select { border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; background: white; }
-        .subtitle-summary-table { font-size: 0.75rem; background: #f8fafc; border-radius: 1rem; margin-top: 1rem; }
-        .subtitle-summary-table th { background: #e2e8f0; font-size: 0.7rem; padding: 8px; }
+        .subtitle-summary-table { font-size: 0.75rem; background: #f8fafc; border-radius: 1rem; margin-top: 1rem; width: 100%; }
+        .subtitle-summary-table th { background: #e2e8f0; font-size: 0.7rem; padding: 8px; text-align: center; }
+        .subtitle-summary-table td { padding: 8px 6px; text-align: center; }
+        .indent-1 { padding-left: 1.5rem !important; }
     </style>
 </head>
 <body class="antialiased">
@@ -75,7 +77,7 @@
         <div class="bg-white rounded-xl p-4 shadow-sm"><div class="flex items-center gap-2 text-slate-500 text-sm"><i class="fa-solid fa-chart-line"></i> Avg. Acceptance</div><p class="text-2xl font-bold text-emerald-600" id="avgAcceptance">—%</p></div>
     </div>
 
-    <!-- Projects Table (with Subtitles count column) -->
+    <!-- Projects Table -->
     <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
         <div class="px-5 py-3 border-b bg-slate-50 flex justify-between items-center">
             <h2 class="font-semibold text-slate-700"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2>
@@ -87,7 +89,7 @@
                     <tr>
                         <th class="text-left">Client</th>
                         <th class="text-left">Project Title</th>
-                        <th class="text-center">Sub‑assemblies<br><span class="text-xs font-normal">(subtitles)</span></th>
+                        <th class="text-center">Sub‑assemblies</th>
                         <th class="text-center">Insp.</th>
                         <th class="text-center">Acc.</th>
                         <th class="text-center">Rework</th>
@@ -103,16 +105,14 @@
         </div>
     </div>
 
-    <!-- Modal: shows inspections + subtitle summary -->
+    <!-- Modal: Detailed View with BOM‑style table -->
     <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-all" onclick="closeModal(event)">
-        <div class="bg-white rounded-2xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
+        <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
             <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
                 <h3 class="font-bold text-lg" id="modalTitle">Project Details</h3>
                 <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            <div id="modalBody" class="p-4 space-y-5">
-                <!-- subtitle summary will appear here -->
-            </div>
+            <div id="modalBody" class="p-4 space-y-5"></div>
         </div>
     </div>
 </div>
@@ -149,6 +149,8 @@
             else if (ratingRand < 0.48) rating = "Conditional Accept";
             const reworkQty = rating === "Rework" ? Math.floor(Math.random()*4)+1 : 0;
             const rejectQty = rating === "Reject" ? Math.floor(Math.random()*3)+1 : 0;
+            const delivered = Math.floor(Math.random() * 100) + 20;
+            const accepted = rating === "Accepted" ? delivered - reworkQty - rejectQty : Math.floor(delivered * 0.6);
             const failureCost = (reworkQty+rejectQty) * (Math.random()*600+150);
             mock.push({
                 id: i, submitted_at: date.toISOString(),
@@ -162,8 +164,8 @@
                 },
                 acceptance_data: { p0: { rating, causes: rating !== "Accepted" ? ["Machine"] : [] } },
                 total_internal_failure_cost: failureCost,
-                delivered_qty: 50 + Math.floor(Math.random()*80),
-                accepted_qty: rating === "Accepted" ? 45 : (rating === "Rework" ? 30 : 10),
+                delivered_qty: delivered,
+                accepted_qty: accepted,
                 rework_qty: reworkQty,
                 reject_qty: rejectQty,
                 conditional_accept_qty: rating === "Conditional Accept" ? 12 : 0
@@ -172,7 +174,6 @@
         return mock;
     }
 
-    // Aggregate projects with subtitle breakdown
     function aggregateProjects(inspections) {
         const projectMap = new Map();
         for (const insp of inspections) {
@@ -184,7 +185,7 @@
                 projectMap.set(key, {
                     client, title,
                     inspections: [],
-                    subtitlesMap: new Map(), // key: subtitle -> stats
+                    subtitlesMap: new Map(),
                     totalAccepted:0, totalRework:0, totalReject:0, totalInspections:0,
                     lastDate: null, failureCostSum:0
                 });
@@ -192,7 +193,6 @@
             const proj = projectMap.get(key);
             proj.inspections.push(insp);
             proj.totalInspections++;
-            // rating
             let rating = 'Unknown';
             const accData = insp.acceptance_data || {};
             const firstParam = Object.values(accData)[0];
@@ -204,16 +204,23 @@
             if (rating === 'Accepted') proj.totalAccepted++;
             else if (rating === 'Rework') proj.totalRework++;
             else if (rating === 'Reject') proj.totalReject++;
-            // subtitle stats
+
             if (!proj.subtitlesMap.has(subtitle)) {
-                proj.subtitlesMap.set(subtitle, { accepted:0, rework:0, reject:0, total:0 });
+                proj.subtitlesMap.set(subtitle, { 
+                    total:0, acceptedCount:0, reworkCount:0, rejectCount:0,
+                    sumDelivered:0, sumAccepted:0, sumRework:0, sumReject:0
+                });
             }
-            const subStats = proj.subtitlesMap.get(subtitle);
-            subStats.total++;
-            if (rating === 'Accepted') subStats.accepted++;
-            else if (rating === 'Rework') subStats.rework++;
-            else if (rating === 'Reject') subStats.reject++;
-            proj.subtitlesMap.set(subtitle, subStats);
+            const sub = proj.subtitlesMap.get(subtitle);
+            sub.total++;
+            if (rating === 'Accepted') sub.acceptedCount++;
+            else if (rating === 'Rework') sub.reworkCount++;
+            else if (rating === 'Reject') sub.rejectCount++;
+            sub.sumDelivered += (insp.delivered_qty || 0);
+            sub.sumAccepted += (insp.accepted_qty || 0);
+            sub.sumRework += (insp.rework_qty || 0);
+            sub.sumReject += (insp.reject_qty || 0);
+            proj.subtitlesMap.set(subtitle, sub);
 
             const inspDate = new Date(insp.submitted_at);
             if (!proj.lastDate || inspDate > proj.lastDate) proj.lastDate = inspDate;
@@ -224,21 +231,23 @@
             let followStatus = 'on_track';
             if (p.totalReject / p.totalInspections >= 0.5) followStatus = 'critical';
             else if (p.totalRework + p.totalReject > 0) followStatus = 'needs_action';
-            const subtitleCount = p.subtitlesMap.size;
-            // convert subtitlesMap to array for modal display
             const subtitlesArray = Array.from(p.subtitlesMap.entries()).map(([name, stats]) => ({
-                name, 
-                total: stats.total,
-                accepted: stats.accepted,
-                rework: stats.rework,
-                reject: stats.reject,
-                acceptRate: stats.total ? (stats.accepted/stats.total)*100 : 0
-            })).sort((a,b) => b.total - a.total);
+                name,
+                totalInspections: stats.total,
+                acceptedCount: stats.acceptedCount,
+                reworkCount: stats.reworkCount,
+                rejectCount: stats.rejectCount,
+                sumDelivered: stats.sumDelivered,
+                sumAccepted: stats.sumAccepted,
+                sumRework: stats.sumRework,
+                sumReject: stats.sumReject,
+                acceptRate: stats.total ? (stats.acceptedCount / stats.total)*100 : 0
+            })).sort((a,b) => b.totalInspections - a.totalInspections);
             return {
                 ...p,
                 acceptanceRate: acceptanceRate.toFixed(1),
                 followStatus,
-                subtitleCount,
+                subtitleCount: p.subtitlesMap.size,
                 subtitlesArray,
                 lastDateStr: p.lastDate ? p.lastDate.toLocaleDateString() : '—',
                 avgFailureCost: p.totalInspections ? (p.failureCostSum / p.totalInspections).toFixed(0) : 0
@@ -284,7 +293,7 @@
                 <td class="text-center text-xs">${proj.lastDateStr}</td>
                 <td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td>
                 <td class="text-center"><button onclick="showProjectDetails('${escapeHtml(proj.client)}', '${escapeHtml(proj.title)}')" class="text-indigo-600 hover:text-indigo-800"><i class="fa-regular fa-eye"></i> View</button></td>
-            </tr>`;
+             </tr>`;
         }).join('');
         document.getElementById('totalProjects').innerText = projects.length;
         const need = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
@@ -294,39 +303,59 @@
         document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
     }
 
+    // Enhanced modal with BOM‑style table (subtitle breakdown with quantity columns)
     function showProjectDetails(client, title) {
         const project = allProjects.find(p => p.client === client && p.title === title);
         if (!project) return;
         const modalBody = document.getElementById('modalBody');
         document.getElementById('modalTitle').innerText = `${client} / ${title}`;
-        // Build subtitle summary table
+        
+        // Build subtitle breakdown table with quantity columns
         let subtitleHtml = '';
         if (project.subtitlesArray.length) {
             subtitleHtml = `
-                <div class="bg-slate-50 rounded-xl p-4">
-                    <h4 class="font-semibold text-slate-700 mb-2"><i class="fa-solid fa-cubes mr-1"></i> Sub‑assembly breakdown (by subtitle)</h4>
+                <div class="bg-white border rounded-xl p-4 shadow-sm">
+                    <h4 class="font-semibold text-slate-800 mb-3"><i class="fa-solid fa-cubes text-indigo-500 mr-2"></i> Sub‑assembly Breakdown (Quantities)</h4>
                     <div class="overflow-x-auto">
-                        <table class="subtitle-summary-table w-full text-xs">
-                            <thead><tr><th>Subtitle (sub‑assembly)</th><th>Inspections</th><th>Accepted</th><th>Rework</th><th>Reject</th><th>Accept%</th></tr></thead>
+                        <table class="subtitle-summary-table">
+                            <thead>
+                                <tr>
+                                    <th>Sub‑assembly (Subtitle)</th>
+                                    <th>Inspections</th>
+                                    <th>Delivered Qty</th>
+                                    <th>Accepted Qty</th>
+                                    <th>Rework Qty</th>
+                                    <th>Reject Qty</th>
+                                    <th>Acceptance %</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 ${project.subtitlesArray.map(sub => `
-                                    <tr class="border-b border-gray-200">
-                                        <td class="font-mono">${escapeHtml(sub.name)}</td>
-                                        <td class="text-center">${sub.total}</td>
-                                        <td class="text-center text-emerald-700">${sub.accepted}</td>
-                                        <td class="text-center text-amber-600">${sub.rework}</td>
-                                        <td class="text-center text-red-600">${sub.reject}</td>
-                                        <td class="text-center"><div class="flex justify-center"><div class="progress-bar w-12"><div class="progress-fill" style="width: ${Math.min(100,sub.acceptRate)}%"></div></div><span class="ml-1">${sub.acceptRate.toFixed(1)}%</span></div></td>
+                                    <tr>
+                                        <td class="font-medium text-left">${escapeHtml(sub.name)}</td>
+                                        <td>${sub.totalInspections}</td>
+                                        <td>${sub.sumDelivered.toLocaleString()}</td>
+                                        <td class="text-emerald-700 font-medium">${sub.sumAccepted.toLocaleString()}</td>
+                                        <td class="text-amber-600">${sub.sumRework.toLocaleString()}</td>
+                                        <td class="text-red-600">${sub.sumReject.toLocaleString()}</td>
+                                        <td>
+                                            <div class="flex items-center justify-center gap-1">
+                                                <span class="text-sm">${sub.acceptRate.toFixed(1)}%</span>
+                                                <div class="progress-bar w-12"><div class="progress-fill" style="width: ${Math.min(100, sub.acceptRate)}%"></div></div>
+                                            </div>
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
                     </div>
+                    <p class="text-xs text-gray-400 mt-3 italic">※ Quantities are summed from all inspections under each sub‑assembly.</p>
                 </div>`;
         } else {
-            subtitleHtml = '<div class="text-xs text-gray-500 italic">No subtitles recorded for this project.</div>';
+            subtitleHtml = '<div class="text-xs text-gray-500 italic bg-slate-50 p-3 rounded">No subtitles recorded for this project.</div>';
         }
-        // Individual inspection list
+
+        // Individual inspections list (unchanged)
         const inspectionsList = project.inspections.slice().sort((a,b)=>new Date(b.submitted_at)-new Date(a.submitted_at)).map(insp => {
             const date = new Date(insp.submitted_at).toLocaleDateString();
             let rating = '—';
@@ -344,10 +373,11 @@
                 <div><span class="px-2 py-1 rounded-full text-xs font-medium ${ratingColor}">${rating}</span><p class="text-xs text-slate-400 mt-1">Cost: ${(insp.total_internal_failure_cost||0).toFixed(0)} ETB</p></div>
             </div>`;
         }).join('');
+        
         modalBody.innerHTML = `
             ${subtitleHtml}
-            <div>
-                <h4 class="font-semibold text-slate-700 mb-2"><i class="fa-regular fa-clock mr-1"></i> Individual Inspections</h4>
+            <div class="mt-4">
+                <h4 class="font-semibold text-slate-800 mb-2"><i class="fa-regular fa-clock mr-1"></i> Individual Inspections</h4>
                 <div class="space-y-2 max-h-96 overflow-y-auto">${inspectionsList || '<p class="text-gray-500">No inspections</p>'}</div>
             </div>
         `;
@@ -356,7 +386,7 @@
 
     function closeModal(e) { if (!e || e.target === document.getElementById('modal') || e.target.closest('.fa-xmark')) document.getElementById('modal').classList.add('hidden'); }
 
-    // Filter logic
+    // Filters
     let originalProjects = [];
     function applyFilters() {
         const client = document.getElementById('filterClient').value;
