@@ -60,7 +60,27 @@
     <!-- Projects Table -->
     <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
         <div class="px-5 py-3 border-b bg-slate-50 flex justify-between"><h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2><span class="text-xs text-slate-400" id="recordCount"></span></div>
-        <div class="table-wrapper"><table class="min-w-full"><thead><tr><th>Client</th><th>Project Title</th><th class="text-center">Sub‑assemblies</th><th class="text-center">Insp.</th><th class="text-center">Acc.</th><th class="text-center">Rework</th><th class="text-center">Reject</th><th class="text-center">Accept%</th><th class="text-center">Last Insp.</th><th class="text-center">Status</th><th class="text-center">Details</th></tr></thead><tbody id="projectsTableBody"></tbody></table></div>
+        <div class="table-wrapper">
+            <table class="min-w-full">
+                <thead>
+                    <tr>
+                        <th class="text-left">Client</th>
+                        <th class="text-left">Project Title</th>
+                        <th class="text-center">Sub‑assemblies</th>
+                        <th class="text-center">Insp.</th>
+                        <th class="text-center">Accepted Qty</th>
+                        <th class="text-center">Rework Qty</th>
+                        <th class="text-center">Reject Qty</th>
+                        <th class="text-center">Conditional Accept</th>
+                        <th class="text-center">Accept%</th>
+                        <th class="text-center">Last Insp.</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Details</th>
+                    </tr>
+                </thead>
+                <tbody id="projectsTableBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Modal -->
@@ -98,11 +118,19 @@
         const partNames = ["Frame", "Motor Mount", "Bolt Set", "Hydraulic Cylinder", "Control Board"];
         for (let i=0; i<40; i++) {
             const date = new Date(); date.setDate(date.getDate() - Math.floor(Math.random() * 60));
-            const rating = Math.random() < 0.7 ? "Accepted" : (Math.random() < 0.5 ? "Rework" : "Reject");
+            const ratingRand = Math.random();
+            let rating = "Accepted";
+            let conditional = 0;
+            if (ratingRand < 0.25) rating = "Rework";
+            else if (ratingRand < 0.4) rating = "Reject";
+            else if (ratingRand < 0.48) { rating = "Conditional Accept"; conditional = Math.floor(Math.random() * 10) + 1; }
             const delivered = Math.floor(Math.random() * 50) + 10;
-            const accepted = rating === "Accepted" ? delivered : Math.floor(delivered * 0.6);
-            const rework = rating === "Rework" ? Math.floor(delivered * 0.2) : 0;
-            const reject = rating === "Reject" ? delivered - accepted : 0;
+            let accepted = 0, rework = 0, reject = 0;
+            if (rating === "Accepted") { accepted = delivered; rework = 0; reject = 0; }
+            else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6); rework = delivered - accepted; reject = 0; }
+            else if (rating === "Reject") { accepted = 0; rework = 0; reject = delivered; }
+            else if (rating === "Conditional Accept") { accepted = Math.floor(delivered * 0.8); rework = 0; reject = 0; }
+            const failureCost = (rework+reject) * (Math.random()*600+150);
             mock.push({
                 id: i, submitted_at: date.toISOString(),
                 process_type: processes[Math.floor(Math.random()*processes.length)],
@@ -115,7 +143,8 @@
                 },
                 acceptance_data: { p0: { rating } },
                 delivered_qty: delivered, accepted_qty: accepted, rework_qty: rework, reject_qty: reject,
-                total_internal_failure_cost: (rework+reject)*200
+                conditional_accept_qty: conditional,
+                total_internal_failure_cost: failureCost
             });
         }
         return mock;
@@ -131,7 +160,11 @@
             const deliveredQty = insp.delivered_qty || 0;
             const key = `${client}||${title}`;
             if (!projectMap.has(key)) {
-                projectMap.set(key, { client, title, inspections: [], subtitlesMap: new Map(), totalAccepted:0, totalRework:0, totalReject:0, totalInspections:0, lastDate: null });
+                projectMap.set(key, { 
+                    client, title, inspections: [], subtitlesMap: new Map(),
+                    totalAccepted:0, totalRework:0, totalReject:0, totalConditional:0,
+                    totalInspections:0, lastDate: null
+                });
             }
             const proj = projectMap.get(key);
             proj.inspections.push(insp);
@@ -140,19 +173,21 @@
             const accData = insp.acceptance_data || {};
             const firstParam = Object.values(accData)[0];
             if (firstParam?.rating) rating = firstParam.rating;
-            else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0) rating='Accepted';
+            else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0 && insp.conditional_accept_qty===0) rating='Accepted';
             else if (insp.rework_qty >0) rating='Rework';
             else if (insp.reject_qty >0) rating='Reject';
             else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
+            
             if (rating === 'Accepted') proj.totalAccepted++;
             else if (rating === 'Rework') proj.totalRework++;
             else if (rating === 'Reject') proj.totalReject++;
+            else if (rating === 'Conditional Accept') proj.totalConditional++;
 
             if (!proj.subtitlesMap.has(subtitle)) {
                 proj.subtitlesMap.set(subtitle, { 
-                    totalInspections:0, acceptedCount:0, reworkCount:0, rejectCount:0,
-                    sumDelivered:0, sumAccepted:0, sumRework:0, sumReject:0,
-                    partsMap: new Map() // part name -> total delivered quantity
+                    totalInspections:0, acceptedCount:0, reworkCount:0, rejectCount:0, conditionalCount:0,
+                    sumDelivered:0, sumAccepted:0, sumRework:0, sumReject:0, sumConditional:0,
+                    partsMap: new Map()
                 });
             }
             const sub = proj.subtitlesMap.get(subtitle);
@@ -160,11 +195,12 @@
             if (rating === 'Accepted') sub.acceptedCount++;
             else if (rating === 'Rework') sub.reworkCount++;
             else if (rating === 'Reject') sub.rejectCount++;
+            else if (rating === 'Conditional Accept') sub.conditionalCount++;
             sub.sumDelivered += deliveredQty;
             sub.sumAccepted += (insp.accepted_qty || 0);
             sub.sumRework += (insp.rework_qty || 0);
             sub.sumReject += (insp.reject_qty || 0);
-            // Aggregate part quantities
+            sub.sumConditional += (insp.conditional_accept_qty || 0);
             sub.partsMap.set(partName, (sub.partsMap.get(partName) || 0) + deliveredQty);
             proj.subtitlesMap.set(subtitle, sub);
 
@@ -202,12 +238,25 @@
 
     function renderProjects(projects) {
         const tbody = document.getElementById('projectsTableBody');
-        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="11" class="text-center py-10">No projects found</td></table>'; return; }
+        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="12" class="text-center py-10">No projects found</td></tr>'; return; }
         tbody.innerHTML = projects.map(p => {
             const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
             let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus === 'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
             let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track');
-            return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitleCount}</td><td class="text-center">${p.totalInspections}</td><td class="text-center text-emerald-700">${p.totalAccepted}</td><td class="text-center text-amber-600">${p.totalRework}</td><td class="text-center text-red-600">${p.totalReject}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
+            return `<tr>
+                <td class="font-medium">${escapeHtml(p.client)}</td>
+                <td class="font-mono">${escapeHtml(p.title)}</td>
+                <td class="text-center font-bold">${p.subtitleCount}</td>
+                <td class="text-center">${p.totalInspections}</td>
+                <td class="text-center text-emerald-700">${p.totalAccepted}</td>
+                <td class="text-center text-amber-600">${p.totalRework}</td>
+                <td class="text-center text-red-600">${p.totalReject}</td>
+                <td class="text-center text-blue-600">${p.totalConditional || 0}</td>
+                <td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td>
+                <td class="text-center text-xs">${p.lastDateStr}</td>
+                <td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td>
+                <td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td>
+            </tr>`;
         }).join('');
         document.getElementById('totalProjects').innerText = projects.length;
         const need = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
@@ -237,12 +286,13 @@
                 return `
                     <div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
                         <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
-                        <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-center text-sm mt-2">
+                        <div class="grid grid-cols-2 md:grid-cols-7 gap-2 text-center text-sm mt-2">
                             <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
                             <div><span class="text-gray-500">Delivered</span><br><span>${sub.sumDelivered.toLocaleString()}</span></div>
                             <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
                             <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
                             <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
+                            <div><span class="text-gray-500">Conditional</span><br><span class="text-blue-600">${sub.sumConditional.toLocaleString()}</span></div>
                             <div><span class="text-gray-500">Accept %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
                         </div>
                         ${partsTable}
@@ -258,7 +308,7 @@
             const accData = insp.acceptance_data || {};
             const firstParam = Object.values(accData)[0];
             if (firstParam?.rating) rating = firstParam.rating;
-            else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0) rating='Accepted';
+            else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0 && insp.conditional_accept_qty===0) rating='Accepted';
             else if (insp.rework_qty >0) rating='Rework';
             else if (insp.reject_qty >0) rating='Reject';
             else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
