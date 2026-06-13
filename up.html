@@ -33,7 +33,7 @@
                 <i class="fa-solid fa-flag-checkered text-indigo-600"></i> 
                 Project Follow‑Up (Sub‑Assembly View)
             </h1>
-            <p class="text-slate-500 text-sm">Track sub‑assemblies, parts (from Part Name), and inspection outcomes</p>
+            <p class="text-slate-500 text-sm">Track sub‑assemblies, parts, and quantity‑based metrics</p>
         </div>
         <div class="flex gap-3">
             <button onclick="refreshData()" class="bg-white hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm text-sm font-medium text-indigo-600 transition"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
@@ -68,6 +68,7 @@
                         <th class="text-left">Project Title</th>
                         <th class="text-center">Sub‑assemblies</th>
                         <th class="text-center">Insp.</th>
+                        <th class="text-center">Delivered Qty</th>
                         <th class="text-center">Accepted Qty</th>
                         <th class="text-center">Rework Qty</th>
                         <th class="text-center">Reject Qty</th>
@@ -157,64 +158,51 @@
             const title = getExtraField(insp, 'Project Name') || 'Untitled';
             const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
             const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
-            const deliveredQty = insp.delivered_qty || 0;
             const key = `${client}||${title}`;
             if (!projectMap.has(key)) {
                 projectMap.set(key, { 
                     client, title, inspections: [], subtitlesMap: new Map(),
-                    totalAccepted:0, totalRework:0, totalReject:0, totalConditional:0,
-                    totalInspections:0, lastDate: null
+                    totalDelivered: 0, totalAccepted: 0, totalRework: 0, totalReject: 0, totalConditional: 0,
+                    totalInspections: 0, lastDate: null
                 });
             }
             const proj = projectMap.get(key);
             proj.inspections.push(insp);
             proj.totalInspections++;
-            let rating = 'Unknown';
-            const accData = insp.acceptance_data || {};
-            const firstParam = Object.values(accData)[0];
-            if (firstParam?.rating) rating = firstParam.rating;
-            else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0 && insp.conditional_accept_qty===0) rating='Accepted';
-            else if (insp.rework_qty >0) rating='Rework';
-            else if (insp.reject_qty >0) rating='Reject';
-            else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
-            
-            if (rating === 'Accepted') proj.totalAccepted++;
-            else if (rating === 'Rework') proj.totalRework++;
-            else if (rating === 'Reject') proj.totalReject++;
-            else if (rating === 'Conditional Accept') proj.totalConditional++;
+            proj.totalDelivered += (insp.delivered_qty || 0);
+            proj.totalAccepted += (insp.accepted_qty || 0);
+            proj.totalRework += (insp.rework_qty || 0);
+            proj.totalReject += (insp.reject_qty || 0);
+            proj.totalConditional += (insp.conditional_accept_qty || 0);
 
             if (!proj.subtitlesMap.has(subtitle)) {
                 proj.subtitlesMap.set(subtitle, { 
-                    totalInspections:0, acceptedCount:0, reworkCount:0, rejectCount:0, conditionalCount:0,
-                    sumDelivered:0, sumAccepted:0, sumRework:0, sumReject:0, sumConditional:0,
+                    totalInspections: 0,
+                    sumDelivered: 0, sumAccepted: 0, sumRework: 0, sumReject: 0, sumConditional: 0,
                     partsMap: new Map()
                 });
             }
             const sub = proj.subtitlesMap.get(subtitle);
             sub.totalInspections++;
-            if (rating === 'Accepted') sub.acceptedCount++;
-            else if (rating === 'Rework') sub.reworkCount++;
-            else if (rating === 'Reject') sub.rejectCount++;
-            else if (rating === 'Conditional Accept') sub.conditionalCount++;
-            sub.sumDelivered += deliveredQty;
+            sub.sumDelivered += (insp.delivered_qty || 0);
             sub.sumAccepted += (insp.accepted_qty || 0);
             sub.sumRework += (insp.rework_qty || 0);
             sub.sumReject += (insp.reject_qty || 0);
             sub.sumConditional += (insp.conditional_accept_qty || 0);
-            sub.partsMap.set(partName, (sub.partsMap.get(partName) || 0) + deliveredQty);
+            sub.partsMap.set(partName, (sub.partsMap.get(partName) || 0) + (insp.delivered_qty || 0));
             proj.subtitlesMap.set(subtitle, sub);
 
             const inspDate = new Date(insp.submitted_at);
             if (!proj.lastDate || inspDate > proj.lastDate) proj.lastDate = inspDate;
         }
         const projects = Array.from(projectMap.values()).map(p => {
-            const acceptanceRate = p.totalInspections ? (p.totalAccepted / p.totalInspections)*100 : 0;
+            const acceptanceRate = p.totalDelivered ? (p.totalAccepted / p.totalDelivered) * 100 : 0;
             let followStatus = 'on_track';
-            if (p.totalReject / p.totalInspections >= 0.5) followStatus = 'critical';
+            if (p.totalReject / p.totalDelivered >= 0.5) followStatus = 'critical';
             else if (p.totalRework + p.totalReject > 0) followStatus = 'needs_action';
             const subtitlesArray = Array.from(p.subtitlesMap.entries()).map(([name, stats]) => ({
                 name, ...stats,
-                acceptRate: stats.totalInspections ? (stats.acceptedCount / stats.totalInspections)*100 : 0,
+                acceptRate: stats.sumDelivered ? (stats.sumAccepted / stats.sumDelivered) * 100 : 0,
                 partsList: Array.from(stats.partsMap.entries()).map(([part, qty]) => ({ part_name: part, quantity: qty }))
             }));
             return {
@@ -238,7 +226,7 @@
 
     function renderProjects(projects) {
         const tbody = document.getElementById('projectsTableBody');
-        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="12" class="text-center py-10">No projects found</td></tr>'; return; }
+        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="13" class="text-center py-10">No projects found</td></tr>'; return; }
         tbody.innerHTML = projects.map(p => {
             const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
             let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus === 'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
@@ -248,15 +236,16 @@
                 <td class="font-mono">${escapeHtml(p.title)}</td>
                 <td class="text-center font-bold">${p.subtitleCount}</td>
                 <td class="text-center">${p.totalInspections}</td>
-                <td class="text-center text-emerald-700">${p.totalAccepted}</td>
-                <td class="text-center text-amber-600">${p.totalRework}</td>
-                <td class="text-center text-red-600">${p.totalReject}</td>
-                <td class="text-center text-blue-600">${p.totalConditional || 0}</td>
+                <td class="text-center">${p.totalDelivered.toLocaleString()}</td>
+                <td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td>
+                <td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td>
+                <td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td>
+                <td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td>
                 <td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td>
                 <td class="text-center text-xs">${p.lastDateStr}</td>
                 <td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td>
                 <td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td>
-            </tr>`;
+            </table>`;
         }).join('');
         document.getElementById('totalProjects').innerText = projects.length;
         const need = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
@@ -279,14 +268,14 @@
                         <div class="text-xs font-semibold text-gray-600 mt-2">📋 Parts / Components (from Part Name & Delivered Qty):</div>
                         <table class="parts-table">
                             <thead><tr><th>Part Name</th><th>Total Delivered Qty</th></tr></thead>
-                            <tbody>${sub.partsList.map(p => `<tr><td class="text-left">${escapeHtml(p.part_name)}</td><td class="text-center">${p.quantity}</td></tr>`).join('')}</tbody>
+                            <tbody>${sub.partsList.map(p => `<td><td class="text-left">${escapeHtml(p.part_name)}</td><td class="text-center">${p.quantity}</td></tr>`).join('')}</tbody>
                         </table>
                     </div>
                 ` : '<div class="text-xs text-gray-400 italic mt-1">No parts recorded for this sub‑assembly (Part Name field empty).</div>';
                 return `
                     <div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
                         <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
-                        <div class="grid grid-cols-2 md:grid-cols-7 gap-2 text-center text-sm mt-2">
+                        <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
                             <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
                             <div><span class="text-gray-500">Delivered</span><br><span>${sub.sumDelivered.toLocaleString()}</span></div>
                             <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
