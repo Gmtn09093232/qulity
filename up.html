@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Project Follow‑Up</title>
+    <title>Project Follow‑Up | Sub‑Assembly View</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -17,8 +17,6 @@
         th { background-color: #f8fafc; padding: 12px 10px; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
         td { padding: 12px 10px; border-bottom: 1px solid #eef2f6; vertical-align: middle; }
         .filter-select { border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; background: white; }
-        
-        /* Enhanced parts table style */
         .parts-table {
             width: 100%;
             font-size: 0.75rem;
@@ -38,16 +36,12 @@
             padding: 8px 10px;
             border-bottom: 1px solid #e2e8f0;
         }
-        .parts-table tr:last-child td {
-            border-bottom: none;
-        }
-        .parts-table tbody tr:hover {
-            background-color: #f8fafc;
-        }
-        
+        .parts-table tr:last-child td { border-bottom: none; }
+        .parts-table tbody tr:hover { background-color: #f8fafc; }
         .modal-filter-bar { background: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
-        .btn-excel { background-color: #10b981; color: white; border-radius: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem; margin-left: 1rem; }
+        .btn-excel { background-color: #10b981; color: white; border-radius: 0.5rem; padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; }
         .btn-excel:hover { background-color: #059669; }
+        .btn-excel-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
     </style>
 </head>
 <body class="antialiased">
@@ -58,11 +52,12 @@
         <div>
             <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                 <i class="fa-solid fa-flag-checkered text-indigo-600"></i> 
-                Project Follow‑Up
+                Project Follow‑Up (Sub‑Assembly View)
             </h1>
-           
+            <p class="text-slate-500 text-sm">Track sub‑assemblies and parts (with DWG & Tag) – filters apply to all data</p>
         </div>
         <div class="flex gap-3">
+            <button onclick="exportGlobalToExcel()" class="btn-excel btn-excel-sm"><i class="fa-solid fa-file-excel"></i> Export Excel (Projects)</button>
             <button onclick="refreshData()" class="bg-white hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm text-sm font-medium text-indigo-600 transition"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
             <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm">← Back</button>
         </div>
@@ -88,7 +83,7 @@
     <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
         <div class="px-5 py-3 border-b bg-slate-50 flex justify-between"><h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2><span class="text-xs text-slate-400" id="recordCount"></span></div>
         <div class="table-wrapper">
-            <table class="min-w-full">
+            <table class="min-w-full" id="projectsTable">
                 <thead>
                     <tr>
                         <th class="text-left">Client</th>
@@ -117,7 +112,7 @@
             <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
                 <h3 class="font-bold text-lg" id="modalTitle"></h3>
                 <div class="flex items-center gap-2">
-                    <button id="modalExcelBtn" class="btn-excel"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
+                    <button id="modalExcelBtn" class="btn-excel btn-excel-sm"><i class="fa-solid fa-file-excel"></i> Export Excel (Details)</button>
                     <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
             </div>
@@ -130,7 +125,7 @@
     let allProjects = [];
     let allInspectionsRaw = [];
     let currentModalProject = null;
-    let currentModalFilters = { process: '', engineer: '', dateFrom: '', dateTo: '' };
+    let currentFilteredProjects = [];
 
     function getExtraField(insp, field) { return insp.extra_fields?.[field]?.trim() || ''; }
 
@@ -304,13 +299,14 @@
     }
 
     function renderProjects(projects) {
+        currentFilteredProjects = projects;
         const tbody = document.getElementById('projectsTableBody');
-        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="13" class="text-center py-10">No projects found</td>'; return; }
+        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="13" class="text-center py-10">No projects found</td></td>'; return; }
         tbody.innerHTML = projects.map(p => {
             const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
             let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus === 'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
             let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track');
-            return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center">${p.totalInspections}</td><td class="text-center">${p.totalDelivered.toLocaleString()}</td><td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td><td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td><td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td><td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></table>`;
+            return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center">${p.totalInspections}</td><td class="text-center">${p.totalDelivered.toLocaleString()}</td><td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td><td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td><td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td><td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
         }).join('');
         document.getElementById('totalProjects').innerText = projects.length;
         const need = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
@@ -320,7 +316,24 @@
         document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
     }
 
-    // Excel export for modal content (unchanged)
+    // Global Excel export
+    function exportGlobalToExcel() {
+        if (!currentFilteredProjects.length) {
+            alert('No data to export.');
+            return;
+        }
+        const rows = [['Client', 'Project Title', 'Sub‑assemblies', 'Inspections', 'Delivered Qty', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept', 'Accept %', 'Last Inspection', 'Status']];
+        for (const p of currentFilteredProjects) {
+            rows.push([p.client, p.title, p.subtitlesArray.length, p.totalInspections, p.totalDelivered, p.totalAccepted, p.totalRework, p.totalReject, p.totalConditional, p.acceptanceRate + '%', p.lastDateStr, p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track')]);
+        }
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{wch:20},{wch:25},{wch:12},{wch:12},{wch:14},{wch:14},{wch:12},{wch:12},{wch:18},{wch:10},{wch:14},{wch:14}];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Projects Overview');
+        XLSX.writeFile(wb, `projects_overview_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
+    }
+
+    // Modal Excel export (already working)
     function exportModalToExcel() {
         if (!currentModalProject) return;
         const processVal = document.getElementById('modalFilterProcess')?.value || '';
@@ -352,7 +365,7 @@
         XLSX.writeFile(wb, `project_detail_${currentModalProject.client}_${currentModalProject.title}_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
     }
 
-    // Modal with filters and enhanced parts table
+    // Modal content (same as before, with parts table)
     function showProjectDetails(client, title) {
         const project = allProjects.find(p => p.client === client && p.title === title);
         if (!project) return;
@@ -404,18 +417,9 @@
                         <div class="mt-3">
                             <div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components</div>
                             <table class="parts-table">
-                                <thead>
-                                    <tr><th>Part Name</th><th>Total Delivered Qty</th><th>DWG No.</th><th>Tag No.</th></tr>
-                                </thead>
+                                <thead><tr><th>Part Name</th><th>Total Delivered Qty</th><th>DWG No.</th><th>Tag No.</th></tr></thead>
                                 <tbody>
-                                    ${sub.partsList.map(p => `
-                                        <tr>
-                                            <td>${escapeHtml(p.part_name)}</td>
-                                            <td class="text-center">${p.quantity}</td>
-                                            <td>${escapeHtml(p.dwgList) || '—'}</td>
-                                            <td>${escapeHtml(p.tagList) || '—'}</td>
-                                        </tr>
-                                    `).join('')}
+                                    ${sub.partsList.map(p => `<tr><td>${escapeHtml(p.part_name)}</td><td class="text-center">${p.quantity}</td><td>${escapeHtml(p.dwgList) || '—'}</td><td>${escapeHtml(p.tagList) || '—'}</td></tr>`).join('')}
                                 </tbody>
                             </table>
                         </div>
