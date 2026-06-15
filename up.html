@@ -16,9 +16,6 @@
         th { background-color: #f8fafc; padding: 12px 10px; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
         td { padding: 12px 10px; border-bottom: 1px solid #eef2f6; vertical-align: middle; }
         .filter-select { border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; background: white; }
-        .subtitle-summary-table { font-size: 0.75rem; background: #f8fafc; border-radius: 1rem; margin-top: 1rem; width: 100%; }
-        .subtitle-summary-table th { background: #e2e8f0; font-size: 0.7rem; padding: 8px; text-align: center; }
-        .subtitle-summary-table td { padding: 8px 6px; text-align: center; }
         .parts-table { font-size: 0.7rem; width: 100%; margin-top: 8px; background: white; border-radius: 8px; }
         .parts-table th { background: #f1f5f9; font-size: 0.65rem; padding: 6px; }
         .modal-filter-bar { background: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
@@ -34,7 +31,7 @@
                 <i class="fa-solid fa-flag-checkered text-indigo-600"></i> 
                 Project Follow‑Up (Sub‑Assembly View)
             </h1>
-            <p class="text-slate-500 text-sm">Track sub‑assemblies, parts (with DWG & Tag), and quantity‑based metrics</p>
+            <p class="text-slate-500 text-sm">Track sub‑assemblies and parts (with DWG & Tag) – filters apply to all data</p>
         </div>
         <div class="flex gap-3">
             <button onclick="refreshData()" class="bg-white hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm text-sm font-medium text-indigo-600 transition"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
@@ -42,7 +39,7 @@
         </div>
     </div>
 
-    <!-- Filters (global) -->
+    <!-- Global Filters -->
     <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
         <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
         <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
@@ -85,7 +82,7 @@
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal (with filters) -->
     <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closeModal(event)">
         <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
             <div class="sticky top-0 bg-white p-4 border-b flex justify-between">
@@ -100,8 +97,7 @@
 <script>
     let allProjects = [];
     let allInspectionsRaw = [];
-    let currentModalProject = null; // store full project object (all inspections)
-    let modalInspectionFilters = { process: '', engineer: '', dateFrom: '', dateTo: '' };
+    let currentModalProject = null;
 
     function getExtraField(insp, field) { return insp.extra_fields?.[field]?.trim() || ''; }
 
@@ -161,7 +157,6 @@
         return mock;
     }
 
-    // Aggregate projects from inspections (global)
     function aggregateProjects(inspections) {
         const projectMap = new Map();
         for (const insp of inspections) {
@@ -174,7 +169,6 @@
             projectMap.get(key).inspections.push(insp);
         }
         const projects = Array.from(projectMap.values()).map(p => {
-            // Compute aggregated stats for the project (without filters, for global display)
             const aggregated = aggregateInspectionsForProject(p.inspections);
             return {
                 ...p,
@@ -189,7 +183,6 @@
         return projects;
     }
 
-    // Helper: aggregate inspections (used globally and for filtered modal view)
     function aggregateInspectionsForProject(inspections) {
         let totalDelivered = 0, totalAccepted = 0, totalRework = 0, totalReject = 0, totalConditional = 0;
         let totalInspections = 0;
@@ -279,7 +272,7 @@
 
     function renderProjects(projects) {
         const tbody = document.getElementById('projectsTableBody');
-        if (!projects.length) { tbody.innerHTML = '<td><td colspan="13" class="text-center py-10">No projects found</td></table>'; return; }
+        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="13" class="text-center py-10">No projects found</td></tr>'; return; }
         tbody.innerHTML = projects.map(p => {
             const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
             let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus === 'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
@@ -308,111 +301,7 @@
         document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
     }
 
-    // Filter inspections inside modal and recompute aggregated data
-    function filterModalProjectData() {
-        if (!currentModalProject) return;
-        let filteredInspections = [...currentModalProject.inspections];
-        if (modalInspectionFilters.process) {
-            filteredInspections = filteredInspections.filter(insp => insp.process_type === modalInspectionFilters.process);
-        }
-        if (modalInspectionFilters.engineer) {
-            filteredInspections = filteredInspections.filter(insp => insp.username === modalInspectionFilters.engineer);
-        }
-        if (modalInspectionFilters.dateFrom) {
-            const fromDate = new Date(modalInspectionFilters.dateFrom);
-            fromDate.setHours(0,0,0,0);
-            filteredInspections = filteredInspections.filter(insp => new Date(insp.submitted_at) >= fromDate);
-        }
-        if (modalInspectionFilters.dateTo) {
-            const toDate = new Date(modalInspectionFilters.dateTo);
-            toDate.setHours(23,59,59,999);
-            filteredInspections = filteredInspections.filter(insp => new Date(insp.submitted_at) <= toDate);
-        }
-        // Recompute aggregated data from filtered inspections
-        const aggregated = aggregateInspectionsForProject(filteredInspections);
-        renderModalContent(aggregated, filteredInspections);
-    }
-
-    function renderModalContent(aggregated, filteredInspections) {
-        const modalBody = document.getElementById('modalBody');
-        // Build subtitle summary HTML
-        let subtitlesHtml = '';
-        if (aggregated.subtitlesArray.length) {
-            subtitlesHtml = aggregated.subtitlesArray.map(sub => {
-                const partsTable = sub.partsList.length ? `
-                    <div class="mt-2">
-                        <div class="text-xs font-semibold text-gray-600 mt-2">📋 Parts / Components (with DWG & Tag):</div>
-                        <table class="parts-table">
-                            <thead><tr><th>Part Name</th><th>Total Delivered Qty</th><th>DWG No.</th><th>Tag No.</th></tr></thead>
-                            <tbody>
-                                ${sub.partsList.map(p => `
-                                    <tr>
-                                        <td class="text-left">${escapeHtml(p.part_name)}</td>
-                                        <td class="text-center">${p.quantity}</td>
-                                        <td class="text-left">${escapeHtml(p.dwgList) || '—'}</td>
-                                        <td class="text-left">${escapeHtml(p.tagList) || '—'}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                ` : '<div class="text-xs text-gray-400 italic mt-1">No parts recorded for this sub‑assembly (Part Name field empty).</div>';
-                return `
-                    <div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
-                        <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
-                        <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
-                            <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
-                            <div><span class="text-gray-500">Delivered</span><br><span>${sub.sumDelivered.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Conditional</span><br><span class="text-blue-600">${sub.sumConditional.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Accept %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
-                        </div>
-                        ${partsTable}
-                    </div>
-                `;
-            }).join('');
-        } else {
-            subtitlesHtml = '<div class="text-gray-500 italic">No sub‑assemblies found.</div>';
-        }
-
-        // Build individual inspections list
-        const inspectionsListHtml = filteredInspections.length ? filteredInspections.slice().sort((a,b)=>new Date(b.submitted_at)-new Date(a.submitted_at)).map(insp => {
-            const date = new Date(insp.submitted_at).toLocaleDateString();
-            let rating = '—';
-            const accData = insp.acceptance_data || {};
-            const firstParam = Object.values(accData)[0];
-            if (firstParam?.rating) rating = firstParam.rating;
-            else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0 && insp.conditional_accept_qty===0) rating='Accepted';
-            else if (insp.rework_qty >0) rating='Rework';
-            else if (insp.reject_qty >0) rating='Reject';
-            else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
-            const ratingColor = rating === 'Accepted' ? 'bg-emerald-100 text-emerald-700' : (rating === 'Rework' ? 'bg-amber-100 text-amber-700' : (rating === 'Reject' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'));
-            const partName = getExtraField(insp, 'Part Name');
-            const dwg = getExtraField(insp, 'Drawing No.');
-            const tag = getExtraField(insp, 'Tag No.');
-            return `<div class="border rounded-lg p-3 bg-white flex justify-between items-center">
-                <div>
-                    <p class="text-sm font-medium">${insp.process_type || 'Process'} | ${date}</p>
-                    <p class="text-xs text-slate-500">QC: ${insp.username || '—'} | Part: ${partName || '—'} | DWG: ${dwg || '—'} | Tag: ${tag || '—'} | Subtitle: ${getExtraField(insp, 'Subtitle') || '—'}</p>
-                </div>
-                <div>
-                    <span class="px-2 py-1 rounded-full text-xs font-medium ${ratingColor}">${rating}</span>
-                    <p class="text-xs text-slate-400 mt-1">Cost: ${(insp.total_internal_failure_cost||0).toFixed(0)} ETB</p>
-                </div>
-            </div>`;
-        }).join('') : '<div class="text-gray-500 italic text-center py-4">No inspections match the filters.</div>';
-
-        modalBody.innerHTML = `
-            ${subtitlesHtml}
-            <div>
-                <h4 class="font-semibold text-slate-800 mb-2">📋 Individual Inspections</h4>
-                <div id="modalInspectionsList">${inspectionsListHtml}</div>
-            </div>
-        `;
-    }
-
+    // Modal with filters (no individual inspections)
     function showProjectDetails(client, title) {
         const project = allProjects.find(p => p.client === client && p.title === title);
         if (!project) return;
@@ -429,7 +318,6 @@
         const processOptions = Array.from(processSet).sort();
         const engineerOptions = Array.from(engineerSet).sort();
 
-        // Build filter bar HTML and attach after modalBody is set
         const modalBody = document.getElementById('modalBody');
         const filterBarHtml = `
             <div class="modal-filter-bar" id="modalFilterBar">
@@ -459,39 +347,38 @@
                     <button id="clearModalFiltersBtn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg text-sm">Clear</button>
                 </div>
             </div>
+            <div id="modalFilterableContent"></div>
         `;
-        // Insert filter bar above the content (we will prepend to modalBody)
-        modalBody.innerHTML = filterBarHtml + '<div id="modalFilterableContent"></div>';
+        modalBody.innerHTML = filterBarHtml;
         const filterableContainer = document.getElementById('modalFilterableContent');
 
-        // Function to update filtered content
         const updateFilteredContent = () => {
-            modalInspectionFilters.process = document.getElementById('modalFilterProcess').value;
-            modalInspectionFilters.engineer = document.getElementById('modalFilterEngineer').value;
-            modalInspectionFilters.dateFrom = document.getElementById('modalFilterDateFrom').value;
-            modalInspectionFilters.dateTo = document.getElementById('modalFilterDateTo').value;
+            const processVal = document.getElementById('modalFilterProcess').value;
+            const engineerVal = document.getElementById('modalFilterEngineer').value;
+            const dateFrom = document.getElementById('modalFilterDateFrom').value;
+            const dateTo = document.getElementById('modalFilterDateTo').value;
             
             let filtered = [...currentModalProject.inspections];
-            if (modalInspectionFilters.process) filtered = filtered.filter(insp => insp.process_type === modalInspectionFilters.process);
-            if (modalInspectionFilters.engineer) filtered = filtered.filter(insp => insp.username === modalInspectionFilters.engineer);
-            if (modalInspectionFilters.dateFrom) {
-                const fromDate = new Date(modalInspectionFilters.dateFrom);
-                fromDate.setHours(0,0,0,0);
-                filtered = filtered.filter(insp => new Date(insp.submitted_at) >= fromDate);
+            if (processVal) filtered = filtered.filter(insp => insp.process_type === processVal);
+            if (engineerVal) filtered = filtered.filter(insp => insp.username === engineerVal);
+            if (dateFrom) {
+                const from = new Date(dateFrom);
+                from.setHours(0,0,0,0);
+                filtered = filtered.filter(insp => new Date(insp.submitted_at) >= from);
             }
-            if (modalInspectionFilters.dateTo) {
-                const toDate = new Date(modalInspectionFilters.dateTo);
-                toDate.setHours(23,59,59,999);
-                filtered = filtered.filter(insp => new Date(insp.submitted_at) <= toDate);
+            if (dateTo) {
+                const to = new Date(dateTo);
+                to.setHours(23,59,59,999);
+                filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to);
             }
             const aggregated = aggregateInspectionsForProject(filtered);
-            renderFilterableContent(aggregated, filtered);
+            renderFilterableSubAssemblies(aggregated);
         };
 
-        function renderFilterableContent(aggregated, filteredInspections) {
-            let subtitlesHtml = '';
+        function renderFilterableSubAssemblies(aggregated) {
+            let html = '';
             if (aggregated.subtitlesArray.length) {
-                subtitlesHtml = aggregated.subtitlesArray.map(sub => {
+                html = aggregated.subtitlesArray.map(sub => {
                     const partsTable = sub.partsList.length ? `
                         <div class="mt-2">
                             <div class="text-xs font-semibold text-gray-600 mt-2">📋 Parts / Components (with DWG & Tag):</div>
@@ -527,66 +414,33 @@
                     `;
                 }).join('');
             } else {
-                subtitlesHtml = '<div class="text-gray-500 italic">No sub‑assemblies found.</div>';
+                html = '<div class="text-gray-500 italic">No sub‑assemblies match the filters.</div>';
             }
-
-            const inspectionsListHtml = filteredInspections.length ? filteredInspections.slice().sort((a,b)=>new Date(b.submitted_at)-new Date(a.submitted_at)).map(insp => {
-                const date = new Date(insp.submitted_at).toLocaleDateString();
-                let rating = '—';
-                const accData = insp.acceptance_data || {};
-                const firstParam = Object.values(accData)[0];
-                if (firstParam?.rating) rating = firstParam.rating;
-                else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0 && insp.conditional_accept_qty===0) rating='Accepted';
-                else if (insp.rework_qty >0) rating='Rework';
-                else if (insp.reject_qty >0) rating='Reject';
-                else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
-                const ratingColor = rating === 'Accepted' ? 'bg-emerald-100 text-emerald-700' : (rating === 'Rework' ? 'bg-amber-100 text-amber-700' : (rating === 'Reject' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'));
-                const partName = getExtraField(insp, 'Part Name');
-                const dwg = getExtraField(insp, 'Drawing No.');
-                const tag = getExtraField(insp, 'Tag No.');
-                return `<div class="border rounded-lg p-3 bg-white flex justify-between items-center">
-                    <div>
-                        <p class="text-sm font-medium">${insp.process_type || 'Process'} | ${date}</p>
-                        <p class="text-xs text-slate-500">QC: ${insp.username || '—'} | Part: ${partName || '—'} | DWG: ${dwg || '—'} | Tag: ${tag || '—'} | Subtitle: ${getExtraField(insp, 'Subtitle') || '—'}</p>
-                    </div>
-                    <div>
-                        <span class="px-2 py-1 rounded-full text-xs font-medium ${ratingColor}">${rating}</span>
-                        <p class="text-xs text-slate-400 mt-1">Cost: ${(insp.total_internal_failure_cost||0).toFixed(0)} ETB</p>
-                    </div>
-                </div>`;
-            }).join('') : '<div class="text-gray-500 italic text-center py-4">No inspections match the filters.</div>';
-
-            filterableContainer.innerHTML = `
-                ${subtitlesHtml}
-                <div>
-                    <h4 class="font-semibold text-slate-800 mb-2">📋 Individual Inspections</h4>
-                    <div class="space-y-2 max-h-96 overflow-y-auto">${inspectionsListHtml}</div>
-                </div>
-            `;
+            filterableContainer.innerHTML = html;
         }
 
-        // Attach event listeners to filter controls
+        // Attach event listeners
         const processSelect = document.getElementById('modalFilterProcess');
         const engineerSelect = document.getElementById('modalFilterEngineer');
         const dateFromInput = document.getElementById('modalFilterDateFrom');
         const dateToInput = document.getElementById('modalFilterDateTo');
         const clearBtn = document.getElementById('clearModalFiltersBtn');
 
-        processSelect.addEventListener('change', updateFilteredContent);
-        engineerSelect.addEventListener('change', updateFilteredContent);
-        dateFromInput.addEventListener('change', updateFilteredContent);
-        dateToInput.addEventListener('change', updateFilteredContent);
+        const refresh = () => updateFilteredContent();
+        processSelect.addEventListener('change', refresh);
+        engineerSelect.addEventListener('change', refresh);
+        dateFromInput.addEventListener('change', refresh);
+        dateToInput.addEventListener('change', refresh);
         clearBtn.addEventListener('click', () => {
             processSelect.value = '';
             engineerSelect.value = '';
             dateFromInput.value = '';
             dateToInput.value = '';
-            updateFilteredContent();
+            refresh();
         });
 
         // Initial render (no filters)
         updateFilteredContent();
-
         document.getElementById('modal').classList.remove('hidden');
     }
 
