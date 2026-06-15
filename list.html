@@ -24,7 +24,6 @@
         .summary-card { transition: all 0.2s; border-radius: 1rem; }
         .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
         .filter-input:focus { outline: none; ring: 2px solid #3b82f6; border-color: transparent; }
-        /* loading spinner */
         .loader {
             border: 3px solid #e2e8f0;
             border-top: 3px solid #3b82f6;
@@ -47,7 +46,7 @@
                 <i class="fa-solid fa-clipboard-list text-blue-600"></i> 
                 Inspection Report
             </h1>
-            <p class="text-gray-500 text-sm mt-1">Drawing, Part & Quantity details – filter & export</p>
+            <p class="text-gray-500 text-sm mt-1">Client, Project, Subtitle, Drawing, Part & Quantity details – filter & export</p>
         </div>
         <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
             <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -114,7 +113,7 @@
             </select>
         </div>
         <div class="flex-1">
-            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-magnifying-glass mr-1"></i> Search (Drawing, Part, Qty)</label>
+            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-magnifying-glass mr-1"></i> Search (Client, Title, Subtitle, Drawing, Part, Qty)</label>
             <input type="text" id="searchInput" placeholder="Type anything..." class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
         </div>
         <div>
@@ -130,6 +129,9 @@
             <table id="reportTable" class="min-w-full">
                 <thead>
                     <tr class="border-b border-gray-200">
+                        <th class="text-left">👤 Client Name</th>
+                        <th class="text-left">📁 Title</th>
+                        <th class="text-left">🔖 Subtitle</th>
                         <th class="text-left">📄 Drawing No.</th>
                         <th class="text-left">🔧 Part Name</th>
                         <th class="text-right">📦 Delivered</th>
@@ -140,7 +142,7 @@
                     </tr>
                 </thead>
                 <tbody id="reportTableBody">
-                    <tr><td colspan="7" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections...</p></td></tr>
+                    <tr><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections...</p></td></tr>
                 </tbody>
             </table>
         </div>
@@ -157,46 +159,53 @@
         return inspection.extra_fields?.[fieldName]?.trim() || '';
     }
 
+    function getClientName(inspection) {
+        if (inspection.customer_name) return inspection.customer_name.trim();
+        return getExtraField(inspection, 'Customer Name');
+    }
+
     function getProjectName(inspection) {
         if (inspection.project_name) return inspection.project_name.trim();
         return getExtraField(inspection, 'Project Name');
     }
 
-    let allReportRows = [];      // store full rows
+    function getSubtitle(inspection) {
+        return getExtraField(inspection, 'Subtitle');
+    }
+
+    let allReportRows = [];
     let uniqueProjects = new Set();
 
-    // Format quantity display (handle null/undefined/empty)
     function formatQty(value) {
         if (value === undefined || value === null || value === '') return '-';
         const num = Number(value);
         return isNaN(num) ? '-' : num.toLocaleString();
     }
 
-    // Compute numeric value for summaries
     function numericQty(value) {
         if (value === undefined || value === null || value === '') return 0;
         const num = Number(value);
         return isNaN(num) ? 0 : num;
     }
 
-    // Fetch data and update UI
     async function fetchReportData() {
         const tbody = document.getElementById('reportTableBody');
         const statusSpan = document.getElementById('recordStatus');
         try {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></td></tr>`;
             statusSpan.innerText = 'Loading...';
             const response = await fetch('/api/inspections');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const inspections = await response.json();
             
-            // Build rows and collect projects
             const rows = [];
             uniqueProjects.clear();
             let sumDelivered = 0, sumAccepted = 0, sumRework = 0, sumReject = 0, sumConditional = 0;
             
             for (const insp of inspections) {
+                const clientName = getClientName(insp) || '';
                 const projectName = getProjectName(insp) || '';
+                const subtitle = getSubtitle(insp) || '';
                 if (projectName) uniqueProjects.add(projectName);
                 
                 const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
@@ -213,7 +222,6 @@
                 const reject = formatQty(rejectRaw);
                 const conditional = formatQty(conditionalRaw);
                 
-                // numeric for totals
                 sumDelivered += numericQty(deliveredRaw);
                 sumAccepted += numericQty(acceptedRaw);
                 sumRework += numericQty(reworkRaw);
@@ -221,7 +229,9 @@
                 sumConditional += numericQty(conditionalRaw);
                 
                 rows.push({
+                    clientName,
                     projectName,
+                    subtitle,
                     drawingNo,
                     partName,
                     delivered,
@@ -229,18 +239,16 @@
                     rework,
                     reject,
                     conditional,
-                    rawSearch: `${projectName} ${drawingNo} ${partName} ${delivered} ${accepted} ${rework} ${reject} ${conditional}`.toLowerCase()
+                    rawSearch: `${clientName} ${projectName} ${subtitle} ${drawingNo} ${partName} ${delivered} ${accepted} ${rework} ${reject} ${conditional}`.toLowerCase()
                 });
             }
             
-            // Update summary cards
             document.getElementById('totalDeliveredSum').innerText = sumDelivered.toLocaleString();
             document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
             document.getElementById('totalReworkSum').innerText = sumRework.toLocaleString();
             document.getElementById('totalRejectSum').innerText = sumReject.toLocaleString();
             document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
             
-            // Populate project dropdown
             const projectSelect = document.getElementById('projectFilterSelect');
             projectSelect.innerHTML = '<option value="">All Projects</option>';
             [...uniqueProjects].sort().forEach(proj => {
@@ -252,12 +260,11 @@
             statusSpan.innerText = `✅ Loaded ${rows.length} records`;
         } catch (err) {
             console.error(err);
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
             statusSpan.innerText = '❌ Error';
         }
     }
     
-    // Apply search + project filter
     function applyFilters() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -275,15 +282,17 @@
         countSpan.innerText = `Showing ${filtered.length} of ${total} records`;
     }
     
-    // Render table rows
     function renderTable(rows) {
         const tbody = document.getElementById('reportTableBody');
         if (!rows.length) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
             return;
         }
         tbody.innerHTML = rows.map(row => `
             <tr class="hover:bg-gray-50 transition">
+                <td class="font-medium">${escapeHtml(row.clientName)}</td>
+                <td class="font-medium">${escapeHtml(row.projectName)}</td>
+                <td class="text-sm">${escapeHtml(row.subtitle)}</td>
                 <td class="font-mono text-sm">${escapeHtml(row.drawingNo)}</td>
                 <td class="font-medium">${escapeHtml(row.partName)}</td>
                 <td class="text-right tabular-nums">${row.delivered}</td>
@@ -295,7 +304,6 @@
         `).join('');
     }
     
-    // Helper: escape HTML
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -306,7 +314,6 @@
         });
     }
     
-    // Export to Excel (CSV with .xls extension, proper encoding)
     function exportToExcel() {
         const searchTerm = document.getElementById('searchInput').value;
         const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -319,13 +326,14 @@
             return;
         }
         
-        // Create header row (no project column in export)
-        const headers = ['Drawing No.', 'Part Name', 'Delivered Qty', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept'];
-        const csvRows = [];
-        csvRows.push(headers.join(','));
+        const headers = ['Client Name', 'Title', 'Subtitle', 'Drawing No.', 'Part Name', 'Delivered Qty', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept'];
+        const csvRows = [headers.join(',')];
         
         for (const row of dataToExport) {
             const values = [
+                `"${(row.clientName || '').replace(/"/g, '""')}"`,
+                `"${(row.projectName || '').replace(/"/g, '""')}"`,
+                `"${(row.subtitle || '').replace(/"/g, '""')}"`,
                 `"${(row.drawingNo || '').replace(/"/g, '""')}"`,
                 `"${(row.partName || '').replace(/"/g, '""')}"`,
                 row.delivered,
@@ -348,42 +356,38 @@
         URL.revokeObjectURL(url);
     }
     
-    // Copy table to clipboard (tab-separated for Excel)
     async function copyTableToClipboard() {
         const rows = document.querySelectorAll('#reportTable tbody tr');
         if (!rows.length || (rows.length === 1 && rows[0].innerText.includes('No matching'))) {
             alert('No data to copy');
             return;
         }
-        let csvContent = "Drawing No.\tPart Name\tDelivered Qty\tAccepted Qty\tRework Qty\tReject Qty\tConditional Accept\n";
+        let tsvContent = "Client Name\tTitle\tSubtitle\tDrawing No.\tPart Name\tDelivered Qty\tAccepted Qty\tRework Qty\tReject Qty\tConditional Accept\n";
         for (let row of rows) {
             const cells = row.querySelectorAll('td');
-            if (cells.length === 7) {
+            if (cells.length === 10) {
                 const line = Array.from(cells).map(cell => cell.innerText.trim()).join('\t');
-                csvContent += line + '\n';
+                tsvContent += line + '\n';
             }
         }
         try {
-            await navigator.clipboard.writeText(csvContent);
+            await navigator.clipboard.writeText(tsvContent);
             alert('✅ Table copied to clipboard (tab-separated, ready for Excel)');
         } catch (err) {
             alert('❌ Copy failed: ' + err);
         }
     }
     
-    // Clear filters
     function clearFilters() {
         document.getElementById('searchInput').value = '';
         document.getElementById('projectFilterSelect').value = '';
         applyFilters();
     }
     
-    // Event listeners
     document.getElementById('searchInput').addEventListener('input', () => { if (allReportRows.length) applyFilters(); });
     document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
     
-    // Initial load
     fetchReportData();
 </script>
 </body>
