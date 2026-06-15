@@ -147,7 +147,7 @@
 
                 <!-- Quantity summary -->
                 <div id="quantitySummary" class="grid grid-cols-2 md:grid-cols-5 gap-2 bg-gray-50 p-3 rounded mt-4">
-                    <div><label class="font-bold">Delivered Qty</label><input type="number" id="deliveredQty" class="border p-1 rounded w-full"></div>
+                    <div><label class="font-bold">Delivered Qty</label><input type="number" id="deliveredQty" class="border p-1 rounded w-full bg-gray-100" readonly></div>
                     <div><label class="font-bold">Accepted Qty</label><input type="number" id="acceptedQty" class="border p-1 rounded w-full"></div>
                     <div><label class="font-bold">Rework Qty</label><input type="number" id="reworkQty" class="border p-1 rounded w-full"></div>
                     <div><label class="font-bold">Reject Qty</label><input type="number" id="rejectQty" class="border p-1 rounded w-full"></div>
@@ -216,6 +216,31 @@
             } else {
                 document.getElementById('secretError').classList.remove('hidden');
             }
+        }
+
+        // ============================================================
+        // DELIVERED QTY CALCULATION (sum of Accepted, Rework, Reject, Conditional)
+        // ============================================================
+        function updateDeliveredQty() {
+            const accepted = parseFloat(document.getElementById('acceptedQty').value) || 0;
+            const rework = parseFloat(document.getElementById('reworkQty').value) || 0;
+            const reject = parseFloat(document.getElementById('rejectQty').value) || 0;
+            const conditional = parseFloat(document.getElementById('conditionalAcceptQty').value) || 0;
+            const total = accepted + rework + reject + conditional;
+            document.getElementById('deliveredQty').value = total;
+            return total;
+        }
+
+        // Attach event listeners to quantity fields
+        function attachQuantityListeners() {
+            const qtyFields = ['acceptedQty', 'reworkQty', 'rejectQty', 'conditionalAcceptQty'];
+            qtyFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.removeEventListener('input', updateDeliveredQty);
+                    el.addEventListener('input', updateDeliveredQty);
+                }
+            });
         }
 
         // ============================================================
@@ -439,7 +464,6 @@
         // DYNAMIC WORK STATION based on Process Type
         // ============================================================
         function getWorkStationOptionsForProcess(processType) {
-            // Map process to appropriate workstation (single default or list)
             const workstationMap = {
                 "Lathe": ["machine shop"],
                 "Milling": ["machine shop"],
@@ -470,14 +494,11 @@
                 "Incoming": ["warehouse"]
             };
             let options = workstationMap[processType] || ["general"];
-            // For simplicity, return a list of options (if multiple, we could expand, but most processes map to one)
             return options;
         }
 
-        // Helper to generate Work Station dropdown HTML with dynamic options
         function getWorkStationHtml(currentProcess, savedValue = "") {
             const possibleStations = getWorkStationOptionsForProcess(currentProcess);
-            // Also include "Other" option for flexibility
             const allOptions = [...possibleStations, "other"];
             let html = `<div><label class="font-bold text-sm">Work Station</label><select id="extra_Work_Station" class="w-full border p-1 rounded text-sm">`;
             allOptions.forEach(opt => {
@@ -597,7 +618,7 @@
         }
 
         // ============================================================
-        // RENDER DYNAMIC FIELDS (standard processes) with dynamic Work Station
+        // RENDER DYNAMIC FIELDS (standard processes)
         // ============================================================
         function renderDynamicFields() {
             const container = document.getElementById("dynamicFieldsContainer");
@@ -616,7 +637,6 @@
                     def.extraFields.forEach(field => {
                         const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                         if (field === "Work Station") {
-                            // Dynamic Work Station based on current process
                             html += getWorkStationHtml(currentProcess, "");
                         } else if (field === "Location") {
                             html += `<div><label class="font-bold text-sm">Location</label><select id="${safeId}" class="w-full border p-1 rounded text-sm"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
@@ -630,13 +650,13 @@
                             html += `<div><label class="font-bold text-sm">DWG No.</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan"></div>`;
                         } else if (field === "Part Name") {
                             html += `<div><label class="font-bold text-sm">Part Name</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan"></div>`;
-                        } else if (field !== "Work Station") { // avoid duplicate
+                        } else if (field !== "Work Station") {
                             html += `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
                         }
                     });
                     html += `</div>`;
                 }
-                html += `<div class="overflow-x-auto border rounded-md"><table class="min-w-full text-sm"><thead class="bg-gray-200"><tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Acceptance Conditions</th><th class="p-2 border">Cause of Defects</th><tr></thead><tbody>`;
+                html += `<div class="overflow-x-auto border rounded-md"><table class="min-w-full text-sm"><thead class="bg-gray-200"><tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Acceptance Conditions</th><th class="p-2 border">Cause of Defects</th></tr></thead><tbody>`;
                 def.parameters.forEach((param, idx) => {
                     const paramId = `p_${idx}`;
                     html += `<tr><td class="border p-2 font-medium">${param}</td><td class="border"><select id="rating_${paramId}" class="w-full p-1 border rounded">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="border"><div class="flex flex-wrap gap-2">${causeFields.map(cause => `<label><input type="checkbox" class="cause-check" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
@@ -644,18 +664,21 @@
                 html += `</tbody></table></div>`;
                 container.innerHTML = html;
                 refreshDatalistOptions();
+                // Attach quantity listeners after dynamic fields are rendered
+                attachQuantityListeners();
+                // Initial calculation
+                updateDeliveredQty();
             }
         }
 
         function switchProcess() { 
             currentProcess = document.getElementById("processType").value; 
             renderDynamicFields(); 
-            populateMachineDropdown(); // refresh machine dropdown
-            // Also refresh Work Station selection if needed (already done in renderDynamicFields)
+            populateMachineDropdown();
         }
 
         // ============================================================
-        // SAVE/LOAD UTILITIES
+        // SAVE/LOAD UTILITIES (modified to use calculated delivered qty)
         // ============================================================
         function getExtraFields() { 
             if (currentProcess === "Incoming") {
@@ -787,6 +810,8 @@
             document.getElementById("cancelEditBtn").classList.add("hidden"); 
             if(engineerFromUrl) document.getElementById('qcEngineerName').value=currentEngineer;
             populateMachineDropdown(); 
+            attachQuantityListeners();
+            updateDeliveredQty();
         }
 
         function cancelEdit(){ resetForm(); loadHistory(); }
@@ -803,6 +828,8 @@
         }
 
         async function saveToBackend() { 
+            // Ensure delivered qty is up to date
+            const delivered = updateDeliveredQty();
             let engineerName = document.getElementById("qcEngineerName").value.trim(); 
             if(!engineerName){ document.getElementById("formMessage").innerHTML='<span class="text-red-600">Please enter QC Engineer Name</span>'; return; } 
             const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value; 
@@ -833,11 +860,11 @@
                 machining_hours: +document.getElementById("machiningHours").value||0, 
                 machining_cost_per_hr: +document.getElementById("machiningCostPerHr").value||0, 
                 total_internal_failure_cost: computeFailureCost(), 
-                delivered_qty: document.getElementById("deliveredQty").value||null, 
-                accepted_qty: document.getElementById("acceptedQty").value||null, 
-                rework_qty: document.getElementById("reworkQty").value||null, 
-                reject_qty: document.getElementById("rejectQty").value||null, 
-                conditional_accept_qty: document.getElementById("conditionalAcceptQty").value||null 
+                delivered_qty: delivered, 
+                accepted_qty: +document.getElementById("acceptedQty").value||0, 
+                rework_qty: +document.getElementById("reworkQty").value||0, 
+                reject_qty: +document.getElementById("rejectQty").value||0, 
+                conditional_accept_qty: +document.getElementById("conditionalAcceptQty").value||0 
             }; 
             try { 
                 let url='/api/inspections', method='POST'; 
@@ -884,11 +911,12 @@
             document.getElementById("startTime").value=inspection.start_time||""; 
             document.getElementById("endTime").value=inspection.end_time||""; 
             updateTotalTime(); 
-            document.getElementById("deliveredQty").value=inspection.delivered_qty??""; 
-            document.getElementById("acceptedQty").value=inspection.accepted_qty??""; 
-            document.getElementById("reworkQty").value=inspection.rework_qty??""; 
-            document.getElementById("rejectQty").value=inspection.reject_qty??""; 
-            document.getElementById("conditionalAcceptQty").value=inspection.conditional_accept_qty??""; 
+            // Set quantity fields
+            document.getElementById("acceptedQty").value = inspection.accepted_qty || 0;
+            document.getElementById("reworkQty").value = inspection.rework_qty || 0;
+            document.getElementById("rejectQty").value = inspection.reject_qty || 0;
+            document.getElementById("conditionalAcceptQty").value = inspection.conditional_accept_qty || 0;
+            updateDeliveredQty(); // This will set deliveredQty from sum
             document.getElementById("defectedMaterialCost").value=inspection.defected_material_cost??0; 
             document.getElementById("laborHours").value=inspection.labor_hours??0; 
             document.getElementById("salaryPerHour").value=inspection.salary_per_hour??0; 
@@ -909,15 +937,14 @@
             document.getElementById("isEditMode").value="true"; 
             document.getElementById("saveBtn").innerHTML="✔ Update to Cloud"; 
             document.getElementById("cancelEditBtn").classList.remove("hidden");
-            // restore machine dropdown
             const rateToRestore = inspection.machining_cost_per_hr ? (inspection.machining_cost_per_hr).toFixed(4) : "";
             populateMachineDropdown(rateToRestore);
-            // restore Work Station value (will be set by setExtraFields, but ensure the select exists)
             const savedWorkStation = inspection.extra_fields?.["Work Station"];
             if (savedWorkStation) {
                 const wsSelect = document.getElementById("extra_Work_Station");
                 if (wsSelect) wsSelect.value = savedWorkStation;
             }
+            attachQuantityListeners();
         }
 
         document.getElementById("levelSelect").addEventListener("change",function(e){ 
@@ -933,7 +960,7 @@
         ["defectedMaterialCost","laborHours","salaryPerHour","machiningHours","machiningCostPerHr","reworkQty","rejectQty"].forEach(id=>document.getElementById(id)?.addEventListener("input",computeFailureCost));
         document.getElementById("startTime")?.addEventListener("change",updateTotalTime); 
         document.getElementById("endTime")?.addEventListener("change",updateTotalTime);
-        document.addEventListener("DOMContentLoaded",()=>{ renderDynamicFields(); loadHistory(); populateMachineDropdown(); });
+        document.addEventListener("DOMContentLoaded",()=>{ renderDynamicFields(); loadHistory(); populateMachineDropdown(); attachQuantityListeners(); });
         function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
     </script>
 </body>
