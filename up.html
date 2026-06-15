@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    <!-- Filters -->
+    <!-- Filters (global) -->
     <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
         <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
         <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
@@ -100,7 +100,7 @@
 <script>
     let allProjects = [];
     let allInspectionsRaw = [];
-    let currentModalProject = null; // store project object for filtering inside modal
+    let currentModalProject = null; // store full project object (all inspections)
     let modalInspectionFilters = { process: '', engineer: '', dateFrom: '', dateTo: '' };
 
     function getExtraField(insp, field) { return insp.extra_fields?.[field]?.trim() || ''; }
@@ -161,40 +161,66 @@
         return mock;
     }
 
+    // Aggregate projects from inspections (global)
     function aggregateProjects(inspections) {
         const projectMap = new Map();
         for (const insp of inspections) {
             const client = getExtraField(insp, 'Customer Name') || 'Unknown';
             const title = getExtraField(insp, 'Project Name') || 'Untitled';
+            const key = `${client}||${title}`;
+            if (!projectMap.has(key)) {
+                projectMap.set(key, { client, title, inspections: [] });
+            }
+            projectMap.get(key).inspections.push(insp);
+        }
+        const projects = Array.from(projectMap.values()).map(p => {
+            // Compute aggregated stats for the project (without filters, for global display)
+            const aggregated = aggregateInspectionsForProject(p.inspections);
+            return {
+                ...p,
+                ...aggregated,
+                subtitlesArray: aggregated.subtitlesArray,
+                lastDateStr: aggregated.lastDateStr,
+                acceptanceRate: aggregated.acceptanceRate,
+                followStatus: aggregated.followStatus
+            };
+        });
+        projects.sort((a,b) => (b.lastDate || 0) - (a.lastDate || 0));
+        return projects;
+    }
+
+    // Helper: aggregate inspections (used globally and for filtered modal view)
+    function aggregateInspectionsForProject(inspections) {
+        let totalDelivered = 0, totalAccepted = 0, totalRework = 0, totalReject = 0, totalConditional = 0;
+        let totalInspections = 0;
+        let lastDate = null;
+        const subtitlesMap = new Map();
+
+        for (const insp of inspections) {
             const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
             const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
             const dwgNo = getExtraField(insp, 'Drawing No.') || '—';
             const tagNo = getExtraField(insp, 'Tag No.') || '—';
-            const key = `${client}||${title}`;
-            if (!projectMap.has(key)) {
-                projectMap.set(key, { 
-                    client, title, inspections: [], subtitlesMap: new Map(),
-                    totalDelivered: 0, totalAccepted: 0, totalRework: 0, totalReject: 0, totalConditional: 0,
-                    totalInspections: 0, lastDate: null
-                });
-            }
-            const proj = projectMap.get(key);
-            proj.inspections.push(insp);
-            proj.totalInspections++;
-            proj.totalDelivered += (insp.delivered_qty || 0);
-            proj.totalAccepted += (insp.accepted_qty || 0);
-            proj.totalRework += (insp.rework_qty || 0);
-            proj.totalReject += (insp.reject_qty || 0);
-            proj.totalConditional += (insp.conditional_accept_qty || 0);
+            
+            totalInspections++;
+            totalDelivered += (insp.delivered_qty || 0);
+            totalAccepted += (insp.accepted_qty || 0);
+            totalRework += (insp.rework_qty || 0);
+            totalReject += (insp.reject_qty || 0);
+            totalConditional += (insp.conditional_accept_qty || 0);
+            
+            const inspDate = new Date(insp.submitted_at);
+            if (!lastDate || inspDate > lastDate) lastDate = inspDate;
 
-            if (!proj.subtitlesMap.has(subtitle)) {
-                proj.subtitlesMap.set(subtitle, { 
+            if (!subtitlesMap.has(subtitle)) {
+                subtitlesMap.set(subtitle, {
+                    name: subtitle,
                     totalInspections: 0,
                     sumDelivered: 0, sumAccepted: 0, sumRework: 0, sumReject: 0, sumConditional: 0,
                     partsMap: new Map()
                 });
             }
-            const sub = proj.subtitlesMap.get(subtitle);
+            const sub = subtitlesMap.get(subtitle);
             sub.totalInspections++;
             sub.sumDelivered += (insp.delivered_qty || 0);
             sub.sumAccepted += (insp.accepted_qty || 0);
@@ -210,34 +236,36 @@
             if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
             if (tagNo !== '—') partData.tagSet.add(tagNo);
             sub.partsMap.set(partName, partData);
-            proj.subtitlesMap.set(subtitle, sub);
-
-            const inspDate = new Date(insp.submitted_at);
-            if (!proj.lastDate || inspDate > proj.lastDate) proj.lastDate = inspDate;
         }
-        const projects = Array.from(projectMap.values()).map(p => {
-            const acceptanceRate = p.totalDelivered ? (p.totalAccepted / p.totalDelivered) * 100 : 0;
-            let followStatus = 'on_track';
-            if (p.totalReject / p.totalDelivered >= 0.5) followStatus = 'critical';
-            else if (p.totalRework + p.totalReject > 0) followStatus = 'needs_action';
-            const subtitlesArray = Array.from(p.subtitlesMap.entries()).map(([name, stats]) => ({
-                name, ...stats,
-                acceptRate: stats.sumDelivered ? (stats.sumAccepted / stats.sumDelivered) * 100 : 0,
-                partsList: Array.from(stats.partsMap.entries()).map(([partName, data]) => ({ 
-                    part_name: partName, 
-                    quantity: data.quantity,
-                    dwgList: Array.from(data.dwgSet).join(', '),
-                    tagList: Array.from(data.tagSet).join(', ')
-                }))
-            }));
-            return {
-                ...p, acceptanceRate: acceptanceRate.toFixed(1), followStatus,
-                subtitleCount: p.subtitlesMap.size, subtitlesArray,
-                lastDateStr: p.lastDate ? p.lastDate.toLocaleDateString() : '—'
-            };
-        });
-        projects.sort((a,b) => (b.lastDate || 0) - (a.lastDate || 0));
-        return projects;
+
+        const acceptanceRate = totalDelivered ? (totalAccepted / totalDelivered) * 100 : 0;
+        let followStatus = 'on_track';
+        if (totalReject / totalDelivered >= 0.5) followStatus = 'critical';
+        else if (totalRework + totalReject > 0) followStatus = 'needs_action';
+
+        const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => ({
+            name: sub.name,
+            totalInspections: sub.totalInspections,
+            sumDelivered: sub.sumDelivered,
+            sumAccepted: sub.sumAccepted,
+            sumRework: sub.sumRework,
+            sumReject: sub.sumReject,
+            sumConditional: sub.sumConditional,
+            acceptRate: sub.sumDelivered ? (sub.sumAccepted / sub.sumDelivered) * 100 : 0,
+            partsList: Array.from(sub.partsMap.entries()).map(([partName, data]) => ({
+                part_name: partName,
+                quantity: data.quantity,
+                dwgList: Array.from(data.dwgSet).join(', '),
+                tagList: Array.from(data.tagSet).join(', ')
+            }))
+        }));
+
+        return {
+            totalDelivered, totalAccepted, totalRework, totalReject, totalConditional,
+            totalInspections, lastDate, acceptanceRate: acceptanceRate.toFixed(1), followStatus,
+            lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
+            subtitlesArray
+        };
     }
 
     function getAllSubtitles(inspections) {
@@ -251,7 +279,7 @@
 
     function renderProjects(projects) {
         const tbody = document.getElementById('projectsTableBody');
-        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="13" class="text-center py-10">No projects found</td></tr>'; return; }
+        if (!projects.length) { tbody.innerHTML = '<td><td colspan="13" class="text-center py-10">No projects found</td></table>'; return; }
         tbody.innerHTML = projects.map(p => {
             const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
             let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus === 'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
@@ -259,7 +287,7 @@
             return `<tr>
                 <td class="font-medium">${escapeHtml(p.client)}</td>
                 <td class="font-mono">${escapeHtml(p.title)}</td>
-                <td class="text-center font-bold">${p.subtitleCount}</td>
+                <td class="text-center font-bold">${p.subtitlesArray.length}</td>
                 <td class="text-center">${p.totalInspections}</td>
                 <td class="text-center">${p.totalDelivered.toLocaleString()}</td>
                 <td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td>
@@ -280,75 +308,37 @@
         document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
     }
 
-    // Filter inspections inside modal
-    function filterModalInspections() {
+    // Filter inspections inside modal and recompute aggregated data
+    function filterModalProjectData() {
         if (!currentModalProject) return;
-        const inspections = currentModalProject.inspections;
-        let filtered = [...inspections];
+        let filteredInspections = [...currentModalProject.inspections];
         if (modalInspectionFilters.process) {
-            filtered = filtered.filter(insp => insp.process_type === modalInspectionFilters.process);
+            filteredInspections = filteredInspections.filter(insp => insp.process_type === modalInspectionFilters.process);
         }
         if (modalInspectionFilters.engineer) {
-            filtered = filtered.filter(insp => insp.username === modalInspectionFilters.engineer);
+            filteredInspections = filteredInspections.filter(insp => insp.username === modalInspectionFilters.engineer);
         }
         if (modalInspectionFilters.dateFrom) {
             const fromDate = new Date(modalInspectionFilters.dateFrom);
             fromDate.setHours(0,0,0,0);
-            filtered = filtered.filter(insp => new Date(insp.submitted_at) >= fromDate);
+            filteredInspections = filteredInspections.filter(insp => new Date(insp.submitted_at) >= fromDate);
         }
         if (modalInspectionFilters.dateTo) {
             const toDate = new Date(modalInspectionFilters.dateTo);
             toDate.setHours(23,59,59,999);
-            filtered = filtered.filter(insp => new Date(insp.submitted_at) <= toDate);
+            filteredInspections = filteredInspections.filter(insp => new Date(insp.submitted_at) <= toDate);
         }
-        renderModalInspectionsList(filtered);
+        // Recompute aggregated data from filtered inspections
+        const aggregated = aggregateInspectionsForProject(filteredInspections);
+        renderModalContent(aggregated, filteredInspections);
     }
 
-    function renderModalInspectionsList(inspections) {
-        const container = document.getElementById('modalInspectionsList');
-        if (!container) return;
-        if (!inspections.length) {
-            container.innerHTML = '<div class="text-gray-500 italic text-center py-4">No inspections match the filters.</div>';
-            return;
-        }
-        container.innerHTML = inspections.slice().sort((a,b)=>new Date(b.submitted_at)-new Date(a.submitted_at)).map(insp => {
-            const date = new Date(insp.submitted_at).toLocaleDateString();
-            let rating = '—';
-            const accData = insp.acceptance_data || {};
-            const firstParam = Object.values(accData)[0];
-            if (firstParam?.rating) rating = firstParam.rating;
-            else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0 && insp.conditional_accept_qty===0) rating='Accepted';
-            else if (insp.rework_qty >0) rating='Rework';
-            else if (insp.reject_qty >0) rating='Reject';
-            else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
-            const ratingColor = rating === 'Accepted' ? 'bg-emerald-100 text-emerald-700' : (rating === 'Rework' ? 'bg-amber-100 text-amber-700' : (rating === 'Reject' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'));
-            const partName = getExtraField(insp, 'Part Name');
-            const dwg = getExtraField(insp, 'Drawing No.');
-            const tag = getExtraField(insp, 'Tag No.');
-            return `<div class="border rounded-lg p-3 bg-white flex justify-between items-center">
-                <div>
-                    <p class="text-sm font-medium">${insp.process_type || 'Process'} | ${date}</p>
-                    <p class="text-xs text-slate-500">QC: ${insp.username || '—'} | Part: ${partName || '—'} | DWG: ${dwg || '—'} | Tag: ${tag || '—'} | Subtitle: ${getExtraField(insp, 'Subtitle') || '—'}</p>
-                </div>
-                <div>
-                    <span class="px-2 py-1 rounded-full text-xs font-medium ${ratingColor}">${rating}</span>
-                    <p class="text-xs text-slate-400 mt-1">Cost: ${(insp.total_internal_failure_cost||0).toFixed(0)} ETB</p>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    function showProjectDetails(client, title) {
-        const project = allProjects.find(p => p.client === client && p.title === title);
-        if (!project) return;
-        currentModalProject = project;
+    function renderModalContent(aggregated, filteredInspections) {
         const modalBody = document.getElementById('modalBody');
-        document.getElementById('modalTitle').innerText = `${client} / ${title}`;
-        
-        // Build subtitle summary (unchanged)
+        // Build subtitle summary HTML
         let subtitlesHtml = '';
-        if (project.subtitlesArray.length) {
-            subtitlesHtml = project.subtitlesArray.map(sub => {
+        if (aggregated.subtitlesArray.length) {
+            subtitlesHtml = aggregated.subtitlesArray.map(sub => {
                 const partsTable = sub.partsList.length ? `
                     <div class="mt-2">
                         <div class="text-xs font-semibold text-gray-600 mt-2">📋 Parts / Components (with DWG & Tag):</div>
@@ -387,6 +377,48 @@
             subtitlesHtml = '<div class="text-gray-500 italic">No sub‑assemblies found.</div>';
         }
 
+        // Build individual inspections list
+        const inspectionsListHtml = filteredInspections.length ? filteredInspections.slice().sort((a,b)=>new Date(b.submitted_at)-new Date(a.submitted_at)).map(insp => {
+            const date = new Date(insp.submitted_at).toLocaleDateString();
+            let rating = '—';
+            const accData = insp.acceptance_data || {};
+            const firstParam = Object.values(accData)[0];
+            if (firstParam?.rating) rating = firstParam.rating;
+            else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0 && insp.conditional_accept_qty===0) rating='Accepted';
+            else if (insp.rework_qty >0) rating='Rework';
+            else if (insp.reject_qty >0) rating='Reject';
+            else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
+            const ratingColor = rating === 'Accepted' ? 'bg-emerald-100 text-emerald-700' : (rating === 'Rework' ? 'bg-amber-100 text-amber-700' : (rating === 'Reject' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'));
+            const partName = getExtraField(insp, 'Part Name');
+            const dwg = getExtraField(insp, 'Drawing No.');
+            const tag = getExtraField(insp, 'Tag No.');
+            return `<div class="border rounded-lg p-3 bg-white flex justify-between items-center">
+                <div>
+                    <p class="text-sm font-medium">${insp.process_type || 'Process'} | ${date}</p>
+                    <p class="text-xs text-slate-500">QC: ${insp.username || '—'} | Part: ${partName || '—'} | DWG: ${dwg || '—'} | Tag: ${tag || '—'} | Subtitle: ${getExtraField(insp, 'Subtitle') || '—'}</p>
+                </div>
+                <div>
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${ratingColor}">${rating}</span>
+                    <p class="text-xs text-slate-400 mt-1">Cost: ${(insp.total_internal_failure_cost||0).toFixed(0)} ETB</p>
+                </div>
+            </div>`;
+        }).join('') : '<div class="text-gray-500 italic text-center py-4">No inspections match the filters.</div>';
+
+        modalBody.innerHTML = `
+            ${subtitlesHtml}
+            <div>
+                <h4 class="font-semibold text-slate-800 mb-2">📋 Individual Inspections</h4>
+                <div id="modalInspectionsList">${inspectionsListHtml}</div>
+            </div>
+        `;
+    }
+
+    function showProjectDetails(client, title) {
+        const project = allProjects.find(p => p.client === client && p.title === title);
+        if (!project) return;
+        currentModalProject = project;
+        document.getElementById('modalTitle').innerText = `${client} / ${title}`;
+        
         // Get unique process types and engineers from this project's inspections
         const processSet = new Set();
         const engineerSet = new Set();
@@ -397,9 +429,10 @@
         const processOptions = Array.from(processSet).sort();
         const engineerOptions = Array.from(engineerSet).sort();
 
-        // Build filter bar HTML
+        // Build filter bar HTML and attach after modalBody is set
+        const modalBody = document.getElementById('modalBody');
         const filterBarHtml = `
-            <div class="modal-filter-bar">
+            <div class="modal-filter-bar" id="modalFilterBar">
                 <div class="flex-1 min-w-[120px]">
                     <label class="text-xs font-medium text-slate-500">Process Type</label>
                     <select id="modalFilterProcess" class="filter-select w-full text-sm">
@@ -426,47 +459,133 @@
                     <button id="clearModalFiltersBtn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg text-sm">Clear</button>
                 </div>
             </div>
-            <div id="modalInspectionsList" class="space-y-2 max-h-96 overflow-y-auto"></div>
         `;
+        // Insert filter bar above the content (we will prepend to modalBody)
+        modalBody.innerHTML = filterBarHtml + '<div id="modalFilterableContent"></div>';
+        const filterableContainer = document.getElementById('modalFilterableContent');
 
-        modalBody.innerHTML = `
-            ${subtitlesHtml}
-            <div>
-                <h4 class="font-semibold text-slate-800 mb-2">📋 Individual Inspections</h4>
-                ${filterBarHtml}
-            </div>
-        `;
+        // Function to update filtered content
+        const updateFilteredContent = () => {
+            modalInspectionFilters.process = document.getElementById('modalFilterProcess').value;
+            modalInspectionFilters.engineer = document.getElementById('modalFilterEngineer').value;
+            modalInspectionFilters.dateFrom = document.getElementById('modalFilterDateFrom').value;
+            modalInspectionFilters.dateTo = document.getElementById('modalFilterDateTo').value;
+            
+            let filtered = [...currentModalProject.inspections];
+            if (modalInspectionFilters.process) filtered = filtered.filter(insp => insp.process_type === modalInspectionFilters.process);
+            if (modalInspectionFilters.engineer) filtered = filtered.filter(insp => insp.username === modalInspectionFilters.engineer);
+            if (modalInspectionFilters.dateFrom) {
+                const fromDate = new Date(modalInspectionFilters.dateFrom);
+                fromDate.setHours(0,0,0,0);
+                filtered = filtered.filter(insp => new Date(insp.submitted_at) >= fromDate);
+            }
+            if (modalInspectionFilters.dateTo) {
+                const toDate = new Date(modalInspectionFilters.dateTo);
+                toDate.setHours(23,59,59,999);
+                filtered = filtered.filter(insp => new Date(insp.submitted_at) <= toDate);
+            }
+            const aggregated = aggregateInspectionsForProject(filtered);
+            renderFilterableContent(aggregated, filtered);
+        };
 
-        // Attach filter event listeners
+        function renderFilterableContent(aggregated, filteredInspections) {
+            let subtitlesHtml = '';
+            if (aggregated.subtitlesArray.length) {
+                subtitlesHtml = aggregated.subtitlesArray.map(sub => {
+                    const partsTable = sub.partsList.length ? `
+                        <div class="mt-2">
+                            <div class="text-xs font-semibold text-gray-600 mt-2">📋 Parts / Components (with DWG & Tag):</div>
+                            <table class="parts-table">
+                                <thead><tr><th>Part Name</th><th>Total Delivered Qty</th><th>DWG No.</th><th>Tag No.</th></tr></thead>
+                                <tbody>
+                                    ${sub.partsList.map(p => `
+                                        <tr>
+                                            <td class="text-left">${escapeHtml(p.part_name)}</td>
+                                            <td class="text-center">${p.quantity}</td>
+                                            <td class="text-left">${escapeHtml(p.dwgList) || '—'}</td>
+                                            <td class="text-left">${escapeHtml(p.tagList) || '—'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : '<div class="text-xs text-gray-400 italic mt-1">No parts recorded for this sub‑assembly (Part Name field empty).</div>';
+                    return `
+                        <div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
+                            <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
+                                <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
+                                <div><span class="text-gray-500">Delivered</span><br><span>${sub.sumDelivered.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Conditional</span><br><span class="text-blue-600">${sub.sumConditional.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Accept %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
+                            </div>
+                            ${partsTable}
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                subtitlesHtml = '<div class="text-gray-500 italic">No sub‑assemblies found.</div>';
+            }
+
+            const inspectionsListHtml = filteredInspections.length ? filteredInspections.slice().sort((a,b)=>new Date(b.submitted_at)-new Date(a.submitted_at)).map(insp => {
+                const date = new Date(insp.submitted_at).toLocaleDateString();
+                let rating = '—';
+                const accData = insp.acceptance_data || {};
+                const firstParam = Object.values(accData)[0];
+                if (firstParam?.rating) rating = firstParam.rating;
+                else if (insp.accepted_qty >0 && insp.rework_qty===0 && insp.reject_qty===0 && insp.conditional_accept_qty===0) rating='Accepted';
+                else if (insp.rework_qty >0) rating='Rework';
+                else if (insp.reject_qty >0) rating='Reject';
+                else if (insp.conditional_accept_qty >0) rating='Conditional Accept';
+                const ratingColor = rating === 'Accepted' ? 'bg-emerald-100 text-emerald-700' : (rating === 'Rework' ? 'bg-amber-100 text-amber-700' : (rating === 'Reject' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'));
+                const partName = getExtraField(insp, 'Part Name');
+                const dwg = getExtraField(insp, 'Drawing No.');
+                const tag = getExtraField(insp, 'Tag No.');
+                return `<div class="border rounded-lg p-3 bg-white flex justify-between items-center">
+                    <div>
+                        <p class="text-sm font-medium">${insp.process_type || 'Process'} | ${date}</p>
+                        <p class="text-xs text-slate-500">QC: ${insp.username || '—'} | Part: ${partName || '—'} | DWG: ${dwg || '—'} | Tag: ${tag || '—'} | Subtitle: ${getExtraField(insp, 'Subtitle') || '—'}</p>
+                    </div>
+                    <div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${ratingColor}">${rating}</span>
+                        <p class="text-xs text-slate-400 mt-1">Cost: ${(insp.total_internal_failure_cost||0).toFixed(0)} ETB</p>
+                    </div>
+                </div>`;
+            }).join('') : '<div class="text-gray-500 italic text-center py-4">No inspections match the filters.</div>';
+
+            filterableContainer.innerHTML = `
+                ${subtitlesHtml}
+                <div>
+                    <h4 class="font-semibold text-slate-800 mb-2">📋 Individual Inspections</h4>
+                    <div class="space-y-2 max-h-96 overflow-y-auto">${inspectionsListHtml}</div>
+                </div>
+            `;
+        }
+
+        // Attach event listeners to filter controls
         const processSelect = document.getElementById('modalFilterProcess');
         const engineerSelect = document.getElementById('modalFilterEngineer');
         const dateFromInput = document.getElementById('modalFilterDateFrom');
         const dateToInput = document.getElementById('modalFilterDateTo');
         const clearBtn = document.getElementById('clearModalFiltersBtn');
 
-        function updateModalFilters() {
-            modalInspectionFilters.process = processSelect.value;
-            modalInspectionFilters.engineer = engineerSelect.value;
-            modalInspectionFilters.dateFrom = dateFromInput.value;
-            modalInspectionFilters.dateTo = dateToInput.value;
-            filterModalInspections();
-        }
-
-        processSelect.addEventListener('change', updateModalFilters);
-        engineerSelect.addEventListener('change', updateModalFilters);
-        dateFromInput.addEventListener('change', updateModalFilters);
-        dateToInput.addEventListener('change', updateModalFilters);
+        processSelect.addEventListener('change', updateFilteredContent);
+        engineerSelect.addEventListener('change', updateFilteredContent);
+        dateFromInput.addEventListener('change', updateFilteredContent);
+        dateToInput.addEventListener('change', updateFilteredContent);
         clearBtn.addEventListener('click', () => {
             processSelect.value = '';
             engineerSelect.value = '';
             dateFromInput.value = '';
             dateToInput.value = '';
-            updateModalFilters();
+            updateFilteredContent();
         });
 
-        // Initial render of inspections list (no filters)
-        modalInspectionFilters = { process: '', engineer: '', dateFrom: '', dateTo: '' };
-        filterModalInspections();
+        // Initial render (no filters)
+        updateFilteredContent();
 
         document.getElementById('modal').classList.remove('hidden');
     }
