@@ -19,7 +19,7 @@
         .table-wrapper { overflow-x: auto; border-radius: 1rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { background-color: #f1f5f9; position: sticky; top: 0; z-index: 10; padding: 12px 10px; font-weight: 600; color: #0f172a; }
-        td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
         tr:hover td { background-color: #f8fafc; }
         .summary-card { transition: all 0.2s; border-radius: 1rem; }
         .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
@@ -46,7 +46,7 @@
                 <i class="fa-solid fa-clipboard-list text-blue-600"></i> 
                 Inspection Report
             </h1>
-            <p class="text-gray-500 text-sm mt-1">Client, Project, Subtitle, Drawing, Part & Quantity details – filter & export</p>
+            <p class="text-gray-500 text-sm mt-1">Client, Project, Subtitle, Drawing, Part & Quantity details – merged view</p>
         </div>
         <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
             <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -104,7 +104,7 @@
         </div>
     </div>
 
-    <!-- Filter Bar (Project + Search) -->
+    <!-- Filter Bar -->
     <div class="bg-white rounded-xl shadow-sm p-4 mb-5 no-print flex flex-col md:flex-row gap-4 items-end">
         <div class="flex-1">
             <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-folder-open mr-1"></i> Filter by Project</label>
@@ -173,7 +173,7 @@
         return getExtraField(inspection, 'Subtitle');
     }
 
-    let allReportRows = [];
+    let allReportRows = [];      // flat rows (not grouped)
     let uniqueProjects = new Set();
 
     function formatQty(value) {
@@ -188,6 +188,7 @@
         return isNaN(num) ? 0 : num;
     }
 
+    // Fetch data and update UI
     async function fetchReportData() {
         const tbody = document.getElementById('reportTableBody');
         const statusSpan = document.getElementById('recordStatus');
@@ -265,6 +266,7 @@
         }
     }
     
+    // Apply search + project filter
     function applyFilters() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -276,34 +278,66 @@
         if (searchTerm) {
             filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
         }
-        renderTable(filtered);
+        renderTableWithRowspan(filtered);
         const countSpan = document.getElementById('recordCount');
         const total = allReportRows.length;
         countSpan.innerText = `Showing ${filtered.length} of ${total} records`;
     }
     
-    function renderTable(rows) {
+    // Render table with rowspan for Client, Title, Subtitle columns
+    function renderTableWithRowspan(rows) {
         const tbody = document.getElementById('reportTableBody');
         if (!rows.length) {
             tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
             return;
         }
-        tbody.innerHTML = rows.map(row => `
-            <tr class="hover:bg-gray-50 transition">
-                <td class="font-medium">${escapeHtml(row.clientName)}</td>
-                <td class="font-medium">${escapeHtml(row.projectName)}</td>
-                <td class="text-sm">${escapeHtml(row.subtitle)}</td>
-                <td class="font-mono text-sm">${escapeHtml(row.drawingNo)}</td>
-                <td class="font-medium">${escapeHtml(row.partName)}</td>
-                <td class="text-right tabular-nums">${row.delivered}</td>
-                <td class="text-right tabular-nums text-emerald-700">${row.accepted}</td>
-                <td class="text-right tabular-nums text-amber-600">${row.rework}</td>
-                <td class="text-right tabular-nums text-red-600">${row.reject}</td>
-                <td class="text-right tabular-nums text-purple-600">${row.conditional}</td>
-            </tr>
-        `).join('');
+        
+        // Group rows by (clientName, projectName, subtitle)
+        const groups = [];
+        let currentGroup = null;
+        for (const row of rows) {
+            const key = `${row.clientName}||${row.projectName}||${row.subtitle}`;
+            if (!currentGroup || currentGroup.key !== key) {
+                if (currentGroup) groups.push(currentGroup);
+                currentGroup = {
+                    key,
+                    clientName: row.clientName,
+                    projectName: row.projectName,
+                    subtitle: row.subtitle,
+                    rows: []
+                };
+            }
+            currentGroup.rows.push(row);
+        }
+        if (currentGroup) groups.push(currentGroup);
+        
+        // Build HTML with rowspan
+        let html = '';
+        for (const group of groups) {
+            const rowCount = group.rows.length;
+            for (let i = 0; i < rowCount; i++) {
+                const row = group.rows[i];
+                html += `<tr class="hover:bg-gray-50 transition">`;
+                if (i === 0) {
+                    html += `<td rowspan="${rowCount}" class="font-medium align-top">${escapeHtml(group.clientName)}</td>`;
+                    html += `<td rowspan="${rowCount}" class="font-medium align-top">${escapeHtml(group.projectName)}</td>`;
+                    html += `<td rowspan="${rowCount}" class="text-sm align-top">${escapeHtml(group.subtitle)}</td>`;
+                }
+                html += `
+                    <td class="font-mono text-sm">${escapeHtml(row.drawingNo)}</td>
+                    <td class="font-medium">${escapeHtml(row.partName)}</td>
+                    <td class="text-right tabular-nums">${row.delivered}</td>
+                    <td class="text-right tabular-nums text-emerald-700">${row.accepted}</td>
+                    <td class="text-right tabular-nums text-amber-600">${row.rework}</td>
+                    <td class="text-right tabular-nums text-red-600">${row.reject}</td>
+                    <td class="text-right tabular-nums text-purple-600">${row.conditional}</td>
+                </tr>`;
+            }
+        }
+        tbody.innerHTML = html;
     }
     
+    // Helper: escape HTML
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -314,6 +348,7 @@
         });
     }
     
+    // Export to Excel (flattened version – no rowspan, same as original rows)
     function exportToExcel() {
         const searchTerm = document.getElementById('searchInput').value;
         const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -356,19 +391,29 @@
         URL.revokeObjectURL(url);
     }
     
+    // Copy table to clipboard (tab-separated, flattened)
     async function copyTableToClipboard() {
         const rows = document.querySelectorAll('#reportTable tbody tr');
         if (!rows.length || (rows.length === 1 && rows[0].innerText.includes('No matching'))) {
             alert('No data to copy');
             return;
         }
+        // Build flattened version by reading DOM rows – but rowspan makes it tricky.
+        // Simpler: re‑gather filtered rows from `allReportRows` and create TSV.
+        const searchTerm = document.getElementById('searchInput').value;
+        const selectedProject = document.getElementById('projectFilterSelect').value;
+        let dataToCopy = [...allReportRows];
+        if (selectedProject) dataToCopy = dataToCopy.filter(row => row.projectName === selectedProject);
+        if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
+        
+        if (dataToCopy.length === 0) {
+            alert('No data to copy');
+            return;
+        }
+        
         let tsvContent = "Client Name\tTitle\tSubtitle\tDrawing No.\tPart Name\tDelivered Qty\tAccepted Qty\tRework Qty\tReject Qty\tConditional Accept\n";
-        for (let row of rows) {
-            const cells = row.querySelectorAll('td');
-            if (cells.length === 10) {
-                const line = Array.from(cells).map(cell => cell.innerText.trim()).join('\t');
-                tsvContent += line + '\n';
-            }
+        for (const row of dataToCopy) {
+            tsvContent += `${row.clientName}\t${row.projectName}\t${row.subtitle}\t${row.drawingNo}\t${row.partName}\t${row.delivered}\t${row.accepted}\t${row.rework}\t${row.reject}\t${row.conditional}\n`;
         }
         try {
             await navigator.clipboard.writeText(tsvContent);
@@ -384,10 +429,12 @@
         applyFilters();
     }
     
+    // Event listeners
     document.getElementById('searchInput').addEventListener('input', () => { if (allReportRows.length) applyFilters(); });
     document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
     
+    // Initial load
     fetchReportData();
 </script>
 </body>
