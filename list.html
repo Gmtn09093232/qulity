@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Inspection Report | Amhara Metal Industry</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         @media print {
@@ -49,8 +50,8 @@
             <p class="text-gray-500 text-sm mt-1">Hierarchical view: Client → Title → Subtitle → Parts</p>
         </div>
         <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
-            <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
-                <i class="fas fa-file-excel"></i> Excel
+            <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                <i class="fas fa-file-excel"></i> Excel (XLSX)
             </button>
             <button onclick="copyTableToClipboard()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
                 <i class="fas fa-copy"></i> Copy
@@ -142,7 +143,7 @@
                     </tr>
                 </thead>
                 <tbody id="reportTableBody">
-                    <tr><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections...</p></td></tr>
+                    <tr><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections...</p></tr>
                 </tbody>
             </table>
         </div>
@@ -160,7 +161,6 @@
     }
 
     function getClientName(inspection) {
-        // Priority: dedicated column -> extra_fields
         if (inspection.customer_name && inspection.customer_name.trim()) return inspection.customer_name.trim();
         return getExtraField(inspection, 'Customer Name');
     }
@@ -193,7 +193,7 @@
         const tbody = document.getElementById('reportTableBody');
         const statusSpan = document.getElementById('recordStatus');
         try {
-            tbody.innerHTML = `<td><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></td></td>`;
+            tbody.innerHTML = `<td><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></tr></tr>`;
             statusSpan.innerText = 'Loading...';
             const response = await fetch('/api/inspections');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -208,7 +208,6 @@
                 const projectName = getProjectName(insp);
                 const subtitle = getSubtitle(insp);
                 
-                // Only add to unique titles if title is non‑empty
                 if (projectName) uniqueProjectNames.add(projectName);
                 
                 const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
@@ -263,7 +262,7 @@
             statusSpan.innerText = `✅ Loaded ${rows.length} records`;
         } catch (err) {
             console.error(err);
-            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
+            tbody.innerHTML = `<td><td colspan="10" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
             statusSpan.innerText = '❌ Error';
         }
     }
@@ -288,7 +287,7 @@
     function renderHierarchicalTable(rows) {
         const tbody = document.getElementById('reportTableBody');
         if (!rows.length) {
-            tbody.innerHTML = `<td><td colspan="10" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
             return;
         }
         
@@ -315,7 +314,7 @@
         
         let html = '';
         for (const clientEntry of clientMap.values()) {
-            // Calculate total rows for this client (sum of all part rows)
+            // Calculate total rows for this client
             let clientTotalRows = 0;
             for (const titleEntry of clientEntry.titleMap.values()) {
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -377,49 +376,132 @@
         });
     }
     
-    // Export to Excel (flattened)
-    function exportToExcel() {
-        const searchTerm = document.getElementById('searchInput').value;
+    // ---------- XLSX Export with merged cells (preserves hierarchical grouping) ----------
+    function exportToExcelXLSX() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const selectedProject = document.getElementById('projectFilterSelect').value;
-        let dataToExport = [...allReportRows];
-        if (selectedProject) dataToExport = dataToExport.filter(row => row.projectName === selectedProject);
-        if (searchTerm) dataToExport = dataToExport.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
+        let filteredRows = [...allReportRows];
+        if (selectedProject) filteredRows = filteredRows.filter(row => row.projectName === selectedProject);
+        if (searchTerm) filteredRows = filteredRows.filter(row => row.rawSearch.includes(searchTerm));
         
-        if (dataToExport.length === 0) {
+        if (filteredRows.length === 0) {
             alert('No data to export. Adjust filters.');
             return;
         }
         
-        const headers = ['Client Name', 'Title', 'Subtitle', 'Drawing No.', 'Part Name', 'Delivered Qty', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept'];
-        const csvRows = [headers.join(',')];
-        
-        for (const row of dataToExport) {
-            const values = [
-                `"${(row.clientName || '').replace(/"/g, '""')}"`,
-                `"${(row.projectName || '').replace(/"/g, '""')}"`,
-                `"${(row.subtitle || '').replace(/"/g, '""')}"`,
-                `"${(row.drawingNo || '').replace(/"/g, '""')}"`,
-                `"${(row.partName || '').replace(/"/g, '""')}"`,
-                row.delivered,
-                row.accepted,
-                row.rework,
-                row.reject,
-                row.conditional
-            ];
-            csvRows.push(values.join(','));
+        // Build the hierarchical structure (same as for HTML)
+        const clientMap = new Map();
+        for (const row of filteredRows) {
+            const client = row.clientName;
+            if (!clientMap.has(client)) {
+                clientMap.set(client, { clientName: client, titleMap: new Map() });
+            }
+            const clientEntry = clientMap.get(client);
+            const title = row.projectName;
+            if (!clientEntry.titleMap.has(title)) {
+                clientEntry.titleMap.set(title, { titleName: title, subtitleMap: new Map() });
+            }
+            const titleEntry = clientEntry.titleMap.get(title);
+            const subtitle = row.subtitle || '';
+            if (!titleEntry.subtitleMap.has(subtitle)) {
+                titleEntry.subtitleMap.set(subtitle, { subtitleName: subtitle, partRows: [] });
+            }
+            const subtitleEntry = titleEntry.subtitleMap.get(subtitle);
+            subtitleEntry.partRows.push(row);
         }
         
-        const blob = new Blob(["\uFEFF" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.setAttribute('download', 'inspection_report.xls');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        // Prepare data array for sheet (each cell as string)
+        const headers = ['Client Name', 'Title', 'Subtitle', 'Drawing No.', 'Part Name', 'Delivered Qty', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept'];
+        const data = [headers];
+        
+        // We'll also record merge ranges: { s: {r,c}, e: {r,c} }
+        const merges = [];
+        let currentRowIdx = 1; // 0-based header at row 0, data starts at row 1
+        
+        for (const clientEntry of clientMap.values()) {
+            // Count total rows for this client
+            let clientRows = 0;
+            for (const titleEntry of clientEntry.titleMap.values()) {
+                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                    clientRows += subtitleEntry.partRows.length;
+                }
+            }
+            let clientStartRow = currentRowIdx;
+            let firstClientRow = true;
+            
+            for (const titleEntry of clientEntry.titleMap.values()) {
+                let titleRows = 0;
+                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                    titleRows += subtitleEntry.partRows.length;
+                }
+                let titleStartRow = currentRowIdx;
+                let firstTitleRow = true;
+                
+                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                    const partRows = subtitleEntry.partRows;
+                    const subtitleRows = partRows.length;
+                    let subtitleStartRow = currentRowIdx;
+                    let firstSubtitleRow = true;
+                    
+                    for (let i = 0; i < subtitleRows; i++) {
+                        const row = partRows[i];
+                        const rowData = [];
+                        if (firstClientRow && i === 0) {
+                            rowData.push(row.clientName);
+                        } else {
+                            rowData.push('');
+                        }
+                        if (firstTitleRow && i === 0) {
+                            rowData.push(row.projectName);
+                        } else {
+                            rowData.push('');
+                        }
+                        if (firstSubtitleRow && i === 0) {
+                            rowData.push(row.subtitle);
+                        } else {
+                            rowData.push('');
+                        }
+                        rowData.push(row.drawingNo);
+                        rowData.push(row.partName);
+                        rowData.push(row.delivered);
+                        rowData.push(row.accepted);
+                        rowData.push(row.rework);
+                        rowData.push(row.reject);
+                        rowData.push(row.conditional);
+                        data.push(rowData);
+                        currentRowIdx++;
+                    }
+                    // Merge subtitle cells
+                    if (subtitleRows > 1) {
+                        merges.push({ s: { r: subtitleStartRow, c: 2 }, e: { r: subtitleStartRow + subtitleRows - 1, c: 2 } });
+                    }
+                    firstSubtitleRow = false;
+                }
+                // Merge title cells
+                if (titleRows > 1) {
+                    merges.push({ s: { r: titleStartRow, c: 1 }, e: { r: titleStartRow + titleRows - 1, c: 1 } });
+                }
+                firstTitleRow = false;
+            }
+            // Merge client cells
+            if (clientRows > 1) {
+                merges.push({ s: { r: clientStartRow, c: 0 }, e: { r: clientStartRow + clientRows - 1, c: 0 } });
+            }
+        }
+        
+        // Create worksheet
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        ws['!merges'] = merges;
+        // Auto-size columns (basic)
+        const colWidths = [{wch:20}, {wch:20}, {wch:20}, {wch:15}, {wch:20}, {wch:12}, {wch:12}, {wch:10}, {wch:10}, {wch:15}];
+        ws['!cols'] = colWidths;
+        
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Inspection Report');
+        XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
     }
     
+    // Copy to clipboard (flattened)
     async function copyTableToClipboard() {
         const searchTerm = document.getElementById('searchInput').value;
         const selectedProject = document.getElementById('projectFilterSelect').value;
