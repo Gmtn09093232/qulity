@@ -18,7 +18,7 @@
         }
         .table-wrapper { overflow-x: auto; border-radius: 1rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background-color: #f1f5f9; position: sticky; top: 0; z-index: 10; padding: 12px 10px; font-weight: 600; color: #0f172a; }
+        th { background-color: #f1f5f9; position: sticky; top: 0; z-index: 10; padding: 12px 10px; font-weight: 600; color: #0f172a; border-bottom: 2px solid #e2e8f0; }
         td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
         tr:hover td { background-color: #f8fafc; }
         .summary-card { transition: all 0.2s; border-radius: 1rem; }
@@ -64,7 +64,7 @@
         </div>
     </div>
 
-    <!-- Summary Cards (unchanged) -->
+    <!-- Summary Cards -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 no-print">
         <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
             <div class="flex items-center justify-between">
@@ -107,13 +107,13 @@
     <!-- Filter Bar -->
     <div class="bg-white rounded-xl shadow-sm p-4 mb-5 no-print flex flex-col md:flex-row gap-4 items-end">
         <div class="flex-1">
-            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-folder-open mr-1"></i> Filter by Project (Title)</label>
+            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-folder-open mr-1"></i> Filter by Title (Project)</label>
             <select id="projectFilterSelect" class="filter-input w-full md:w-80 border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
                 <option value="">All Titles</option>
             </select>
         </div>
         <div class="flex-1">
-            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-magnifying-glass mr-1"></i> Search (Client, Title, Subtitle, Drawing, Part, Qty)</label>
+            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-magnifying-glass mr-1"></i> Search (any field)</label>
             <input type="text" id="searchInput" placeholder="Type anything..." class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
         </div>
         <div>
@@ -154,18 +154,19 @@
 </div>
 
 <script>
-    // ---------- Helper functions ----------
+    // ---------- Robust field extraction ----------
     function getExtraField(inspection, fieldName) {
         return inspection.extra_fields?.[fieldName]?.trim() || '';
     }
 
     function getClientName(inspection) {
-        if (inspection.customer_name) return inspection.customer_name.trim();
+        // Priority: dedicated column -> extra_fields
+        if (inspection.customer_name && inspection.customer_name.trim()) return inspection.customer_name.trim();
         return getExtraField(inspection, 'Customer Name');
     }
 
     function getProjectName(inspection) {
-        if (inspection.project_name) return inspection.project_name.trim();
+        if (inspection.project_name && inspection.project_name.trim()) return inspection.project_name.trim();
         return getExtraField(inspection, 'Project Name');
     }
 
@@ -192,7 +193,7 @@
         const tbody = document.getElementById('reportTableBody');
         const statusSpan = document.getElementById('recordStatus');
         try {
-            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></td></tr>`;
+            tbody.innerHTML = `<td><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></td></td>`;
             statusSpan.innerText = 'Loading...';
             const response = await fetch('/api/inspections');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -203,9 +204,11 @@
             let sumDelivered = 0, sumAccepted = 0, sumRework = 0, sumReject = 0, sumConditional = 0;
             
             for (const insp of inspections) {
-                const clientName = getClientName(insp) || '';
-                const projectName = getProjectName(insp) || '';
-                const subtitle = getSubtitle(insp) || '';
+                const clientName = getClientName(insp);
+                const projectName = getProjectName(insp);
+                const subtitle = getSubtitle(insp);
+                
+                // Only add to unique titles if title is non‑empty
                 if (projectName) uniqueProjectNames.add(projectName);
                 
                 const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
@@ -229,9 +232,9 @@
                 sumConditional += numericQty(conditionalRaw);
                 
                 rows.push({
-                    clientName,
-                    projectName,
-                    subtitle,
+                    clientName: clientName || '(no client)',
+                    projectName: projectName || '(no title)',
+                    subtitle: subtitle || '',
                     drawingNo,
                     partName,
                     delivered,
@@ -260,7 +263,7 @@
             statusSpan.innerText = `✅ Loaded ${rows.length} records`;
         } catch (err) {
             console.error(err);
-            tbody.innerHTML = `<td><td colspan="10" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
             statusSpan.innerText = '❌ Error';
         }
     }
@@ -278,11 +281,10 @@
         }
         renderHierarchicalTable(filtered);
         const countSpan = document.getElementById('recordCount');
-        const total = allReportRows.length;
-        countSpan.innerText = `Showing ${filtered.length} of ${total} records`;
+        countSpan.innerText = `Showing ${filtered.length} of ${allReportRows.length} records`;
     }
     
-    // Hierarchical grouping: Client -> Title -> Subtitle -> parts
+    // Strict hierarchical grouping: Client → Title → Subtitle
     function renderHierarchicalTable(rows) {
         const tbody = document.getElementById('reportTableBody');
         if (!rows.length) {
@@ -290,8 +292,8 @@
             return;
         }
         
-        // Group by Client
-        const clientMap = new Map(); // key: clientName, value: { clientName, titleMap: Map }
+        // Build tree: Client -> Title -> Subtitle -> rows
+        const clientMap = new Map();
         for (const row of rows) {
             const client = row.clientName;
             if (!clientMap.has(client)) {
@@ -303,7 +305,7 @@
                 clientEntry.titleMap.set(title, { titleName: title, subtitleMap: new Map() });
             }
             const titleEntry = clientEntry.titleMap.get(title);
-            const subtitle = row.subtitle;
+            const subtitle = row.subtitle || '';
             if (!titleEntry.subtitleMap.has(subtitle)) {
                 titleEntry.subtitleMap.set(subtitle, { subtitleName: subtitle, partRows: [] });
             }
@@ -311,32 +313,43 @@
             subtitleEntry.partRows.push(row);
         }
         
-        // Build HTML with proper rowspan
         let html = '';
         for (const clientEntry of clientMap.values()) {
-            const clientRowsTotal = Array.from(clientEntry.titleMap.values()).reduce((sum, titleEntry) => {
-                return sum + Array.from(titleEntry.subtitleMap.values()).reduce((s, subEntry) => s + subEntry.partRows.length, 0);
-            }, 0);
-            let clientRowspan = clientRowsTotal;
-            
-            let firstClientRow = true;
+            // Calculate total rows for this client (sum of all part rows)
+            let clientTotalRows = 0;
             for (const titleEntry of clientEntry.titleMap.values()) {
-                const titleRowsTotal = Array.from(titleEntry.subtitleMap.values()).reduce((s, subEntry) => s + subEntry.partRows.length, 0);
-                let firstTitleRow = true;
+                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                    clientTotalRows += subtitleEntry.partRows.length;
+                }
+            }
+            let clientRowPrinted = false;
+            
+            for (const titleEntry of clientEntry.titleMap.values()) {
+                let titleTotalRows = 0;
+                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                    titleTotalRows += subtitleEntry.partRows.length;
+                }
+                let titleRowPrinted = false;
+                
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                     const partRows = subtitleEntry.partRows;
                     const subtitleRowspan = partRows.length;
+                    let subtitleRowPrinted = false;
+                    
                     for (let i = 0; i < subtitleRowspan; i++) {
                         const row = partRows[i];
                         html += `<tr class="hover:bg-gray-50 transition">`;
-                        if (firstClientRow && i === 0) {
-                            html += `<td rowspan="${clientRowspan}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
+                        if (!clientRowPrinted && i === 0) {
+                            html += `<td rowspan="${clientTotalRows}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
+                            clientRowPrinted = true;
                         }
-                        if (firstTitleRow && i === 0) {
-                            html += `<td rowspan="${titleRowsTotal}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
+                        if (!titleRowPrinted && i === 0) {
+                            html += `<td rowspan="${titleTotalRows}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
+                            titleRowPrinted = true;
                         }
-                        if (i === 0) {
+                        if (!subtitleRowPrinted && i === 0) {
                             html += `<td rowspan="${subtitleRowspan}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
+                            subtitleRowPrinted = true;
                         }
                         html += `
                             <td class="font-mono text-sm">${escapeHtml(row.drawingNo)}</td>
@@ -348,9 +361,7 @@
                             <td class="text-right tabular-nums text-purple-600">${row.conditional}</td>
                         </tr>`;
                     }
-                    firstTitleRow = false;
                 }
-                firstClientRow = false;
             }
         }
         tbody.innerHTML = html;
@@ -366,7 +377,7 @@
         });
     }
     
-    // Export to Excel (flattened version)
+    // Export to Excel (flattened)
     function exportToExcel() {
         const searchTerm = document.getElementById('searchInput').value;
         const selectedProject = document.getElementById('projectFilterSelect').value;
