@@ -89,7 +89,7 @@
         </div>
     </div>
 
-    <!-- NEW: Internal Failure Cost by Process Type -->
+    <!-- Internal Failure Cost by Process Type -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="bg-white rounded-lg shadow p-4">
             <h2 class="font-bold text-lg mb-3">💰 Internal Failure Cost by Process Type</h2>
@@ -107,6 +107,27 @@
         <div class="bg-white rounded-lg shadow p-4">
             <h2 class="font-bold text-lg mb-2">💰 Failure Cost by Process (Bar Chart)</h2>
             <div class="chart-container"><canvas id="failureCostChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- NEW: Internal Failure Cost by Title (Project Name) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-4">
+            <h2 class="font-bold text-lg mb-3">📁 Internal Failure Cost by Title (Project)</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm border-collapse">
+                    <thead class="bg-gray-100">
+                        <tr><th class="p-2 border text-left">Project Title</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr></thead>
+                    <tbody id="failureCostTitleTableBody"><tr><td colspan="3" class="text-center p-4">Loading...</td></tr></tbody>
+                </table>
+            </div>
+            <div class="mt-3 text-sm text-gray-600 border-t pt-2">
+                <span class="font-semibold">Grand Total: </span><span id="failureCostTitleGrandTotal" class="font-bold text-red-700">0.00</span> ETB
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <h2 class="font-bold text-lg mb-2">📁 Failure Cost by Title (Bar Chart)</h2>
+            <div class="chart-container"><canvas id="failureCostTitleChart"></canvas></div>
         </div>
     </div>
 
@@ -136,6 +157,7 @@
     let allInspections = [];
     let barChart = null;
     let failureCostChart = null;
+    let failureCostTitleChart = null;
     const quantityCategories = ["Accepted Qty", "Rework Qty", "Reject Qty", "Conditional Accept Qty"];
 
     // Helper: get project name
@@ -215,6 +237,7 @@
         updateResultsByQuantity(filtered);
         updateQuantitySummary(filtered);
         updateFailureCostByProcess(filtered);
+        updateFailureCostByTitle(filtered);
         updateTable(filtered);
     }
 
@@ -326,7 +349,7 @@
         `;
     }
 
-    // NEW: Internal Failure Cost by Process Type
+    // Internal Failure Cost by Process Type
     function updateFailureCostByProcess(data) {
         const costMap = new Map();
         let grandTotal = 0;
@@ -367,7 +390,6 @@
         const ctx = document.getElementById('failureCostChart').getContext('2d');
         if (failureCostChart) failureCostChart.destroy();
 
-        // Generate colors
         const colors = [
             '#e74c3c', '#f39c12', '#2ecc71', '#3498db', '#9b59b6',
             '#1abc9c', '#e67e22', '#2c3e50', '#d35400', '#c0392b',
@@ -378,6 +400,91 @@
             type: 'bar',
             data: {
                 labels: sorted.map(([process]) => process),
+                datasets: [{
+                    label: 'Total Failure Cost (ETB)',
+                    data: sorted.map(([, cost]) => cost),
+                    backgroundColor: sorted.map((_, i) => colors[i % colors.length]),
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `ETB ${context.parsed.y.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Cost (ETB)' },
+                        ticks: { callback: function(value) { return value.toFixed(0); } }
+                    },
+                    x: {
+                        ticks: { maxRotation: 45, minRotation: 30 }
+                    }
+                }
+            }
+        });
+    }
+
+    // NEW: Internal Failure Cost by Title (Project Name)
+    function updateFailureCostByTitle(data) {
+        const costMap = new Map();
+        let grandTotal = 0;
+
+        data.forEach(insp => {
+            const cost = parseFloat(insp.total_internal_failure_cost || 0);
+            if (cost === 0) return;
+            const title = getProjectName(insp) || 'Untitled Project';
+            if (!costMap.has(title)) costMap.set(title, 0);
+            costMap.set(title, costMap.get(title) + cost);
+            grandTotal += cost;
+        });
+
+        const tbody = document.getElementById('failureCostTitleTableBody');
+        const grandTotalSpan = document.getElementById('failureCostTitleGrandTotal');
+
+        if (grandTotal === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4">No failure cost data available</td></tr>';
+            grandTotalSpan.innerText = '0.00';
+            if (failureCostTitleChart) failureCostTitleChart.destroy();
+            return;
+        }
+
+        // Sort by cost descending
+        const sorted = Array.from(costMap.entries()).sort((a, b) => b[1] - a[1]);
+
+        tbody.innerHTML = sorted.map(([title, cost]) => `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-2 border font-medium">${escapeHtml(title)}</td>
+                <td class="p-2 border text-right font-semibold">${cost.toFixed(2)}</td>
+                <td class="p-2 border text-right">${((cost / grandTotal) * 100).toFixed(1)}%</td>
+            </tr>
+        `).join('');
+
+        grandTotalSpan.innerText = grandTotal.toFixed(2);
+
+        // Render chart
+        const ctx = document.getElementById('failureCostTitleChart').getContext('2d');
+        if (failureCostTitleChart) failureCostTitleChart.destroy();
+
+        const colors = [
+            '#e74c3c', '#f39c12', '#2ecc71', '#3498db', '#9b59b6',
+            '#1abc9c', '#e67e22', '#2c3e50', '#d35400', '#c0392b',
+            '#27ae60', '#2980b9', '#8e44ad', '#16a085', '#f1c40f'
+        ];
+
+        failureCostTitleChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sorted.map(([title]) => title),
                 datasets: [{
                     label: 'Total Failure Cost (ETB)',
                     data: sorted.map(([, cost]) => cost),
