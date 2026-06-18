@@ -65,6 +65,9 @@
         .control-point:hover {
             r: 6;
         }
+        .filter-select {
+            min-width: 150px;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -85,6 +88,38 @@
                     <span id="dataStatus" class="text-sm text-gray-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
                     <button onclick="fetchAndAnalyze()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
                         <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== FILTER BAR ========== -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100">
+            <div class="flex flex-wrap items-end gap-4">
+                <div class="flex-1 min-w-[150px]">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">QC Engineer</label>
+                    <select id="filterEngineer" class="filter-select w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 focus:bg-white transition text-sm">
+                        <option value="">All Engineers</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[150px]">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Project Name (Title)</label>
+                    <select id="filterProject" class="filter-select w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 focus:bg-white transition text-sm">
+                        <option value="">All Projects</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[150px]">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Operation Process</label>
+                    <select id="filterProcess" class="filter-select w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 focus:bg-white transition text-sm">
+                        <option value="">All Processes</option>
+                    </select>
+                </div>
+                <div>
+                    <button onclick="applyFilters()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition">
+                        Apply Filters
+                    </button>
+                    <button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-medium transition ml-2">
+                        Clear
                     </button>
                 </div>
             </div>
@@ -195,7 +230,7 @@
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4" id="fishboneStats"></div>
             </div>
 
-            <!-- ============ TOOL 3: HISTOGRAM (UPDATED: Quantity Distribution) ============ -->
+            <!-- ============ TOOL 3: HISTOGRAM ============ -->
             <div class="tool-panel" data-panel="3">
                 <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-layer-group text-green-600 mr-2"></i>Histogram — Quantity Distribution</h2>
                 <p class="text-gray-500 text-sm mb-4">Shows the distribution of total quantities across all inspections, broken down by Accepted, Rework, Reject, and Conditional Accept.</p>
@@ -266,7 +301,9 @@
         // DATA FETCH & PROCESSING
         // ============================================================
         let allInspections = [];
+        let filteredInspections = [];
         let allParamData = [];
+        let filteredParamData = [];
         let charts = {};
 
         // Helper: get project name
@@ -300,7 +337,8 @@
                         date: insp.submitted_at,
                         client: getClientName(insp),
                         title: getProjectName(insp),
-                        inspectionId: insp.id
+                        inspectionId: insp.id,
+                        engineer: insp.username || '',
                     });
                 }
             }
@@ -315,22 +353,85 @@
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 allInspections = await res.json();
 
-                // Flatten all parameter data
-                allParamData = [];
-                for (const insp of allInspections) {
-                    const parsed = parseAcceptanceData(insp);
-                    allParamData.push(...parsed);
-                }
+                // Populate filter dropdowns
+                populateFilterDropdowns();
+
+                // Apply initial filters (all)
+                applyFilters();
 
                 statusEl.innerHTML =
-                    `<i class="fa-solid fa-check-circle text-green-600"></i> ${allInspections.length} inspections, ${allParamData.length} parameters`;
-                renderAllTools();
+                    `<i class="fa-solid fa-check-circle text-green-600"></i> ${allInspections.length} inspections loaded`;
             } catch (err) {
                 console.error(err);
                 statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-600"></i> Error loading data';
                 document.getElementById('checkSheetBody').innerHTML =
                     `<tr><td colspan="8" class="text-center p-8 text-red-500">Failed to load data: ${err.message}</td></tr>`;
             }
+        }
+
+        function populateFilterDropdowns() {
+            const engineers = new Set();
+            const projects = new Set();
+            const processes = new Set();
+
+            for (const insp of allInspections) {
+                if (insp.username) engineers.add(insp.username);
+                const proj = getProjectName(insp);
+                if (proj) projects.add(proj);
+                if (insp.process_type) processes.add(insp.process_type);
+            }
+
+            const engineerSelect = document.getElementById('filterEngineer');
+            engineerSelect.innerHTML = '<option value="">All Engineers</option>';
+            [...engineers].sort().forEach(e => {
+                engineerSelect.innerHTML += `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`;
+            });
+
+            const projectSelect = document.getElementById('filterProject');
+            projectSelect.innerHTML = '<option value="">All Projects</option>';
+            [...projects].sort().forEach(p => {
+                projectSelect.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`;
+            });
+
+            const processSelect = document.getElementById('filterProcess');
+            processSelect.innerHTML = '<option value="">All Processes</option>';
+            [...processes].sort().forEach(p => {
+                processSelect.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`;
+            });
+        }
+
+        function applyFilters() {
+            const engineer = document.getElementById('filterEngineer').value;
+            const project = document.getElementById('filterProject').value;
+            const process = document.getElementById('filterProcess').value;
+
+            filteredInspections = allInspections.filter(insp => {
+                if (engineer && insp.username !== engineer) return false;
+                if (project && getProjectName(insp) !== project) return false;
+                if (process && insp.process_type !== process) return false;
+                return true;
+            });
+
+            // Build filtered parameter data
+            filteredParamData = [];
+            for (const insp of filteredInspections) {
+                const parsed = parseAcceptanceData(insp);
+                filteredParamData.push(...parsed);
+            }
+
+            // Update status
+            document.getElementById('dataStatus').innerHTML =
+                `<i class="fa-solid fa-filter text-blue-600"></i> ${filteredInspections.length} of ${allInspections.length} inspections`;
+
+            // Re-render all tools with filtered data
+            renderAllTools();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterEngineer').value = '';
+            document.getElementById('filterProject').value = '';
+            document.getElementById('filterProcess').value = '';
+            applyFilters();
         }
 
         // ============================================================
@@ -351,12 +452,12 @@
         // ============================================================
         function renderCheckSheet() {
             const tbody = document.getElementById('checkSheetBody');
-            if (!allParamData.length) {
+            if (!filteredParamData.length) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-gray-400">No parameter data available</td></tr>';
                 return;
             }
             let html = '';
-            allParamData.slice(0, 100).forEach((p, i) => {
+            filteredParamData.slice(0, 100).forEach((p, i) => {
                 const causes = p.causes.length ? p.causes.join(', ') : '-';
                 const date = p.date ? new Date(p.date).toLocaleDateString() : '-';
                 html += `<tr class="border-b hover:bg-gray-50">
@@ -370,13 +471,13 @@
                 <td class="p-2 border text-sm">${escapeHtml(causes)}</td>
             </tr>`;
             });
-            if (allParamData.length > 100) {
+            if (filteredParamData.length > 100) {
                 html +=
-                    `<tr><td colspan="8" class="p-2 text-center text-gray-400 text-sm">... and ${allParamData.length - 100} more parameters</td></tr>`;
+                    `<tr><td colspan="8" class="p-2 text-center text-gray-400 text-sm">... and ${filteredParamData.length - 100} more parameters</td></tr>`;
             }
             tbody.innerHTML = html;
             document.getElementById('checkSheetStats').innerText =
-                `Showing ${Math.min(allParamData.length, 100)} of ${allParamData.length} parameter records from ${allInspections.length} inspections`;
+                `Showing ${Math.min(filteredParamData.length, 100)} of ${filteredParamData.length} parameter records from ${filteredInspections.length} inspections`;
         }
 
         function getRatingColor(rating) {
@@ -400,9 +501,9 @@
         // TOOL 1: PARETO CHART
         // ============================================================
         function renderPareto() {
-            // Count defect causes across all parameters
+            // Count defect causes across filtered parameters
             const causeCount = {};
-            for (const p of allParamData) {
+            for (const p of filteredParamData) {
                 for (const cause of p.causes) {
                     causeCount[cause] = (causeCount[cause] || 0) + 1;
                 }
@@ -426,6 +527,18 @@
 
             const ctx = document.getElementById('paretoChart').getContext('2d');
             if (charts.pareto) charts.pareto.destroy();
+
+            if (total === 0 || labels.length === 0) {
+                // No data: show empty chart
+                charts.pareto = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#e5e7eb' }] },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+                document.getElementById('paretoTopList').innerHTML = '<div class="text-gray-400">No defect data</div>';
+                document.getElementById('paretoThreshold').innerText = '-';
+                return;
+            }
 
             charts.pareto = new Chart(ctx, {
                 type: 'bar',
@@ -508,7 +621,7 @@
         // ============================================================
         function renderFishbone() {
             const causeMap = { Machine: 0, Design: 0, Operator: 0, Methods: 0, Material: 0 };
-            for (const p of allParamData) {
+            for (const p of filteredParamData) {
                 for (const cause of p.causes) {
                     if (causeMap.hasOwnProperty(cause)) causeMap[cause]++;
                 }
@@ -575,21 +688,21 @@
             <div class="bg-white rounded-lg p-3 text-center shadow-sm border border-gray-100">
                 <div class="text-xs text-gray-500">${key}</div>
                 <div class="text-xl font-bold" style="color: ${categories.find(c=>c.key===key)?.color || '#333'}">${count}</div>
-                <div class="text-xs text-gray-400">${allParamData.length > 0 ? (count/allParamData.length*100).toFixed(1) : 0}% of parameters</div>
+                <div class="text-xs text-gray-400">${filteredParamData.length > 0 ? (count/filteredParamData.length*100).toFixed(1) : 0}% of parameters</div>
             </div>
         `).join('');
         }
 
         // ============================================================
-        // TOOL 3: HISTOGRAM — Quantity Distribution (UPDATED)
+        // TOOL 3: HISTOGRAM — Quantity Distribution
         // ============================================================
         function renderHistogram() {
-            // Sum quantities across all inspections
+            // Sum quantities across filtered inspections
             let sumAccepted = 0,
                 sumRework = 0,
                 sumReject = 0,
                 sumConditional = 0;
-            for (const insp of allInspections) {
+            for (const insp of filteredInspections) {
                 sumAccepted += parseFloat(insp.accepted_qty) || 0;
                 sumRework += parseFloat(insp.rework_qty) || 0;
                 sumReject += parseFloat(insp.reject_qty) || 0;
@@ -661,9 +774,9 @@
         // TOOL 4: CONTROL CHART
         // ============================================================
         function renderControlChart() {
-            // Group by inspection, calculate defect rate (reject + rework) per inspection
+            // Group by filtered inspections, calculate defect rate
             const inspData = [];
-            for (const insp of allInspections) {
+            for (const insp of filteredInspections) {
                 const params = parseAcceptanceData(insp);
                 const total = params.length;
                 const defects = params.filter(p => p.rating === 'Reject' || p.rating === 'Rework').length;
@@ -685,17 +798,28 @@
             const rates = inspData.map(d => +(d.rate * 100).toFixed(1));
             const totalPoints = inspData.length;
 
+            const ctx = document.getElementById('controlChart').getContext('2d');
+            if (charts.control) charts.control.destroy();
+
+            if (totalPoints === 0) {
+                charts.control = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: ['No data'], datasets: [{ data: [0], borderColor: '#ccc' }] },
+                    options: { plugins: { legend: { display: false } } }
+                });
+                document.getElementById('controlStats').innerHTML = 'No data available';
+                document.getElementById('controlStatus').innerText = '—';
+                return;
+            }
+
             // Calculate control limits (p-chart)
-            const avgRate = rates.length > 0 ? rates.reduce((s, r) => s + r, 0) / rates.length : 0;
+            const avgRate = rates.reduce((s, r) => s + r, 0) / rates.length;
             const pBar = avgRate / 100;
-            const n = inspData.reduce((s, d) => s + d.total, 0) / (inspData.length || 1);
+            const n = inspData.reduce((s, d) => s + d.total, 0) / inspData.length;
             const stdDev = Math.sqrt(pBar * (1 - pBar) / n);
             const UCL = Math.min(100, +(pBar + 3 * stdDev) * 100);
             const LCL = Math.max(0, +(pBar - 3 * stdDev) * 100);
             const CL = +(pBar * 100);
-
-            const ctx = document.getElementById('controlChart').getContext('2d');
-            if (charts.control) charts.control.destroy();
 
             charts.control = new Chart(ctx, {
                 type: 'line',
@@ -790,9 +914,8 @@
         // TOOL 5: SCATTER DIAGRAM
         // ============================================================
         function renderScatter() {
-            // Prepare data: Delivered Qty vs Defect Rate per inspection
             const scatterData = [];
-            for (const insp of allInspections) {
+            for (const insp of filteredInspections) {
                 const delivered = insp.delivered_qty || 0;
                 const params = parseAcceptanceData(insp);
                 const total = params.length;
@@ -810,8 +933,19 @@
             const ctx = document.getElementById('scatterChart').getContext('2d');
             if (charts.scatter) charts.scatter.destroy();
 
-            // Calculate correlation
             const n = scatterData.length;
+            if (n === 0) {
+                charts.scatter = new Chart(ctx, {
+                    type: 'scatter',
+                    data: { datasets: [{ label: 'No data', data: [], backgroundColor: '#ccc' }] },
+                    options: { plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true },
+                            y: { beginAtZero: true } } }
+                });
+                document.getElementById('scatterStats').innerHTML = 'No data available';
+                return;
+            }
+
+            // Calculate correlation
             let sumX = 0,
                 sumY = 0,
                 sumXY = 0,
@@ -824,8 +958,7 @@
                 sumX2 += d.x * d.x;
                 sumY2 += d.y * d.y;
             }
-            const corr = n > 0 ? (n * sumXY - sumX * sumY) / Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY)) :
-            0;
+            const corr = (n * sumXY - sumX * sumY) / Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
 
             charts.scatter = new Chart(ctx, {
                 type: 'scatter',
@@ -880,7 +1013,7 @@
         }
 
         // ============================================================
-        // TOOL 6: FLOWCHART
+        // TOOL 6: FLOWCHART (unchanged)
         // ============================================================
         function renderFlowchart() {
             const svg = document.getElementById('flowchartSvg');
@@ -916,7 +1049,6 @@
                 { from: 'rework', to: 'visual', label: 'Re-inspect' },
             ];
 
-            // Build SVG
             let html = `
             <defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
@@ -998,7 +1130,6 @@
                     border = '#1e293b';
                     textColor = '#ffffff'; }
 
-                // Shadow filter
                 const shadow = node.type !== 'start' ? 'filter="url(#shadow)"' : '';
 
                 if (isStart) {
@@ -1033,17 +1164,12 @@
         // TOOL SWITCHING
         // ============================================================
         function switchTool(index) {
-            // Update cards
             document.querySelectorAll('.tool-card').forEach((el, i) => {
                 el.classList.toggle('active', i === index);
             });
-
-            // Update panels
             document.querySelectorAll('.tool-panel').forEach((el, i) => {
                 el.classList.toggle('active', i === index);
             });
-
-            // Trigger chart resize for active panel
             setTimeout(() => {
                 const panel = document.querySelector(`.tool-panel[data-panel="${index}"]`);
                 if (panel) {
@@ -1060,6 +1186,10 @@
         // ============================================================
         document.addEventListener('DOMContentLoaded', () => {
             fetchAndAnalyze();
+            // Auto-apply on filter change
+            document.getElementById('filterEngineer').addEventListener('change', applyFilters);
+            document.getElementById('filterProject').addEventListener('change', applyFilters);
+            document.getElementById('filterProcess').addEventListener('change', applyFilters);
         });
     </script>
 </body>
