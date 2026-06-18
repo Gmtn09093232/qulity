@@ -35,6 +35,7 @@
             margin: 20px auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .filter-select { min-width: 150px; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
@@ -106,20 +107,32 @@
     </div>
 
     <!-- Filter Bar -->
-    <div class="bg-white rounded-xl shadow-sm p-4 mb-5 no-print flex flex-col md:flex-row gap-4 items-end">
-        <div class="flex-1">
-            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-folder-open mr-1"></i> Filter by Title (Project)</label>
-            <select id="projectFilterSelect" class="filter-input w-full md:w-80 border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
+    <div class="bg-white rounded-xl shadow-sm p-4 mb-5 no-print flex flex-col md:flex-row gap-3 flex-wrap items-end">
+        <div class="flex-1 min-w-[150px]">
+            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-folder-open mr-1"></i> Title</label>
+            <select id="projectFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
                 <option value="">All Titles</option>
             </select>
         </div>
-        <div class="flex-1">
-            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-magnifying-glass mr-1"></i> Search (any field)</label>
+        <div class="flex-1 min-w-[150px]">
+            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-solid fa-gears mr-1"></i> Process</label>
+            <select id="processFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
+                <option value="">All Processes</option>
+            </select>
+        </div>
+        <div class="flex-1 min-w-[150px]">
+            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-solid fa-user mr-1"></i> QC Engineer</label>
+            <select id="engineerFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
+                <option value="">All Engineers</option>
+            </select>
+        </div>
+        <div class="flex-1 min-w-[180px]">
+            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-magnifying-glass mr-1"></i> Search</label>
             <input type="text" id="searchInput" placeholder="Type anything..." class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
         </div>
         <div>
             <button id="clearFiltersBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2">
-                <i class="fas fa-eraser"></i> Clear filters
+                <i class="fas fa-eraser"></i> Clear
             </button>
         </div>
     </div>
@@ -176,6 +189,8 @@
 
     let allReportRows = [];
     let uniqueProjectNames = new Set();
+    let uniqueProcessTypes = new Set();
+    let uniqueEngineers = new Set();
 
     function formatQty(value) {
         if (value === undefined || value === null || value === '') return '-';
@@ -193,7 +208,7 @@
         const tbody = document.getElementById('reportTableBody');
         const statusSpan = document.getElementById('recordStatus');
         try {
-            tbody.innerHTML = `<td><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></tr></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></tr>`;
             statusSpan.innerText = 'Loading...';
             const response = await fetch('/api/inspections');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -201,14 +216,20 @@
             
             const rows = [];
             uniqueProjectNames.clear();
+            uniqueProcessTypes.clear();
+            uniqueEngineers.clear();
             let sumDelivered = 0, sumAccepted = 0, sumRework = 0, sumReject = 0, sumConditional = 0;
             
             for (const insp of inspections) {
                 const clientName = getClientName(insp);
                 const projectName = getProjectName(insp);
                 const subtitle = getSubtitle(insp);
+                const processType = insp.process_type || '';
+                const engineer = insp.username || '';
                 
                 if (projectName) uniqueProjectNames.add(projectName);
+                if (processType) uniqueProcessTypes.add(processType);
+                if (engineer) uniqueEngineers.add(engineer);
                 
                 const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
                 const partName = getExtraField(insp, 'Part Name') || '-';
@@ -241,7 +262,9 @@
                     rework,
                     reject,
                     conditional,
-                    rawSearch: `${clientName} ${projectName} ${subtitle} ${drawingNo} ${partName} ${delivered} ${accepted} ${rework} ${reject} ${conditional}`.toLowerCase()
+                    processType,
+                    engineer,
+                    rawSearch: `${clientName} ${projectName} ${subtitle} ${drawingNo} ${partName} ${delivered} ${accepted} ${rework} ${reject} ${conditional} ${processType} ${engineer}`.toLowerCase()
                 });
             }
             
@@ -251,10 +274,23 @@
             document.getElementById('totalRejectSum').innerText = sumReject.toLocaleString();
             document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
             
+            // Populate filter dropdowns
             const projectSelect = document.getElementById('projectFilterSelect');
             projectSelect.innerHTML = '<option value="">All Titles</option>';
             [...uniqueProjectNames].sort().forEach(proj => {
                 projectSelect.innerHTML += `<option value="${escapeHtml(proj)}">${escapeHtml(proj)}</option>`;
+            });
+
+            const processSelect = document.getElementById('processFilterSelect');
+            processSelect.innerHTML = '<option value="">All Processes</option>';
+            [...uniqueProcessTypes].sort().forEach(proc => {
+                processSelect.innerHTML += `<option value="${escapeHtml(proc)}">${escapeHtml(proc)}</option>`;
+            });
+
+            const engineerSelect = document.getElementById('engineerFilterSelect');
+            engineerSelect.innerHTML = '<option value="">All Engineers</option>';
+            [...uniqueEngineers].sort().forEach(eng => {
+                engineerSelect.innerHTML += `<option value="${escapeHtml(eng)}">${escapeHtml(eng)}</option>`;
             });
             
             allReportRows = rows;
@@ -262,7 +298,7 @@
             statusSpan.innerText = `✅ Loaded ${rows.length} records`;
         } catch (err) {
             console.error(err);
-            tbody.innerHTML = `<td><td colspan="10" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></tr>`;
             statusSpan.innerText = '❌ Error';
         }
     }
@@ -270,10 +306,18 @@
     function applyFilters() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const selectedProject = document.getElementById('projectFilterSelect').value;
+        const selectedProcess = document.getElementById('processFilterSelect').value;
+        const selectedEngineer = document.getElementById('engineerFilterSelect').value;
         
         let filtered = [...allReportRows];
         if (selectedProject) {
             filtered = filtered.filter(row => row.projectName === selectedProject);
+        }
+        if (selectedProcess) {
+            filtered = filtered.filter(row => row.processType === selectedProcess);
+        }
+        if (selectedEngineer) {
+            filtered = filtered.filter(row => row.engineer === selectedEngineer);
         }
         if (searchTerm) {
             filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
@@ -380,8 +424,13 @@
     function exportToExcelXLSX() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const selectedProject = document.getElementById('projectFilterSelect').value;
+        const selectedProcess = document.getElementById('processFilterSelect').value;
+        const selectedEngineer = document.getElementById('engineerFilterSelect').value;
+        
         let filteredRows = [...allReportRows];
         if (selectedProject) filteredRows = filteredRows.filter(row => row.projectName === selectedProject);
+        if (selectedProcess) filteredRows = filteredRows.filter(row => row.processType === selectedProcess);
+        if (selectedEngineer) filteredRows = filteredRows.filter(row => row.engineer === selectedEngineer);
         if (searchTerm) filteredRows = filteredRows.filter(row => row.rawSearch.includes(searchTerm));
         
         if (filteredRows.length === 0) {
@@ -389,7 +438,7 @@
             return;
         }
         
-        // Build the hierarchical structure (same as for HTML)
+        // Build hierarchical structure for the filtered rows
         const clientMap = new Map();
         for (const row of filteredRows) {
             const client = row.clientName;
@@ -410,16 +459,12 @@
             subtitleEntry.partRows.push(row);
         }
         
-        // Prepare data array for sheet (each cell as string)
         const headers = ['Client Name', 'Title', 'Subtitle', 'Drawing No.', 'Part Name', 'Delivered Qty', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept'];
         const data = [headers];
-        
-        // We'll also record merge ranges: { s: {r,c}, e: {r,c} }
         const merges = [];
-        let currentRowIdx = 1; // 0-based header at row 0, data starts at row 1
+        let currentRowIdx = 1;
         
         for (const clientEntry of clientMap.values()) {
-            // Count total rows for this client
             let clientRows = 0;
             for (const titleEntry of clientEntry.titleMap.values()) {
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -471,28 +516,23 @@
                         data.push(rowData);
                         currentRowIdx++;
                     }
-                    // Merge subtitle cells
                     if (subtitleRows > 1) {
                         merges.push({ s: { r: subtitleStartRow, c: 2 }, e: { r: subtitleStartRow + subtitleRows - 1, c: 2 } });
                     }
                     firstSubtitleRow = false;
                 }
-                // Merge title cells
                 if (titleRows > 1) {
                     merges.push({ s: { r: titleStartRow, c: 1 }, e: { r: titleStartRow + titleRows - 1, c: 1 } });
                 }
                 firstTitleRow = false;
             }
-            // Merge client cells
             if (clientRows > 1) {
                 merges.push({ s: { r: clientStartRow, c: 0 }, e: { r: clientStartRow + clientRows - 1, c: 0 } });
             }
         }
         
-        // Create worksheet
         const ws = XLSX.utils.aoa_to_sheet(data);
         ws['!merges'] = merges;
-        // Auto-size columns (basic)
         const colWidths = [{wch:20}, {wch:20}, {wch:20}, {wch:15}, {wch:20}, {wch:12}, {wch:12}, {wch:10}, {wch:10}, {wch:15}];
         ws['!cols'] = colWidths;
         
@@ -505,8 +545,13 @@
     async function copyTableToClipboard() {
         const searchTerm = document.getElementById('searchInput').value;
         const selectedProject = document.getElementById('projectFilterSelect').value;
+        const selectedProcess = document.getElementById('processFilterSelect').value;
+        const selectedEngineer = document.getElementById('engineerFilterSelect').value;
+        
         let dataToCopy = [...allReportRows];
         if (selectedProject) dataToCopy = dataToCopy.filter(row => row.projectName === selectedProject);
+        if (selectedProcess) dataToCopy = dataToCopy.filter(row => row.processType === selectedProcess);
+        if (selectedEngineer) dataToCopy = dataToCopy.filter(row => row.engineer === selectedEngineer);
         if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
         
         if (dataToCopy.length === 0) {
@@ -529,11 +574,16 @@
     function clearFilters() {
         document.getElementById('searchInput').value = '';
         document.getElementById('projectFilterSelect').value = '';
+        document.getElementById('processFilterSelect').value = '';
+        document.getElementById('engineerFilterSelect').value = '';
         applyFilters();
     }
     
+    // Event listeners
     document.getElementById('searchInput').addEventListener('input', () => { if (allReportRows.length) applyFilters(); });
     document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
+    document.getElementById('processFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
+    document.getElementById('engineerFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
     
     fetchReportData();
