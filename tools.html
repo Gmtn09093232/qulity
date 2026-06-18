@@ -4,316 +4,362 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>7 QC Tools | Quality Analysis Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        .tool-card { transition: all 0.2s; cursor: pointer; border-left: 4px solid transparent; }
-        .tool-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-        .tool-card.active { border-left-color: #3b82f6; background-color: #f0f7ff; }
-        .chart-container { position: relative; height: 350px; width: 100%; }
-        .fishbone-container { overflow-x: auto; padding: 20px 0; }
-        .fishbone-svg { min-width: 900px; }
-        .stat-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-        .tool-panel { display: none; animation: fadeIn 0.3s ease; }
-        .tool-panel.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .control-point { transition: all 0.2s; }
-        .control-point:hover { r: 6; }
+        .tool-card {
+            transition: all 0.2s;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+        }
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        .tool-card.active {
+            border-left-color: #3b82f6;
+            background-color: #f0f7ff;
+        }
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+        .fishbone-container {
+            overflow-x: auto;
+            padding: 20px 0;
+        }
+        .fishbone-svg {
+            min-width: 900px;
+        }
+        .stat-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .tool-panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tool-panel.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .control-point {
+            transition: all 0.2s;
+        }
+        .control-point:hover {
+            r: 6;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
 
-<div class="max-w-7xl mx-auto p-4 md:p-6">
+    <div class="max-w-7xl mx-auto p-4 md:p-6">
 
-    <!-- Header -->
-    <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-gray-100">
-        <div class="flex flex-wrap justify-between items-center">
-            <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-3">
-                    <i class="fa-solid fa-chart-simple text-blue-600"></i>
-                    7 QC Tools
-                </h1>
-                <p class="text-gray-500 text-sm mt-1">Quality Control Analysis — based on inspection checklist data</p>
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-gray-100">
+            <div class="flex flex-wrap justify-between items-center">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-3">
+                        <i class="fa-solid fa-chart-simple text-blue-600"></i>
+                        7 QC Tools
+                    </h1>
+                    <p class="text-gray-500 text-sm mt-1">Quality Control Analysis — based on inspection checklist data</p>
+                </div>
+                <div class="flex items-center gap-3 mt-3 md:mt-0">
+                    <span id="dataStatus" class="text-sm text-gray-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
+                    <button onclick="fetchAndAnalyze()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
             </div>
-            <div class="flex items-center gap-3 mt-3 md:mt-0">
-                <span id="dataStatus" class="text-sm text-gray-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
-                <button onclick="fetchAndAnalyze()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tool Navigation -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-        <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100 active" data-tool="0" onclick="switchTool(0)">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-list-check"></i></div>
-                <div><div class="font-semibold text-sm">Check Sheet</div><div class="text-xs text-gray-400">Data collection</div></div>
-            </div>
-        </div>
-        <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="1" onclick="switchTool(1)">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600"><i class="fas fa-chart-bar"></i></div>
-                <div><div class="font-semibold text-sm">Pareto</div><div class="text-xs text-gray-400">80/20 analysis</div></div>
-            </div>
-        </div>
-        <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="2" onclick="switchTool(2)">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><i class="fas fa-fish"></i></div>
-                <div><div class="font-semibold text-sm">Fishbone</div><div class="text-xs text-gray-400">Cause & effect</div></div>
-            </div>
-        </div>
-        <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="3" onclick="switchTool(3)">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i class="fas fa-layer-group"></i></div>
-                <div><div class="font-semibold text-sm">Histogram</div><div class="text-xs text-gray-400">Distribution</div></div>
-            </div>
-        </div>
-        <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="4" onclick="switchTool(4)">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-600"><i class="fas fa-chart-line"></i></div>
-                <div><div class="font-semibold text-sm">Control</div><div class="text-xs text-gray-400">Shewhart chart</div></div>
-            </div>
-        </div>
-        <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="5" onclick="switchTool(5)">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-600"><i class="fas fa-dot-circle"></i></div>
-                <div><div class="font-semibold text-sm">Scatter</div><div class="text-xs text-gray-400">Correlation</div></div>
-            </div>
-        </div>
-        <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="6" onclick="switchTool(6)">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600"><i class="fas fa-sitemap"></i></div>
-                <div><div class="font-semibold text-sm">Flowchart</div><div class="text-xs text-gray-400">Process map</div></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tool Content Panels -->
-    <div id="toolContent" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6">
-
-        <!-- ============ TOOL 0: CHECK SHEET ============ -->
-        <div class="tool-panel active" data-panel="0">
-            <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-list-check text-blue-600 mr-2"></i>Check Sheet — Raw Data Collection</h2>
-            <p class="text-gray-500 text-sm mb-4">All inspection records with parameter-level details. Use this as the foundation for all other QC tools.</p>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm border-collapse" id="checkSheetTable">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="p-2 border text-left">#</th>
-                            <th class="p-2 border text-left">Date</th>
-                            <th class="p-2 border text-left">Process</th>
-                            <th class="p-2 border text-left">Client</th>
-                            <th class="p-2 border text-left">Title</th>
-                            <th class="p-2 border text-left">Parameter</th>
-                            <th class="p-2 border text-left">Rating</th>
-                            <th class="p-2 border text-left">Causes</th>
-                        </tr>
-                    </thead>
-                    <tbody id="checkSheetBody">
-                        <tr><td colspan="8" class="text-center p-8 text-gray-400">No data loaded</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-3 text-sm text-gray-500" id="checkSheetStats"></div>
         </div>
 
-        <!-- ============ TOOL 1: PARETO ============ -->
-        <div class="tool-panel" data-panel="1">
-            <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-chart-bar text-red-600 mr-2"></i>Pareto Chart — Defect Frequency Analysis</h2>
-            <p class="text-gray-500 text-sm mb-4">Shows which defect causes occur most frequently. The 80/20 rule: ~80% of problems come from ~20% of causes.</p>
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div class="lg:col-span-3 chart-container"><canvas id="paretoChart"></canvas></div>
-                <div class="lg:col-span-2">
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <h3 class="font-semibold text-sm mb-2">📊 Top Causes</h3>
-                        <div id="paretoTopList" class="space-y-1 text-sm"></div>
-                        <div class="mt-3 pt-3 border-t border-gray-200 text-sm">
-                            <span class="font-semibold">80% threshold:</span> <span id="paretoThreshold" class="text-red-600 font-bold">-</span>
+        <!-- Tool Navigation -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+            <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100 active" data-tool="0" onclick="switchTool(0)">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-list-check"></i></div>
+                    <div><div class="font-semibold text-sm">Check Sheet</div><div class="text-xs text-gray-400">Data collection</div></div>
+                </div>
+            </div>
+            <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="1" onclick="switchTool(1)">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600"><i class="fas fa-chart-bar"></i></div>
+                    <div><div class="font-semibold text-sm">Pareto</div><div class="text-xs text-gray-400">80/20 analysis</div></div>
+                </div>
+            </div>
+            <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="2" onclick="switchTool(2)">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><i class="fas fa-fish"></i></div>
+                    <div><div class="font-semibold text-sm">Fishbone</div><div class="text-xs text-gray-400">Cause & effect</div></div>
+                </div>
+            </div>
+            <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="3" onclick="switchTool(3)">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i class="fas fa-layer-group"></i></div>
+                    <div><div class="font-semibold text-sm">Histogram</div><div class="text-xs text-gray-400">Distribution</div></div>
+                </div>
+            </div>
+            <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="4" onclick="switchTool(4)">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-600"><i class="fas fa-chart-line"></i></div>
+                    <div><div class="font-semibold text-sm">Control</div><div class="text-xs text-gray-400">Shewhart chart</div></div>
+                </div>
+            </div>
+            <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="5" onclick="switchTool(5)">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-600"><i class="fas fa-dot-circle"></i></div>
+                    <div><div class="font-semibold text-sm">Scatter</div><div class="text-xs text-gray-400">Correlation</div></div>
+                </div>
+            </div>
+            <div class="tool-card bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-tool="6" onclick="switchTool(6)">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600"><i class="fas fa-sitemap"></i></div>
+                    <div><div class="font-semibold text-sm">Flowchart</div><div class="text-xs text-gray-400">Process map</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tool Content Panels -->
+        <div id="toolContent" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6">
+
+            <!-- ============ TOOL 0: CHECK SHEET ============ -->
+            <div class="tool-panel active" data-panel="0">
+                <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-list-check text-blue-600 mr-2"></i>Check Sheet — Raw Data Collection</h2>
+                <p class="text-gray-500 text-sm mb-4">All inspection records with parameter-level details. Use this as the foundation for all other QC tools.</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm border-collapse" id="checkSheetTable">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-2 border text-left">#</th>
+                                <th class="p-2 border text-left">Date</th>
+                                <th class="p-2 border text-left">Process</th>
+                                <th class="p-2 border text-left">Client</th>
+                                <th class="p-2 border text-left">Title</th>
+                                <th class="p-2 border text-left">Parameter</th>
+                                <th class="p-2 border text-left">Rating</th>
+                                <th class="p-2 border text-left">Causes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="checkSheetBody">
+                            <tr><td colspan="8" class="text-center p-8 text-gray-400">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3 text-sm text-gray-500" id="checkSheetStats"></div>
+            </div>
+
+            <!-- ============ TOOL 1: PARETO ============ -->
+            <div class="tool-panel" data-panel="1">
+                <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-chart-bar text-red-600 mr-2"></i>Pareto Chart — Defect Frequency Analysis</h2>
+                <p class="text-gray-500 text-sm mb-4">Shows which defect causes occur most frequently. The 80/20 rule: ~80% of problems come from ~20% of causes.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div class="lg:col-span-3 chart-container"><canvas id="paretoChart"></canvas></div>
+                    <div class="lg:col-span-2">
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <h3 class="font-semibold text-sm mb-2">📊 Top Causes</h3>
+                            <div id="paretoTopList" class="space-y-1 text-sm"></div>
+                            <div class="mt-3 pt-3 border-t border-gray-200 text-sm">
+                                <span class="font-semibold">80% threshold:</span> <span id="paretoThreshold" class="text-red-600 font-bold">-</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ============ TOOL 2: FISHBONE ============ -->
-        <div class="tool-panel" data-panel="2">
-            <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-fish text-orange-600 mr-2"></i>Fishbone (Ishikawa) — Cause & Effect Analysis</h2>
-            <p class="text-gray-500 text-sm mb-4">Identifies root causes of defects across 5 key categories: Machine, Design, Operator, Methods, and Material.</p>
-            <div class="fishbone-container bg-gray-50 rounded-xl p-4">
-                <svg id="fishboneSvg" class="fishbone-svg w-full" viewBox="0 0 1000 420" preserveAspectRatio="xMidYMid meet">
-                    <!-- Will be drawn by JS -->
-                </svg>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4" id="fishboneStats"></div>
-        </div>
-
-        <!-- ============ TOOL 3: HISTOGRAM ============ -->
-        <div class="tool-panel" data-panel="3">
-            <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-layer-group text-green-600 mr-2"></i>Histogram — Rating Distribution</h2>
-            <p class="text-gray-500 text-sm mb-4">Shows the distribution of inspection ratings across all parameters. Helps identify process capability and variation.</p>
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div class="lg:col-span-3 chart-container"><canvas id="histogramChart"></canvas></div>
-                <div class="lg:col-span-2">
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <h3 class="font-semibold text-sm mb-2">📊 Summary Statistics</h3>
-                        <div id="histogramStats" class="space-y-2 text-sm"></div>
-                    </div>
+            <!-- ============ TOOL 2: FISHBONE ============ -->
+            <div class="tool-panel" data-panel="2">
+                <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-fish text-orange-600 mr-2"></i>Fishbone (Ishikawa) — Cause & Effect Analysis</h2>
+                <p class="text-gray-500 text-sm mb-4">Identifies root causes of defects across 5 key categories: Machine, Design, Operator, Methods, and Material.</p>
+                <div class="fishbone-container bg-gray-50 rounded-xl p-4">
+                    <svg id="fishboneSvg" class="fishbone-svg w-full" viewBox="0 0 1000 420" preserveAspectRatio="xMidYMid meet">
+                        <!-- Will be drawn by JS -->
+                    </svg>
                 </div>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4" id="fishboneStats"></div>
             </div>
-        </div>
 
-        <!-- ============ TOOL 4: CONTROL CHART ============ -->
-        <div class="tool-panel" data-panel="4">
-            <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-chart-line text-purple-600 mr-2"></i>Control Chart (Shewhart) — Process Variation Over Time</h2>
-            <p class="text-gray-500 text-sm mb-4">Monitors process stability by tracking the proportion of non-conforming (Reject + Rework) inspections over time.</p>
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div class="lg:col-span-4 chart-container"><canvas id="controlChart"></canvas></div>
-                <div class="lg:col-span-1">
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <h3 class="font-semibold text-sm mb-2">📊 Control Limits</h3>
-                        <div id="controlStats" class="space-y-2 text-sm"></div>
-                        <div class="mt-3 pt-3 border-t border-gray-200 text-sm">
-                            <span class="font-semibold">Status:</span> <span id="controlStatus" class="px-2 py-0.5 rounded-full text-xs font-semibold">-</span>
+            <!-- ============ TOOL 3: HISTOGRAM (UPDATED: Quantity Distribution) ============ -->
+            <div class="tool-panel" data-panel="3">
+                <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-layer-group text-green-600 mr-2"></i>Histogram — Quantity Distribution</h2>
+                <p class="text-gray-500 text-sm mb-4">Shows the distribution of total quantities across all inspections, broken down by Accepted, Rework, Reject, and Conditional Accept.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div class="lg:col-span-3 chart-container"><canvas id="histogramChart"></canvas></div>
+                    <div class="lg:col-span-2">
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <h3 class="font-semibold text-sm mb-2">📊 Summary Statistics</h3>
+                            <div id="histogramStats" class="space-y-2 text-sm"></div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ============ TOOL 5: SCATTER ============ -->
-        <div class="tool-panel" data-panel="5">
-            <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-dot-circle text-teal-600 mr-2"></i>Scatter Diagram — Correlation Analysis</h2>
-            <p class="text-gray-500 text-sm mb-4">Shows the relationship between Delivered Qty and Defect Rate (Reject + Rework). Helps identify if higher volume correlates with more defects.</p>
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div class="lg:col-span-4 chart-container"><canvas id="scatterChart"></canvas></div>
-                <div class="lg:col-span-1">
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <h3 class="font-semibold text-sm mb-2">📊 Correlation</h3>
-                        <div id="scatterStats" class="space-y-2 text-sm"></div>
+            <!-- ============ TOOL 4: CONTROL CHART ============ -->
+            <div class="tool-panel" data-panel="4">
+                <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-chart-line text-purple-600 mr-2"></i>Control Chart (Shewhart) — Process Variation Over Time</h2>
+                <p class="text-gray-500 text-sm mb-4">Monitors process stability by tracking the proportion of non-conforming (Reject + Rework) inspections over time.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div class="lg:col-span-4 chart-container"><canvas id="controlChart"></canvas></div>
+                    <div class="lg:col-span-1">
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <h3 class="font-semibold text-sm mb-2">📊 Control Limits</h3>
+                            <div id="controlStats" class="space-y-2 text-sm"></div>
+                            <div class="mt-3 pt-3 border-t border-gray-200 text-sm">
+                                <span class="font-semibold">Status:</span> <span id="controlStatus" class="px-2 py-0.5 rounded-full text-xs font-semibold">-</span>
+                            </div>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ============ TOOL 5: SCATTER ============ -->
+            <div class="tool-panel" data-panel="5">
+                <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-dot-circle text-teal-600 mr-2"></i>Scatter Diagram — Correlation Analysis</h2>
+                <p class="text-gray-500 text-sm mb-4">Shows the relationship between Delivered Qty and Defect Rate (Reject + Rework). Helps identify if higher volume correlates with more defects.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div class="lg:col-span-4 chart-container"><canvas id="scatterChart"></canvas></div>
+                    <div class="lg:col-span-1">
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <h3 class="font-semibold text-sm mb-2">📊 Correlation</h3>
+                            <div id="scatterStats" class="space-y-2 text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ TOOL 6: FLOWCHART ============ -->
+            <div class="tool-panel" data-panel="6">
+                <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-sitemap text-cyan-600 mr-2"></i>Flowchart — Inspection Process Map</h2>
+                <p class="text-gray-500 text-sm mb-4">Visual representation of the quality inspection workflow, from raw material to final decision.</p>
+                <div class="bg-gray-50 rounded-xl p-6 overflow-x-auto">
+                    <svg id="flowchartSvg" class="w-full" viewBox="0 0 900 600" preserveAspectRatio="xMidYMid meet">
+                        <!-- Will be drawn by JS -->
+                    </svg>
                 </div>
             </div>
         </div>
 
-        <!-- ============ TOOL 6: FLOWCHART ============ -->
-        <div class="tool-panel" data-panel="6">
-            <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-sitemap text-cyan-600 mr-2"></i>Flowchart — Inspection Process Map</h2>
-            <p class="text-gray-500 text-sm mb-4">Visual representation of the quality inspection workflow, from raw material to final decision.</p>
-            <div class="bg-gray-50 rounded-xl p-6 overflow-x-auto">
-                <svg id="flowchartSvg" class="w-full" viewBox="0 0 900 600" preserveAspectRatio="xMidYMid meet">
-                    <!-- Will be drawn by JS -->
-                </svg>
-            </div>
+        <!-- Footer -->
+        <div class="mt-6 text-center text-xs text-gray-400 border-t border-gray-200 pt-4">
+            <i class="fa-regular fa-copyright"></i> 7 QC Tools Dashboard — Powered by Inspection Data
         </div>
     </div>
 
-    <!-- Footer -->
-    <div class="mt-6 text-center text-xs text-gray-400 border-t border-gray-200 pt-4">
-        <i class="fa-regular fa-copyright"></i> 7 QC Tools Dashboard — Powered by Inspection Data
-    </div>
-</div>
+    <script>
+        // ============================================================
+        // DATA FETCH & PROCESSING
+        // ============================================================
+        let allInspections = [];
+        let allParamData = [];
+        let charts = {};
 
-<script>
-    // ============================================================
-    // DATA FETCH & PROCESSING
-    // ============================================================
-    let allInspections = [];
-    let allParamData = [];
-    let charts = {};
+        // Helper: get project name
+        function getProjectName(insp) {
+            let name = '';
+            if (insp.project_name) name = insp.project_name;
+            else if (insp.extra_fields && insp.extra_fields["Project Name"]) name = insp.extra_fields["Project Name"];
+            return name ? name.trim() : '';
+        }
 
-    // Helper: get project name
-    function getProjectName(insp) {
-        let name = '';
-        if (insp.project_name) name = insp.project_name;
-        else if (insp.extra_fields && insp.extra_fields["Project Name"]) name = insp.extra_fields["Project Name"];
-        return name ? name.trim() : '';
-    }
+        function getClientName(insp) {
+            if (insp.customer_name && insp.customer_name.trim()) return insp.customer_name.trim();
+            return insp.extra_fields?.["Customer Name"]?.trim() || '';
+        }
 
-    function getClientName(insp) {
-        if (insp.customer_name && insp.customer_name.trim()) return insp.customer_name.trim();
-        return insp.extra_fields?.["Customer Name"]?.trim() || '';
-    }
+        function getExtraField(insp, field) {
+            return insp.extra_fields?.[field]?.trim() || '';
+        }
 
-    function getExtraField(insp, field) {
-        return insp.extra_fields?.[field]?.trim() || '';
-    }
+        function parseAcceptanceData(insp) {
+            const data = insp.acceptance_data || {};
+            const params = [];
+            for (const key in data) {
+                const item = data[key];
+                if (item && item.parameter) {
+                    params.push({
+                        parameter: item.parameter,
+                        rating: item.rating || 'N/A',
+                        causes: item.causes || [],
+                        process: insp.process_type || 'Unknown',
+                        date: insp.submitted_at,
+                        client: getClientName(insp),
+                        title: getProjectName(insp),
+                        inspectionId: insp.id
+                    });
+                }
+            }
+            return params;
+        }
 
-    function parseAcceptanceData(insp) {
-        const data = insp.acceptance_data || {};
-        const params = [];
-        for (const key in data) {
-            const item = data[key];
-            if (item && item.parameter) {
-                params.push({
-                    parameter: item.parameter,
-                    rating: item.rating || 'N/A',
-                    causes: item.causes || [],
-                    process: insp.process_type || 'Unknown',
-                    date: insp.submitted_at,
-                    client: getClientName(insp),
-                    title: getProjectName(insp),
-                    inspectionId: insp.id
-                });
+        async function fetchAndAnalyze() {
+            const statusEl = document.getElementById('dataStatus');
+            try {
+                statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading...';
+                const res = await fetch('/api/inspections');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                allInspections = await res.json();
+
+                // Flatten all parameter data
+                allParamData = [];
+                for (const insp of allInspections) {
+                    const parsed = parseAcceptanceData(insp);
+                    allParamData.push(...parsed);
+                }
+
+                statusEl.innerHTML =
+                    `<i class="fa-solid fa-check-circle text-green-600"></i> ${allInspections.length} inspections, ${allParamData.length} parameters`;
+                renderAllTools();
+            } catch (err) {
+                console.error(err);
+                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-600"></i> Error loading data';
+                document.getElementById('checkSheetBody').innerHTML =
+                    `<tr><td colspan="8" class="text-center p-8 text-red-500">Failed to load data: ${err.message}</td></tr>`;
             }
         }
-        return params;
-    }
 
-    async function fetchAndAnalyze() {
-        const statusEl = document.getElementById('dataStatus');
-        try {
-            statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading...';
-            const res = await fetch('/api/inspections');
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            allInspections = await res.json();
+        // ============================================================
+        // RENDER ALL TOOLS
+        // ============================================================
+        function renderAllTools() {
+            renderCheckSheet();
+            renderPareto();
+            renderFishbone();
+            renderHistogram();
+            renderControlChart();
+            renderScatter();
+            renderFlowchart();
+        }
 
-            // Flatten all parameter data
-            allParamData = [];
-            for (const insp of allInspections) {
-                const parsed = parseAcceptanceData(insp);
-                allParamData.push(...parsed);
+        // ============================================================
+        // TOOL 0: CHECK SHEET
+        // ============================================================
+        function renderCheckSheet() {
+            const tbody = document.getElementById('checkSheetBody');
+            if (!allParamData.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-gray-400">No parameter data available</td></tr>';
+                return;
             }
-
-            statusEl.innerHTML = `<i class="fa-solid fa-check-circle text-green-600"></i> ${allInspections.length} inspections, ${allParamData.length} parameters`;
-            renderAllTools();
-        } catch (err) {
-            console.error(err);
-            statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-600"></i> Error loading data';
-            document.getElementById('checkSheetBody').innerHTML =
-                `<tr><td colspan="8" class="text-center p-8 text-red-500">Failed to load data: ${err.message}</td></tr>`;
-        }
-    }
-
-    // ============================================================
-    // RENDER ALL TOOLS
-    // ============================================================
-    function renderAllTools() {
-        renderCheckSheet();
-        renderPareto();
-        renderFishbone();
-        renderHistogram();
-        renderControlChart();
-        renderScatter();
-        renderFlowchart();
-    }
-
-    // ============================================================
-    // TOOL 0: CHECK SHEET
-    // ============================================================
-    function renderCheckSheet() {
-        const tbody = document.getElementById('checkSheetBody');
-        if (!allParamData.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 text-gray-400">No parameter data available</td></tr>';
-            return;
-        }
-        let html = '';
-        allParamData.slice(0, 100).forEach((p, i) => {
-            const causes = p.causes.length ? p.causes.join(', ') : '-';
-            const date = p.date ? new Date(p.date).toLocaleDateString() : '-';
-            html += `<tr class="border-b hover:bg-gray-50">
+            let html = '';
+            allParamData.slice(0, 100).forEach((p, i) => {
+                const causes = p.causes.length ? p.causes.join(', ') : '-';
+                const date = p.date ? new Date(p.date).toLocaleDateString() : '-';
+                html += `<tr class="border-b hover:bg-gray-50">
                 <td class="p-2 border">${i + 1}</td>
                 <td class="p-2 border">${date}</td>
                 <td class="p-2 border">${escapeHtml(p.process)}</td>
@@ -323,158 +369,159 @@
                 <td class="p-2 border"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ${getRatingColor(p.rating)}">${p.rating}</span></td>
                 <td class="p-2 border text-sm">${escapeHtml(causes)}</td>
             </tr>`;
-        });
-        if (allParamData.length > 100) {
-            html += `<tr><td colspan="8" class="p-2 text-center text-gray-400 text-sm">... and ${allParamData.length - 100} more parameters</td></tr>`;
-        }
-        tbody.innerHTML = html;
-        document.getElementById('checkSheetStats').innerText =
-            `Showing ${Math.min(allParamData.length, 100)} of ${allParamData.length} parameter records from ${allInspections.length} inspections`;
-    }
-
-    function getRatingColor(rating) {
-        const map = {
-            'Accepted': 'bg-green-100 text-green-800',
-            'Rework': 'bg-yellow-100 text-yellow-800',
-            'Reject': 'bg-red-100 text-red-800',
-            'Conditional Accept': 'bg-blue-100 text-blue-800',
-            'Conditional Accepted': 'bg-blue-100 text-blue-800',
-            'N/A': 'bg-gray-100 text-gray-600'
-        };
-        return map[rating] || 'bg-gray-100 text-gray-600';
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } [m]));
-    }
-
-    // ============================================================
-    // TOOL 1: PARETO CHART
-    // ============================================================
-    function renderPareto() {
-        // Count defect causes across all parameters
-        const causeCount = {};
-        for (const p of allParamData) {
-            for (const cause of p.causes) {
-                causeCount[cause] = (causeCount[cause] || 0) + 1;
+            });
+            if (allParamData.length > 100) {
+                html +=
+                    `<tr><td colspan="8" class="p-2 text-center text-gray-400 text-sm">... and ${allParamData.length - 100} more parameters</td></tr>`;
             }
+            tbody.innerHTML = html;
+            document.getElementById('checkSheetStats').innerText =
+                `Showing ${Math.min(allParamData.length, 100)} of ${allParamData.length} parameter records from ${allInspections.length} inspections`;
         }
 
-        const sorted = Object.entries(causeCount).sort((a, b) => b[1] - a[1]);
-        const labels = sorted.map(([c]) => c);
-        const values = sorted.map(([, v]) => v);
-        const total = values.reduce((s, v) => s + v, 0);
+        function getRatingColor(rating) {
+            const map = {
+                'Accepted': 'bg-green-100 text-green-800',
+                'Rework': 'bg-yellow-100 text-yellow-800',
+                'Reject': 'bg-red-100 text-red-800',
+                'Conditional Accept': 'bg-blue-100 text-blue-800',
+                'Conditional Accepted': 'bg-blue-100 text-blue-800',
+                'N/A': 'bg-gray-100 text-gray-600'
+            };
+            return map[rating] || 'bg-gray-100 text-gray-600';
+        }
 
-        // Cumulative percentage
-        let cum = 0;
-        const cumPct = values.map(v => {
-            cum += v;
-            return +(cum / total * 100).toFixed(1);
-        });
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } [m]));
+        }
 
-        // Find 80% threshold
-        let thresholdIdx = cumPct.findIndex(p => p >= 80);
-        if (thresholdIdx === -1) thresholdIdx = cumPct.length - 1;
-
-        const ctx = document.getElementById('paretoChart').getContext('2d');
-        if (charts.pareto) charts.pareto.destroy();
-
-        charts.pareto = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Defect Frequency',
-                    data: values,
-                    backgroundColor: values.map((_, i) => i <= thresholdIdx ? '#ef4444' : '#94a3b8'),
-                    borderRadius: 4,
-                    order: 1
-                }, {
-                    label: 'Cumulative %',
-                    type: 'line',
-                    data: cumPct,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37,99,235,0.1)',
-                    borderWidth: 3,
-                    tension: 0.2,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#2563eb',
-                    yAxisID: 'y1',
-                    order: 0,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { position: 'top', labels: { usePointStyle: true, padding: 20 } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                if (context.datasetIndex === 0) return `Count: ${context.parsed.y}`;
-                                return `Cumulative: ${context.parsed.y}%`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Frequency' },
-                        position: 'left'
-                    },
-                    y1: {
-                        beginAtZero: true,
-                        max: 100,
-                        position: 'right',
-                        title: { display: true, text: 'Cumulative %' },
-                        grid: { drawOnChartArea: false },
-                        ticks: { callback: v => v + '%' }
-                    },
-                    x: {
-                        ticks: { maxRotation: 30, minRotation: 20 }
-                    }
+        // ============================================================
+        // TOOL 1: PARETO CHART
+        // ============================================================
+        function renderPareto() {
+            // Count defect causes across all parameters
+            const causeCount = {};
+            for (const p of allParamData) {
+                for (const cause of p.causes) {
+                    causeCount[cause] = (causeCount[cause] || 0) + 1;
                 }
             }
-        });
 
-        // Top list
-        const listEl = document.getElementById('paretoTopList');
-        const top5 = sorted.slice(0, 5);
-        listEl.innerHTML = top5.map(([cause, count], i) => {
-            const pct = (count / total * 100).toFixed(1);
-            const is80 = i <= thresholdIdx;
-            return `<div class="flex justify-between items-center ${is80 ? 'text-red-700 font-medium' : 'text-gray-500'}">
+            const sorted = Object.entries(causeCount).sort((a, b) => b[1] - a[1]);
+            const labels = sorted.map(([c]) => c);
+            const values = sorted.map(([, v]) => v);
+            const total = values.reduce((s, v) => s + v, 0);
+
+            // Cumulative percentage
+            let cum = 0;
+            const cumPct = values.map(v => {
+                cum += v;
+                return +(cum / total * 100).toFixed(1);
+            });
+
+            // Find 80% threshold
+            let thresholdIdx = cumPct.findIndex(p => p >= 80);
+            if (thresholdIdx === -1) thresholdIdx = cumPct.length - 1;
+
+            const ctx = document.getElementById('paretoChart').getContext('2d');
+            if (charts.pareto) charts.pareto.destroy();
+
+            charts.pareto = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Defect Frequency',
+                        data: values,
+                        backgroundColor: values.map((_, i) => i <= thresholdIdx ? '#ef4444' : '#94a3b8'),
+                        borderRadius: 4,
+                        order: 1
+                    }, {
+                        label: 'Cumulative %',
+                        type: 'line',
+                        data: cumPct,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37,99,235,0.1)',
+                        borderWidth: 3,
+                        tension: 0.2,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#2563eb',
+                        yAxisID: 'y1',
+                        order: 0,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, padding: 20 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.datasetIndex === 0) return `Count: ${context.parsed.y}`;
+                                    return `Cumulative: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Frequency' },
+                            position: 'left'
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            max: 100,
+                            position: 'right',
+                            title: { display: true, text: 'Cumulative %' },
+                            grid: { drawOnChartArea: false },
+                            ticks: { callback: v => v + '%' }
+                        },
+                        x: {
+                            ticks: { maxRotation: 30, minRotation: 20 }
+                        }
+                    }
+                }
+            });
+
+            // Top list
+            const listEl = document.getElementById('paretoTopList');
+            const top5 = sorted.slice(0, 5);
+            listEl.innerHTML = top5.map(([cause, count], i) => {
+                const pct = (count / total * 100).toFixed(1);
+                const is80 = i <= thresholdIdx;
+                return `<div class="flex justify-between items-center ${is80 ? 'text-red-700 font-medium' : 'text-gray-500'}">
                 <span>${i+1}. ${escapeHtml(cause)}</span>
                 <span>${count} (${pct}%)</span>
             </div>`;
-        }).join('');
+            }).join('');
 
-        document.getElementById('paretoThreshold').innerText =
-            `${labels.slice(0, thresholdIdx + 1).join(', ')} — ${(cumPct[thresholdIdx])}% of total`;
-    }
-
-    // ============================================================
-    // TOOL 2: FISHBONE DIAGRAM
-    // ============================================================
-    function renderFishbone() {
-        const causeMap = { Machine: 0, Design: 0, Operator: 0, Methods: 0, Material: 0 };
-        for (const p of allParamData) {
-            for (const cause of p.causes) {
-                if (causeMap.hasOwnProperty(cause)) causeMap[cause]++;
-            }
+            document.getElementById('paretoThreshold').innerText =
+                `${labels.slice(0, thresholdIdx + 1).join(', ')} — ${(cumPct[thresholdIdx])}% of total`;
         }
 
-        const maxVal = Math.max(...Object.values(causeMap), 1);
-        const svg = document.getElementById('fishboneSvg');
-        const w = 1000,
-            h = 420;
-        const spineY = h / 2;
+        // ============================================================
+        // TOOL 2: FISHBONE DIAGRAM
+        // ============================================================
+        function renderFishbone() {
+            const causeMap = { Machine: 0, Design: 0, Operator: 0, Methods: 0, Material: 0 };
+            for (const p of allParamData) {
+                for (const cause of p.causes) {
+                    if (causeMap.hasOwnProperty(cause)) causeMap[cause]++;
+                }
+            }
 
-        // Build SVG
-        let html = `
+            const maxVal = Math.max(...Object.values(causeMap), 1);
+            const svg = document.getElementById('fishboneSvg');
+            const w = 1000,
+                h = 420;
+            const spineY = h / 2;
+
+            // Build SVG
+            let html = `
             <!-- Main spine -->
             <line x1="80" y1="${spineY}" x2="920" y2="${spineY}" stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
             <!-- Arrow head -->
@@ -484,245 +531,244 @@
             <text x="500" y="${spineY-18}" text-anchor="middle" font-size="14" fill="#64748b">(Reject / Rework)</text>
         `;
 
-        // Bone categories with their positions
-        const categories = [
-            { key: 'Machine', x: 160, color: '#ef4444', angle: -25 },
-            { key: 'Design', x: 330, color: '#f59e0b', angle: -20 },
-            { key: 'Operator', x: 500, color: '#3b82f6', angle: 20 },
-            { key: 'Methods', x: 670, color: '#8b5cf6', angle: 25 },
-            { key: 'Material', x: 840, color: '#10b981', angle: 30 }
-        ];
+            // Bone categories with their positions
+            const categories = [
+                { key: 'Machine', x: 160, color: '#ef4444', angle: -25 },
+                { key: 'Design', x: 330, color: '#f59e0b', angle: -20 },
+                { key: 'Operator', x: 500, color: '#3b82f6', angle: 20 },
+                { key: 'Methods', x: 670, color: '#8b5cf6', angle: 25 },
+                { key: 'Material', x: 840, color: '#10b981', angle: 30 }
+            ];
 
-        for (const cat of categories) {
-            const count = causeMap[cat.key] || 0;
-            const pct = maxVal > 0 ? (count / maxVal * 100) : 0;
-            const barHeight = Math.max(8, pct * 0.6);
-            const yOffset = cat.angle < 0 ? -1 : 1;
-            const tipY = spineY + (cat.angle < 0 ? -80 : 80);
+            for (const cat of categories) {
+                const count = causeMap[cat.key] || 0;
+                const pct = maxVal > 0 ? (count / maxVal * 100) : 0;
+                const barHeight = Math.max(8, pct * 0.6);
+                const yOffset = cat.angle < 0 ? -1 : 1;
+                const tipY = spineY + (cat.angle < 0 ? -80 : 80);
 
-            // Bone line (diagonal)
-            html += `<line x1="${cat.x}" y1="${spineY}" x2="${cat.x + 60}" y2="${tipY}" stroke="${cat.color}" stroke-width="3" opacity="0.7"/>`;
-            // Bone head (circle)
-            html += `<circle cx="${cat.x + 60}" cy="${tipY}" r="8" fill="${cat.color}"/>`;
-            // Category label
-            html += `<text x="${cat.x + 60}" y="${tipY + (cat.angle < 0 ? -14 : 22)}" text-anchor="middle" font-size="14" font-weight="700" fill="${cat.color}">${cat.key}</text>`;
-            // Count badge
-            html +=
-                `<rect x="${cat.x + 60 - 20}" y="${tipY + (cat.angle < 0 ? -30 : 30)}" width="40" height="20" rx="10" fill="${cat.color}" opacity="0.2"/>`;
-            html +=
-                `<text x="${cat.x + 60}" y="${tipY + (cat.angle < 0 ? -16 : 44)}" text-anchor="middle" font-size="12" font-weight="600" fill="${cat.color}">${count}</text>`;
+                // Bone line (diagonal)
+                html += `<line x1="${cat.x}" y1="${spineY}" x2="${cat.x + 60}" y2="${tipY}" stroke="${cat.color}" stroke-width="3" opacity="0.7"/>`;
+                // Bone head (circle)
+                html += `<circle cx="${cat.x + 60}" cy="${tipY}" r="8" fill="${cat.color}"/>`;
+                // Category label
+                html +=
+                    `<text x="${cat.x + 60}" y="${tipY + (cat.angle < 0 ? -14 : 22)}" text-anchor="middle" font-size="14" font-weight="700" fill="${cat.color}">${cat.key}</text>`;
+                // Count badge
+                html +=
+                    `<rect x="${cat.x + 60 - 20}" y="${tipY + (cat.angle < 0 ? -30 : 30)}" width="40" height="20" rx="10" fill="${cat.color}" opacity="0.2"/>`;
+                html +=
+                    `<text x="${cat.x + 60}" y="${tipY + (cat.angle < 0 ? -16 : 44)}" text-anchor="middle" font-size="12" font-weight="600" fill="${cat.color}">${count}</text>`;
 
-            // Horizontal bar representing magnitude
-            const barX = cat.x - 50;
-            const barY = spineY + (cat.angle < 0 ? -30 - barHeight : 30);
-            html +=
-                `<rect x="${barX}" y="${barY}" width="${Math.max(10, pct * 0.8)}" height="${barHeight}" rx="4" fill="${cat.color}" opacity="0.3"/>`;
-        }
+                // Horizontal bar representing magnitude
+                const barX = cat.x - 50;
+                const barY = spineY + (cat.angle < 0 ? -30 - barHeight : 30);
+                html +=
+                    `<rect x="${barX}" y="${barY}" width="${Math.max(10, pct * 0.8)}" height="${barHeight}" rx="4" fill="${cat.color}" opacity="0.3"/>`;
+            }
 
-        svg.innerHTML = html;
+            svg.innerHTML = html;
 
-        // Stats cards
-        const statsEl = document.getElementById('fishboneStats');
-        statsEl.innerHTML = Object.entries(causeMap).map(([key, count]) => `
+            // Stats cards
+            const statsEl = document.getElementById('fishboneStats');
+            statsEl.innerHTML = Object.entries(causeMap).map(([key, count]) => `
             <div class="bg-white rounded-lg p-3 text-center shadow-sm border border-gray-100">
                 <div class="text-xs text-gray-500">${key}</div>
                 <div class="text-xl font-bold" style="color: ${categories.find(c=>c.key===key)?.color || '#333'}">${count}</div>
                 <div class="text-xs text-gray-400">${allParamData.length > 0 ? (count/allParamData.length*100).toFixed(1) : 0}% of parameters</div>
             </div>
         `).join('');
-    }
-
-    // ============================================================
-    // TOOL 3: HISTOGRAM
-    // ============================================================
-    function renderHistogram() {
-        const ratingCount = { Accepted: 0, Rework: 0, Reject: 0, 'Conditional Accept': 0, 'Conditional Accepted': 0 };
-        for (const p of allParamData) {
-            const r = p.rating;
-            if (ratingCount.hasOwnProperty(r)) ratingCount[r]++;
-            else if (r === 'Conditional Accepted') ratingCount['Conditional Accepted']++;
-            else ratingCount['N/A'] = (ratingCount['N/A'] || 0) + 1;
         }
 
-        // Merge Conditional Accepted into Conditional Accept
-        if (ratingCount['Conditional Accepted']) {
-            ratingCount['Conditional Accept'] = (ratingCount['Conditional Accept'] || 0) + ratingCount['Conditional Accepted'];
-            delete ratingCount['Conditional Accepted'];
-        }
-
-        const labels = ['Accepted', 'Rework', 'Reject', 'Conditional Accept'];
-        const values = labels.map(l => ratingCount[l] || 0);
-        const colors = ['#22c55e', '#eab308', '#ef4444', '#3b82f6'];
-
-        const ctx = document.getElementById('histogramChart').getContext('2d');
-        if (charts.histogram) charts.histogram.destroy();
-
-        charts.histogram = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Parameter Count',
-                    data: values,
-                    backgroundColor: colors.map(c => c + 'CC'),
-                    borderColor: colors,
-                    borderWidth: 2,
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = values.reduce((s, v) => s + v, 0);
-                                const pct = total > 0 ? (context.parsed.y / total * 100).toFixed(1) : 0;
-                                return `${context.parsed.y} parameters (${pct}%)`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Frequency' },
-                        ticks: { stepSize: 1 }
-                    }
-                }
+        // ============================================================
+        // TOOL 3: HISTOGRAM — Quantity Distribution (UPDATED)
+        // ============================================================
+        function renderHistogram() {
+            // Sum quantities across all inspections
+            let sumAccepted = 0,
+                sumRework = 0,
+                sumReject = 0,
+                sumConditional = 0;
+            for (const insp of allInspections) {
+                sumAccepted += parseFloat(insp.accepted_qty) || 0;
+                sumRework += parseFloat(insp.rework_qty) || 0;
+                sumReject += parseFloat(insp.reject_qty) || 0;
+                sumConditional += parseFloat(insp.conditional_accept_qty) || 0;
             }
-        });
 
-        // Stats
-        const total = values.reduce((s, v) => s + v, 0);
-        const acceptedPct = total > 0 ? (values[0] / total * 100).toFixed(1) : 0;
-        const rejectRework = values[1] + values[2];
-        const rejectReworkPct = total > 0 ? (rejectRework / total * 100).toFixed(1) : 0;
+            const labels = ['Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept Qty'];
+            const values = [sumAccepted, sumRework, sumReject, sumConditional];
+            const colors = ['#22c55e', '#eab308', '#ef4444', '#3b82f6'];
 
-        document.getElementById('histogramStats').innerHTML = `
-            <div class="flex justify-between"><span>Total parameters</span><span class="font-semibold">${total}</span></div>
-            <div class="flex justify-between"><span>Accepted</span><span class="font-semibold text-green-600">${values[0]} (${acceptedPct}%)</span></div>
-            <div class="flex justify-between"><span>Rework</span><span class="font-semibold text-yellow-600">${values[1]}</span></div>
-            <div class="flex justify-between"><span>Reject</span><span class="font-semibold text-red-600">${values[2]}</span></div>
-            <div class="flex justify-between"><span>Conditional</span><span class="font-semibold text-blue-600">${values[3]}</span></div>
-            <div class="flex justify-between pt-2 border-t"><span>Non-conforming (Rework+Reject)</span><span class="font-semibold text-red-600">${rejectRework} (${rejectReworkPct}%)</span></div>
-        `;
-    }
+            const ctx = document.getElementById('histogramChart').getContext('2d');
+            if (charts.histogram) charts.histogram.destroy();
 
-    // ============================================================
-    // TOOL 4: CONTROL CHART
-    // ============================================================
-    function renderControlChart() {
-        // Group by inspection, calculate defect rate (reject + rework) per inspection
-        const inspData = [];
-        for (const insp of allInspections) {
-            const params = parseAcceptanceData(insp);
-            const total = params.length;
-            const defects = params.filter(p => p.rating === 'Reject' || p.rating === 'Rework').length;
-            const rate = total > 0 ? defects / total : 0;
-            inspData.push({
-                id: insp.id,
-                date: new Date(insp.submitted_at),
-                total,
-                defects,
-                rate,
-                label: insp.process_type || 'Unknown'
-            });
-        }
-
-        // Sort by date
-        inspData.sort((a, b) => a.date - b.date);
-
-        const labels = inspData.map(d => d.date.toLocaleDateString());
-        const rates = inspData.map(d => +(d.rate * 100).toFixed(1));
-        const totalPoints = inspData.length;
-
-        // Calculate control limits (p-chart)
-        const avgRate = rates.length > 0 ? rates.reduce((s, r) => s + r, 0) / rates.length : 0;
-        const pBar = avgRate / 100;
-        const n = inspData.reduce((s, d) => s + d.total, 0) / (inspData.length || 1);
-        const stdDev = Math.sqrt(pBar * (1 - pBar) / n);
-        const UCL = Math.min(100, +(pBar + 3 * stdDev) * 100);
-        const LCL = Math.max(0, +(pBar - 3 * stdDev) * 100);
-        const CL = +(pBar * 100);
-
-        const ctx = document.getElementById('controlChart').getContext('2d');
-        if (charts.control) charts.control.destroy();
-
-        charts.control = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Defect Rate %',
-                    data: rates,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37,99,235,0.1)',
-                    pointRadius: 5,
-                    pointBackgroundColor: '#2563eb',
-                    tension: 0.1,
-                    fill: true
-                }, {
-                    label: 'UCL (Upper Control Limit)',
-                    data: Array(rates.length).fill(UCL),
-                    borderColor: '#ef4444',
-                    borderDash: [6, 4],
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    fill: false
-                }, {
-                    label: 'LCL (Lower Control Limit)',
-                    data: Array(rates.length).fill(LCL),
-                    borderColor: '#ef4444',
-                    borderDash: [6, 4],
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    fill: false
-                }, {
-                    label: 'Center Line (CL)',
-                    data: Array(rates.length).fill(CL),
-                    borderColor: '#22c55e',
-                    borderDash: [4, 4],
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { position: 'top', labels: { usePointStyle: true, padding: 12 } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                if (context.datasetIndex === 0) {
-                                    const d = inspData[context.dataIndex];
-                                    return `Defect Rate: ${context.parsed.y}% (${d.defects}/${d.total})`;
+            charts.histogram = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Quantity',
+                        data: values,
+                        backgroundColor: colors.map(c => c + 'CC'),
+                        borderColor: colors,
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = values.reduce((s, v) => s + v, 0);
+                                    const pct = total > 0 ? (context.parsed.y / total * 100).toFixed(1) : 0;
+                                    return `${context.parsed.y.toLocaleString()} units (${pct}%)`;
                                 }
-                                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
                             }
                         }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Defect Rate %' },
-                        ticks: { callback: v => v + '%' }
                     },
-                    x: {
-                        ticks: { maxRotation: 45, minRotation: 30, font: { size: 10 } }
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Total Quantity' },
+                            ticks: { callback: function(value) { return value.toLocaleString(); } }
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        // Stats
-        const outOfControl = rates.filter(r => r > UCL || r < LCL).length;
-        document.getElementById('controlStats').innerHTML = `
+            // Update summary stats
+            const total = values.reduce((s, v) => s + v, 0);
+            const acceptedPct = total > 0 ? (values[0] / total * 100).toFixed(1) : 0;
+            const rejectRework = values[1] + values[2];
+            const rejectReworkPct = total > 0 ? (rejectRework / total * 100).toFixed(1) : 0;
+
+            document.getElementById('histogramStats').innerHTML = `
+            <div class="flex justify-between"><span>Total units</span><span class="font-semibold">${total.toLocaleString()}</span></div>
+            <div class="flex justify-between"><span>Accepted</span><span class="font-semibold text-green-600">${values[0].toLocaleString()} (${acceptedPct}%)</span></div>
+            <div class="flex justify-between"><span>Rework</span><span class="font-semibold text-yellow-600">${values[1].toLocaleString()}</span></div>
+            <div class="flex justify-between"><span>Reject</span><span class="font-semibold text-red-600">${values[2].toLocaleString()}</span></div>
+            <div class="flex justify-between"><span>Conditional</span><span class="font-semibold text-blue-600">${values[3].toLocaleString()}</span></div>
+            <div class="flex justify-between pt-2 border-t"><span>Non-conforming (Rework+Reject)</span><span class="font-semibold text-red-600">${rejectRework.toLocaleString()} (${rejectReworkPct}%)</span></div>
+        `;
+        }
+
+        // ============================================================
+        // TOOL 4: CONTROL CHART
+        // ============================================================
+        function renderControlChart() {
+            // Group by inspection, calculate defect rate (reject + rework) per inspection
+            const inspData = [];
+            for (const insp of allInspections) {
+                const params = parseAcceptanceData(insp);
+                const total = params.length;
+                const defects = params.filter(p => p.rating === 'Reject' || p.rating === 'Rework').length;
+                const rate = total > 0 ? defects / total : 0;
+                inspData.push({
+                    id: insp.id,
+                    date: new Date(insp.submitted_at),
+                    total,
+                    defects,
+                    rate,
+                    label: insp.process_type || 'Unknown'
+                });
+            }
+
+            // Sort by date
+            inspData.sort((a, b) => a.date - b.date);
+
+            const labels = inspData.map(d => d.date.toLocaleDateString());
+            const rates = inspData.map(d => +(d.rate * 100).toFixed(1));
+            const totalPoints = inspData.length;
+
+            // Calculate control limits (p-chart)
+            const avgRate = rates.length > 0 ? rates.reduce((s, r) => s + r, 0) / rates.length : 0;
+            const pBar = avgRate / 100;
+            const n = inspData.reduce((s, d) => s + d.total, 0) / (inspData.length || 1);
+            const stdDev = Math.sqrt(pBar * (1 - pBar) / n);
+            const UCL = Math.min(100, +(pBar + 3 * stdDev) * 100);
+            const LCL = Math.max(0, +(pBar - 3 * stdDev) * 100);
+            const CL = +(pBar * 100);
+
+            const ctx = document.getElementById('controlChart').getContext('2d');
+            if (charts.control) charts.control.destroy();
+
+            charts.control = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Defect Rate %',
+                        data: rates,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37,99,235,0.1)',
+                        pointRadius: 5,
+                        pointBackgroundColor: '#2563eb',
+                        tension: 0.1,
+                        fill: true
+                    }, {
+                        label: 'UCL (Upper Control Limit)',
+                        data: Array(rates.length).fill(UCL),
+                        borderColor: '#ef4444',
+                        borderDash: [6, 4],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false
+                    }, {
+                        label: 'LCL (Lower Control Limit)',
+                        data: Array(rates.length).fill(LCL),
+                        borderColor: '#ef4444',
+                        borderDash: [6, 4],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false
+                    }, {
+                        label: 'Center Line (CL)',
+                        data: Array(rates.length).fill(CL),
+                        borderColor: '#22c55e',
+                        borderDash: [4, 4],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, padding: 12 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.datasetIndex === 0) {
+                                        const d = inspData[context.dataIndex];
+                                        return `Defect Rate: ${context.parsed.y}% (${d.defects}/${d.total})`;
+                                    }
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Defect Rate %' },
+                            ticks: { callback: v => v + '%' }
+                        },
+                        x: {
+                            ticks: { maxRotation: 45, minRotation: 30, font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            // Stats
+            const outOfControl = rates.filter(r => r > UCL || r < LCL).length;
+            document.getElementById('controlStats').innerHTML = `
             <div class="flex justify-between"><span>Total inspections</span><span class="font-semibold">${totalPoints}</span></div>
             <div class="flex justify-between"><span>Avg defect rate</span><span class="font-semibold">${CL.toFixed(1)}%</span></div>
             <div class="flex justify-between"><span>UCL</span><span class="font-semibold text-red-600">${UCL.toFixed(1)}%</span></div>
@@ -730,96 +776,97 @@
             <div class="flex justify-between pt-2 border-t"><span>Out of control points</span><span class="font-semibold ${outOfControl > 0 ? 'text-red-600' : 'text-green-600'}">${outOfControl}</span></div>
         `;
 
-        const statusEl = document.getElementById('controlStatus');
-        if (outOfControl > 0) {
-            statusEl.className = 'px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800';
-            statusEl.innerText = '⚠️ Out of Control';
-        } else {
-            statusEl.className = 'px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800';
-            statusEl.innerText = '✅ In Control';
-        }
-    }
-
-    // ============================================================
-    // TOOL 5: SCATTER DIAGRAM
-    // ============================================================
-    function renderScatter() {
-        // Prepare data: Delivered Qty vs Defect Rate per inspection
-        const scatterData = [];
-        for (const insp of allInspections) {
-            const delivered = insp.delivered_qty || 0;
-            const params = parseAcceptanceData(insp);
-            const total = params.length;
-            const defects = params.filter(p => p.rating === 'Reject' || p.rating === 'Rework').length;
-            const rate = total > 0 ? defects / total : 0;
-            if (delivered > 0) {
-                scatterData.push({
-                    x: delivered,
-                    y: +(rate * 100).toFixed(1),
-                    label: insp.process_type || 'Unknown'
-                });
+            const statusEl = document.getElementById('controlStatus');
+            if (outOfControl > 0) {
+                statusEl.className = 'px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800';
+                statusEl.innerText = '⚠️ Out of Control';
+            } else {
+                statusEl.className = 'px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800';
+                statusEl.innerText = '✅ In Control';
             }
         }
 
-        const ctx = document.getElementById('scatterChart').getContext('2d');
-        if (charts.scatter) charts.scatter.destroy();
-
-        // Calculate correlation
-        const n = scatterData.length;
-        let sumX = 0,
-            sumY = 0,
-            sumXY = 0,
-            sumX2 = 0,
-            sumY2 = 0;
-        for (const d of scatterData) {
-            sumX += d.x;
-            sumY += d.y;
-            sumXY += d.x * d.y;
-            sumX2 += d.x * d.x;
-            sumY2 += d.y * d.y;
-        }
-        const corr = n > 0 ? (n * sumXY - sumX * sumY) / Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY)) : 0;
-
-        charts.scatter = new Chart(ctx, {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    label: 'Defect Rate vs Delivered Qty',
-                    data: scatterData,
-                    backgroundColor: '#3b82f6',
-                    pointRadius: 7,
-                    pointHoverRadius: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const d = context.raw;
-                                return `Delivered: ${d.x}, Defect Rate: ${d.y}% (${d.label})`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        title: { display: true, text: 'Delivered Qty' },
-                        beginAtZero: true
-                    },
-                    y: {
-                        title: { display: true, text: 'Defect Rate %' },
-                        beginAtZero: true,
-                        ticks: { callback: v => v + '%' }
-                    }
+        // ============================================================
+        // TOOL 5: SCATTER DIAGRAM
+        // ============================================================
+        function renderScatter() {
+            // Prepare data: Delivered Qty vs Defect Rate per inspection
+            const scatterData = [];
+            for (const insp of allInspections) {
+                const delivered = insp.delivered_qty || 0;
+                const params = parseAcceptanceData(insp);
+                const total = params.length;
+                const defects = params.filter(p => p.rating === 'Reject' || p.rating === 'Rework').length;
+                const rate = total > 0 ? defects / total : 0;
+                if (delivered > 0) {
+                    scatterData.push({
+                        x: delivered,
+                        y: +(rate * 100).toFixed(1),
+                        label: insp.process_type || 'Unknown'
+                    });
                 }
             }
-        });
 
-        document.getElementById('scatterStats').innerHTML = `
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+            if (charts.scatter) charts.scatter.destroy();
+
+            // Calculate correlation
+            const n = scatterData.length;
+            let sumX = 0,
+                sumY = 0,
+                sumXY = 0,
+                sumX2 = 0,
+                sumY2 = 0;
+            for (const d of scatterData) {
+                sumX += d.x;
+                sumY += d.y;
+                sumXY += d.x * d.y;
+                sumX2 += d.x * d.x;
+                sumY2 += d.y * d.y;
+            }
+            const corr = n > 0 ? (n * sumXY - sumX * sumY) / Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY)) :
+            0;
+
+            charts.scatter = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Defect Rate vs Delivered Qty',
+                        data: scatterData,
+                        backgroundColor: '#3b82f6',
+                        pointRadius: 7,
+                        pointHoverRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const d = context.raw;
+                                    return `Delivered: ${d.x}, Defect Rate: ${d.y}% (${d.label})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Delivered Qty' },
+                            beginAtZero: true
+                        },
+                        y: {
+                            title: { display: true, text: 'Defect Rate %' },
+                            beginAtZero: true,
+                            ticks: { callback: v => v + '%' }
+                        }
+                    }
+                }
+            });
+
+            document.getElementById('scatterStats').innerHTML = `
             <div class="flex justify-between"><span>Data points</span><span class="font-semibold">${n}</span></div>
             <div class="flex justify-between"><span>Correlation (r)</span><span class="font-semibold">${corr.toFixed(3)}</span></div>
             <div class="flex justify-between"><span>Correlation (r²)</span><span class="font-semibold">${(corr*corr).toFixed(3)}</span></div>
@@ -830,47 +877,47 @@
                 ${corr > 0 ? '↗️ Positive: higher volume → more defects' : '↘️ Negative: higher volume → fewer defects'}
             </div>
         `;
-    }
+        }
 
-    // ============================================================
-    // TOOL 6: FLOWCHART
-    // ============================================================
-    function renderFlowchart() {
-        const svg = document.getElementById('flowchartSvg');
-        const w = 900,
-            h = 600;
+        // ============================================================
+        // TOOL 6: FLOWCHART
+        // ============================================================
+        function renderFlowchart() {
+            const svg = document.getElementById('flowchartSvg');
+            const w = 900,
+                h = 600;
 
-        // Nodes with positions
-        const nodes = [
-            { id: 'start', label: '🔍 Start', x: 450, y: 30, type: 'start' },
-            { id: 'recv', label: '📦 Receive Material', x: 450, y: 100, type: 'process' },
-            { id: 'visual', label: '👀 Visual Inspection', x: 450, y: 170, type: 'decision' },
-            { id: 'measure', label: '📏 Dimensional Check', x: 450, y: 240, type: 'process' },
-            { id: 'param', label: '📋 Parameter Check', x: 450, y: 310, type: 'process' },
-            { id: 'eval', label: '✅ Evaluate Results', x: 450, y: 380, type: 'decision' },
-            { id: 'accept', label: '✔️ Accept', x: 280, y: 460, type: 'end' },
-            { id: 'rework', label: '🔄 Rework', x: 450, y: 460, type: 'process' },
-            { id: 'reject', label: '❌ Reject', x: 620, y: 460, type: 'end' },
-            { id: 'cond', label: '⚠️ Conditional Accept', x: 450, y: 530, type: 'end' },
-        ];
+            // Nodes with positions
+            const nodes = [
+                { id: 'start', label: '🔍 Start', x: 450, y: 30, type: 'start' },
+                { id: 'recv', label: '📦 Receive Material', x: 450, y: 100, type: 'process' },
+                { id: 'visual', label: '👀 Visual Inspection', x: 450, y: 170, type: 'decision' },
+                { id: 'measure', label: '📏 Dimensional Check', x: 450, y: 240, type: 'process' },
+                { id: 'param', label: '📋 Parameter Check', x: 450, y: 310, type: 'process' },
+                { id: 'eval', label: '✅ Evaluate Results', x: 450, y: 380, type: 'decision' },
+                { id: 'accept', label: '✔️ Accept', x: 280, y: 460, type: 'end' },
+                { id: 'rework', label: '🔄 Rework', x: 450, y: 460, type: 'process' },
+                { id: 'reject', label: '❌ Reject', x: 620, y: 460, type: 'end' },
+                { id: 'cond', label: '⚠️ Conditional Accept', x: 450, y: 530, type: 'end' },
+            ];
 
-        // Edges
-        const edges = [
-            { from: 'start', to: 'recv' },
-            { from: 'recv', to: 'visual' },
-            { from: 'visual', to: 'measure', label: 'OK' },
-            { from: 'visual', to: 'rework', label: 'NOK' },
-            { from: 'measure', to: 'param' },
-            { from: 'param', to: 'eval' },
-            { from: 'eval', to: 'accept', label: 'OK' },
-            { from: 'eval', to: 'rework', label: 'Rework' },
-            { from: 'eval', to: 'reject', label: 'Reject' },
-            { from: 'eval', to: 'cond', label: 'Conditional' },
-            { from: 'rework', to: 'visual', label: 'Re-inspect' },
-        ];
+            // Edges
+            const edges = [
+                { from: 'start', to: 'recv' },
+                { from: 'recv', to: 'visual' },
+                { from: 'visual', to: 'measure', label: 'OK' },
+                { from: 'visual', to: 'rework', label: 'NOK' },
+                { from: 'measure', to: 'param' },
+                { from: 'param', to: 'eval' },
+                { from: 'eval', to: 'accept', label: 'OK' },
+                { from: 'eval', to: 'rework', label: 'Rework' },
+                { from: 'eval', to: 'reject', label: 'Reject' },
+                { from: 'eval', to: 'cond', label: 'Conditional' },
+                { from: 'rework', to: 'visual', label: 'Re-inspect' },
+            ];
 
-        // Build SVG
-        let html = `
+            // Build SVG
+            let html = `
             <defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
                     <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
@@ -881,139 +928,139 @@
             </defs>
         `;
 
-        // Draw edges
-        for (const edge of edges) {
-            const from = nodes.find(n => n.id === edge.from);
-            const to = nodes.find(n => n.id === edge.to);
-            if (!from || !to) continue;
+            // Draw edges
+            for (const edge of edges) {
+                const from = nodes.find(n => n.id === edge.from);
+                const to = nodes.find(n => n.id === edge.to);
+                if (!from || !to) continue;
 
-            const dx = to.x - from.x;
-            const dy = to.y - from.y;
-            const len = Math.sqrt(dx * dx + dy * dy);
-            const nx = dx / len;
-            const ny = dy / len;
-            const offset = 25;
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const nx = dx / len;
+                const ny = dy / len;
+                const offset = 25;
 
-            const x1 = from.x + nx * (from.type === 'start' ? 20 : 55);
-            const y1 = from.y + ny * (from.type === 'start' ? 20 : 30);
-            const x2 = to.x - nx * (to.type === 'end' ? 30 : 30);
-            const y2 = to.y - ny * (to.type === 'end' ? 30 : 30);
+                const x1 = from.x + nx * (from.type === 'start' ? 20 : 55);
+                const y1 = from.y + ny * (from.type === 'start' ? 20 : 30);
+                const x2 = to.x - nx * (to.type === 'end' ? 30 : 30);
+                const y2 = to.y - ny * (to.type === 'end' ? 30 : 30);
 
-            const midX = (x1 + x2) / 2;
-            const midY = (y1 + y2) / 2;
+                const midX = (x1 + x2) / 2;
+                const midY = (y1 + y2) / 2;
 
-            html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)"/>`;
+                html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)"/>`;
 
-            if (edge.label) {
-                html +=
-                    `<text x="${midX + (dy > 0 ? 15 : -15)}" y="${midY + (dx > 0 ? -8 : 8)}" font-size="11" fill="#64748b" font-weight="500">${edge.label}</text>`;
-            }
-        }
-
-        // Draw nodes
-        for (const node of nodes) {
-            const isStart = node.type === 'start';
-            const isEnd = node.type === 'end';
-            const isDecision = node.type === 'decision';
-
-            let rx = 40,
-                ry = 30;
-            let shape = 'rect';
-
-            if (isStart) {
-                rx = 35;
-                ry = 22;
-            } else if (isDecision) {
-                rx = 45;
-                ry = 30;
-            } else if (isEnd) {
-                rx = 40;
-                ry = 25;
-            }
-
-            let bg = '#ffffff';
-            let border = '#3b82f6';
-            let textColor = '#1e293b';
-
-            if (node.id === 'accept') { bg = '#dcfce7';
-                border = '#22c55e';
-                textColor = '#166534'; }
-            if (node.id === 'reject') { bg = '#fee2e2';
-                border = '#ef4444';
-                textColor = '#991b1b'; }
-            if (node.id === 'rework') { bg = '#fef9c3';
-                border = '#eab308';
-                textColor = '#854d0e'; }
-            if (node.id === 'cond') { bg = '#dbeafe';
-                border = '#3b82f6';
-                textColor = '#1e40af'; }
-            if (node.id === 'start') { bg = '#1e293b';
-                border = '#1e293b';
-                textColor = '#ffffff'; }
-
-            // Shadow filter
-            const shadow = node.type !== 'start' ? 'filter="url(#shadow)"' : '';
-
-            if (isStart) {
-                html +=
-                    `<ellipse cx="${node.x}" cy="${node.y}" rx="${rx}" ry="${ry}" fill="${bg}" stroke="${border}" stroke-width="2" ${shadow}/>`;
-                html +=
-                    `<text x="${node.x}" y="${node.y+6}" text-anchor="middle" font-size="14" font-weight="600" fill="${textColor}">${node.label}</text>`;
-            } else if (isDecision) {
-                html +=
-                    `<polygon points="${node.x},${node.y-ry} ${node.x+rx},${node.y} ${node.x},${node.y+ry} ${node.x-rx},${node.y}" fill="${bg}" stroke="${border}" stroke-width="2" ${shadow}/>`;
-                const lines = node.label.split(' ');
-                const labelText = lines.length > 2 ? lines[0] + ' ' + lines[1] + '…' : node.label;
-                html +=
-                    `<text x="${node.x}" y="${node.y+5}" text-anchor="middle" font-size="13" font-weight="600" fill="${textColor}">${labelText}</text>`;
-            } else if (isEnd) {
-                html +=
-                    `<rect x="${node.x - rx}" y="${node.y - ry}" width="${rx * 2}" height="${ry * 2}" rx="12" fill="${bg}" stroke="${border}" stroke-width="2" ${shadow}/>`;
-                html +=
-                    `<text x="${node.x}" y="${node.y+5}" text-anchor="middle" font-size="13" font-weight="600" fill="${textColor}">${node.label}</text>`;
-            } else {
-                html +=
-                    `<rect x="${node.x - rx}" y="${node.y - ry}" width="${rx * 2}" height="${ry * 2}" rx="8" fill="${bg}" stroke="${border}" stroke-width="2" ${shadow}/>`;
-                html +=
-                    `<text x="${node.x}" y="${node.y+5}" text-anchor="middle" font-size="13" font-weight="600" fill="${textColor}">${node.label}</text>`;
-            }
-        }
-
-        svg.innerHTML = html;
-    }
-
-    // ============================================================
-    // TOOL SWITCHING
-    // ============================================================
-    function switchTool(index) {
-        // Update cards
-        document.querySelectorAll('.tool-card').forEach((el, i) => {
-            el.classList.toggle('active', i === index);
-        });
-
-        // Update panels
-        document.querySelectorAll('.tool-panel').forEach((el, i) => {
-            el.classList.toggle('active', i === index);
-        });
-
-        // Trigger chart resize for active panel
-        setTimeout(() => {
-            const panel = document.querySelector(`.tool-panel[data-panel="${index}"]`);
-            if (panel) {
-                const canvas = panel.querySelector('canvas');
-                if (canvas && canvas.chart) {
-                    canvas.chart.resize();
+                if (edge.label) {
+                    html +=
+                        `<text x="${midX + (dy > 0 ? 15 : -15)}" y="${midY + (dx > 0 ? -8 : 8)}" font-size="11" fill="#64748b" font-weight="500">${edge.label}</text>`;
                 }
             }
-        }, 100);
-    }
 
-    // ============================================================
-    // INIT
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', () => {
-        fetchAndAnalyze();
-    });
-</script>
+            // Draw nodes
+            for (const node of nodes) {
+                const isStart = node.type === 'start';
+                const isEnd = node.type === 'end';
+                const isDecision = node.type === 'decision';
+
+                let rx = 40,
+                    ry = 30;
+                let shape = 'rect';
+
+                if (isStart) {
+                    rx = 35;
+                    ry = 22;
+                } else if (isDecision) {
+                    rx = 45;
+                    ry = 30;
+                } else if (isEnd) {
+                    rx = 40;
+                    ry = 25;
+                }
+
+                let bg = '#ffffff';
+                let border = '#3b82f6';
+                let textColor = '#1e293b';
+
+                if (node.id === 'accept') { bg = '#dcfce7';
+                    border = '#22c55e';
+                    textColor = '#166534'; }
+                if (node.id === 'reject') { bg = '#fee2e2';
+                    border = '#ef4444';
+                    textColor = '#991b1b'; }
+                if (node.id === 'rework') { bg = '#fef9c3';
+                    border = '#eab308';
+                    textColor = '#854d0e'; }
+                if (node.id === 'cond') { bg = '#dbeafe';
+                    border = '#3b82f6';
+                    textColor = '#1e40af'; }
+                if (node.id === 'start') { bg = '#1e293b';
+                    border = '#1e293b';
+                    textColor = '#ffffff'; }
+
+                // Shadow filter
+                const shadow = node.type !== 'start' ? 'filter="url(#shadow)"' : '';
+
+                if (isStart) {
+                    html +=
+                        `<ellipse cx="${node.x}" cy="${node.y}" rx="${rx}" ry="${ry}" fill="${bg}" stroke="${border}" stroke-width="2" ${shadow}/>`;
+                    html +=
+                        `<text x="${node.x}" y="${node.y+6}" text-anchor="middle" font-size="14" font-weight="600" fill="${textColor}">${node.label}</text>`;
+                } else if (isDecision) {
+                    html +=
+                        `<polygon points="${node.x},${node.y-ry} ${node.x+rx},${node.y} ${node.x},${node.y+ry} ${node.x-rx},${node.y}" fill="${bg}" stroke="${border}" stroke-width="2" ${shadow}/>`;
+                    const lines = node.label.split(' ');
+                    const labelText = lines.length > 2 ? lines[0] + ' ' + lines[1] + '…' : node.label;
+                    html +=
+                        `<text x="${node.x}" y="${node.y+5}" text-anchor="middle" font-size="13" font-weight="600" fill="${textColor}">${labelText}</text>`;
+                } else if (isEnd) {
+                    html +=
+                        `<rect x="${node.x - rx}" y="${node.y - ry}" width="${rx * 2}" height="${ry * 2}" rx="12" fill="${bg}" stroke="${border}" stroke-width="2" ${shadow}/>`;
+                    html +=
+                        `<text x="${node.x}" y="${node.y+5}" text-anchor="middle" font-size="13" font-weight="600" fill="${textColor}">${node.label}</text>`;
+                } else {
+                    html +=
+                        `<rect x="${node.x - rx}" y="${node.y - ry}" width="${rx * 2}" height="${ry * 2}" rx="8" fill="${bg}" stroke="${border}" stroke-width="2" ${shadow}/>`;
+                    html +=
+                        `<text x="${node.x}" y="${node.y+5}" text-anchor="middle" font-size="13" font-weight="600" fill="${textColor}">${node.label}</text>`;
+                }
+            }
+
+            svg.innerHTML = html;
+        }
+
+        // ============================================================
+        // TOOL SWITCHING
+        // ============================================================
+        function switchTool(index) {
+            // Update cards
+            document.querySelectorAll('.tool-card').forEach((el, i) => {
+                el.classList.toggle('active', i === index);
+            });
+
+            // Update panels
+            document.querySelectorAll('.tool-panel').forEach((el, i) => {
+                el.classList.toggle('active', i === index);
+            });
+
+            // Trigger chart resize for active panel
+            setTimeout(() => {
+                const panel = document.querySelector(`.tool-panel[data-panel="${index}"]`);
+                if (panel) {
+                    const canvas = panel.querySelector('canvas');
+                    if (canvas && canvas.chart) {
+                        canvas.chart.resize();
+                    }
+                }
+            }, 100);
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndAnalyze();
+        });
+    </script>
 </body>
 </html>
