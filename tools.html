@@ -31,17 +31,17 @@
             border-radius: 1rem;
             padding: 1rem 0.75rem;
             text-align: center;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
         .tool-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10);
             border-color: #dbeafe;
         }
         .tool-card.active {
             border-color: #3b82f6;
             background: #eff6ff;
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.18);
         }
         .tool-card .icon-wrapper {
             width: 48px;
@@ -240,7 +240,7 @@
             </div>
         </div>
 
-        <!-- ========== TOOL NAVIGATION ========== -->
+        <!-- ========== TOOL NAVIGATION (with shadow boxes on each card) ========== -->
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4 mb-8">
             <div class="tool-card active" data-tool="0" onclick="switchTool(0)">
                 <div class="icon-wrapper bg-blue-50 text-blue-600"><i class="fas fa-list-check"></i></div>
@@ -433,7 +433,7 @@
 
     <script>
         // ============================================================
-        // DATA FETCH & PROCESSING (FULLY INTACT)
+        // DATA FETCH & PROCESSING
         // ============================================================
         let allInspections = [];
         let filteredInspections = [];
