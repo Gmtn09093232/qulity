@@ -49,13 +49,15 @@ app.get('/login', (req, res) => {
 app.get('/list', (req, res) => {
   res.sendFile(path.join(__dirname, 'list.html'));
 });
-// NEW: route for Project Follow-Up page (up.html)
+// Project Follow-Up page (up.html)
 app.get('/up', (req, res) => {
   res.sendFile(path.join(__dirname, 'up.html'));
 });
-app.get('/up', (req, res) => {
+// NEW: route for 7 QC Tools page (tools.html) – accessible at /tools
+app.get('/tools', (req, res) => {
   res.sendFile(path.join(__dirname, 'tools.html'));
 });
+
 // GET a single inspection by ID
 app.get('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
