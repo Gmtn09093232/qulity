@@ -129,11 +129,19 @@
             </div>
         </div>
 
-        <!-- Global Filters -->
+        <!-- Global Filters (added Operation Condition) -->
         <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Subtitle</label><select id="filterSubtitle" class="filter-select w-full"><option value="">All Subtitles</option></select></div>
+            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Operation Condition</label>
+                <select id="filterOpCondition" class="filter-select w-full">
+                    <option value="">All</option>
+                    <option value="holdup">Holdup</option>
+                    <option value="continuous">Continuous</option>
+                    <option value="ending">Ending</option>
+                </select>
+            </div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Status</label><select id="filterStatus" class="filter-select w-full"><option value="">All Status</option><option value="needs_action">Needs Action</option><option value="on_track">On Track</option><option value="critical">Critical</option></select></div>
             <div><button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl text-sm">Clear Filters</button></div>
         </div>
@@ -196,14 +204,11 @@
         // --- FIX: read operation_status as Operation Condition and normalise 'Continue' to 'continuous' ---
         function getExtraField(insp, field) {
             if (field === 'Operation Condition') {
-                // Use the top-level operation_status column
                 const raw = insp.operation_status?.trim() || '';
-                // Normalise: 'Continue' -> 'continuous', everything else lowercased
                 const lower = raw.toLowerCase();
                 if (lower === 'continue') return 'continuous';
                 return lower; // 'holdup' or 'ending'
             }
-            // For other fields, try top-level then extra_fields
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
@@ -214,7 +219,6 @@
                 if (!res.ok) throw new Error();
                 return await res.json();
             } catch {
-                // Fallback mock (includes operation_status)
                 return generateMockInspections();
             }
         }
@@ -230,9 +234,8 @@
             const partNames = ["Frame", "Motor Mount", "Bolt Set", "Hydraulic Cylinder", "Control Board"];
             const dwgNos = ["DWG-1001", "DWG-1002", "DWG-1003"];
             const tagNos = ["TAG-A01", "TAG-B02", "TAG-C03"];
-            const opStatuses = ["Ending", "Holdup", "Continue"]; // DB values
+            const opStatuses = ["Ending", "Holdup", "Continue"];
 
-            // Ensure each project has all three statuses
             for (const client of clients) {
                 for (const title of titles) {
                     for (const status of opStatuses) {
@@ -269,7 +272,7 @@
                             submitted_at: date.toISOString(),
                             process_type: processes[Math.floor(Math.random() * processes.length)],
                             username: engineers[Math.floor(Math.random() * engineers.length)],
-                            operation_status: status, // top-level column
+                            operation_status: status,
                             extra_fields: {
                                 "Customer Name": client,
                                 "Project Name": title,
@@ -290,7 +293,6 @@
                 }
             }
 
-            // Extra random records
             for (let i = 0; i < 20; i++) {
                 const date = new Date();
                 date.setDate(date.getDate() - Math.floor(Math.random() * 90));
@@ -715,18 +717,34 @@
 
         let originalProjects = [];
 
+        // --- Updated applyFilters with operation condition ---
         function applyFilters() {
             const client = document.getElementById('filterClient').value;
             const title = document.getElementById('filterTitle').value;
             const subtitle = document.getElementById('filterSubtitle').value;
+            const opCond = document.getElementById('filterOpCondition').value;
             const status = document.getElementById('filterStatus').value;
+
             let filtered = [...originalProjects];
+
             if (client) filtered = filtered.filter(p => p.client === client);
             if (title) filtered = filtered.filter(p => p.title === title);
             if (subtitle) filtered = filtered.filter(p => p.subtitlesArray.some(s => s.name === subtitle));
+
+            // Filter by operation condition: keep projects that have at least one inspection with that condition
+            if (opCond) {
+                filtered = filtered.filter(p => {
+                    return p.inspections.some(insp => {
+                        const cond = getExtraField(insp, 'Operation Condition');
+                        return cond === opCond;
+                    });
+                });
+            }
+
             if (status === 'needs_action') filtered = filtered.filter(p => p.followStatus === 'needs_action');
             else if (status === 'critical') filtered = filtered.filter(p => p.followStatus === 'critical');
             else if (status === 'on_track') filtered = filtered.filter(p => p.followStatus === 'on_track');
+
             renderProjects(filtered);
         }
 
@@ -746,6 +764,7 @@
             document.getElementById('filterClient').value = '';
             document.getElementById('filterTitle').value = '';
             document.getElementById('filterSubtitle').value = '';
+            document.getElementById('filterOpCondition').value = '';
             document.getElementById('filterStatus').value = '';
             applyFilters();
         }
@@ -766,6 +785,7 @@
         document.getElementById('filterClient').addEventListener('change', applyFilters);
         document.getElementById('filterTitle').addEventListener('change', applyFilters);
         document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
+        document.getElementById('filterOpCondition').addEventListener('change', applyFilters);
         document.getElementById('filterStatus').addEventListener('change', applyFilters);
         window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
         refreshData();
