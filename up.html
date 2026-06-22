@@ -10,104 +10,26 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        body {
-            background: #f1f5f9;
-            font-family: 'Inter', system-ui, sans-serif;
-        }
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-        .progress-bar {
-            height: 6px;
-            border-radius: 10px;
-            background-color: #e2e8f0;
-        }
-        .progress-fill {
-            height: 6px;
-            border-radius: 10px;
-            background-color: #10b981;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 1rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-        }
-        th {
-            background-color: #f8fafc;
-            padding: 12px 10px;
-            font-weight: 600;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #eef2f6;
-            vertical-align: middle;
-        }
-        .filter-select {
-            border-radius: 0.75rem;
-            border: 1px solid #e2e8f0;
-            padding: 0.5rem 1rem;
-            background: white;
-        }
-        .parts-table {
-            width: 100%;
-            font-size: 0.75rem;
-            background: white;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-        }
-        .parts-table th {
-            background-color: #f1f5f9;
-            padding: 8px 10px;
-            font-weight: 600;
-            text-align: left;
-            border-bottom: 1px solid #cbd5e1;
-        }
-        .parts-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .parts-table tr:last-child td {
-            border-bottom: none;
-        }
-        .parts-table tbody tr:hover {
-            background-color: #f8fafc;
-        }
-        .modal-filter-bar {
-            background: #f8fafc;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
-            margin-bottom: 1rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: flex-end;
-        }
-        .btn-excel {
-            background-color: #10b981;
-            color: white;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-excel:hover {
-            background-color: #059669;
-        }
-        .btn-excel-sm {
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-        }
+        body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+        .progress-bar { height: 6px; border-radius: 10px; background-color: #e2e8f0; }
+        .progress-fill { height: 6px; border-radius: 10px; background-color: #10b981; }
+        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background-color: #f8fafc; padding: 12px 10px; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 12px 10px; border-bottom: 1px solid #eef2f6; vertical-align: middle; }
+        .filter-select { border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; background: white; }
+        .parts-table { width: 100%; font-size: 0.75rem; background: white; border-radius: 0.5rem; overflow: hidden; border: 1px solid #e2e8f0; }
+        .parts-table th { background-color: #f1f5f9; padding: 8px 10px; font-weight: 600; text-align: left; border-bottom: 1px solid #cbd5e1; }
+        .parts-table td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+        .parts-table tr:last-child td { border-bottom: none; }
+        .parts-table tbody tr:hover { background-color: #f8fafc; }
+        .modal-filter-bar { background: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+        .btn-excel { background-color: #10b981; color: white; border-radius: 0.5rem; padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-excel:hover { background-color: #059669; }
+        .btn-excel-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+        .clickable-part { color: #2563eb; cursor: pointer; text-decoration: underline; }
+        .clickable-part:hover { color: #1d4ed8; }
     </style>
 </head>
 <body class="antialiased">
@@ -120,7 +42,7 @@
                     <i class="fa-solid fa-flag-checkered text-indigo-600"></i>
                     Project Follow‑Up (Sub‑Assembly View)
                 </h1>
-                <p class="text-slate-500 text-sm">Track sub‑assemblies and parts (with DWG & Tag) – filters apply to all data</p>
+                <p class="text-slate-500 text-sm">Track sub‑assemblies and parts – click a part to see its full operation history</p>
             </div>
             <div class="flex gap-3">
                 <button onclick="exportGlobalToExcel()" class="btn-excel btn-excel-sm"><i class="fa-solid fa-file-excel"></i> Export Excel (Projects)</button>
@@ -134,6 +56,14 @@
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Subtitle</label><select id="filterSubtitle" class="filter-select w-full"><option value="">All Subtitles</option></select></div>
+            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Operation Condition</label>
+                <select id="filterOpCondition" class="filter-select w-full">
+                    <option value="">All</option>
+                    <option value="holdup">Holdup</option>
+                    <option value="continuous">Continuous</option>
+                    <option value="ending">Ending</option>
+                </select>
+            </div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Status</label><select id="filterStatus" class="filter-select w-full"><option value="">All Status</option><option value="needs_action">Needs Action</option><option value="on_track">On Track</option><option value="critical">Critical</option></select></div>
             <div><button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl text-sm">Clear Filters</button></div>
         </div>
@@ -172,7 +102,7 @@
             </div>
         </div>
 
-        <!-- Modal -->
+        <!-- Main Modal (Sub‑Assembly Details) -->
         <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closeModal(event)">
             <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
@@ -185,6 +115,17 @@
                 <div id="modalBody" class="p-4 space-y-5"></div>
             </div>
         </div>
+
+        <!-- Part Detail Modal (click on part name) -->
+        <div id="partModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closePartModal(event)">
+            <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
+                <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-lg" id="partModalTitle">Part Operation History</h3>
+                    <button onclick="closePartModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div id="partModalBody" class="p-4"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -193,17 +134,14 @@
         let currentModalProject = null;
         let currentFilteredProjects = [];
 
-        // --- FIX: read operation_status as Operation Condition and normalise 'Continue' to 'continuous' ---
+        // --- read operation_status and normalise 'Continue' to 'continuous' ---
         function getExtraField(insp, field) {
             if (field === 'Operation Condition') {
-                // Use the top-level operation_status column
                 const raw = insp.operation_status?.trim() || '';
-                // Normalise: 'Continue' -> 'continuous', everything else lowercased
                 const lower = raw.toLowerCase();
                 if (lower === 'continue') return 'continuous';
                 return lower; // 'holdup' or 'ending'
             }
-            // For other fields, try top-level then extra_fields
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
@@ -214,27 +152,26 @@
                 if (!res.ok) throw new Error();
                 return await res.json();
             } catch {
-                // Fallback mock (includes operation_status)
                 return generateMockInspections();
             }
         }
 
-        // --- Mock data generator with operation_status ---
+        // --- Mock data generator (now includes more variety) ---
         function generateMockInspections() {
             const mock = [];
-            const processes = ["Punching", "Welding", "Assembling", "Lathe", "Milling"];
+            const processes = ["Punching", "Welding", "Assembling", "Lathe", "Milling", "Bending", "Drilling", "Pressing"];
             const engineers = ["Gizie M.", "Abebech A.", "Biruk D.", "Selam W."];
-            const clients = ["DEF Metal", "AA Manufacturing", "Bishoftu Tech"];
-            const titles = ["Animal Feed Plant", "Bridge Bracket", "Hydraulic Cylinder"];
-            const subtitles = ["mixer", "conveyor", "control panel", "frame", "hydraulic unit"];
-            const partNames = ["Frame", "Motor Mount", "Bolt Set", "Hydraulic Cylinder", "Control Board"];
-            const dwgNos = ["DWG-1001", "DWG-1002", "DWG-1003"];
-            const tagNos = ["TAG-A01", "TAG-B02", "TAG-C03"];
-            const opStatuses = ["Ending", "Holdup", "Continue"]; // DB values
+            const clients = ["DEF Metal", "AA Manufacturing", "Bishoftu Tech", "AMIMTDE", "BGFFF", "Awscod"];
+            const titles = ["Animal Feed Plant", "Bridge Bracket", "Hydraulic Cylinder", "gear box", "OIL tanker", "Waters hole drill", "roller door"];
+            const subtitles = ["mixer", "conveyor", "control panel", "frame", "hydraulic unit", "cover sub assmbelly", "stand", "bottom", "top cover sub assmbelly"];
+            const partNames = ["Frame", "Motor Mount", "Bolt Set", "Hydraulic Cylinder", "Control Board", "plate", "sheet", "stand plate", "Top cap", "Cover stand", "Supr gear 25 tooth"];
+            const dwgNos = ["DWG-1001", "DWG-1002", "DWG-1003", "1", "2", "2.1", "23", "2.3", "ot12", "p12", "ol45", "pl32", "p132", "56", "1569", "15256", "1532", "01", "02", "11", "15568", "255445"];
+            const tagNos = ["TAG-A01", "TAG-B02", "TAG-C03", "gm1", "gm2", "gm1233", "gmtn.", "gmtn", "gmi23", "gmtn125", "tg123", "456", "jhj", "1", "2", "T1", "gf", "55"];
+            const opStatuses = ["Ending", "Holdup", "Continue"];
 
-            // Ensure each project has all three statuses
-            for (const client of clients) {
-                for (const title of titles) {
+            // Ensure every combination of client/title has at least one inspection per status
+            for (const client of clients.slice(0, 3)) {
+                for (const title of titles.slice(0, 3)) {
                     for (const status of opStatuses) {
                         const date = new Date();
                         date.setDate(date.getDate() - Math.floor(Math.random() * 60));
@@ -264,12 +201,13 @@
                         const partName = partNames[Math.floor(Math.random() * partNames.length)];
                         const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
                         const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
+                        const process = processes[Math.floor(Math.random() * processes.length)];
                         mock.push({
                             id: mock.length,
                             submitted_at: date.toISOString(),
-                            process_type: processes[Math.floor(Math.random() * processes.length)],
+                            process_type: process,
                             username: engineers[Math.floor(Math.random() * engineers.length)],
-                            operation_status: status, // top-level column
+                            operation_status: status,
                             extra_fields: {
                                 "Customer Name": client,
                                 "Project Name": title,
@@ -290,8 +228,8 @@
                 }
             }
 
-            // Extra random records
-            for (let i = 0; i < 20; i++) {
+            // Additional random records
+            for (let i = 0; i < 40; i++) {
                 const date = new Date();
                 date.setDate(date.getDate() - Math.floor(Math.random() * 90));
                 const ratingRand = Math.random();
@@ -322,11 +260,12 @@
                 const partName = partNames[Math.floor(Math.random() * partNames.length)];
                 const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
                 const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
+                const process = processes[Math.floor(Math.random() * processes.length)];
                 const status = opStatuses[Math.floor(Math.random() * opStatuses.length)];
                 mock.push({
                     id: mock.length,
                     submitted_at: date.toISOString(),
-                    process_type: processes[Math.floor(Math.random() * processes.length)],
+                    process_type: process,
                     username: engineers[Math.floor(Math.random() * engineers.length)],
                     operation_status: status,
                     extra_fields: {
@@ -349,7 +288,7 @@
             return mock;
         }
 
-        // --- aggregation, rendering, export (unchanged) ---
+        // --- aggregation functions (updated to include operations per part) ---
         function aggregateProjects(inspections) {
             const projectMap = new Map();
             for (const insp of inspections) {
@@ -391,6 +330,9 @@
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 const dwgNo = getExtraField(insp, 'Drawing No.') || '—';
                 const tagNo = getExtraField(insp, 'Tag No.') || '—';
+                const processType = insp.process_type || 'Unknown Process';
+                const opCondition = getExtraField(insp, 'Operation Condition') || '—';
+                const opDesc = `${processType} (${opCondition})`;
 
                 totalInspections++;
                 totalDelivered += (insp.delivered_qty || 0);
@@ -423,12 +365,18 @@
                 sub.sumConditional += (insp.conditional_accept_qty || 0);
 
                 if (!sub.partsMap.has(partName)) {
-                    sub.partsMap.set(partName, { quantity: 0, dwgSet: new Set(), tagSet: new Set() });
+                    sub.partsMap.set(partName, {
+                        quantity: 0,
+                        dwgSet: new Set(),
+                        tagSet: new Set(),
+                        operationsSet: new Set()
+                    });
                 }
                 const partData = sub.partsMap.get(partName);
                 partData.quantity += (insp.delivered_qty || 0);
                 if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
                 if (tagNo !== '—') partData.tagSet.add(tagNo);
+                partData.operationsSet.add(opDesc);
                 sub.partsMap.set(partName, partData);
             }
 
@@ -450,7 +398,8 @@
                     part_name: partName,
                     quantity: data.quantity,
                     dwgList: Array.from(data.dwgSet).join(', '),
-                    tagList: Array.from(data.tagSet).join(', ')
+                    tagList: Array.from(data.tagSet).join(', '),
+                    operations: Array.from(data.operationsSet).join(', ')
                 }))
             }));
 
@@ -558,6 +507,9 @@
                         if (part.dwgList || part.tagList) rows.push(['      DWG: ' + part.dwgList, 'Tag: ' + part
                             .tagList, '', '', '', '', '', ''
                         ]);
+                        if (part.operations) rows.push(['      Operations: ' + part.operations, '', '', '', '', '',
+                            '', ''
+                        ]);
                     }
                 } else { rows.push(['  No parts recorded', '', '', '', '', '', '', '']); }
                 rows.push([]);
@@ -572,6 +524,75 @@
                 );
         }
 
+        // --- show part details in a new modal ---
+        function showPartDetails(partName) {
+            if (!currentModalProject) return;
+            const allInspections = currentModalProject.inspections;
+            const partInspections = allInspections.filter(insp => getExtraField(insp, 'Part Name') === partName);
+            if (!partInspections.length) {
+                alert('No inspections found for this part.');
+                return;
+            }
+
+            document.getElementById('partModalTitle').innerText = `Operations for: ${escapeHtml(partName)}`;
+            const body = document.getElementById('partModalBody');
+
+            let tableHtml = `
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm border">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="p-2 text-left">Date</th>
+                                <th class="p-2 text-left">Process Type</th>
+                                <th class="p-2 text-left">Operation Condition</th>
+                                <th class="p-2 text-center">Delivered</th>
+                                <th class="p-2 text-center">Accepted</th>
+                                <th class="p-2 text-center">Rework</th>
+                                <th class="p-2 text-center">Reject</th>
+                                <th class="p-2 text-center">Conditional</th>
+                                <th class="p-2 text-center">Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            // Sort by date ascending
+            partInspections.sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+            for (const insp of partInspections) {
+                const date = new Date(insp.submitted_at).toLocaleDateString();
+                const process = insp.process_type || '—';
+                const opCond = getExtraField(insp, 'Operation Condition') || '—';
+                const del = insp.delivered_qty || 0;
+                const acc = insp.accepted_qty || 0;
+                const rework = insp.rework_qty || 0;
+                const rej = insp.reject_qty || 0;
+                const cond = insp.conditional_accept_qty || 0;
+                const rating = insp.acceptance_data?.p0?.rating || '—';
+                tableHtml += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2">${date}</td>
+                        <td class="p-2">${escapeHtml(process)}</td>
+                        <td class="p-2">${escapeHtml(opCond)}</td>
+                        <td class="p-2 text-center">${del}</td>
+                        <td class="p-2 text-center text-emerald-700">${acc}</td>
+                        <td class="p-2 text-center text-amber-600">${rework}</td>
+                        <td class="p-2 text-center text-red-600">${rej}</td>
+                        <td class="p-2 text-center text-blue-600">${cond}</td>
+                        <td class="p-2 text-center">${escapeHtml(rating)}</td>
+                    </tr>
+                `;
+            }
+            tableHtml += `</tbody></table></div>`;
+            body.innerHTML = tableHtml;
+            document.getElementById('partModal').classList.remove('hidden');
+        }
+
+        function closePartModal(e) {
+            if (!e || e.target === document.getElementById('partModal') || e.target.closest('.fa-xmark')) {
+                document.getElementById('partModal').classList.add('hidden');
+            }
+        }
+
+        // --- main modal functions ---
         function showProjectDetails(client, title) {
             const project = allProjects.find(p => p.client === client && p.title === title);
             if (!project) return;
@@ -643,16 +664,18 @@
                                             <th class="text-center">Total Delivered Qty</th>
                                             <th>DWG No.</th>
                                             <th>Tag No.</th>
+                                            <th>Operations</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         ${sub.partsList.map((p, idx) => `
                                             <tr>
                                                 <td class="text-center text-red-600 font-bold">${idx + 1}</td>
-                                                <td>${escapeHtml(p.part_name)}</td>
+                                                <td><span class="clickable-part" onclick="showPartDetails('${escapeHtml(p.part_name)}')">${escapeHtml(p.part_name)}</span></td>
                                                 <td class="text-center">${p.quantity}</td>
                                                 <td>${escapeHtml(p.dwgList) || '—'}</td>
                                                 <td>${escapeHtml(p.tagList) || '—'}</td>
+                                                <td class="text-xs">${escapeHtml(p.operations) || '—'}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -719,11 +742,20 @@
             const client = document.getElementById('filterClient').value;
             const title = document.getElementById('filterTitle').value;
             const subtitle = document.getElementById('filterSubtitle').value;
+            const opCond = document.getElementById('filterOpCondition').value;
             const status = document.getElementById('filterStatus').value;
             let filtered = [...originalProjects];
             if (client) filtered = filtered.filter(p => p.client === client);
             if (title) filtered = filtered.filter(p => p.title === title);
             if (subtitle) filtered = filtered.filter(p => p.subtitlesArray.some(s => s.name === subtitle));
+            if (opCond) {
+                filtered = filtered.filter(p => {
+                    return p.inspections.some(insp => {
+                        const cond = getExtraField(insp, 'Operation Condition');
+                        return cond === opCond;
+                    });
+                });
+            }
             if (status === 'needs_action') filtered = filtered.filter(p => p.followStatus === 'needs_action');
             else if (status === 'critical') filtered = filtered.filter(p => p.followStatus === 'critical');
             else if (status === 'on_track') filtered = filtered.filter(p => p.followStatus === 'on_track');
@@ -746,6 +778,7 @@
             document.getElementById('filterClient').value = '';
             document.getElementById('filterTitle').value = '';
             document.getElementById('filterSubtitle').value = '';
+            document.getElementById('filterOpCondition').value = '';
             document.getElementById('filterStatus').value = '';
             applyFilters();
         }
@@ -766,6 +799,7 @@
         document.getElementById('filterClient').addEventListener('change', applyFilters);
         document.getElementById('filterTitle').addEventListener('change', applyFilters);
         document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
+        document.getElementById('filterOpCondition').addEventListener('change', applyFilters);
         document.getElementById('filterStatus').addEventListener('change', applyFilters);
         window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
         refreshData();
