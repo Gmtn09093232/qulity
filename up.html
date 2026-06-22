@@ -216,7 +216,69 @@
             const dwgNos = ["DWG-1001", "DWG-1002", "DWG-1003"];
             const tagNos = ["TAG-A01", "TAG-B02", "TAG-C03"];
             const opConditions = ["holdup", "continuous", "ending"];
-            for (let i = 0; i < 60; i++) {
+
+            // Ensure every project (client+title) has at least one inspection for each operation condition
+            for (const client of clients) {
+                for (const title of titles) {
+                    // For each operation condition, create a base inspection
+                    for (const opCond of opConditions) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - Math.floor(Math.random() * 60));
+                        const ratingRand = Math.random();
+                        let rating = "Accepted";
+                        let conditional = 0;
+                        if (ratingRand < 0.25) rating = "Rework";
+                        else if (ratingRand < 0.4) rating = "Reject";
+                        else if (ratingRand < 0.48) { rating = "Conditional Accept";
+                            conditional = Math.floor(Math.random() * 10) + 1; }
+                        const delivered = Math.floor(Math.random() * 30) + 10;
+                        let accepted = 0,
+                            rework = 0,
+                            reject = 0;
+                        if (rating === "Accepted") { accepted = delivered;
+                            rework = 0;
+                            reject = 0; } else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6);
+                            rework = delivered - accepted;
+                            reject = 0; } else if (rating === "Reject") { accepted = 0;
+                            rework = 0;
+                            reject = delivered; } else if (rating === "Conditional Accept") { accepted = Math.floor(
+                                delivered * 0.8);
+                            rework = 0;
+                            reject = 0; }
+                        const failureCost = (rework + reject) * (Math.random() * 600 + 150);
+                        // Pick a random subtitle and part name for variety
+                        const subtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
+                        const partName = partNames[Math.floor(Math.random() * partNames.length)];
+                        const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
+                        const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
+                        mock.push({
+                            id: mock.length,
+                            submitted_at: date.toISOString(),
+                            process_type: processes[Math.floor(Math.random() * processes.length)],
+                            username: engineers[Math.floor(Math.random() * engineers.length)],
+                            extra_fields: {
+                                "Customer Name": client,
+                                "Project Name": title,
+                                "Subtitle": subtitle,
+                                "Part Name": partName,
+                                "Drawing No.": dwg,
+                                "Tag No.": tag,
+                                "Operation Condition": opCond
+                            },
+                            acceptance_data: { p0: { rating } },
+                            delivered_qty: delivered,
+                            accepted_qty: accepted,
+                            rework_qty: rework,
+                            reject_qty: reject,
+                            conditional_accept_qty: conditional,
+                            total_internal_failure_cost: failureCost
+                        });
+                    }
+                }
+            }
+
+            // Add some extra random inspections to increase data volume
+            for (let i = 0; i < 30; i++) {
                 const date = new Date();
                 date.setDate(date.getDate() - Math.floor(Math.random() * 90));
                 const ratingRand = Math.random();
@@ -236,23 +298,31 @@
                     rework = delivered - accepted;
                     reject = 0; } else if (rating === "Reject") { accepted = 0;
                     rework = 0;
-                    reject = delivered; } else if (rating === "Conditional Accept") { accepted = Math.floor(delivered * 0.8);
+                    reject = delivered; } else if (rating === "Conditional Accept") { accepted = Math.floor(delivered *
+                        0.8);
                     rework = 0;
                     reject = 0; }
                 const failureCost = (rework + reject) * (Math.random() * 600 + 150);
+                const client = clients[Math.floor(Math.random() * clients.length)];
+                const title = titles[Math.floor(Math.random() * titles.length)];
+                const subtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
+                const partName = partNames[Math.floor(Math.random() * partNames.length)];
+                const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
+                const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
+                const opCond = opConditions[Math.floor(Math.random() * opConditions.length)];
                 mock.push({
-                    id: i,
+                    id: mock.length,
                     submitted_at: date.toISOString(),
                     process_type: processes[Math.floor(Math.random() * processes.length)],
                     username: engineers[Math.floor(Math.random() * engineers.length)],
                     extra_fields: {
-                        "Customer Name": clients[Math.floor(Math.random() * clients.length)],
-                        "Project Name": titles[Math.floor(Math.random() * titles.length)],
-                        "Subtitle": subtitles[Math.floor(Math.random() * subtitles.length)],
-                        "Part Name": partNames[Math.floor(Math.random() * partNames.length)],
-                        "Drawing No.": dwgNos[Math.floor(Math.random() * dwgNos.length)],
-                        "Tag No.": tagNos[Math.floor(Math.random() * tagNos.length)],
-                        "Operation Condition": opConditions[Math.floor(Math.random() * opConditions.length)]
+                        "Customer Name": client,
+                        "Project Name": title,
+                        "Subtitle": subtitle,
+                        "Part Name": partName,
+                        "Drawing No.": dwg,
+                        "Tag No.": tag,
+                        "Operation Condition": opCond
                     },
                     acceptance_data: { p0: { rating } },
                     delivered_qty: delivered,
