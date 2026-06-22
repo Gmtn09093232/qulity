@@ -1,22 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
     <title>Project Follow‑Up | Sub‑Assembly View</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
-        .status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
-        .progress-bar { height: 6px; border-radius: 10px; background-color: #e2e8f0; }
-        .progress-fill { height: 6px; border-radius: 10px; background-color: #10b981; }
-        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background-color: #f8fafc; padding: 12px 10px; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
-        td { padding: 12px 10px; border-bottom: 1px solid #eef2f6; vertical-align: middle; }
-        .filter-select { border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; background: white; }
+        body {
+            background: #f1f5f9;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .progress-bar {
+            height: 6px;
+            border-radius: 10px;
+            background-color: #e2e8f0;
+        }
+        .progress-fill {
+            height: 6px;
+            border-radius: 10px;
+            background-color: #10b981;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th {
+            background-color: #f8fafc;
+            padding: 12px 10px;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #eef2f6;
+            vertical-align: middle;
+        }
+        .filter-select {
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 1rem;
+            background: white;
+        }
         .parts-table {
             width: 100%;
             font-size: 0.75rem;
@@ -36,494 +75,617 @@
             padding: 8px 10px;
             border-bottom: 1px solid #e2e8f0;
         }
-        .parts-table tr:last-child td { border-bottom: none; }
-        .parts-table tbody tr:hover { background-color: #f8fafc; }
-        .modal-filter-bar { background: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
-        .btn-excel { background-color: #10b981; color: white; border-radius: 0.5rem; padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; }
-        .btn-excel:hover { background-color: #059669; }
-        .btn-excel-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+        .parts-table tr:last-child td {
+            border-bottom: none;
+        }
+        .parts-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+        .modal-filter-bar {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+        .btn-excel {
+            background-color: #10b981;
+            color: white;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-excel:hover {
+            background-color: #059669;
+        }
+        .btn-excel-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body class="antialiased">
 
-<div class="max-w-7xl mx-auto px-4 py-6 md:px-6">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-flag-checkered text-indigo-600"></i> 
-                Project Follow‑Up (Sub‑Assembly View)
-            </h1>
-            <p class="text-slate-500 text-sm">Track sub‑assemblies and parts (with DWG & Tag) – filters apply to all data</p>
-        </div>
-        <div class="flex gap-3">
-            <button onclick="exportGlobalToExcel()" class="btn-excel btn-excel-sm"><i class="fa-solid fa-file-excel"></i> Export Excel (Projects)</button>
-            <button onclick="refreshData()" class="bg-white hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm text-sm font-medium text-indigo-600 transition"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
-            <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm">← Back</button>
-        </div>
-    </div>
-
-    <!-- Global Filters -->
-    <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
-        <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
-        <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
-        <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Subtitle</label><select id="filterSubtitle" class="filter-select w-full"><option value="">All Subtitles</option></select></div>
-        <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Status</label><select id="filterStatus" class="filter-select w-full"><option value="">All Status</option><option value="needs_action">Needs Action</option><option value="on_track">On Track</option><option value="critical">Critical</option></select></div>
-        <div><button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl text-sm">Clear Filters</button></div>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-diagram-project"></i> Active Projects</div><p class="text-2xl font-bold" id="totalProjects">—</p></div>
-        <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Need Follow‑up</div><p class="text-2xl font-bold text-amber-600" id="needFollowup">—</p></div>
-        <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-chart-line"></i> Avg. Acceptance</div><p class="text-2xl font-bold text-emerald-600" id="avgAcceptance">—%</p></div>
-    </div>
-
-    <!-- Projects Table -->
-    <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-        <div class="px-5 py-3 border-b bg-slate-50 flex justify-between"><h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2><span class="text-xs text-slate-400" id="recordCount"></span></div>
-        <div class="table-wrapper">
-            <table class="min-w-full" id="projectsTable">
-                <thead>
-                    <tr>
-                        <th class="text-left">Client</th>
-                        <th class="text-left">Project Title</th>
-                        <th class="text-center">Sub‑assemblies</th>
-                        <th class="text-center">Insp.</th>
-                        <th class="text-center">Delivered Qty</th>
-                        <th class="text-center">Accepted Qty</th>
-                        <th class="text-center">Rework Qty</th>
-                        <th class="text-center">Reject Qty</th>
-                        <th class="text-center">Conditional Accept</th>
-                        <th class="text-center">Accept%</th>
-                        <th class="text-center">Last Insp.</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center">Details</th>
-                    </tr>
-                </thead>
-                <tbody id="projectsTableBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Modal -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closeModal(event)">
-        <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
-            <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg" id="modalTitle"></h3>
-                <div class="flex items-center gap-2">
-                    <button id="modalExcelBtn" class="btn-excel btn-excel-sm"><i class="fa-solid fa-file-excel"></i> Export Excel (Details)</button>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
-                </div>
+    <div class="max-w-7xl mx-auto px-4 py-6 md:px-6">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-flag-checkered text-indigo-600"></i>
+                    Project Follow‑Up (Sub‑Assembly View)
+                </h1>
+                <p class="text-slate-500 text-sm">Track sub‑assemblies and parts (with DWG & Tag) – filters apply to all data</p>
             </div>
-            <div id="modalBody" class="p-4 space-y-5"></div>
+            <div class="flex gap-3">
+                <button onclick="exportGlobalToExcel()" class="btn-excel btn-excel-sm"><i class="fa-solid fa-file-excel"></i> Export Excel (Projects)</button>
+                <button onclick="refreshData()" class="bg-white hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm text-sm font-medium text-indigo-600 transition"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm">← Back</button>
+            </div>
+        </div>
+
+        <!-- Global Filters -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
+            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
+            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Subtitle</label><select id="filterSubtitle" class="filter-select w-full"><option value="">All Subtitles</option></select></div>
+            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Status</label><select id="filterStatus" class="filter-select w-full"><option value="">All Status</option><option value="needs_action">Needs Action</option><option value="on_track">On Track</option><option value="critical">Critical</option></select></div>
+            <div><button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl text-sm">Clear Filters</button></div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-diagram-project"></i> Active Projects</div><p class="text-2xl font-bold" id="totalProjects">—</p></div>
+            <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Need Follow‑up</div><p class="text-2xl font-bold text-amber-600" id="needFollowup">—</p></div>
+            <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-chart-line"></i> Avg. Acceptance</div><p class="text-2xl font-bold text-emerald-600" id="avgAcceptance">—%</p></div>
+        </div>
+
+        <!-- Projects Table -->
+        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+            <div class="px-5 py-3 border-b bg-slate-50 flex justify-between"><h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2><span class="text-xs text-slate-400" id="recordCount"></span></div>
+            <div class="table-wrapper">
+                <table class="min-w-full" id="projectsTable">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Client</th>
+                            <th class="text-left">Project Title</th>
+                            <th class="text-center">Sub‑assemblies</th>
+                            <th class="text-center">Insp.</th>
+                            <th class="text-center">Delivered Qty</th>
+                            <th class="text-center">Accepted Qty</th>
+                            <th class="text-center">Rework Qty</th>
+                            <th class="text-center">Reject Qty</th>
+                            <th class="text-center">Conditional Accept</th>
+                            <th class="text-center">Accept%</th>
+                            <th class="text-center">Last Insp.</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closeModal(event)">
+            <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
+                <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-lg" id="modalTitle"></h3>
+                    <div class="flex items-center gap-2">
+                        <button id="modalExcelBtn" class="btn-excel btn-excel-sm"><i class="fa-solid fa-file-excel"></i> Export Excel (Details)</button>
+                        <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    </div>
+                </div>
+                <div id="modalBody" class="p-4 space-y-5"></div>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    let allProjects = [];
-    let allInspectionsRaw = [];
-    let currentModalProject = null;
-    let currentFilteredProjects = [];
+    <script>
+        let allProjects = [];
+        let allInspectionsRaw = [];
+        let currentModalProject = null;
+        let currentFilteredProjects = [];
 
-    function getExtraField(insp, field) { return insp.extra_fields?.[field]?.trim() || ''; }
+        function getExtraField(insp, field) { return insp.extra_fields?.[field]?.trim() || ''; }
 
-    async function fetchInspections() {
-        try {
-            const res = await fetch('/api/inspections');
-            if (!res.ok) throw new Error();
-            return await res.json();
-        } catch {
-            return generateMockInspections();
-        }
-    }
-
-    function generateMockInspections() {
-        const mock = [];
-        const processes = ["Punching","Welding","Assembling","Lathe","Milling"];
-        const engineers = ["Gizie M.", "Abebech A.", "Biruk D.", "Selam W."];
-        const clients = ["DEF Metal", "AA Manufacturing", "Bishoftu Tech"];
-        const titles = ["Animal Feed Plant", "Bridge Bracket", "Hydraulic Cylinder"];
-        const subtitles = ["mixer", "conveyor", "control panel", "frame", "hydraulic unit"];
-        const partNames = ["Frame", "Motor Mount", "Bolt Set", "Hydraulic Cylinder", "Control Board"];
-        const dwgNos = ["DWG-1001", "DWG-1002", "DWG-1003"];
-        const tagNos = ["TAG-A01", "TAG-B02", "TAG-C03"];
-        for (let i=0; i<60; i++) {
-            const date = new Date(); date.setDate(date.getDate() - Math.floor(Math.random() * 90));
-            const ratingRand = Math.random();
-            let rating = "Accepted";
-            let conditional = 0;
-            if (ratingRand < 0.25) rating = "Rework";
-            else if (ratingRand < 0.4) rating = "Reject";
-            else if (ratingRand < 0.48) { rating = "Conditional Accept"; conditional = Math.floor(Math.random() * 10) + 1; }
-            const delivered = Math.floor(Math.random() * 50) + 10;
-            let accepted = 0, rework = 0, reject = 0;
-            if (rating === "Accepted") { accepted = delivered; rework = 0; reject = 0; }
-            else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6); rework = delivered - accepted; reject = 0; }
-            else if (rating === "Reject") { accepted = 0; rework = 0; reject = delivered; }
-            else if (rating === "Conditional Accept") { accepted = Math.floor(delivered * 0.8); rework = 0; reject = 0; }
-            const failureCost = (rework+reject) * (Math.random()*600+150);
-            mock.push({
-                id: i, submitted_at: date.toISOString(),
-                process_type: processes[Math.floor(Math.random()*processes.length)],
-                username: engineers[Math.floor(Math.random()*engineers.length)],
-                extra_fields: {
-                    "Customer Name": clients[Math.floor(Math.random()*clients.length)],
-                    "Project Name": titles[Math.floor(Math.random()*titles.length)],
-                    "Subtitle": subtitles[Math.floor(Math.random()*subtitles.length)],
-                    "Part Name": partNames[Math.floor(Math.random()*partNames.length)],
-                    "Drawing No.": dwgNos[Math.floor(Math.random()*dwgNos.length)],
-                    "Tag No.": tagNos[Math.floor(Math.random()*tagNos.length)]
-                },
-                acceptance_data: { p0: { rating } },
-                delivered_qty: delivered, accepted_qty: accepted, rework_qty: rework, reject_qty: reject,
-                conditional_accept_qty: conditional,
-                total_internal_failure_cost: failureCost
-            });
-        }
-        return mock;
-    }
-
-    function aggregateProjects(inspections) {
-        const projectMap = new Map();
-        for (const insp of inspections) {
-            const client = getExtraField(insp, 'Customer Name') || 'Unknown';
-            const title = getExtraField(insp, 'Project Name') || 'Untitled';
-            const key = `${client}||${title}`;
-            if (!projectMap.has(key)) {
-                projectMap.set(key, { client, title, inspections: [] });
+        async function fetchInspections() {
+            try {
+                const res = await fetch('/api/inspections');
+                if (!res.ok) throw new Error();
+                return await res.json();
+            } catch {
+                return generateMockInspections();
             }
-            projectMap.get(key).inspections.push(insp);
         }
-        const projects = Array.from(projectMap.values()).map(p => {
-            const aggregated = aggregateInspectionsForProject(p.inspections);
-            return {
-                ...p,
-                ...aggregated,
-                subtitlesArray: aggregated.subtitlesArray,
-                lastDateStr: aggregated.lastDateStr,
-                acceptanceRate: aggregated.acceptanceRate,
-                followStatus: aggregated.followStatus
-            };
-        });
-        projects.sort((a,b) => (b.lastDate || 0) - (a.lastDate || 0));
-        return projects;
-    }
 
-    function aggregateInspectionsForProject(inspections) {
-        let totalDelivered = 0, totalAccepted = 0, totalRework = 0, totalReject = 0, totalConditional = 0;
-        let totalInspections = 0;
-        let lastDate = null;
-        const subtitlesMap = new Map();
-
-        for (const insp of inspections) {
-            const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
-            const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
-            const dwgNo = getExtraField(insp, 'Drawing No.') || '—';
-            const tagNo = getExtraField(insp, 'Tag No.') || '—';
-            
-            totalInspections++;
-            totalDelivered += (insp.delivered_qty || 0);
-            totalAccepted += (insp.accepted_qty || 0);
-            totalRework += (insp.rework_qty || 0);
-            totalReject += (insp.reject_qty || 0);
-            totalConditional += (insp.conditional_accept_qty || 0);
-            
-            const inspDate = new Date(insp.submitted_at);
-            if (!lastDate || inspDate > lastDate) lastDate = inspDate;
-
-            if (!subtitlesMap.has(subtitle)) {
-                subtitlesMap.set(subtitle, {
-                    name: subtitle,
-                    totalInspections: 0,
-                    sumDelivered: 0, sumAccepted: 0, sumRework: 0, sumReject: 0, sumConditional: 0,
-                    partsMap: new Map()
+        function generateMockInspections() {
+            const mock = [];
+            const processes = ["Punching", "Welding", "Assembling", "Lathe", "Milling"];
+            const engineers = ["Gizie M.", "Abebech A.", "Biruk D.", "Selam W."];
+            const clients = ["DEF Metal", "AA Manufacturing", "Bishoftu Tech"];
+            const titles = ["Animal Feed Plant", "Bridge Bracket", "Hydraulic Cylinder"];
+            const subtitles = ["mixer", "conveyor", "control panel", "frame", "hydraulic unit"];
+            const partNames = ["Frame", "Motor Mount", "Bolt Set", "Hydraulic Cylinder", "Control Board"];
+            const dwgNos = ["DWG-1001", "DWG-1002", "DWG-1003"];
+            const tagNos = ["TAG-A01", "TAG-B02", "TAG-C03"];
+            const opConditions = ["holdup", "continuous", "ending"];
+            for (let i = 0; i < 60; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - Math.floor(Math.random() * 90));
+                const ratingRand = Math.random();
+                let rating = "Accepted";
+                let conditional = 0;
+                if (ratingRand < 0.25) rating = "Rework";
+                else if (ratingRand < 0.4) rating = "Reject";
+                else if (ratingRand < 0.48) { rating = "Conditional Accept";
+                    conditional = Math.floor(Math.random() * 10) + 1; }
+                const delivered = Math.floor(Math.random() * 50) + 10;
+                let accepted = 0,
+                    rework = 0,
+                    reject = 0;
+                if (rating === "Accepted") { accepted = delivered;
+                    rework = 0;
+                    reject = 0; } else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6);
+                    rework = delivered - accepted;
+                    reject = 0; } else if (rating === "Reject") { accepted = 0;
+                    rework = 0;
+                    reject = delivered; } else if (rating === "Conditional Accept") { accepted = Math.floor(delivered * 0.8);
+                    rework = 0;
+                    reject = 0; }
+                const failureCost = (rework + reject) * (Math.random() * 600 + 150);
+                mock.push({
+                    id: i,
+                    submitted_at: date.toISOString(),
+                    process_type: processes[Math.floor(Math.random() * processes.length)],
+                    username: engineers[Math.floor(Math.random() * engineers.length)],
+                    extra_fields: {
+                        "Customer Name": clients[Math.floor(Math.random() * clients.length)],
+                        "Project Name": titles[Math.floor(Math.random() * titles.length)],
+                        "Subtitle": subtitles[Math.floor(Math.random() * subtitles.length)],
+                        "Part Name": partNames[Math.floor(Math.random() * partNames.length)],
+                        "Drawing No.": dwgNos[Math.floor(Math.random() * dwgNos.length)],
+                        "Tag No.": tagNos[Math.floor(Math.random() * tagNos.length)],
+                        "Operation Condition": opConditions[Math.floor(Math.random() * opConditions.length)]
+                    },
+                    acceptance_data: { p0: { rating } },
+                    delivered_qty: delivered,
+                    accepted_qty: accepted,
+                    rework_qty: rework,
+                    reject_qty: reject,
+                    conditional_accept_qty: conditional,
+                    total_internal_failure_cost: failureCost
                 });
             }
-            const sub = subtitlesMap.get(subtitle);
-            sub.totalInspections++;
-            sub.sumDelivered += (insp.delivered_qty || 0);
-            sub.sumAccepted += (insp.accepted_qty || 0);
-            sub.sumRework += (insp.rework_qty || 0);
-            sub.sumReject += (insp.reject_qty || 0);
-            sub.sumConditional += (insp.conditional_accept_qty || 0);
-
-            if (!sub.partsMap.has(partName)) {
-                sub.partsMap.set(partName, { quantity: 0, dwgSet: new Set(), tagSet: new Set() });
-            }
-            const partData = sub.partsMap.get(partName);
-            partData.quantity += (insp.delivered_qty || 0);
-            if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
-            if (tagNo !== '—') partData.tagSet.add(tagNo);
-            sub.partsMap.set(partName, partData);
+            return mock;
         }
 
-        const acceptanceRate = totalDelivered ? (totalAccepted / totalDelivered) * 100 : 0;
-        let followStatus = 'on_track';
-        if (totalReject / totalDelivered >= 0.5) followStatus = 'critical';
-        else if (totalRework + totalReject > 0) followStatus = 'needs_action';
-
-        const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => ({
-            name: sub.name,
-            totalInspections: sub.totalInspections,
-            sumDelivered: sub.sumDelivered,
-            sumAccepted: sub.sumAccepted,
-            sumRework: sub.sumRework,
-            sumReject: sub.sumReject,
-            sumConditional: sub.sumConditional,
-            acceptRate: sub.sumDelivered ? (sub.sumAccepted / sub.sumDelivered) * 100 : 0,
-            partsList: Array.from(sub.partsMap.entries()).map(([partName, data]) => ({
-                part_name: partName,
-                quantity: data.quantity,
-                dwgList: Array.from(data.dwgSet).join(', '),
-                tagList: Array.from(data.tagSet).join(', ')
-            }))
-        }));
-
-        return {
-            totalDelivered, totalAccepted, totalRework, totalReject, totalConditional,
-            totalInspections, lastDate, acceptanceRate: acceptanceRate.toFixed(1), followStatus,
-            lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
-            subtitlesArray
-        };
-    }
-
-    function getAllSubtitles(inspections) {
-        const subs = new Set();
-        for (const insp of inspections) {
-            const s = getExtraField(insp, 'Subtitle');
-            if (s) subs.add(s);
-        }
-        return Array.from(subs).sort();
-    }
-
-    function renderProjects(projects) {
-        currentFilteredProjects = projects;
-        const tbody = document.getElementById('projectsTableBody');
-        if (!projects.length) { tbody.innerHTML = '<tr><td colspan="13" class="text-center py-10">No projects found</td>'; return; }
-        tbody.innerHTML = projects.map(p => {
-            const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
-            let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus === 'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
-            let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track');
-            return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center">${p.totalInspections}</td><td class="text-center">${p.totalDelivered.toLocaleString()}</td><td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td><td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td><td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td><td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
-        }).join('');
-        document.getElementById('totalProjects').innerText = projects.length;
-        const need = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
-        document.getElementById('needFollowup').innerText = need;
-        const avg = projects.reduce((s,p) => s + parseFloat(p.acceptanceRate),0) / (projects.length||1);
-        document.getElementById('avgAcceptance').innerText = avg.toFixed(1) + '%';
-        document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
-    }
-
-    // Global Excel export
-    function exportGlobalToExcel() {
-        if (!currentFilteredProjects.length) {
-            alert('No data to export.');
-            return;
-        }
-        const rows = [['Client', 'Project Title', 'Sub‑assemblies', 'Inspections', 'Delivered Qty', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept', 'Accept %', 'Last Inspection', 'Status']];
-        for (const p of currentFilteredProjects) {
-            rows.push([p.client, p.title, p.subtitlesArray.length, p.totalInspections, p.totalDelivered, p.totalAccepted, p.totalRework, p.totalReject, p.totalConditional, p.acceptanceRate + '%', p.lastDateStr, p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track')]);
-        }
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [{wch:20},{wch:25},{wch:12},{wch:12},{wch:14},{wch:14},{wch:12},{wch:12},{wch:18},{wch:10},{wch:14},{wch:14}];
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Projects Overview');
-        XLSX.writeFile(wb, `projects_overview_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
-    }
-
-    // Modal Excel export (unchanged)
-    function exportModalToExcel() {
-        if (!currentModalProject) return;
-        const processVal = document.getElementById('modalFilterProcess')?.value || '';
-        const engineerVal = document.getElementById('modalFilterEngineer')?.value || '';
-        const dateFrom = document.getElementById('modalFilterDateFrom')?.value || '';
-        const dateTo = document.getElementById('modalFilterDateTo')?.value || '';
-        let filtered = [...currentModalProject.inspections];
-        if (processVal) filtered = filtered.filter(insp => insp.process_type === processVal);
-        if (engineerVal) filtered = filtered.filter(insp => insp.username === engineerVal);
-        if (dateFrom) { const from = new Date(dateFrom); from.setHours(0,0,0,0); filtered = filtered.filter(insp => new Date(insp.submitted_at) >= from); }
-        if (dateTo) { const to = new Date(dateTo); to.setHours(23,59,59,999); filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to); }
-        const aggregated = aggregateInspectionsForProject(filtered);
-        const rows = [['Sub‑assembly', 'Inspections', 'Delivered', 'Accepted', 'Rework', 'Reject', 'Conditional', 'Accept %']];
-        for (const sub of aggregated.subtitlesArray) {
-            rows.push([sub.name, sub.totalInspections, sub.sumDelivered, sub.sumAccepted, sub.sumRework, sub.sumReject, sub.sumConditional, sub.acceptRate.toFixed(1) + '%']);
-            if (sub.partsList.length) {
-                rows.push(['  └─ Parts:']);
-                for (const part of sub.partsList) {
-                    rows.push(['    ' + part.part_name, '', part.quantity, '', '', '', '', '']);
-                    if (part.dwgList || part.tagList) rows.push(['      DWG: ' + part.dwgList, 'Tag: ' + part.tagList, '', '', '', '', '', '']);
+        function aggregateProjects(inspections) {
+            const projectMap = new Map();
+            for (const insp of inspections) {
+                const client = getExtraField(insp, 'Customer Name') || 'Unknown';
+                const title = getExtraField(insp, 'Project Name') || 'Untitled';
+                const key = `${client}||${title}`;
+                if (!projectMap.has(key)) {
+                    projectMap.set(key, { client, title, inspections: [] });
                 }
-            } else { rows.push(['  No parts recorded', '', '', '', '', '', '', '']); }
-            rows.push([]);
-        }
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [{wch:25}, {wch:12}, {wch:12}, {wch:12}, {wch:12}, {wch:12}, {wch:12}, {wch:12}];
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, `Project_${currentModalProject.client}_${currentModalProject.title}`);
-        XLSX.writeFile(wb, `project_detail_${currentModalProject.client}_${currentModalProject.title}_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
-    }
-
-    // Modal content with item number column (red)
-    function showProjectDetails(client, title) {
-        const project = allProjects.find(p => p.client === client && p.title === title);
-        if (!project) return;
-        currentModalProject = project;
-        document.getElementById('modalTitle').innerText = `${client} / ${title}`;
-        
-        const processSet = new Set();
-        const engineerSet = new Set();
-        project.inspections.forEach(insp => {
-            if (insp.process_type) processSet.add(insp.process_type);
-            if (insp.username) engineerSet.add(insp.username);
-        });
-        const processOptions = Array.from(processSet).sort();
-        const engineerOptions = Array.from(engineerSet).sort();
-
-        const modalBody = document.getElementById('modalBody');
-        const filterBarHtml = `
-            <div class="modal-filter-bar" id="modalFilterBar">
-                <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">Process Type</label><select id="modalFilterProcess" class="filter-select w-full text-sm"><option value="">All Processes</option>${processOptions.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select></div>
-                <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">QC Engineer</label><select id="modalFilterEngineer" class="filter-select w-full text-sm"><option value="">All Engineers</option>${engineerOptions.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join('')}</select></div>
-                <div class="flex-1 min-w-[130px]"><label class="text-xs font-medium text-slate-500">Date From</label><input type="date" id="modalFilterDateFrom" class="filter-select w-full text-sm"></div>
-                <div class="flex-1 min-w-[130px]"><label class="text-xs font-medium text-slate-500">Date To</label><input type="date" id="modalFilterDateTo" class="filter-select w-full text-sm"></div>
-                <div><button id="clearModalFiltersBtn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg text-sm">Clear</button></div>
-            </div>
-            <div id="modalFilterableContent"></div>
-        `;
-        modalBody.innerHTML = filterBarHtml;
-        const filterableContainer = document.getElementById('modalFilterableContent');
-
-        const updateFilteredContent = () => {
-            const pv = document.getElementById('modalFilterProcess').value;
-            const ev = document.getElementById('modalFilterEngineer').value;
-            const df = document.getElementById('modalFilterDateFrom').value;
-            const dt = document.getElementById('modalFilterDateTo').value;
-            let filtered = [...currentModalProject.inspections];
-            if (pv) filtered = filtered.filter(insp => insp.process_type === pv);
-            if (ev) filtered = filtered.filter(insp => insp.username === ev);
-            if (df) { const from = new Date(df); from.setHours(0,0,0,0); filtered = filtered.filter(insp => new Date(insp.submitted_at) >= from); }
-            if (dt) { const to = new Date(dt); to.setHours(23,59,59,999); filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to); }
-            const aggregated = aggregateInspectionsForProject(filtered);
-            renderFilterableSubAssemblies(aggregated);
-        };
-
-        function renderFilterableSubAssemblies(aggregated) {
-            let html = '';
-            if (aggregated.subtitlesArray.length) {
-                html = aggregated.subtitlesArray.map(sub => {
-                    const partsTable = sub.partsList.length ? `
-                        <div class="mt-3">
-                            <div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components</div>
-                            <table class="parts-table">
-                                <thead>
-                                    <tr>
-                                        <th class="text-center" style="width: 40px;">No.</th>
-                                        <th>Part Name</th>
-                                        <th class="text-center">Total Delivered Qty</th>
-                                        <th>DWG No.</th>
-                                        <th>Tag No.</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${sub.partsList.map((p, idx) => `
-                                        <tr>
-                                            <td class="text-center text-red-600 font-bold">${idx + 1}</td>
-                                            <td>${escapeHtml(p.part_name)}</td>
-                                            <td class="text-center">${p.quantity}</td>
-                                            <td>${escapeHtml(p.dwgList) || '—'}</td>
-                                            <td>${escapeHtml(p.tagList) || '—'}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    ` : '<div class="text-xs text-gray-400 italic mt-1">No parts recorded for this sub‑assembly (Part Name field empty).</div>';
-                    return `<div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
-                        <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
-                        <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
-                            <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
-                            <div><span class="text-gray-500">Delivered</span><br><span>${sub.sumDelivered.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Conditional</span><br><span class="text-blue-600">${sub.sumConditional.toLocaleString()}</span></div>
-                            <div><span class="text-gray-500">Accept %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
-                        </div>
-                        ${partsTable}
-                    </div>`;
-                }).join('');
-            } else {
-                html = '<div class="text-gray-500 italic">No sub‑assemblies match the filters.</div>';
+                projectMap.get(key).inspections.push(insp);
             }
-            filterableContainer.innerHTML = html;
+            const projects = Array.from(projectMap.values()).map(p => {
+                const aggregated = aggregateInspectionsForProject(p.inspections);
+                return {
+                    ...p,
+                    ...aggregated,
+                    subtitlesArray: aggregated.subtitlesArray,
+                    lastDateStr: aggregated.lastDateStr,
+                    acceptanceRate: aggregated.acceptanceRate,
+                    followStatus: aggregated.followStatus
+                };
+            });
+            projects.sort((a, b) => (b.lastDate || 0) - (a.lastDate || 0));
+            return projects;
         }
 
-        const processSelect = document.getElementById('modalFilterProcess');
-        const engineerSelect = document.getElementById('modalFilterEngineer');
-        const dateFromInput = document.getElementById('modalFilterDateFrom');
-        const dateToInput = document.getElementById('modalFilterDateTo');
-        const clearBtn = document.getElementById('clearModalFiltersBtn');
-        const refresh = () => updateFilteredContent();
-        processSelect.addEventListener('change', refresh);
-        engineerSelect.addEventListener('change', refresh);
-        dateFromInput.addEventListener('change', refresh);
-        dateToInput.addEventListener('change', refresh);
-        clearBtn.addEventListener('click', () => {
-            processSelect.value = '';
-            engineerSelect.value = '';
-            dateFromInput.value = '';
-            dateToInput.value = '';
-            refresh();
-        });
-        updateFilteredContent();
-        
-        const excelBtn = document.getElementById('modalExcelBtn');
-        const newExcelBtn = excelBtn.cloneNode(true);
-        excelBtn.parentNode.replaceChild(newExcelBtn, excelBtn);
-        newExcelBtn.addEventListener('click', exportModalToExcel);
-        
-        document.getElementById('modal').classList.remove('hidden');
-    }
+        function aggregateInspectionsForProject(inspections) {
+            let totalDelivered = 0,
+                totalAccepted = 0,
+                totalRework = 0,
+                totalReject = 0,
+                totalConditional = 0;
+            let totalInspections = 0;
+            let lastDate = null;
+            const subtitlesMap = new Map();
 
-    function closeModal(e) { if (!e || e.target === document.getElementById('modal') || e.target.closest('.fa-xmark')) document.getElementById('modal').classList.add('hidden'); }
+            for (const insp of inspections) {
+                const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
+                const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
+                const dwgNo = getExtraField(insp, 'Drawing No.') || '—';
+                const tagNo = getExtraField(insp, 'Tag No.') || '—';
 
-    let originalProjects = [];
-    function applyFilters() {
-        const client = document.getElementById('filterClient').value;
-        const title = document.getElementById('filterTitle').value;
-        const subtitle = document.getElementById('filterSubtitle').value;
-        const status = document.getElementById('filterStatus').value;
-        let filtered = [...originalProjects];
-        if (client) filtered = filtered.filter(p => p.client === client);
-        if (title) filtered = filtered.filter(p => p.title === title);
-        if (subtitle) filtered = filtered.filter(p => p.subtitlesArray.some(s => s.name === subtitle));
-        if (status === 'needs_action') filtered = filtered.filter(p => p.followStatus === 'needs_action');
-        else if (status === 'critical') filtered = filtered.filter(p => p.followStatus === 'critical');
-        else if (status === 'on_track') filtered = filtered.filter(p => p.followStatus === 'on_track');
-        renderProjects(filtered);
-    }
+                totalInspections++;
+                totalDelivered += (insp.delivered_qty || 0);
+                totalAccepted += (insp.accepted_qty || 0);
+                totalRework += (insp.rework_qty || 0);
+                totalReject += (insp.reject_qty || 0);
+                totalConditional += (insp.conditional_accept_qty || 0);
 
-    function populateFilters(projects, rawInspections) {
-        const clients = [...new Set(projects.map(p => p.client))].sort();
-        const titles = [...new Set(projects.map(p => p.title))].sort();
-        const subs = getAllSubtitles(rawInspections);
-        document.getElementById('filterClient').innerHTML = '<option value="">All Clients</option>' + clients.map(c=>`<option>${escapeHtml(c)}</option>`).join('');
-        document.getElementById('filterTitle').innerHTML = '<option value="">All Titles</option>' + titles.map(t=>`<option>${escapeHtml(t)}</option>`).join('');
-        document.getElementById('filterSubtitle').innerHTML = '<option value="">All Subtitles</option>' + subs.map(s=>`<option>${escapeHtml(s)}</option>`).join('');
-    }
+                const inspDate = new Date(insp.submitted_at);
+                if (!lastDate || inspDate > lastDate) lastDate = inspDate;
 
-    function clearFilters() { document.getElementById('filterClient').value = ''; document.getElementById('filterTitle').value = ''; document.getElementById('filterSubtitle').value = ''; document.getElementById('filterStatus').value = ''; applyFilters(); }
-    async function refreshData() { const inspections = await fetchInspections(); allInspectionsRaw = inspections; const projects = aggregateProjects(inspections); originalProjects = projects; allProjects = projects; populateFilters(projects, inspections); applyFilters(); }
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+                if (!subtitlesMap.has(subtitle)) {
+                    subtitlesMap.set(subtitle, {
+                        name: subtitle,
+                        totalInspections: 0,
+                        sumDelivered: 0,
+                        sumAccepted: 0,
+                        sumRework: 0,
+                        sumReject: 0,
+                        sumConditional: 0,
+                        partsMap: new Map()
+                    });
+                }
+                const sub = subtitlesMap.get(subtitle);
+                sub.totalInspections++;
+                sub.sumDelivered += (insp.delivered_qty || 0);
+                sub.sumAccepted += (insp.accepted_qty || 0);
+                sub.sumRework += (insp.rework_qty || 0);
+                sub.sumReject += (insp.reject_qty || 0);
+                sub.sumConditional += (insp.conditional_accept_qty || 0);
 
-    document.getElementById('filterClient').addEventListener('change', applyFilters);
-    document.getElementById('filterTitle').addEventListener('change', applyFilters);
-    document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
-    document.getElementById('filterStatus').addEventListener('change', applyFilters);
-    window.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
-    refreshData();
-</script>
+                if (!sub.partsMap.has(partName)) {
+                    sub.partsMap.set(partName, { quantity: 0, dwgSet: new Set(), tagSet: new Set() });
+                }
+                const partData = sub.partsMap.get(partName);
+                partData.quantity += (insp.delivered_qty || 0);
+                if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
+                if (tagNo !== '—') partData.tagSet.add(tagNo);
+                sub.partsMap.set(partName, partData);
+            }
+
+            const acceptanceRate = totalDelivered ? (totalAccepted / totalDelivered) * 100 : 0;
+            let followStatus = 'on_track';
+            if (totalReject / totalDelivered >= 0.5) followStatus = 'critical';
+            else if (totalRework + totalReject > 0) followStatus = 'needs_action';
+
+            const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => ({
+                name: sub.name,
+                totalInspections: sub.totalInspections,
+                sumDelivered: sub.sumDelivered,
+                sumAccepted: sub.sumAccepted,
+                sumRework: sub.sumRework,
+                sumReject: sub.sumReject,
+                sumConditional: sub.sumConditional,
+                acceptRate: sub.sumDelivered ? (sub.sumAccepted / sub.sumDelivered) * 100 : 0,
+                partsList: Array.from(sub.partsMap.entries()).map(([partName, data]) => ({
+                    part_name: partName,
+                    quantity: data.quantity,
+                    dwgList: Array.from(data.dwgSet).join(', '),
+                    tagList: Array.from(data.tagSet).join(', ')
+                }))
+            }));
+
+            return {
+                totalDelivered,
+                totalAccepted,
+                totalRework,
+                totalReject,
+                totalConditional,
+                totalInspections,
+                lastDate,
+                acceptanceRate: acceptanceRate.toFixed(1),
+                followStatus,
+                lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
+                subtitlesArray
+            };
+        }
+
+        function getAllSubtitles(inspections) {
+            const subs = new Set();
+            for (const insp of inspections) {
+                const s = getExtraField(insp, 'Subtitle');
+                if (s) subs.add(s);
+            }
+            return Array.from(subs).sort();
+        }
+
+        function renderProjects(projects) {
+            currentFilteredProjects = projects;
+            const tbody = document.getElementById('projectsTableBody');
+            if (!projects.length) { tbody.innerHTML = '<tr><td colspan="13" class="text-center py-10">No projects found</td>';
+                return; }
+            tbody.innerHTML = projects.map(p => {
+                const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
+                let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus ===
+                    'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
+                let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ?
+                    'Needs Action' : 'On Track');
+                return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center">${p.totalInspections}</td><td class="text-center">${p.totalDelivered.toLocaleString()}</td><td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td><td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td><td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td><td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
+            }).join('');
+            document.getElementById('totalProjects').innerText = projects.length;
+            const need = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
+            document.getElementById('needFollowup').innerText = need;
+            const avg = projects.reduce((s, p) => s + parseFloat(p.acceptanceRate), 0) / (projects.length || 1);
+            document.getElementById('avgAcceptance').innerText = avg.toFixed(1) + '%';
+            document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
+        }
+
+        function exportGlobalToExcel() {
+            if (!currentFilteredProjects.length) {
+                alert('No data to export.');
+                return;
+            }
+            const rows = [
+                ['Client', 'Project Title', 'Sub‑assemblies', 'Inspections', 'Delivered Qty', 'Accepted Qty',
+                    'Rework Qty', 'Reject Qty', 'Conditional Accept', 'Accept %', 'Last Inspection', 'Status'
+                ]
+            ];
+            for (const p of currentFilteredProjects) {
+                rows.push([p.client, p.title, p.subtitlesArray.length, p.totalInspections, p.totalDelivered, p
+                    .totalAccepted, p.totalRework, p.totalReject, p.totalConditional, p.acceptanceRate + '%', p
+                    .lastDateStr, p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ?
+                        'Needs Action' : 'On Track')
+                ]);
+            }
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
+            { wch: 12 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 14 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Projects Overview');
+            XLSX.writeFile(wb, `projects_overview_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`);
+        }
+
+        function exportModalToExcel() {
+            if (!currentModalProject) return;
+            const processVal = document.getElementById('modalFilterProcess')?.value || '';
+            const engineerVal = document.getElementById('modalFilterEngineer')?.value || '';
+            const opCondVal = document.getElementById('modalFilterOpCondition')?.value || '';
+            const dateFrom = document.getElementById('modalFilterDateFrom')?.value || '';
+            const dateTo = document.getElementById('modalFilterDateTo')?.value || '';
+            let filtered = [...currentModalProject.inspections];
+            if (processVal) filtered = filtered.filter(insp => insp.process_type === processVal);
+            if (engineerVal) filtered = filtered.filter(insp => insp.username === engineerVal);
+            if (opCondVal) filtered = filtered.filter(insp => getExtraField(insp, 'Operation Condition') === opCondVal);
+            if (dateFrom) { const from = new Date(dateFrom);
+                from.setHours(0, 0, 0, 0);
+                filtered = filtered.filter(insp => new Date(insp.submitted_at) >= from); }
+            if (dateTo) { const to = new Date(dateTo);
+                to.setHours(23, 59, 59, 999);
+                filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to); }
+            const aggregated = aggregateInspectionsForProject(filtered);
+            const rows = [
+                ['Sub‑assembly', 'Inspections', 'Delivered', 'Accepted', 'Rework', 'Reject', 'Conditional',
+                    'Accept %'
+                ]
+            ];
+            for (const sub of aggregated.subtitlesArray) {
+                rows.push([sub.name, sub.totalInspections, sub.sumDelivered, sub.sumAccepted, sub.sumRework, sub
+                    .sumReject, sub.sumConditional, sub.acceptRate.toFixed(1) + '%'
+                ]);
+                if (sub.partsList.length) {
+                    rows.push(['  └─ Parts:']);
+                    for (const part of sub.partsList) {
+                        rows.push(['    ' + part.part_name, '', part.quantity, '', '', '', '', '']);
+                        if (part.dwgList || part.tagList) rows.push(['      DWG: ' + part.dwgList, 'Tag: ' + part
+                            .tagList, '', '', '', '', '', ''
+                        ]);
+                    }
+                } else { rows.push(['  No parts recorded', '', '', '', '', '', '', '']); }
+                rows.push([]);
+            }
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            ws['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+            { wch: 12 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `Project_${currentModalProject.client}_${currentModalProject.title}`);
+            XLSX.writeFile(wb,
+                `project_detail_${currentModalProject.client}_${currentModalProject.title}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`
+                );
+        }
+
+        function showProjectDetails(client, title) {
+            const project = allProjects.find(p => p.client === client && p.title === title);
+            if (!project) return;
+            currentModalProject = project;
+            document.getElementById('modalTitle').innerText = `${client} / ${title}`;
+
+            const processSet = new Set();
+            const engineerSet = new Set();
+            const opCondSet = new Set();
+            project.inspections.forEach(insp => {
+                if (insp.process_type) processSet.add(insp.process_type);
+                if (insp.username) engineerSet.add(insp.username);
+                const op = getExtraField(insp, 'Operation Condition');
+                if (op) opCondSet.add(op);
+            });
+            const processOptions = Array.from(processSet).sort();
+            const engineerOptions = Array.from(engineerSet).sort();
+            // always show the three specified values even if not in data yet, plus any others
+            const opCondBase = new Set(['holdup', 'continuous', 'ending']);
+            for (const v of opCondSet) opCondBase.add(v);
+            const opCondOptions = Array.from(opCondBase).sort();
+
+            const modalBody = document.getElementById('modalBody');
+            const filterBarHtml = `
+                <div class="modal-filter-bar" id="modalFilterBar">
+                    <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">Process Type</label><select id="modalFilterProcess" class="filter-select w-full text-sm"><option value="">All Processes</option>${processOptions.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select></div>
+                    <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">QC Engineer</label><select id="modalFilterEngineer" class="filter-select w-full text-sm"><option value="">All Engineers</option>${engineerOptions.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join('')}</select></div>
+                    <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">Operation Condition</label><select id="modalFilterOpCondition" class="filter-select w-full text-sm"><option value="">All</option>${opCondOptions.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}</select></div>
+                    <div class="flex-1 min-w-[130px]"><label class="text-xs font-medium text-slate-500">Date From</label><input type="date" id="modalFilterDateFrom" class="filter-select w-full text-sm"></div>
+                    <div class="flex-1 min-w-[130px]"><label class="text-xs font-medium text-slate-500">Date To</label><input type="date" id="modalFilterDateTo" class="filter-select w-full text-sm"></div>
+                    <div><button id="clearModalFiltersBtn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg text-sm">Clear</button></div>
+                </div>
+                <div id="modalFilterableContent"></div>
+            `;
+            modalBody.innerHTML = filterBarHtml;
+            const filterableContainer = document.getElementById('modalFilterableContent');
+
+            const updateFilteredContent = () => {
+                const pv = document.getElementById('modalFilterProcess').value;
+                const ev = document.getElementById('modalFilterEngineer').value;
+                const ov = document.getElementById('modalFilterOpCondition').value;
+                const df = document.getElementById('modalFilterDateFrom').value;
+                const dt = document.getElementById('modalFilterDateTo').value;
+                let filtered = [...currentModalProject.inspections];
+                if (pv) filtered = filtered.filter(insp => insp.process_type === pv);
+                if (ev) filtered = filtered.filter(insp => insp.username === ev);
+                if (ov) filtered = filtered.filter(insp => getExtraField(insp, 'Operation Condition') === ov);
+                if (df) { const from = new Date(df);
+                    from.setHours(0, 0, 0, 0);
+                    filtered = filtered.filter(insp => new Date(insp.submitted_at) >= from); }
+                if (dt) { const to = new Date(dt);
+                    to.setHours(23, 59, 59, 999);
+                    filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to); }
+                const aggregated = aggregateInspectionsForProject(filtered);
+                renderFilterableSubAssemblies(aggregated);
+            };
+
+            function renderFilterableSubAssemblies(aggregated) {
+                let html = '';
+                if (aggregated.subtitlesArray.length) {
+                    html = aggregated.subtitlesArray.map(sub => {
+                        const partsTable = sub.partsList.length ? `
+                            <div class="mt-3">
+                                <div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components</div>
+                                <table class="parts-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="width: 40px;">No.</th>
+                                            <th>Part Name</th>
+                                            <th class="text-center">Total Delivered Qty</th>
+                                            <th>DWG No.</th>
+                                            <th>Tag No.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${sub.partsList.map((p, idx) => `
+                                            <tr>
+                                                <td class="text-center text-red-600 font-bold">${idx + 1}</td>
+                                                <td>${escapeHtml(p.part_name)}</td>
+                                                <td class="text-center">${p.quantity}</td>
+                                                <td>${escapeHtml(p.dwgList) || '—'}</td>
+                                                <td>${escapeHtml(p.tagList) || '—'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` :
+                            '<div class="text-xs text-gray-400 italic mt-1">No parts recorded for this sub‑assembly (Part Name field empty).</div>';
+                        return `<div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
+                            <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
+                                <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
+                                <div><span class="text-gray-500">Delivered</span><br><span>${sub.sumDelivered.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Conditional</span><br><span class="text-blue-600">${sub.sumConditional.toLocaleString()}</span></div>
+                                <div><span class="text-gray-500">Accept %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
+                            </div>
+                            ${partsTable}
+                        </div>`;
+                    }).join('');
+                } else {
+                    html = '<div class="text-gray-500 italic">No sub‑assemblies match the filters.</div>';
+                }
+                filterableContainer.innerHTML = html;
+            }
+
+            const processSelect = document.getElementById('modalFilterProcess');
+            const engineerSelect = document.getElementById('modalFilterEngineer');
+            const opCondSelect = document.getElementById('modalFilterOpCondition');
+            const dateFromInput = document.getElementById('modalFilterDateFrom');
+            const dateToInput = document.getElementById('modalFilterDateTo');
+            const clearBtn = document.getElementById('clearModalFiltersBtn');
+            const refresh = () => updateFilteredContent();
+            processSelect.addEventListener('change', refresh);
+            engineerSelect.addEventListener('change', refresh);
+            opCondSelect.addEventListener('change', refresh);
+            dateFromInput.addEventListener('change', refresh);
+            dateToInput.addEventListener('change', refresh);
+            clearBtn.addEventListener('click', () => {
+                processSelect.value = '';
+                engineerSelect.value = '';
+                opCondSelect.value = '';
+                dateFromInput.value = '';
+                dateToInput.value = '';
+                refresh();
+            });
+            updateFilteredContent();
+
+            const excelBtn = document.getElementById('modalExcelBtn');
+            const newExcelBtn = excelBtn.cloneNode(true);
+            excelBtn.parentNode.replaceChild(newExcelBtn, excelBtn);
+            newExcelBtn.addEventListener('click', exportModalToExcel);
+
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal(e) { if (!e || e.target === document.getElementById('modal') || e.target.closest('.fa-xmark'))
+                document.getElementById('modal').classList.add('hidden'); }
+
+        let originalProjects = [];
+
+        function applyFilters() {
+            const client = document.getElementById('filterClient').value;
+            const title = document.getElementById('filterTitle').value;
+            const subtitle = document.getElementById('filterSubtitle').value;
+            const status = document.getElementById('filterStatus').value;
+            let filtered = [...originalProjects];
+            if (client) filtered = filtered.filter(p => p.client === client);
+            if (title) filtered = filtered.filter(p => p.title === title);
+            if (subtitle) filtered = filtered.filter(p => p.subtitlesArray.some(s => s.name === subtitle));
+            if (status === 'needs_action') filtered = filtered.filter(p => p.followStatus === 'needs_action');
+            else if (status === 'critical') filtered = filtered.filter(p => p.followStatus === 'critical');
+            else if (status === 'on_track') filtered = filtered.filter(p => p.followStatus === 'on_track');
+            renderProjects(filtered);
+        }
+
+        function populateFilters(projects, rawInspections) {
+            const clients = [...new Set(projects.map(p => p.client))].sort();
+            const titles = [...new Set(projects.map(p => p.title))].sort();
+            const subs = getAllSubtitles(rawInspections);
+            document.getElementById('filterClient').innerHTML = '<option value="">All Clients</option>' + clients.map(c =>
+                `<option>${escapeHtml(c)}</option>`).join('');
+            document.getElementById('filterTitle').innerHTML = '<option value="">All Titles</option>' + titles.map(t =>
+                `<option>${escapeHtml(t)}</option>`).join('');
+            document.getElementById('filterSubtitle').innerHTML = '<option value="">All Subtitles</option>' + subs.map(s =>
+                `<option>${escapeHtml(s)}</option>`).join('');
+        }
+
+        function clearFilters() {
+            document.getElementById('filterClient').value = '';
+            document.getElementById('filterTitle').value = '';
+            document.getElementById('filterSubtitle').value = '';
+            document.getElementById('filterStatus').value = '';
+            applyFilters();
+        }
+
+        async function refreshData() {
+            const inspections = await fetchInspections();
+            allInspectionsRaw = inspections;
+            const projects = aggregateProjects(inspections);
+            originalProjects = projects;
+            allProjects = projects;
+            populateFilters(projects, inspections);
+            applyFilters();
+        }
+
+        function escapeHtml(str) { if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } [m])); }
+
+        document.getElementById('filterClient').addEventListener('change', applyFilters);
+        document.getElementById('filterTitle').addEventListener('change', applyFilters);
+        document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
+        document.getElementById('filterStatus').addEventListener('change', applyFilters);
+        window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+        refreshData();
+    </script>
 </body>
 </html>
