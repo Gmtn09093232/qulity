@@ -193,18 +193,33 @@
         let currentModalProject = null;
         let currentFilteredProjects = [];
 
-        function getExtraField(insp, field) { return insp.extra_fields?.[field]?.trim() || ''; }
+        // --- FIX: read operation_status as Operation Condition and normalise 'Continue' to 'continuous' ---
+        function getExtraField(insp, field) {
+            if (field === 'Operation Condition') {
+                // Use the top-level operation_status column
+                const raw = insp.operation_status?.trim() || '';
+                // Normalise: 'Continue' -> 'continuous', everything else lowercased
+                const lower = raw.toLowerCase();
+                if (lower === 'continue') return 'continuous';
+                return lower; // 'holdup' or 'ending'
+            }
+            // For other fields, try top-level then extra_fields
+            return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
+        }
 
+        // --- API fetch (real or mock) ---
         async function fetchInspections() {
             try {
                 const res = await fetch('/api/inspections');
                 if (!res.ok) throw new Error();
                 return await res.json();
             } catch {
+                // Fallback mock (includes operation_status)
                 return generateMockInspections();
             }
         }
 
+        // --- Mock data generator with operation_status ---
         function generateMockInspections() {
             const mock = [];
             const processes = ["Punching", "Welding", "Assembling", "Lathe", "Milling"];
@@ -215,13 +230,12 @@
             const partNames = ["Frame", "Motor Mount", "Bolt Set", "Hydraulic Cylinder", "Control Board"];
             const dwgNos = ["DWG-1001", "DWG-1002", "DWG-1003"];
             const tagNos = ["TAG-A01", "TAG-B02", "TAG-C03"];
-            const opConditions = ["holdup", "continuous", "ending"];
+            const opStatuses = ["Ending", "Holdup", "Continue"]; // DB values
 
-            // Ensure every project (client+title) has at least one inspection for each operation condition
+            // Ensure each project has all three statuses
             for (const client of clients) {
                 for (const title of titles) {
-                    // For each operation condition, create a base inspection
-                    for (const opCond of opConditions) {
+                    for (const status of opStatuses) {
                         const date = new Date();
                         date.setDate(date.getDate() - Math.floor(Math.random() * 60));
                         const ratingRand = Math.random();
@@ -246,7 +260,6 @@
                             rework = 0;
                             reject = 0; }
                         const failureCost = (rework + reject) * (Math.random() * 600 + 150);
-                        // Pick a random subtitle and part name for variety
                         const subtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
                         const partName = partNames[Math.floor(Math.random() * partNames.length)];
                         const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
@@ -256,14 +269,14 @@
                             submitted_at: date.toISOString(),
                             process_type: processes[Math.floor(Math.random() * processes.length)],
                             username: engineers[Math.floor(Math.random() * engineers.length)],
+                            operation_status: status, // top-level column
                             extra_fields: {
                                 "Customer Name": client,
                                 "Project Name": title,
                                 "Subtitle": subtitle,
                                 "Part Name": partName,
                                 "Drawing No.": dwg,
-                                "Tag No.": tag,
-                                "Operation Condition": opCond
+                                "Tag No.": tag
                             },
                             acceptance_data: { p0: { rating } },
                             delivered_qty: delivered,
@@ -277,8 +290,8 @@
                 }
             }
 
-            // Add some extra random inspections to increase data volume
-            for (let i = 0; i < 30; i++) {
+            // Extra random records
+            for (let i = 0; i < 20; i++) {
                 const date = new Date();
                 date.setDate(date.getDate() - Math.floor(Math.random() * 90));
                 const ratingRand = Math.random();
@@ -309,20 +322,20 @@
                 const partName = partNames[Math.floor(Math.random() * partNames.length)];
                 const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
                 const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
-                const opCond = opConditions[Math.floor(Math.random() * opConditions.length)];
+                const status = opStatuses[Math.floor(Math.random() * opStatuses.length)];
                 mock.push({
                     id: mock.length,
                     submitted_at: date.toISOString(),
                     process_type: processes[Math.floor(Math.random() * processes.length)],
                     username: engineers[Math.floor(Math.random() * engineers.length)],
+                    operation_status: status,
                     extra_fields: {
                         "Customer Name": client,
                         "Project Name": title,
                         "Subtitle": subtitle,
                         "Part Name": partName,
                         "Drawing No.": dwg,
-                        "Tag No.": tag,
-                        "Operation Condition": opCond
+                        "Tag No.": tag
                     },
                     acceptance_data: { p0: { rating } },
                     delivered_qty: delivered,
@@ -336,6 +349,7 @@
             return mock;
         }
 
+        // --- aggregation, rendering, export (unchanged) ---
         function aggregateProjects(inspections) {
             const projectMap = new Map();
             for (const insp of inspections) {
@@ -575,7 +589,6 @@
             });
             const processOptions = Array.from(processSet).sort();
             const engineerOptions = Array.from(engineerSet).sort();
-            // always show the three specified values even if not in data yet, plus any others
             const opCondBase = new Set(['holdup', 'continuous', 'ending']);
             for (const v of opCondSet) opCondBase.add(v);
             const opCondOptions = Array.from(opCondBase).sort();
