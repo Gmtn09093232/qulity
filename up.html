@@ -172,10 +172,9 @@
             "Packaging"
         ];
 
-        // ---- FIX: strip " Process" suffix for matching ----
+        // ---- strip " Process" suffix for matching ----
         function getNextOperation(processType) {
             if (!processType) return '—';
-            // Normalize: remove " Process" suffix (case-insensitive)
             const normalized = processType.replace(/\s*Process$/i, '');
             const idx = PROCESS_ORDER.indexOf(normalized);
             if (idx === -1 || idx === PROCESS_ORDER.length - 1) return 'Complete / No further process';
@@ -187,32 +186,26 @@
         let currentModalProject = null;
         let currentFilteredProjects = [];
 
-        // --- read operation_status and normalise 'Continue' to 'continuous' ---
         function getExtraField(insp, field) {
             if (field === 'Operation Condition') {
                 const raw = insp.operation_status?.trim() || '';
                 const lower = raw.toLowerCase();
                 if (lower === 'continue') return 'continuous';
-                return lower; // 'holdup' or 'ending'
+                return lower;
             }
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
-        // --- Read suggested next operation from DB (top-level or extra_fields) ---
         function getSuggestedNext(insp) {
-            // First check if there's a top-level column
             if (insp.suggested_next_operation) {
                 return insp.suggested_next_operation.trim();
             }
-            // Then check extra_fields
             if (insp.extra_fields && insp.extra_fields["Suggested Next Operation"]) {
                 return insp.extra_fields["Suggested Next Operation"].trim();
             }
-            // Fallback: compute from process_type (now with normalization)
             return getNextOperation(insp.process_type);
         }
 
-        // --- API fetch (real or mock) ---
         async function fetchInspections() {
             try {
                 const res = await fetch('/api/inspections');
@@ -223,7 +216,6 @@
             }
         }
 
-        // --- Mock data generator (includes suggested_next_operation) ---
         function generateMockInspections() {
             const mock = [];
             const processes = ["Punching Process", "Welding Process", "Assembling Process", "Lathe Process", "Milling Process", "Bending Process", "Drilling Process", "Pressing Process"];
@@ -235,7 +227,6 @@
             const dwgNos = ["DWG-1001", "DWG-1002", "DWG-1003", "1", "2", "2.1", "23", "2.3", "ot12", "p12", "ol45", "pl32", "p132", "56", "1569", "15256", "1532", "01", "02", "11", "15568", "255445"];
             const tagNos = ["TAG-A01", "TAG-B02", "TAG-C03", "gm1", "gm2", "gm1233", "gmtn.", "gmtn", "gmi23", "gmtn125", "tg123", "456", "jhj", "1", "2", "T1", "gf", "55"];
             const opStatuses = ["Ending", "Holdup", "Continue"];
-            // Pre‑set suggestions for each process (using normalized names)
             const suggestionMap = {
                 "Punching": "Bending",
                 "Welding": "Pressing",
@@ -260,26 +251,17 @@
                         else if (ratingRand < 0.48) { rating = "Conditional Accept";
                             conditional = Math.floor(Math.random() * 10) + 1; }
                         const delivered = Math.floor(Math.random() * 30) + 10;
-                        let accepted = 0,
-                            rework = 0,
-                            reject = 0;
-                        if (rating === "Accepted") { accepted = delivered;
-                            rework = 0;
-                            reject = 0; } else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6);
-                            rework = delivered - accepted;
-                            reject = 0; } else if (rating === "Reject") { accepted = 0;
-                            rework = 0;
-                            reject = delivered; } else if (rating === "Conditional Accept") { accepted = Math.floor(
-                                delivered * 0.8);
-                            rework = 0;
-                            reject = 0; }
+                        let accepted = 0, rework = 0, reject = 0;
+                        if (rating === "Accepted") { accepted = delivered; rework = 0; reject = 0; }
+                        else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6); rework = delivered - accepted; reject = 0; }
+                        else if (rating === "Reject") { accepted = 0; rework = 0; reject = delivered; }
+                        else if (rating === "Conditional Accept") { accepted = Math.floor(delivered * 0.8); rework = 0; reject = 0; }
                         const failureCost = (rework + reject) * (Math.random() * 600 + 150);
                         const subtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
                         const partName = partNames[Math.floor(Math.random() * partNames.length)];
                         const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
                         const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
                         const process = processes[Math.floor(Math.random() * processes.length)];
-                        // Normalize for suggestion mapping
                         const baseProcess = process.replace(/\s*Process$/i, '');
                         const suggested = suggestionMap[baseProcess] || getNextOperation(process);
                         mock.push({
@@ -288,7 +270,7 @@
                             process_type: process,
                             username: engineers[Math.floor(Math.random() * engineers.length)],
                             operation_status: status,
-                            suggested_next_operation: suggested, // stored suggestion
+                            suggested_next_operation: suggested,
                             extra_fields: {
                                 "Customer Name": client,
                                 "Project Name": title,
@@ -320,19 +302,11 @@
                 else if (ratingRand < 0.48) { rating = "Conditional Accept";
                     conditional = Math.floor(Math.random() * 10) + 1; }
                 const delivered = Math.floor(Math.random() * 50) + 10;
-                let accepted = 0,
-                    rework = 0,
-                    reject = 0;
-                if (rating === "Accepted") { accepted = delivered;
-                    rework = 0;
-                    reject = 0; } else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6);
-                    rework = delivered - accepted;
-                    reject = 0; } else if (rating === "Reject") { accepted = 0;
-                    rework = 0;
-                    reject = delivered; } else if (rating === "Conditional Accept") { accepted = Math.floor(delivered *
-                        0.8);
-                    rework = 0;
-                    reject = 0; }
+                let accepted = 0, rework = 0, reject = 0;
+                if (rating === "Accepted") { accepted = delivered; rework = 0; reject = 0; }
+                else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6); rework = delivered - accepted; reject = 0; }
+                else if (rating === "Reject") { accepted = 0; rework = 0; reject = delivered; }
+                else if (rating === "Conditional Accept") { accepted = Math.floor(delivered * 0.8); rework = 0; reject = 0; }
                 const failureCost = (rework + reject) * (Math.random() * 600 + 150);
                 const client = clients[Math.floor(Math.random() * clients.length)];
                 const title = titles[Math.floor(Math.random() * titles.length)];
@@ -371,7 +345,6 @@
             return mock;
         }
 
-        // --- aggregation functions (now reads suggested from DB) ---
         function aggregateProjects(inspections) {
             const projectMap = new Map();
             for (const insp of inspections) {
@@ -400,15 +373,11 @@
         }
 
         function aggregateInspectionsForProject(inspections) {
-            let totalDelivered = 0,
-                totalAccepted = 0,
-                totalRework = 0,
-                totalReject = 0,
-                totalConditional = 0;
+            let totalDelivered = 0, totalAccepted = 0, totalRework = 0, totalReject = 0, totalConditional = 0;
             let totalInspections = 0;
             let lastDate = null;
             const subtitlesMap = new Map();
-            const partLastInsp = new Map(); // partName -> { process_type, date, suggested_next }
+            const partLastInsp = new Map();
 
             for (const insp of inspections) {
                 const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
@@ -429,7 +398,6 @@
                 const inspDate = new Date(insp.submitted_at);
                 if (!lastDate || inspDate > lastDate) lastDate = inspDate;
 
-                // Update latest inspection per part
                 if (!partLastInsp.has(partName) || inspDate > partLastInsp.get(partName).date) {
                     const suggested = getSuggestedNext(insp);
                     partLastInsp.set(partName, {
@@ -484,7 +452,6 @@
             const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => {
                 const partsList = Array.from(sub.partsMap.entries()).map(([partName, data]) => {
                     const lastInfo = partLastInsp.get(partName);
-                    // Use stored suggestion, fallback to computed if missing
                     const suggested = lastInfo ? lastInfo.suggested_next : getNextOperation(lastInfo?.process_type);
                     if (suggested && suggested !== '—' && suggested !== 'Complete / No further process') {
                         suggestedNextOpsSet.add(suggested);
@@ -539,14 +506,11 @@
         function renderProjects(projects) {
             currentFilteredProjects = projects;
             const tbody = document.getElementById('projectsTableBody');
-            if (!projects.length) { tbody.innerHTML = '<tr><td colspan="13" class="text-center py-10">No projects found</td>';
-                return; }
+            if (!projects.length) { tbody.innerHTML = '<tr><td colspan="13" class="text-center py-10">No projects found</td>'; return; }
             tbody.innerHTML = projects.map(p => {
                 const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
-                let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus ===
-                    'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
-                let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ?
-                    'Needs Action' : 'On Track');
+                let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus === 'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
+                let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track');
                 return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center">${p.totalInspections}</td><td class="text-center">${p.totalDelivered.toLocaleString()}</td><td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td><td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td><td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td><td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
             }).join('');
             document.getElementById('totalProjects').innerText = projects.length;
@@ -624,7 +588,7 @@
                         if (part.operations) rows.push(['      Operations: ' + part.operations, '', '', '', '', '',
                             '', ''
                         ]);
-                        if (part.suggestedNext) rows.push(['      Suggested Next: ' + part.suggestedNext, '', '', '',
+                        if (part.suggestedNext) rows.push(['      Suggested Next Operation: ' + part.suggestedNext, '', '', '',
                             '', '', '', ''
                         ]);
                     }
@@ -641,7 +605,6 @@
                 );
         }
 
-        // --- show part details (now reads suggestion from DB) ---
         function showPartDetails(partName) {
             if (!currentModalProject) return;
             const allInspections = currentModalProject.inspections;
@@ -658,7 +621,6 @@
             const lastInsp = partInspections[partInspections.length - 1];
             const lastProcess = lastInsp?.process_type || '—';
             const lastDate = lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—';
-            // Read suggestion from DB (via getSuggestedNext)
             const nextOp = lastInsp ? getSuggestedNext(lastInsp) : getNextOperation(lastProcess);
 
             let suggestionHtml = `
@@ -728,7 +690,6 @@
             }
         }
 
-        // --- main modal functions ---
         function showProjectDetails(client, title) {
             const project = allProjects.find(p => p.client === client && p.title === title);
             if (!project) return;
@@ -817,7 +778,7 @@
                                             <th>DWG No.</th>
                                             <th>Tag No.</th>
                                             <th>Operations</th>
-                                            <th>Suggested Next</th>
+                                            <th>Suggested Next Operation</th>
                                         </tr>
                                     </thead>
                                     <tbody>
