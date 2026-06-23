@@ -172,10 +172,11 @@
             "Packaging"
         ];
 
-        // ---- strip " Process" suffix for matching ----
+        // ---- FIX: strip both " Process" and " Operation" suffixes ----
         function getNextOperation(processType) {
             if (!processType) return '—';
-            const normalized = processType.replace(/\s*Process$/i, '');
+            // Remove common suffixes: " Process", " Operation", " Op." (case-insensitive)
+            let normalized = processType.replace(/\s*(?:Process|Operation|Op\.?)$/i, '').trim();
             const idx = PROCESS_ORDER.indexOf(normalized);
             if (idx === -1 || idx === PROCESS_ORDER.length - 1) return 'Complete / No further process';
             return PROCESS_ORDER[idx + 1];
@@ -262,7 +263,7 @@
                         const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
                         const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
                         const process = processes[Math.floor(Math.random() * processes.length)];
-                        const baseProcess = process.replace(/\s*Process$/i, '');
+                        const baseProcess = process.replace(/\s*(?:Process|Operation)$/i, '');
                         const suggested = suggestionMap[baseProcess] || getNextOperation(process);
                         mock.push({
                             id: mock.length,
@@ -316,7 +317,7 @@
                 const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
                 const process = processes[Math.floor(Math.random() * processes.length)];
                 const status = opStatuses[Math.floor(Math.random() * opStatuses.length)];
-                const baseProcess = process.replace(/\s*Process$/i, '');
+                const baseProcess = process.replace(/\s*(?:Process|Operation)$/i, '');
                 const suggested = suggestionMap[baseProcess] || getNextOperation(process);
                 mock.push({
                     id: mock.length,
