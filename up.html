@@ -30,6 +30,8 @@
         .btn-excel-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
         .clickable-part { color: #2563eb; cursor: pointer; text-decoration: underline; }
         .clickable-part:hover { color: #1d4ed8; }
+        .suggestion-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 1rem; }
+        .suggestion-box .label { font-weight: 600; color: #166534; }
     </style>
 </head>
 <body class="antialiased">
@@ -51,7 +53,7 @@
             </div>
         </div>
 
-        <!-- Global Filters -->
+        <!-- Global Filters (added Suggested Next Operation) -->
         <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
@@ -65,6 +67,12 @@
                 </select>
             </div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Status</label><select id="filterStatus" class="filter-select w-full"><option value="">All Status</option><option value="needs_action">Needs Action</option><option value="on_track">On Track</option><option value="critical">Critical</option></select></div>
+            <!-- NEW: Suggested Next Operation filter -->
+            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Suggested Next Operation</label>
+                <select id="filterSuggestedNext" class="filter-select w-full">
+                    <option value="">All</option>
+                </select>
+            </div>
             <div><button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl text-sm">Clear Filters</button></div>
         </div>
 
@@ -129,6 +137,45 @@
     </div>
 
     <script>
+        // ============================================================
+        // PROCESS ORDER for suggesting next operation
+        // ============================================================
+        const PROCESS_ORDER = [
+            "Incoming",
+            "Shearing",
+            "GasCutting",
+            "Punching",
+            "Bending",
+            "Rolling",
+            "Welding",
+            "Pressing",
+            "Forging",
+            "Casting",
+            "PatternCore",
+            "Molding",
+            "Hardening",
+            "Tempering",
+            "Coating",
+            "Painting",
+            "Milling",
+            "Lathe",
+            "Drilling",
+            "BoringHoning",
+            "Grinding",
+            "Polishing",
+            "Assembling",
+            "FastenersAssembly",
+            "Testing",
+            "Packaging"
+        ];
+
+        function getNextOperation(processType) {
+            if (!processType) return '—';
+            const idx = PROCESS_ORDER.indexOf(processType);
+            if (idx === -1 || idx === PROCESS_ORDER.length - 1) return 'Complete / No further process';
+            return PROCESS_ORDER[idx + 1];
+        }
+
         let allProjects = [];
         let allInspectionsRaw = [];
         let currentModalProject = null;
@@ -288,7 +335,7 @@
             return mock;
         }
 
-        // --- aggregation functions (updated to include operations per part) ---
+        // --- aggregation functions (updated to include suggested next ops) ---
         function aggregateProjects(inspections) {
             const projectMap = new Map();
             for (const insp of inspections) {
@@ -308,7 +355,8 @@
                     subtitlesArray: aggregated.subtitlesArray,
                     lastDateStr: aggregated.lastDateStr,
                     acceptanceRate: aggregated.acceptanceRate,
-                    followStatus: aggregated.followStatus
+                    followStatus: aggregated.followStatus,
+                    suggestedNextOps: aggregated.suggestedNextOps || []
                 };
             });
             projects.sort((a, b) => (b.lastDate || 0) - (a.lastDate || 0));
@@ -324,6 +372,8 @@
             let totalInspections = 0;
             let lastDate = null;
             const subtitlesMap = new Map();
+            // For each part, store the latest inspection info (process_type and date)
+            const partLastInsp = new Map(); // partName -> { process_type, date }
 
             for (const insp of inspections) {
                 const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
@@ -343,6 +393,11 @@
 
                 const inspDate = new Date(insp.submitted_at);
                 if (!lastDate || inspDate > lastDate) lastDate = inspDate;
+
+                // Update latest inspection per part
+                if (!partLastInsp.has(partName) || inspDate > partLastInsp.get(partName).date) {
+                    partLastInsp.set(partName, { process_type: processType, date: inspDate });
+                }
 
                 if (!subtitlesMap.has(subtitle)) {
                     subtitlesMap.set(subtitle, {
@@ -385,23 +440,36 @@
             if (totalReject / totalDelivered >= 0.5) followStatus = 'critical';
             else if (totalRework + totalReject > 0) followStatus = 'needs_action';
 
-            const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => ({
-                name: sub.name,
-                totalInspections: sub.totalInspections,
-                sumDelivered: sub.sumDelivered,
-                sumAccepted: sub.sumAccepted,
-                sumRework: sub.sumRework,
-                sumReject: sub.sumReject,
-                sumConditional: sub.sumConditional,
-                acceptRate: sub.sumDelivered ? (sub.sumAccepted / sub.sumDelivered) * 100 : 0,
-                partsList: Array.from(sub.partsMap.entries()).map(([partName, data]) => ({
-                    part_name: partName,
-                    quantity: data.quantity,
-                    dwgList: Array.from(data.dwgSet).join(', '),
-                    tagList: Array.from(data.tagSet).join(', '),
-                    operations: Array.from(data.operationsSet).join(', ')
-                }))
-            }));
+            // Build partsList and collect suggested next ops
+            const suggestedNextOpsSet = new Set();
+            const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => {
+                const partsList = Array.from(sub.partsMap.entries()).map(([partName, data]) => {
+                    // Compute suggested next for this part from the last inspection
+                    const lastInfo = partLastInsp.get(partName);
+                    const suggested = lastInfo ? getNextOperation(lastInfo.process_type) : '—';
+                    if (suggested && suggested !== '—' && suggested !== 'Complete / No further process') {
+                        suggestedNextOpsSet.add(suggested);
+                    }
+                    return {
+                        part_name: partName,
+                        quantity: data.quantity,
+                        dwgList: Array.from(data.dwgSet).join(', '),
+                        tagList: Array.from(data.tagSet).join(', '),
+                        operations: Array.from(data.operationsSet).join(', ')
+                    };
+                });
+                return {
+                    name: sub.name,
+                    totalInspections: sub.totalInspections,
+                    sumDelivered: sub.sumDelivered,
+                    sumAccepted: sub.sumAccepted,
+                    sumRework: sub.sumRework,
+                    sumReject: sub.sumReject,
+                    sumConditional: sub.sumConditional,
+                    acceptRate: sub.sumDelivered ? (sub.sumAccepted / sub.sumDelivered) * 100 : 0,
+                    partsList: partsList
+                };
+            });
 
             return {
                 totalDelivered,
@@ -414,7 +482,8 @@
                 acceptanceRate: acceptanceRate.toFixed(1),
                 followStatus,
                 lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
-                subtitlesArray
+                subtitlesArray,
+                suggestedNextOps: Array.from(suggestedNextOpsSet)
             };
         }
 
@@ -524,7 +593,7 @@
                 );
         }
 
-        // --- show part details in a new modal ---
+        // --- show part details in a new modal with suggestion box ---
         function showPartDetails(partName) {
             if (!currentModalProject) return;
             const allInspections = currentModalProject.inspections;
@@ -537,6 +606,24 @@
             document.getElementById('partModalTitle').innerText = `Operations for: ${escapeHtml(partName)}`;
             const body = document.getElementById('partModalBody');
 
+            // Sort by date ascending (oldest first)
+            partInspections.sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+            const lastInsp = partInspections[partInspections.length - 1];
+            const lastProcess = lastInsp?.process_type || '—';
+            const lastDate = lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—';
+            const nextOp = getNextOperation(lastProcess);
+
+            // Build suggestion box
+            let suggestionHtml = `
+                <div class="suggestion-box">
+                    <div class="flex flex-wrap gap-4">
+                        <div><span class="label">Last Operation:</span> ${escapeHtml(lastProcess)} (${lastDate})</div>
+                        <div><span class="label">Suggested Next Operation:</span> <strong>${escapeHtml(nextOp)}</strong></div>
+                    </div>
+                </div>
+            `;
+
+            // Build history table
             let tableHtml = `
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm border">
@@ -555,8 +642,6 @@
                         </thead>
                         <tbody>
             `;
-            // Sort by date ascending
-            partInspections.sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
             for (const insp of partInspections) {
                 const date = new Date(insp.submitted_at).toLocaleDateString();
                 const process = insp.process_type || '—';
@@ -582,7 +667,8 @@
                 `;
             }
             tableHtml += `</tbody></table></div>`;
-            body.innerHTML = tableHtml;
+
+            body.innerHTML = suggestionHtml + tableHtml;
             document.getElementById('partModal').classList.remove('hidden');
         }
 
@@ -744,6 +830,7 @@
             const subtitle = document.getElementById('filterSubtitle').value;
             const opCond = document.getElementById('filterOpCondition').value;
             const status = document.getElementById('filterStatus').value;
+            const suggested = document.getElementById('filterSuggestedNext').value;
             let filtered = [...originalProjects];
             if (client) filtered = filtered.filter(p => p.client === client);
             if (title) filtered = filtered.filter(p => p.title === title);
@@ -759,6 +846,9 @@
             if (status === 'needs_action') filtered = filtered.filter(p => p.followStatus === 'needs_action');
             else if (status === 'critical') filtered = filtered.filter(p => p.followStatus === 'critical');
             else if (status === 'on_track') filtered = filtered.filter(p => p.followStatus === 'on_track');
+            if (suggested) {
+                filtered = filtered.filter(p => p.suggestedNextOps && p.suggestedNextOps.includes(suggested));
+            }
             renderProjects(filtered);
         }
 
@@ -772,6 +862,18 @@
                 `<option>${escapeHtml(t)}</option>`).join('');
             document.getElementById('filterSubtitle').innerHTML = '<option value="">All Subtitles</option>' + subs.map(s =>
                 `<option>${escapeHtml(s)}</option>`).join('');
+
+            // Populate suggested next operations dropdown
+            const allSuggestions = new Set();
+            for (const p of projects) {
+                if (p.suggestedNextOps) {
+                    p.suggestedNextOps.forEach(s => allSuggestions.add(s));
+                }
+            }
+            const sortedSuggestions = Array.from(allSuggestions).sort();
+            const filterSelect = document.getElementById('filterSuggestedNext');
+            filterSelect.innerHTML = '<option value="">All</option>' +
+                sortedSuggestions.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
         }
 
         function clearFilters() {
@@ -780,6 +882,7 @@
             document.getElementById('filterSubtitle').value = '';
             document.getElementById('filterOpCondition').value = '';
             document.getElementById('filterStatus').value = '';
+            document.getElementById('filterSuggestedNext').value = '';
             applyFilters();
         }
 
@@ -801,6 +904,7 @@
         document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
         document.getElementById('filterOpCondition').addEventListener('change', applyFilters);
         document.getElementById('filterStatus').addEventListener('change', applyFilters);
+        document.getElementById('filterSuggestedNext').addEventListener('change', applyFilters);
         window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
         refreshData();
     </script>
