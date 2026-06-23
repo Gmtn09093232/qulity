@@ -172,12 +172,14 @@
             "Packaging"
         ];
 
-        // ---- FIX: strip both " Process" and " Operation" suffixes ----
+        // ---- FIX: case‑insensitive matching + suffix removal ----
         function getNextOperation(processType) {
             if (!processType) return '—';
             // Remove common suffixes: " Process", " Operation", " Op." (case-insensitive)
             let normalized = processType.replace(/\s*(?:Process|Operation|Op\.?)$/i, '').trim();
-            const idx = PROCESS_ORDER.indexOf(normalized);
+            // Find index using case-insensitive comparison
+            const lower = normalized.toLowerCase();
+            const idx = PROCESS_ORDER.map(p => p.toLowerCase()).indexOf(lower);
             if (idx === -1 || idx === PROCESS_ORDER.length - 1) return 'Complete / No further process';
             return PROCESS_ORDER[idx + 1];
         }
