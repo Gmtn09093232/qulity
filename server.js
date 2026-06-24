@@ -53,7 +53,7 @@ app.get('/list', (req, res) => {
 app.get('/up', (req, res) => {
   res.sendFile(path.join(__dirname, 'up.html'));
 });
-// NEW: route for 7 QC Tools page (tools.html) – accessible at /tools
+// 7 QC Tools page (tools.html) – accessible at /tools
 app.get('/tools', (req, res) => {
   res.sendFile(path.join(__dirname, 'tools.html'));
 });
@@ -73,19 +73,21 @@ app.get('/api/inspections/:id', async (req, res) => {
 // UPDATE (PUT) an existing inspection by ID
 app.put('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
+  const extra = req.body.extra_fields || {};
   const inspectionData = {
     ...req.body,
-    submitted_at: new Date()  // update timestamp on edit
+    submitted_at: new Date(),  // update timestamp on edit
+    // Extract dedicated columns from extra_fields
+    customer_name: extra["Customer Name"] || null,
+    project_name: extra["Project Name"] || null,
+    drawing_no: extra["Drawing No."] || null,
+    part_name: extra["Part Name"] || null,
+    tag_no: extra["Tag No."] || null,
+    work_station: extra["Work Station"] || null,
+    location: extra["Location"] || null,
+    // ✅ NEW: map suggested_next_operation (fallback to legacy "process order")
+    suggested_next_operation: extra["suggested_next_operation"] || extra["process order"] || null
   };
-  // Extract dedicated columns from extra_fields
-  const extra = req.body.extra_fields || {};
-  inspectionData.customer_name = extra["Customer Name"] || null;
-  inspectionData.project_name = extra["Project Name"] || null;
-  inspectionData.drawing_no = extra["Drawing No."] || null;
-  inspectionData.part_name = extra["Part Name"] || null;
-  inspectionData.tag_no = extra["Tag No."] || null;
-  inspectionData.work_station = extra["Work Station"] || null;
-  inspectionData.location = extra["Location"] || null;
 
   const { data, error } = await supabase
     .from('rolling_inspections')
@@ -201,7 +203,9 @@ app.post('/api/inspections', async (req, res) => {
     part_name: extra["Part Name"] || null,
     tag_no: extra["Tag No."] || null,
     work_station: extra["Work Station"] || null,
-    location: extra["Location"] || null
+    location: extra["Location"] || null,
+    // ✅ NEW: map suggested_next_operation (fallback to legacy "process order")
+    suggested_next_operation: extra["suggested_next_operation"] || extra["process order"] || null
   };
   
   const { data, error } = await supabase
