@@ -231,14 +231,14 @@
                     <div class="md:col-span-2"><label class="font-bold">Cause of Defects (detailed)</label><textarea id="causeOfDefectsDetail" rows="2" class="border p-1 w-full"></textarea></div>
                 </div>
 
-                <!-- ========== NEW: Suggested Next Operation ========== -->
+                <!-- ========== Suggested Next Operation (dedicated column) ========== -->
                 <div class="mt-4 border-t pt-4">
                     <label class="font-bold">Suggested Next Operation</label>
                     <select id="suggestedNextOp" class="border p-1 w-full rounded">
                         <option value="">-- Select Next Operation --</option>
                     </select>
                 </div>
-                <!-- ================================================== -->
+                <!-- =============================================================== -->
 
                 <div class="flex justify-end gap-4 no-print">
                     <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
@@ -926,7 +926,7 @@
             currentProcess = document.getElementById("processType").value;
             renderDynamicFields();
             populateMachineDropdown();
-            populateSuggestedNextOps(); // <-- new
+            populateSuggestedNextOps(); // <-- update dropdown
         }
 
         // ============================================================
@@ -1129,7 +1129,9 @@
                 accepted_qty: +document.getElementById("acceptedQty").value || 0,
                 rework_qty: +document.getElementById("reworkQty").value || 0,
                 reject_qty: +document.getElementById("rejectQty").value || 0,
-                conditional_accept_qty: +document.getElementById("conditionalAcceptQty").value || 0
+                conditional_accept_qty: +document.getElementById("conditionalAcceptQty").value || 0,
+                // ========== NEW: save suggested next operation ==========
+                suggested_next_operation: document.getElementById("suggestedNextOp").value || null
             };
             try {
                 let url = '/api/inspections',
@@ -1232,11 +1234,26 @@
             } else {
                 refreshDatalistOptions();
             }
-            populateSuggestedNextOps(); // new
+
+            // ========== Set the suggested next operation ==========
+            const suggestedSelect = document.getElementById('suggestedNextOp');
+            if (inspection.suggested_next_operation) {
+                const val = inspection.suggested_next_operation;
+                // If the value is not in the dropdown, add it
+                let exists = Array.from(suggestedSelect.options).some(opt => opt.value === val);
+                if (!exists) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = val;
+                    newOpt.textContent = val;
+                    suggestedSelect.appendChild(newOpt);
+                }
+                suggestedSelect.value = val;
+            }
+            // =====================================================
         }
 
         // ============================================================
-        // SUGGESTED NEXT OPERATION (NEW)
+        // SUGGESTED NEXT OPERATION (dedicated column)
         // ============================================================
         const PROCESS_ORDER = [
             "Incoming",
@@ -1271,7 +1288,8 @@
             const current = document.getElementById("processType").value;
             const select = document.getElementById("suggestedNextOp");
             if (!select) return;
-            // Clear existing options (keep the default empty one)
+            // Preserve any currently selected value (if in edit mode)
+            const currentVal = select.value;
             select.innerHTML = '<option value="">-- Select Next Operation --</option>';
             const idx = PROCESS_ORDER.indexOf(current);
             if (idx === -1) return; // unknown process
@@ -1281,6 +1299,10 @@
                 opt.value = PROCESS_ORDER[i];
                 opt.textContent = PROCESS_ORDER[i];
                 select.appendChild(opt);
+            }
+            // Try to restore previous selection if it still exists
+            if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+                select.value = currentVal;
             }
         }
 
@@ -1309,7 +1331,6 @@
             populateMachineDropdown();
             attachQuantityListeners();
             populateSuggestedNextOps(); // new
-            // Additional client input listener (already set in renderDynamicFields, but safe to re-bind)
             const clientInput = document.getElementById('extra_Customer_Name');
             if (clientInput) {
                 clientInput.removeEventListener('input', filterSuggestionsByCurrentClient);
