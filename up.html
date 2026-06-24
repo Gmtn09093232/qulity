@@ -141,7 +141,7 @@
 
     <script>
         // ============================================================
-        // PROCESS ORDER – only used as fallback if no suggestion stored
+        // FALLBACK process order – only used if no suggestion is stored
         // ============================================================
         const PROCESS_ORDER = [
             "Incoming",
@@ -175,9 +175,7 @@
         // ---- FIX: case‑insensitive matching + suffix removal ----
         function getNextOperation(processType) {
             if (!processType) return '—';
-            // Remove common suffixes: " Process", " Operation", " Op." (case-insensitive)
             let normalized = processType.replace(/\s*(?:Process|Operation|Op\.?)$/i, '').trim();
-            // Find index using case-insensitive comparison
             const lower = normalized.toLowerCase();
             const idx = PROCESS_ORDER.map(p => p.toLowerCase()).indexOf(lower);
             if (idx === -1 || idx === PROCESS_ORDER.length - 1) return 'Complete / No further process';
@@ -199,13 +197,19 @@
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
+        // ============================================================
+        // PRIORITY: 1) dedicated column, 2) extra_fields, 3) fallback
+        // ============================================================
         function getSuggestedNext(insp) {
-            if (insp.suggested_next_operation) {
+            // 1. Use the dedicated column if present
+            if (insp.suggested_next_operation && insp.suggested_next_operation.trim() !== '') {
                 return insp.suggested_next_operation.trim();
             }
+            // 2. Fallback to extra_fields
             if (insp.extra_fields && insp.extra_fields["Suggested Next Operation"]) {
                 return insp.extra_fields["Suggested Next Operation"].trim();
             }
+            // 3. Compute from process type (only as last resort)
             return getNextOperation(insp.process_type);
         }
 
@@ -220,6 +224,7 @@
         }
 
         function generateMockInspections() {
+            // ... (same as before, but ensure suggested_next_operation is set)
             const mock = [];
             const processes = ["Punching Process", "Welding Process", "Assembling Process", "Lathe Process", "Milling Process", "Bending Process", "Drilling Process", "Pressing Process"];
             const engineers = ["Gizie M.", "Abebech A.", "Biruk D.", "Selam W."];
@@ -273,7 +278,7 @@
                             process_type: process,
                             username: engineers[Math.floor(Math.random() * engineers.length)],
                             operation_status: status,
-                            suggested_next_operation: suggested,
+                            suggested_next_operation: suggested, // <-- set dedicated column
                             extra_fields: {
                                 "Customer Name": client,
                                 "Project Name": title,
