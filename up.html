@@ -113,7 +113,7 @@
             </div>
         </div>
 
-        <!-- Main Modal (Sub‑Assembly Details) -->
+        <!-- Main Modal -->
         <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closeModal(event)">
             <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
@@ -127,7 +127,7 @@
             </div>
         </div>
 
-        <!-- Part Detail Modal (click on part name) -->
+        <!-- Part Detail Modal -->
         <div id="partModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closePartModal(event)">
             <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
@@ -141,38 +141,37 @@
 
     <script>
         // ============================================================
-        // FALLBACK process order – only used if no suggestion is stored
+        // FALLBACK PROCESS ORDER – matches dropdown order
         // ============================================================
         const PROCESS_ORDER = [
             "Incoming",
-            "Shearing",
-            "GasCutting",
             "Punching",
-            "Bending",
             "Rolling",
+            "Bending",
             "Welding",
             "Pressing",
-            "Forging",
+            "Milling",
             "Casting",
             "PatternCore",
-            "Molding",
-            "Hardening",
-            "Tempering",
-            "Coating",
+            "Assembling",
+            "Testing",
             "Painting",
-            "Milling",
+            "Packaging",
+            "Shearing",
             "Lathe",
             "Drilling",
             "BoringHoning",
             "Grinding",
+            "Forging",
+            "Molding",
             "Polishing",
-            "Assembling",
+            "GasCutting",
             "FastenersAssembly",
-            "Testing",
-            "Packaging"
+            "Hardening",
+            "Tempering",
+            "Coating"
         ];
 
-        // ---- FIX: case‑insensitive matching + suffix removal ----
         function getNextOperation(processType) {
             if (!processType) return '—';
             let normalized = processType.replace(/\s*(?:Process|Operation|Op\.?)$/i, '').trim();
@@ -197,19 +196,13 @@
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
-        // ============================================================
-        // PRIORITY: 1) dedicated column, 2) extra_fields, 3) fallback
-        // ============================================================
         function getSuggestedNext(insp) {
-            // 1. Use the dedicated column if present
             if (insp.suggested_next_operation && insp.suggested_next_operation.trim() !== '') {
                 return insp.suggested_next_operation.trim();
             }
-            // 2. Fallback to extra_fields
             if (insp.extra_fields && insp.extra_fields["Suggested Next Operation"]) {
                 return insp.extra_fields["Suggested Next Operation"].trim();
             }
-            // 3. Compute from process type (only as last resort)
             return getNextOperation(insp.process_type);
         }
 
@@ -219,138 +212,9 @@
                 if (!res.ok) throw new Error();
                 return await res.json();
             } catch {
-                return generateMockInspections();
+                // If you have a mock generator, keep it; otherwise return []
+                return [];
             }
-        }
-
-        function generateMockInspections() {
-            // ... (same as before, but ensure suggested_next_operation is set)
-            const mock = [];
-            const processes = ["Punching Process", "Welding Process", "Assembling Process", "Lathe Process", "Milling Process", "Bending Process", "Drilling Process", "Pressing Process"];
-            const engineers = ["Gizie M.", "Abebech A.", "Biruk D.", "Selam W."];
-            const clients = ["DEF Metal", "AA Manufacturing", "Bishoftu Tech", "AMIMTDE", "BGFFF", "Awscod"];
-            const titles = ["Animal Feed Plant", "Bridge Bracket", "Hydraulic Cylinder", "gear box", "OIL tanker", "Waters hole drill", "roller door"];
-            const subtitles = ["mixer", "conveyor", "control panel", "frame", "hydraulic unit", "cover sub assmbelly", "stand", "bottom", "top cover sub assmbelly"];
-            const partNames = ["Frame", "Motor Mount", "Bolt Set", "Hydraulic Cylinder", "Control Board", "plate", "sheet", "stand plate", "Top cap", "Cover stand", "Supr gear 25 tooth"];
-            const dwgNos = ["DWG-1001", "DWG-1002", "DWG-1003", "1", "2", "2.1", "23", "2.3", "ot12", "p12", "ol45", "pl32", "p132", "56", "1569", "15256", "1532", "01", "02", "11", "15568", "255445"];
-            const tagNos = ["TAG-A01", "TAG-B02", "TAG-C03", "gm1", "gm2", "gm1233", "gmtn.", "gmtn", "gmi23", "gmtn125", "tg123", "456", "jhj", "1", "2", "T1", "gf", "55"];
-            const opStatuses = ["Ending", "Holdup", "Continue"];
-            const suggestionMap = {
-                "Punching": "Bending",
-                "Welding": "Pressing",
-                "Assembling": "Testing",
-                "Lathe": "Drilling",
-                "Milling": "Lathe",
-                "Bending": "Rolling",
-                "Drilling": "BoringHoning",
-                "Pressing": "Forging"
-            };
-
-            for (const client of clients.slice(0, 3)) {
-                for (const title of titles.slice(0, 3)) {
-                    for (const status of opStatuses) {
-                        const date = new Date();
-                        date.setDate(date.getDate() - Math.floor(Math.random() * 60));
-                        const ratingRand = Math.random();
-                        let rating = "Accepted";
-                        let conditional = 0;
-                        if (ratingRand < 0.25) rating = "Rework";
-                        else if (ratingRand < 0.4) rating = "Reject";
-                        else if (ratingRand < 0.48) { rating = "Conditional Accept";
-                            conditional = Math.floor(Math.random() * 10) + 1; }
-                        const delivered = Math.floor(Math.random() * 30) + 10;
-                        let accepted = 0, rework = 0, reject = 0;
-                        if (rating === "Accepted") { accepted = delivered; rework = 0; reject = 0; }
-                        else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6); rework = delivered - accepted; reject = 0; }
-                        else if (rating === "Reject") { accepted = 0; rework = 0; reject = delivered; }
-                        else if (rating === "Conditional Accept") { accepted = Math.floor(delivered * 0.8); rework = 0; reject = 0; }
-                        const failureCost = (rework + reject) * (Math.random() * 600 + 150);
-                        const subtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
-                        const partName = partNames[Math.floor(Math.random() * partNames.length)];
-                        const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
-                        const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
-                        const process = processes[Math.floor(Math.random() * processes.length)];
-                        const baseProcess = process.replace(/\s*(?:Process|Operation)$/i, '');
-                        const suggested = suggestionMap[baseProcess] || getNextOperation(process);
-                        mock.push({
-                            id: mock.length,
-                            submitted_at: date.toISOString(),
-                            process_type: process,
-                            username: engineers[Math.floor(Math.random() * engineers.length)],
-                            operation_status: status,
-                            suggested_next_operation: suggested, // <-- set dedicated column
-                            extra_fields: {
-                                "Customer Name": client,
-                                "Project Name": title,
-                                "Subtitle": subtitle,
-                                "Part Name": partName,
-                                "Drawing No.": dwg,
-                                "Tag No.": tag
-                            },
-                            acceptance_data: { p0: { rating } },
-                            delivered_qty: delivered,
-                            accepted_qty: accepted,
-                            rework_qty: rework,
-                            reject_qty: reject,
-                            conditional_accept_qty: conditional,
-                            total_internal_failure_cost: failureCost
-                        });
-                    }
-                }
-            }
-
-            for (let i = 0; i < 40; i++) {
-                const date = new Date();
-                date.setDate(date.getDate() - Math.floor(Math.random() * 90));
-                const ratingRand = Math.random();
-                let rating = "Accepted";
-                let conditional = 0;
-                if (ratingRand < 0.25) rating = "Rework";
-                else if (ratingRand < 0.4) rating = "Reject";
-                else if (ratingRand < 0.48) { rating = "Conditional Accept";
-                    conditional = Math.floor(Math.random() * 10) + 1; }
-                const delivered = Math.floor(Math.random() * 50) + 10;
-                let accepted = 0, rework = 0, reject = 0;
-                if (rating === "Accepted") { accepted = delivered; rework = 0; reject = 0; }
-                else if (rating === "Rework") { accepted = Math.floor(delivered * 0.6); rework = delivered - accepted; reject = 0; }
-                else if (rating === "Reject") { accepted = 0; rework = 0; reject = delivered; }
-                else if (rating === "Conditional Accept") { accepted = Math.floor(delivered * 0.8); rework = 0; reject = 0; }
-                const failureCost = (rework + reject) * (Math.random() * 600 + 150);
-                const client = clients[Math.floor(Math.random() * clients.length)];
-                const title = titles[Math.floor(Math.random() * titles.length)];
-                const subtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
-                const partName = partNames[Math.floor(Math.random() * partNames.length)];
-                const dwg = dwgNos[Math.floor(Math.random() * dwgNos.length)];
-                const tag = tagNos[Math.floor(Math.random() * tagNos.length)];
-                const process = processes[Math.floor(Math.random() * processes.length)];
-                const status = opStatuses[Math.floor(Math.random() * opStatuses.length)];
-                const baseProcess = process.replace(/\s*(?:Process|Operation)$/i, '');
-                const suggested = suggestionMap[baseProcess] || getNextOperation(process);
-                mock.push({
-                    id: mock.length,
-                    submitted_at: date.toISOString(),
-                    process_type: process,
-                    username: engineers[Math.floor(Math.random() * engineers.length)],
-                    operation_status: status,
-                    suggested_next_operation: suggested,
-                    extra_fields: {
-                        "Customer Name": client,
-                        "Project Name": title,
-                        "Subtitle": subtitle,
-                        "Part Name": partName,
-                        "Drawing No.": dwg,
-                        "Tag No.": tag
-                    },
-                    acceptance_data: { p0: { rating } },
-                    delivered_qty: delivered,
-                    accepted_qty: accepted,
-                    rework_qty: rework,
-                    reject_qty: reject,
-                    conditional_accept_qty: conditional,
-                    total_internal_failure_cost: failureCost
-                });
-            }
-            return mock;
         }
 
         function aggregateProjects(inspections) {
