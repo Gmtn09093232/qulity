@@ -71,6 +71,17 @@ app.put('/api/inspections/:id', async (req, res) => {
   res.json(data[0]);
 });
 
+// ========== DELETE route ==========
+app.delete('/api/inspections/:id', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase
+    .from('rolling_inspections')
+    .delete()
+    .eq('id', id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.status(204).send();
+});
+
 app.post('/api/telegram-auth', async (req, res) => {
   const telegramData = req.body;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
