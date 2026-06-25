@@ -278,7 +278,7 @@
                 renderDynamicFields();
                 loadHistory();
                 populateMachineDropdown();
-                populateSuggestedNextOps(); // new
+                populateSuggestedNextOps();
             } else {
                 document.getElementById('secretError').classList.remove('hidden');
             }
@@ -290,8 +290,8 @@
         let allClientNames = new Set();
         let allProjectTitles = new Set();
         let allSubtitles = new Set();
-        let clientTitleMap = new Map(); // clientName -> Set of titles
-        let clientSubtitleMap = new Map(); // clientName -> Set of subtitles
+        let clientTitleMap = new Map();
+        let clientSubtitleMap = new Map();
 
         function updateSuggestionsFromInspections(inspections) {
             allClientNames.clear();
@@ -324,10 +324,8 @@
         }
 
         function refreshDatalistOptions(clientFilter) {
-            // clientFilter: string | null | undefined
             const filter = (clientFilter && clientFilter.trim() !== '') ? clientFilter.trim() : null;
 
-            // Client Name datalist – always shows all clients
             const clientDL = document.getElementById("customerNameDatalist");
             if (clientDL) {
                 clientDL.innerHTML = "";
@@ -338,7 +336,6 @@
                 });
             }
 
-            // Title datalist – filtered by client if provided
             const titleDL = document.getElementById("projectNameDatalist");
             if (titleDL) {
                 titleDL.innerHTML = "";
@@ -357,7 +354,6 @@
                 });
             }
 
-            // Subtitle datalist – filtered by client if provided
             const subtitleDL = document.getElementById("subtitleDatalist");
             if (subtitleDL) {
                 subtitleDL.innerHTML = "";
@@ -377,7 +373,6 @@
             }
         }
 
-        // Helper: filter suggestions based on current client input value
         function filterSuggestionsByCurrentClient() {
             const clientInput = document.getElementById('extra_Customer_Name');
             if (clientInput) {
@@ -411,7 +406,7 @@
         }
 
         // ============================================================
-        // OCR SCANNING (with client-filter trigger)
+        // OCR SCANNING
         // ============================================================
         async function scanDocumentAndFill() {
             const fileInput = document.createElement('input');
@@ -477,7 +472,7 @@
         }
 
         // ============================================================
-        // COMPLETE MACHINERY MASTER (69 machines)
+        // COMPLETE MACHINERY MASTER (unchanged)
         // ============================================================
         const machineryMaster = [
             { desc: "Power hack saw", rate: (1693.44 + 24876.46) / 1767 },
@@ -609,7 +604,7 @@
         }
 
         // ============================================================
-        // DYNAMIC WORK STATION based on Process Type
+        // DYNAMIC WORK STATION
         // ============================================================
         function getWorkStationOptionsForProcess(processType) {
             const workstationMap = {
@@ -902,21 +897,17 @@
                 html += `</tbody></table></div>`;
                 container.innerHTML = html;
 
-                // Refresh datalists (all options)
                 refreshDatalistOptions();
 
-                // Attach client input listener for filtering Title/Subtitle
                 const clientInput = document.getElementById('extra_Customer_Name');
                 if (clientInput) {
                     clientInput.removeEventListener('input', filterSuggestionsByCurrentClient);
                     clientInput.addEventListener('input', filterSuggestionsByCurrentClient);
-                    // If client already has a value, filter immediately
                     if (clientInput.value.trim()) {
                         refreshDatalistOptions(clientInput.value.trim());
                     }
                 }
 
-                // Attach quantity listeners
                 attachQuantityListeners();
                 updateDeliveredQty();
             }
@@ -926,7 +917,7 @@
             currentProcess = document.getElementById("processType").value;
             renderDynamicFields();
             populateMachineDropdown();
-            populateSuggestedNextOps(); // <-- update dropdown
+            populateSuggestedNextOps();
         }
 
         // ============================================================
@@ -1069,9 +1060,8 @@
             populateMachineDropdown();
             attachQuantityListeners();
             updateDeliveredQty();
-            // Reset suggestions to show all
             refreshDatalistOptions();
-            populateSuggestedNextOps(); // new
+            populateSuggestedNextOps();
         }
 
         function cancelEdit() { resetForm();
@@ -1130,7 +1120,6 @@
                 rework_qty: +document.getElementById("reworkQty").value || 0,
                 reject_qty: +document.getElementById("rejectQty").value || 0,
                 conditional_accept_qty: +document.getElementById("conditionalAcceptQty").value || 0,
-                // ========== NEW: save suggested next operation ==========
                 suggested_next_operation: document.getElementById("suggestedNextOp").value || null
             };
             try {
@@ -1227,7 +1216,6 @@
             }
             attachQuantityListeners();
 
-            // After populating extra fields, filter Title/Subtitle suggestions based on Client Name
             const clientInput = document.getElementById('extra_Customer_Name');
             if (clientInput && clientInput.value.trim()) {
                 refreshDatalistOptions(clientInput.value.trim());
@@ -1235,11 +1223,9 @@
                 refreshDatalistOptions();
             }
 
-            // ========== Set the suggested next operation ==========
             const suggestedSelect = document.getElementById('suggestedNextOp');
             if (inspection.suggested_next_operation) {
                 const val = inspection.suggested_next_operation;
-                // If the value is not in the dropdown, add it
                 let exists = Array.from(suggestedSelect.options).some(opt => opt.value === val);
                 if (!exists) {
                     const newOpt = document.createElement('option');
@@ -1249,58 +1235,54 @@
                 }
                 suggestedSelect.value = val;
             }
-            // =====================================================
         }
 
         // ============================================================
-        // SUGGESTED NEXT OPERATION (dedicated column)
+        // SUGGESTED NEXT OPERATION – ORDER MATCHES DROPDOWN
         // ============================================================
         const PROCESS_ORDER = [
             "Incoming",
-            "Shearing",
-            "GasCutting",
             "Punching",
-            "Bending",
             "Rolling",
+            "Bending",
             "Welding",
             "Pressing",
-            "Forging",
+            "Milling",
             "Casting",
             "PatternCore",
-            "Molding",
-            "Hardening",
-            "Tempering",
-            "Coating",
+            "Assembling",
+            "Testing",
             "Painting",
-            "Milling",
+            "Packaging",
+            "Shearing",
             "Lathe",
             "Drilling",
             "BoringHoning",
             "Grinding",
+            "Forging",
+            "Molding",
             "Polishing",
-            "Assembling",
+            "GasCutting",
             "FastenersAssembly",
-            "Testing",
-            "Packaging"
+            "Hardening",
+            "Tempering",
+            "Coating"
         ];
 
         function populateSuggestedNextOps() {
             const current = document.getElementById("processType").value;
             const select = document.getElementById("suggestedNextOp");
             if (!select) return;
-            // Preserve any currently selected value (if in edit mode)
             const currentVal = select.value;
             select.innerHTML = '<option value="">-- Select Next Operation --</option>';
             const idx = PROCESS_ORDER.indexOf(current);
-            if (idx === -1) return; // unknown process
-            // Add all processes that come after the current one
+            if (idx === -1) return;
             for (let i = idx + 1; i < PROCESS_ORDER.length; i++) {
                 const opt = document.createElement("option");
                 opt.value = PROCESS_ORDER[i];
                 opt.textContent = PROCESS_ORDER[i];
                 select.appendChild(opt);
             }
-            // Try to restore previous selection if it still exists
             if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
                 select.value = currentVal;
             }
@@ -1330,7 +1312,7 @@
             loadHistory();
             populateMachineDropdown();
             attachQuantityListeners();
-            populateSuggestedNextOps(); // new
+            populateSuggestedNextOps();
             const clientInput = document.getElementById('extra_Customer_Name');
             if (clientInput) {
                 clientInput.removeEventListener('input', filterSuggestionsByCurrentClient);
