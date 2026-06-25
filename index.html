@@ -231,14 +231,13 @@
                     <div class="md:col-span-2"><label class="font-bold">Cause of Defects (detailed)</label><textarea id="causeOfDefectsDetail" rows="2" class="border p-1 w-full"></textarea></div>
                 </div>
 
-                <!-- ========== Suggested Next Operation (dedicated column) ========== -->
+                <!-- ========== Suggested Next Operation – now editable ========== -->
                 <div class="mt-4 border-t pt-4">
                     <label class="font-bold">Suggested Next Operation</label>
-                    <select id="suggestedNextOp" class="border p-1 w-full rounded">
-                        <option value="">-- Select Next Operation --</option>
-                    </select>
+                    <input type="text" id="suggestedNextOp" list="suggestedNextList" class="border p-1 w-full rounded" placeholder="Type or select a suggestion..." />
+                    <datalist id="suggestedNextList"></datalist>
                 </div>
-                <!-- =============================================================== -->
+                <!-- ============================================================ -->
 
                 <div class="flex justify-end gap-4 no-print">
                     <button type="button" onclick="resetForm()" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
@@ -1062,6 +1061,7 @@
             updateDeliveredQty();
             refreshDatalistOptions();
             populateSuggestedNextOps();
+            document.getElementById('suggestedNextOp').value = ''; // clear input
         }
 
         function cancelEdit() { resetForm();
@@ -1223,18 +1223,12 @@
                 refreshDatalistOptions();
             }
 
-            const suggestedSelect = document.getElementById('suggestedNextOp');
+            // ========== Set the suggested next operation (editable input) ==========
+            const suggestedInput = document.getElementById('suggestedNextOp');
             if (inspection.suggested_next_operation) {
-                const val = inspection.suggested_next_operation;
-                let exists = Array.from(suggestedSelect.options).some(opt => opt.value === val);
-                if (!exists) {
-                    const newOpt = document.createElement('option');
-                    newOpt.value = val;
-                    newOpt.textContent = val;
-                    suggestedSelect.appendChild(newOpt);
-                }
-                suggestedSelect.value = val;
+                suggestedInput.value = inspection.suggested_next_operation;
             }
+            // =====================================================================
         }
 
         // ============================================================
@@ -1271,20 +1265,16 @@
 
         function populateSuggestedNextOps() {
             const current = document.getElementById("processType").value;
-            const select = document.getElementById("suggestedNextOp");
-            if (!select) return;
-            const currentVal = select.value;
-            select.innerHTML = '<option value="">-- Select Next Operation --</option>';
+            const datalist = document.getElementById("suggestedNextList");
+            if (!datalist) return;
+            datalist.innerHTML = '';
             const idx = PROCESS_ORDER.indexOf(current);
             if (idx === -1) return;
+            // Add all later processes as suggestions
             for (let i = idx + 1; i < PROCESS_ORDER.length; i++) {
-                const opt = document.createElement("option");
+                const opt = document.createElement('option');
                 opt.value = PROCESS_ORDER[i];
-                opt.textContent = PROCESS_ORDER[i];
-                select.appendChild(opt);
-            }
-            if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
-                select.value = currentVal;
+                datalist.appendChild(opt);
             }
         }
 
