@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
   <style>
-    /* ─── all existing styles (unchanged) ─── */
+    /* ─── all existing styles ─── */
     @media print { body * { visibility: hidden; } #inspectionForm, #inspectionForm * { visibility: visible; } #inspectionForm { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; } .no-print { display: none; } }
     .rating-select { min-width: 100px; }
     .cause-checkbox-group label { margin-right: 12px; font-size: 0.8rem; }
@@ -104,6 +104,13 @@
     .btn-action { transition: transform 0.15s, box-shadow 0.2s; cursor: pointer; }
     .btn-action:hover { transform: scale(1.02); }
     .btn-action:active { transform: scale(0.96); }
+
+    /* ─── Cost summary cards ─── */
+    .cost-card { border-radius: 8px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; }
+    .cost-card .label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .cost-card .value { font-size: 1.1rem; font-weight: 600; color: #0f172a; }
+    .cost-card.total { background: #f0fdf4; border-color: #bbf7d0; }
+    .cost-card.total .value { color: #166534; }
 
     @media (max-width: 700px) {
       #secretOverlay .card { padding: 28px 20px; }
@@ -249,7 +256,7 @@
           <div><label class="font-bold">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="border p-1 rounded w-full" /></div>
         </div>
 
-        <!-- Internal Failure Costs -->
+        <!-- ─── Internal Failure Costs with Operational Cost ─── -->
         <div class="border p-4 rounded-md">
           <h3 class="font-bold text-lg">Internal Failure Costs</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
@@ -262,35 +269,26 @@
             <div><label>Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="border p-1 rounded w-full" /></div>
           </div>
 
-          <!-- ─── Accumulated cost section (based on operational costs) ─── -->
-          <div class="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
-            <div class="flex items-center gap-3 mb-2">
-              <input type="checkbox" id="includePreviousCosts" onchange="togglePreviousCosts()" />
-              <label for="includePreviousCosts" class="font-medium text-sm text-blue-800">Include costs from previous operations for this part</label>
-              <span class="text-xs text-gray-500">(adds labor + machining costs from all earlier inspections for the same part)</span>
+          <!-- ─── COST SUMMARY ─── -->
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="cost-card">
+              <div class="label">Current Failure Cost</div>
+              <div class="value" id="currentFailureCostDisplay">0.00</div>
+              <input type="hidden" id="totalInternalFailureCost" value="0" />
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label class="text-sm text-gray-600">Current Operation Cost (ETB)</label>
-                <input type="text" id="currentFailureCostDisplay" class="border p-1 rounded w-full bg-gray-100" readonly value="0.00" />
-              </div>
-              <div>
-                <label class="text-sm text-gray-600">Previous Operations Cost (ETB)</label>
-                <input type="text" id="previousCostDisplay" class="border p-1 rounded w-full bg-gray-100" readonly value="0.00" />
-              </div>
+            <div class="cost-card">
+              <div class="label">Previous Operational Cost</div>
+              <div class="value text-amber-600" id="previousOperationalCostDisplay">0.00</div>
+              <div class="text-xs text-gray-400">(labor + machining from earlier inspections)</div>
             </div>
-            <div class="mt-2 p-2 bg-green-50 rounded border border-green-200">
-              <span class="font-bold text-green-800">Total Accumulated Failure Cost (ETB):</span>
-              <span id="totalAccumulatedDisplay" class="font-bold text-green-800 text-lg">0.00</span>
+            <div class="cost-card total">
+              <div class="label">Total Accumulated Cost</div>
+              <div class="value" id="totalAccumulatedCostDisplay">0.00</div>
               <input type="hidden" id="accumulatedFailureCost" value="0" />
             </div>
           </div>
+          <!-- ──────────────────────────────────── -->
 
-          <div class="mt-3 p-2 bg-gray-100 rounded">
-            <span class="font-bold">Total Internal Failure Cost (ETB):</span>
-            <span id="totalFailureCostDisplay">0.00</span>
-            <input type="hidden" id="totalInternalFailureCost" />
-          </div>
         </div>
 
         <!-- ─── REMOVED: Most Frequent Defects, Defect Correction Slip, Cause of Defects ─── -->
@@ -418,10 +416,10 @@
       }
       const firstInput = document.querySelector('#inspectionForm input:not([readonly])');
       if (firstInput) firstInput.focus();
-      // Listen for changes on part/project fields to re-calc previous costs
+      // Listen for changes on part/project fields to auto-fetch previous operational cost
       ['extra_Part_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly', 'extra_Drawing_No_', 'extra_Tag_No_'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener('change', () => { if (document.getElementById('includePreviousCosts').checked) fetchPreviousCosts(); });
+        if (el) el.addEventListener('change', () => fetchPreviousOperationalCost());
       });
     }
 
@@ -563,7 +561,7 @@
       return result;
     }
 
-    // ─── machinery master (shortened) ───
+    // ─── machinery master ───
     const machineryMaster = [
       { desc: "Power hack saw", rate: (1693.44 + 24876.46) / 1767 },
       { desc: "Medium duty lathe machine, Conventional", rate: (13539.12 + 52982.93) / 1767 },
@@ -874,9 +872,10 @@
         }
         attachQuantityListeners();
         updateDeliveredQty();
-        // After rendering, if checkbox is checked, fetch previous costs
-        if (document.getElementById('includePreviousCosts').checked) {
-          fetchPreviousCosts();
+        // Always fetch previous operational cost when part name is filled
+        const partName = document.getElementById('extra_Part_Name')?.value?.trim();
+        if (partName) {
+          fetchPreviousOperationalCost();
         }
       }
     }
@@ -983,22 +982,18 @@
       const reject = +document.getElementById("rejectQty").value || 0;
       const mult = (rework + reject) || 1;
       const total = (mat + lab * sal + machH * machR) * mult;
-      document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
       document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
-      document.getElementById("currentFailureCostDisplay").value = total.toFixed(2);
-      // If checkbox is checked, update accumulated total
-      if (document.getElementById('includePreviousCosts').checked) {
-        updateAccumulatedTotal();
-      }
+      document.getElementById("currentFailureCostDisplay").innerText = total.toFixed(2);
+      updateTotalAccumulated();
       return total;
     }
 
-    // ─── Fetch previous operations cost (labor + machining) ───
-    async function fetchPreviousCosts() {
+    // ─── Fetch previous operational cost (labor + machining) ───
+    async function fetchPreviousOperationalCost() {
       const partName = document.getElementById('extra_Part_Name')?.value?.trim();
       if (!partName) {
-        document.getElementById('previousCostDisplay').value = '0.00';
-        updateAccumulatedTotal();
+        document.getElementById('previousOperationalCostDisplay').innerText = '0.00';
+        updateTotalAccumulated();
         return;
       }
 
@@ -1025,30 +1020,21 @@
         });
         if (!resp.ok) throw new Error();
         const data = await resp.json();
-        document.getElementById('previousCostDisplay').value = data.previous_cost.toFixed(2);
-        updateAccumulatedTotal();
+        document.getElementById('previousOperationalCostDisplay').innerText = data.previous_cost.toFixed(2);
+        updateTotalAccumulated();
       } catch (err) {
-        console.error('Failed to fetch previous costs:', err);
-        document.getElementById('previousCostDisplay').value = '0.00';
-        updateAccumulatedTotal();
+        console.error('Failed to fetch previous operational cost:', err);
+        document.getElementById('previousOperationalCostDisplay').innerText = '0.00';
+        updateTotalAccumulated();
       }
     }
 
-    function updateAccumulatedTotal() {
-      const current = parseFloat(document.getElementById('currentFailureCostDisplay').value) || 0;
-      const prev = parseFloat(document.getElementById('previousCostDisplay').value) || 0;
+    function updateTotalAccumulated() {
+      const current = parseFloat(document.getElementById('currentFailureCostDisplay').innerText) || 0;
+      const prev = parseFloat(document.getElementById('previousOperationalCostDisplay').innerText) || 0;
       const total = current + prev;
-      document.getElementById('totalAccumulatedDisplay').innerText = total.toFixed(2);
+      document.getElementById('totalAccumulatedCostDisplay').innerText = total.toFixed(2);
       document.getElementById('accumulatedFailureCost').value = total.toFixed(2);
-    }
-
-    function togglePreviousCosts() {
-      if (document.getElementById('includePreviousCosts').checked) {
-        fetchPreviousCosts();
-      } else {
-        document.getElementById('previousCostDisplay').value = '0.00';
-        updateAccumulatedTotal();
-      }
     }
 
     function updateTotalTime() {
@@ -1079,9 +1065,8 @@
       refreshDatalistOptions();
       populateSuggestedNextOps();
       document.getElementById('suggestedNextOp').value = '';
-      document.getElementById('includePreviousCosts').checked = false;
-      document.getElementById('previousCostDisplay').value = '0.00';
-      updateAccumulatedTotal();
+      document.getElementById('previousOperationalCostDisplay').innerText = '0.00';
+      updateTotalAccumulated();
       showToast('Form reset', 'info');
     }
 
@@ -1117,9 +1102,7 @@
         const acceptanceData = getAcceptanceData();
         const extraFields = getExtraFields();
         const currentCost = parseFloat(document.getElementById('totalInternalFailureCost').value) || 0;
-        const accumulatedCost = document.getElementById('includePreviousCosts').checked ?
-          parseFloat(document.getElementById('accumulatedFailureCost').value) || currentCost :
-          currentCost;
+        const accumulatedCost = parseFloat(document.getElementById('accumulatedFailureCost').value) || currentCost;
 
         const payload = {
           process_type: processTypeText,
@@ -1231,13 +1214,11 @@
       document.getElementById("levelSelect").value = inspection.level || "";
       computeFailureCost();
       // Restore accumulated cost
-      if (inspection.accumulated_failure_cost && inspection.accumulated_failure_cost > 0) {
-        document.getElementById('includePreviousCosts').checked = true;
+      if (inspection.accumulated_failure_cost) {
         document.getElementById('accumulatedFailureCost').value = inspection.accumulated_failure_cost;
-        document.getElementById('totalAccumulatedDisplay').innerText = inspection.accumulated_failure_cost.toFixed(2);
-        // Calculate previous cost = accumulated - current
+        document.getElementById('totalAccumulatedCostDisplay').innerText = inspection.accumulated_failure_cost.toFixed(2);
         const prev = inspection.accumulated_failure_cost - (inspection.total_internal_failure_cost || 0);
-        document.getElementById('previousCostDisplay').value = prev.toFixed(2);
+        document.getElementById('previousOperationalCostDisplay').innerText = prev.toFixed(2);
       }
       setExtraFields(inspection.extra_fields || {});
       setAcceptanceData(inspection.acceptance_data || {});
@@ -1264,6 +1245,9 @@
       const suggestedInput = document.getElementById('suggestedNextOp');
       if (inspection.suggested_next_operation) suggestedInput.value = inspection.suggested_next_operation;
       else populateSuggestedNextOps();
+      // Fetch previous operational cost if part name exists
+      const partName = document.getElementById('extra_Part_Name')?.value?.trim();
+      if (partName) fetchPreviousOperationalCost();
     }
 
     // ─── suggested next ops ───
@@ -1317,7 +1301,7 @@
     // ─── utils ───
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[m])); }
 
-    console.log('🔐 QC Inspection ready – accumulated cost includes previous operational costs.');
+    console.log('🔐 QC Inspection ready – previous operational cost always included.');
   </script>
 </body>
 </html>
