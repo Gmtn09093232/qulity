@@ -71,8 +71,8 @@ app.put('/api/inspections/:id', async (req, res) => {
     work_station: extra["Work Station"] || null,
     location: extra["Location"] || null,
     suggested_next_operation: req.body.suggested_next_operation || extra["process order"] || null,
-    total_internal_failure_cost: req.body.total_internal_failure_cost || 0,
-    accumulated_failure_cost: req.body.accumulated_failure_cost || req.body.total_internal_failure_cost || 0
+    total_internal_failure_cost: req.body.total_internal_failure_cost || 0
+    // ✅ REMOVED: accumulated_failure_cost – no longer stored
   };
   const { data, error } = await supabase
     .from('rolling_inspections')
@@ -202,8 +202,8 @@ app.post('/api/inspections', async (req, res) => {
     work_station: extra["Work Station"] || null,
     location: extra["Location"] || null,
     suggested_next_operation: req.body.suggested_next_operation || extra["process order"] || null,
-    total_internal_failure_cost: req.body.total_internal_failure_cost || 0,
-    accumulated_failure_cost: req.body.accumulated_failure_cost || req.body.total_internal_failure_cost || 0
+    total_internal_failure_cost: req.body.total_internal_failure_cost || 0
+    // ✅ REMOVED: accumulated_failure_cost
   };
   const { data, error } = await supabase
     .from('rolling_inspections')
@@ -214,6 +214,7 @@ app.post('/api/inspections', async (req, res) => {
 });
 
 // ─── API: Get previous operational cost (labor + machining) ───
+// This endpoint is still used by the frontend, so we keep it.
 app.post('/api/inspections/previous-operational-cost', async (req, res) => {
   const { part_name, project_name, subtitle, sub_sub_assembly, drawing_no, tag_no, exclude_id } = req.body;
 
@@ -221,7 +222,6 @@ app.post('/api/inspections/previous-operational-cost', async (req, res) => {
     return res.json({ previous_cost: 0 });
   }
 
-  // Build query – match on part_name and other optional fields
   let query = supabase
     .from('rolling_inspections')
     .select('labor_hours, salary_per_hour, machining_hours, machining_cost_per_hr')
@@ -237,8 +237,6 @@ app.post('/api/inspections/previous-operational-cost', async (req, res) => {
   const { data, error } = await query;
   if (error) return res.status(400).json({ error: error.message });
 
-  // Sum the operational cost for each previous inspection
-  // Operational cost = labor_hours * salary_per_hour + machining_hours * machining_cost_per_hr
   const total = data.reduce((sum, row) => {
     const laborCost = (row.labor_hours || 0) * (row.salary_per_hour || 0);
     const machCost = (row.machining_hours || 0) * (row.machining_cost_per_hr || 0);
