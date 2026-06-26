@@ -414,12 +414,7 @@
           <div class="mt-3 p-2 bg-gray-100 rounded"><span class="font-bold">Total Internal Failure Cost (ETB):</span> <span id="totalFailureCostDisplay">0.00</span><input type="hidden" id="totalInternalFailureCost" /></div>
         </div>
 
-        <!-- Most frequent defects -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
-          <div><label class="font-bold">N.B The Most Frequent Defects</label><textarea id="mostFrequentDefects" rows="2" class="border p-1 w-full" placeholder="List common defects..."></textarea></div>
-          <div><label class="font-bold">Defect Correction Transfer Slip</label><input type="text" id="defectCorrectionSlip" class="border p-1 w-full" placeholder="Slip number" /></div>
-          <div class="md:col-span-2"><label class="font-bold">Cause of Defects (detailed)</label><textarea id="causeOfDefectsDetail" rows="2" class="border p-1 w-full" placeholder="Describe the root causes..."></textarea></div>
-        </div>
+        <!-- ─── REMOVED: Most Frequent Defects, Defect Correction Slip, Cause of Defects ─── -->
 
         <!-- Suggested Next Operation -->
         <div class="mt-4 border-t pt-4">
@@ -684,7 +679,7 @@
       return result;
     }
 
-    // ─── machinery master (shortened for brevity) ───
+    // ─── machinery master ───
     const machineryMaster = [
       { desc: "Power hack saw", rate: (1693.44 + 24876.46) / 1767 },
       { desc: "Medium duty lathe machine, Conventional", rate: (13539.12 + 52982.93) / 1767 },
@@ -1182,9 +1177,7 @@
           total_minutes: updateTotalTime(),
           acceptance_data: acceptanceData,
           extra_fields: extraFields,
-          most_frequent_defects: document.getElementById("mostFrequentDefects").value,
-          defect_correction_slip: document.getElementById("defectCorrectionSlip").value,
-          cause_of_defects: document.getElementById("causeOfDefectsDetail").value,
+          // ─── REMOVED: most_frequent_defects, defect_correction_slip, cause_of_defects ───
           defected_material_cost: +document.getElementById("defectedMaterialCost").value || 0,
           labor_hours: +document.getElementById("laborHours").value || 0,
           salary_per_hour: +document.getElementById("salaryPerHour").value || 0,
@@ -1278,9 +1271,7 @@
       document.getElementById("machiningCostPerHr").value = inspection.machining_cost_per_hr ?? 0;
       document.getElementById("levelSelect").value = inspection.level || "";
       computeFailureCost();
-      document.getElementById("mostFrequentDefects").value = inspection.most_frequent_defects || "";
-      document.getElementById("defectCorrectionSlip").value = inspection.defect_correction_slip || "";
-      document.getElementById("causeOfDefectsDetail").value = inspection.cause_of_defects || "";
+      // ─── REMOVED: most_frequent_defects, defect_correction_slip, cause_of_defects ───
       setExtraFields(inspection.extra_fields || {});
       setAcceptanceData(inspection.acceptance_data || {});
       const opt = Array.from(document.getElementById("processType").options).find(o => o.text === inspection.process_type);
@@ -1352,7 +1343,7 @@
     // ─── utils ───
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[m])); }
 
-    console.log('🔐 QC Inspection ready – no 3D, clean & fast.');
+    console.log('🔐 QC Inspection ready – defect section removed.');
   </script>
 </body>
 </html>
