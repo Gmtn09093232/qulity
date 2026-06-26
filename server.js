@@ -7,14 +7,11 @@ const jwt = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-
-// ─── CORS – allow all methods and headers ───
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -24,7 +21,7 @@ const supabase = createClient(
 );
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here_change_in_production';
 
-// ─── TELEGRAM LOGIN VALIDATION ───
+// ─── TELEGRAM LOGIN ───
 function validateTelegramData(data, botToken) {
   const { hash, ...rest } = data;
   const checkString = Object.keys(rest)
@@ -36,7 +33,6 @@ function validateTelegramData(data, botToken) {
   return computedHash === hash;
 }
 
-// ─── STATIC ROUTES ───
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
@@ -56,15 +52,13 @@ app.get('/api/inspections/:id', async (req, res) => {
   res.json(data);
 });
 
-// ─── API: UPDATE (PUT) ───
+// ─── API: UPDATE ───
 app.put('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
   const extra = req.body.extra_fields || {};
-
   const inspectionData = {
     ...req.body,
     submitted_at: new Date(),
-    // Extract dedicated columns from extra_fields
     customer_name: extra["Customer Name"] || null,
     project_name: extra["Project Name"] || null,
     drawing_no: extra["Drawing No."] || null,
@@ -72,16 +66,16 @@ app.put('/api/inspections/:id', async (req, res) => {
     tag_no: extra["Tag No."] || null,
     work_station: extra["Work Station"] || null,
     location: extra["Location"] || null,
-    // ✅ FIXED: read from top-level `req.body.suggested_next_operation`; fallback to extra["process order"]
-    suggested_next_operation: req.body.suggested_next_operation || extra["process order"] || null
+    suggested_next_operation: req.body.suggested_next_operation || extra["process order"] || null,
+    // Store both the current cost and the accumulated total
+    total_internal_failure_cost: req.body.total_internal_failure_cost || 0,
+    accumulated_failure_cost: req.body.accumulated_failure_cost || req.body.total_internal_failure_cost || 0
   };
-
   const { data, error } = await supabase
     .from('rolling_inspections')
     .update(inspectionData)
     .eq('id', id)
     .select();
-
   if (error) return res.status(400).json({ error: error.message });
   res.json(data[0]);
 });
@@ -89,15 +83,11 @@ app.put('/api/inspections/:id', async (req, res) => {
 // ─── API: DELETE ───
 app.delete('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
-  console.log(`DELETE /api/inspections/${id}`);
   const { error } = await supabase
     .from('rolling_inspections')
     .delete()
     .eq('id', id);
-  if (error) {
-    console.error('Supabase delete error:', error);
-    return res.status(400).json({ error: error.message });
-  }
+  if (error) return res.status(400).json({ error: error.message });
   res.status(204).send();
 });
 
@@ -105,33 +95,20 @@ app.delete('/api/inspections/:id', async (req, res) => {
 app.post('/api/telegram-auth', async (req, res) => {
   const telegramData = req.body;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-
-  if (!botToken) {
-    return res.status(500).json({ error: 'Telegram bot token not configured' });
-  }
-
-  if (!validateTelegramData(telegramData, botToken)) {
-    return res.status(401).json({ error: 'Invalid Telegram authentication data' });
-  }
-
+  if (!botToken) return res.status(500).json({ error: 'Bot token not configured' });
+  if (!validateTelegramData(telegramData, botToken))
+    return res.status(401).json({ error: 'Invalid auth data' });
   const authDate = new Date(telegramData.auth_date * 1000);
   const now = new Date();
   const dayInMs = 24 * 60 * 60 * 1000;
-  if (now - authDate > dayInMs) {
-    return res.status(401).json({ error: 'Authentication data too old' });
-  }
+  if (now - authDate > dayInMs) return res.status(401).json({ error: 'Auth too old' });
 
   const { data: existingUser, error: findError } = await supabase
     .from('telegram_users')
     .select('*')
     .eq('telegram_id', telegramData.id)
     .maybeSingle();
-
-  if (findError && findError.code !== 'PGRST116') {
-    console.error('Database error:', findError);
-    return res.status(500).json({ error: 'Database error' });
-  }
-
+  if (findError && findError.code !== 'PGRST116') return res.status(500).json({ error: 'DB error' });
   let user = existingUser;
   if (!user) {
     const { data: newUser, error: insertError } = await supabase
@@ -146,11 +123,7 @@ app.post('/api/telegram-auth', async (req, res) => {
       }])
       .select()
       .single();
-
-    if (insertError) {
-      console.error('Insert error:', insertError);
-      return res.status(500).json({ error: 'Could not create user' });
-    }
+    if (insertError) return res.status(500).json({ error: 'Could not create user' });
     user = newUser;
   } else {
     await supabase
@@ -158,7 +131,6 @@ app.post('/api/telegram-auth', async (req, res) => {
       .update({ auth_date: new Date(telegramData.auth_date * 1000) })
       .eq('telegram_id', telegramData.id);
   }
-
   const token = jwt.sign(
     {
       telegram_id: user.telegram_id,
@@ -169,7 +141,6 @@ app.post('/api/telegram-auth', async (req, res) => {
     JWT_SECRET,
     { expiresIn: '7d' }
   );
-
   res.json({
     success: true,
     token,
@@ -187,19 +158,16 @@ app.get('/api/inspections', async (req, res) => {
     .from('rolling_inspections')
     .select('*')
     .order('submitted_at', { ascending: false });
-
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// ─── API: CREATE (POST) ───
+// ─── API: CREATE ───
 app.post('/api/inspections', async (req, res) => {
   const extra = req.body.extra_fields || {};
-
   const inspectionData = {
     ...req.body,
     submitted_at: new Date(),
-    // Extract dedicated columns from extra_fields
     customer_name: extra["Customer Name"] || null,
     project_name: extra["Project Name"] || null,
     drawing_no: extra["Drawing No."] || null,
@@ -207,23 +175,46 @@ app.post('/api/inspections', async (req, res) => {
     tag_no: extra["Tag No."] || null,
     work_station: extra["Work Station"] || null,
     location: extra["Location"] || null,
-    // ✅ FIXED: read from top-level `req.body.suggested_next_operation`; fallback to extra["process order"]
-    suggested_next_operation: req.body.suggested_next_operation || extra["process order"] || null
+    suggested_next_operation: req.body.suggested_next_operation || extra["process order"] || null,
+    total_internal_failure_cost: req.body.total_internal_failure_cost || 0,
+    accumulated_failure_cost: req.body.accumulated_failure_cost || req.body.total_internal_failure_cost || 0
   };
-
   const { data, error } = await supabase
     .from('rolling_inspections')
     .insert([inspectionData])
     .select();
-
   if (error) return res.status(400).json({ error: error.message });
   res.status(201).json(data[0]);
 });
 
-// ─── START ───
+// ─── API: Accumulated cost for previous operations ───
+app.post('/api/inspections/accumulated-cost', async (req, res) => {
+  const { part_name, project_name, subtitle, sub_sub_assembly, drawing_no, tag_no, exclude_id } = req.body;
+
+  if (!part_name) {
+    return res.json({ accumulated_cost: 0 });
+  }
+
+  let query = supabase
+    .from('rolling_inspections')
+    .select('total_internal_failure_cost')
+    .eq('part_name', part_name);
+
+  if (project_name) query = query.eq('project_name', project_name);
+  if (subtitle) query = query.eq('subtitle', subtitle);
+  if (sub_sub_assembly) query = query.eq('sub_sub_assembly', sub_sub_assembly);
+  if (drawing_no) query = query.eq('drawing_no', drawing_no);
+  if (tag_no) query = query.eq('tag_no', tag_no);
+  if (exclude_id) query = query.neq('id', exclude_id);
+
+  const { data, error } = await query;
+  if (error) return res.status(400).json({ error: error.message });
+
+  const total = data.reduce((sum, row) => sum + (parseFloat(row.total_internal_failure_cost) || 0), 0);
+  res.json({ accumulated_cost: total });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log(`🔗 Supabase URL: ${process.env.SUPABASE_URL}`);
-  console.log(`🤖 Telegram bot configured: ${process.env.TELEGRAM_BOT_TOKEN ? 'Yes' : 'No'}`);
 });
