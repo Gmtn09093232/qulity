@@ -10,17 +10,104 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
   <style>
-    /* ─── all existing styles (unchanged) ─── */
-    /* ... (keep your existing styles) ... */
-    /* For brevity I'll include only the critical part, but the full code is below */
+    @media print { body * { visibility: hidden; } #inspectionForm, #inspectionForm * { visibility: visible; } #inspectionForm { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; } .no-print { display: none; } }
+    .rating-select { min-width: 100px; }
+    .cause-checkbox-group label { margin-right: 12px; font-size: 0.8rem; }
+    table th, table td { vertical-align: top; padding: 8px 6px; }
+    datalist option { font-size: 0.9rem; }
+    .camera-btn { cursor: pointer; margin-left: 8px; color: #3b82f6; }
+    .single-scan-btn { background-color: #3b82f6; color: white; padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; transition: transform 0.15s, box-shadow 0.2s; border: none; cursor: pointer; }
+    .single-scan-btn:hover { transform: scale(1.02); box-shadow: 0 2px 12px rgba(59,130,246,0.3); }
+    .single-scan-btn:active { transform: scale(0.96); }
+    .incoming-table th, .incoming-table td { border: 1px solid #ddd; padding: 6px; font-size: 0.75rem; vertical-align: top; }
+    .incoming-table input, .incoming-table select { width: 100%; min-width: 80px; border: none; background: transparent; font-size: 0.75rem; }
+
+    #secretOverlay {
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50;
+      background: linear-gradient(135deg, #0a0a1a, #1a1a3a);
+      transition: opacity 0.8s ease, visibility 0.8s ease, transform 0.3s ease;
+      pointer-events: auto;
+    }
+    #secretOverlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; transform: scale(0.96); }
+    #secretOverlay .card {
+      background: rgba(10, 10, 30, 0.9);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 32px;
+      padding: 44px 48px;
+      max-width: 440px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 80px rgba(74, 222, 128, 0.03);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s;
+      position: relative;
+      overflow: hidden;
+    }
+    #secretOverlay .card::before { content: ''; position: absolute; inset: 0; border-radius: 32px; background: radial-gradient(circle at 50% 0%, rgba(74, 222, 128, 0.06), transparent 70%); pointer-events: none; }
+    #secretOverlay .card .gear-icon { font-size: 3.6rem; display: block; color: #4ade80; opacity: 0.5; animation: spin-slow 12s linear infinite; margin-bottom: 8px; }
+    #secretOverlay .card h2 { font-size: 1.8rem; font-weight: 700; color: #eef3ff; margin-bottom: 4px; letter-spacing: -0.3px; }
+    #secretOverlay .card .sub { color: #7a86a8; font-size: 0.9rem; margin-bottom: 28px; }
+    #secretOverlay .card .input-group { position: relative; margin-bottom: 16px; }
+    #secretOverlay .card input {
+      width: 100%; padding: 16px 20px; border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: #eef3ff; font-size: 1.2rem; text-align: center; letter-spacing: 6px;
+      outline: none; transition: border-color 0.3s, box-shadow 0.3s, transform 0.15s;
+      font-family: inherit;
+    }
+    #secretOverlay .card input:focus { border-color: #4ade80; box-shadow: 0 0 40px rgba(74, 222, 128, 0.08), inset 0 0 20px rgba(74, 222, 128, 0.03); }
+    #secretOverlay .card input::placeholder { color: #4a5580; letter-spacing: 2px; font-size: 0.9rem; }
+    #secretOverlay .card .btn-submit {
+      width: 100%; padding: 16px; border: none; border-radius: 16px;
+      background: linear-gradient(135deg, #4ade80, #22d3ee);
+      color: #0b0b1a; font-weight: 700; font-size: 1.1rem; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.3s, background 0.3s;
+      box-shadow: 0 4px 32px rgba(74, 222, 128, 0.15);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    #secretOverlay .card .btn-submit:hover { transform: scale(1.02); box-shadow: 0 6px 48px rgba(74, 222, 128, 0.25); background: linear-gradient(135deg, #3dca75, #1fc9e8); }
+    #secretOverlay .card .btn-submit:active { transform: scale(0.96); }
+    #secretOverlay .card .error { color: #f87171; font-size: 0.85rem; min-height: 28px; margin-top: 6px; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    #secretOverlay .card .error i { font-size: 0.9rem; }
+    .shake { animation: shake 0.5s ease; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-12px); } 40% { transform: translateX(12px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
+    @keyframes spin-slow { to { transform: rotate(360deg); } }
+    @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 40px rgba(74,222,128,0.0); } 50% { box-shadow: 0 0 80px rgba(74,222,128,0.08); } }
+
+    #mainContent { position: relative; z-index: 1; display: none; min-height: 100vh; background: #f1f5f9; padding: 0 0 20px 0; }
+    #mainContent.visible { display: block; }
+
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast { background: rgba(10, 10, 30, 0.92); backdrop-filter: blur(12px); border-radius: 12px; padding: 12px 20px; color: #eef3ff; font-size: 0.9rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); border-left: 4px solid #4ade80; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; max-width: 400px; }
+    .toast.show { transform: translateX(0); }
+    .toast.error { border-left-color: #f87171; }
+    .toast.info { border-left-color: #60a5fa; }
+    .toast .toast-content { display: flex; align-items: center; gap: 10px; }
+    .toast .toast-icon { font-size: 1.2rem; }
+
+    .btn-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-loading { opacity: 0.7; pointer-events: none; }
+
+    #inspectionHistory .border-b { transition: background 0.15s; }
+    #inspectionHistory .border-b:hover { background: rgba(59, 130, 246, 0.04); }
+
+    .btn-action { transition: transform 0.15s, box-shadow 0.2s; cursor: pointer; }
+    .btn-action:hover { transform: scale(1.02); }
+    .btn-action:active { transform: scale(0.96); }
+
+    @media (max-width: 700px) {
+      #secretOverlay .card { padding: 28px 20px; }
+      #secretOverlay .card h2 { font-size: 1.4rem; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- ─── Toast container ─── -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <!-- ─── Secret overlay ─── -->
   <div id="secretOverlay">
     <div class="card" id="secretCard">
       <span class="gear-icon">⚙️</span>
@@ -36,11 +123,9 @@
     </div>
   </div>
 
-  <!-- ─── Main content ─── -->
   <div id="mainContent">
     <div class="max-w-7xl mx-auto p-4 md:p-6">
 
-      <!-- Header -->
       <div class="bg-white rounded-t-xl shadow p-4 mb-2 flex justify-between items-center">
         <div>
           <h1 class="text-xl font-bold text-blue-900">Amhara Metal Industry & Machine Technology Development Enterprise</h1>
@@ -49,7 +134,6 @@
         <div class="text-right text-sm text-gray-600"><i class="fas fa-cloud-upload-alt"></i></div>
       </div>
 
-      <!-- Inspection Form -->
       <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
         <input type="hidden" id="editId" value="" />
         <input type="hidden" id="isEditMode" value="false" />
@@ -153,7 +237,7 @@
         <!-- Dynamic fields (Client, Title, Subtitle, etc.) -->
         <div id="dynamicFieldsContainer"><div class="text-gray-500 text-center py-4">Loading inspection table...</div></div>
 
-        <!-- ─── LAST OPERATION CONTAINER (FIXED) ─── -->
+        <!-- ─── LAST OPERATION CONTAINER ─── -->
         <div id="lastOperationContainer" class="mt-4 hidden">
           <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 class="font-bold text-blue-800 text-sm">🔄 Last Operation for this Part</h4>
