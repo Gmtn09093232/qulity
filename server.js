@@ -8,7 +8,6 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-// ─── CORS – allow all methods and headers ───
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -24,19 +23,14 @@ const supabase = createClient(
 );
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here_change_in_production';
 
-// ─── TELEGRAM LOGIN VALIDATION ───
 function validateTelegramData(data, botToken) {
   const { hash, ...rest } = data;
-  const checkString = Object.keys(rest)
-    .sort()
-    .map(key => `${key}=${rest[key]}`)
-    .join('\n');
+  const checkString = Object.keys(rest).sort().map(key => `${key}=${rest[key]}`).join('\n');
   const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
   const computedHash = crypto.createHmac('sha256', secretKey).update(checkString).digest('hex');
   return computedHash === hash;
 }
 
-// ─── STATIC ROUTES ───
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
@@ -44,19 +38,13 @@ app.get('/list', (req, res) => res.sendFile(path.join(__dirname, 'list.html')));
 app.get('/up', (req, res) => res.sendFile(path.join(__dirname, 'up.html')));
 app.get('/tools', (req, res) => res.sendFile(path.join(__dirname, 'tools.html')));
 
-// ─── API: GET single inspection ───
 app.get('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
-  const { data, error } = await supabase
-    .from('rolling_inspections')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data, error } = await supabase.from('rolling_inspections').select('*').eq('id', id).single();
   if (error) return res.status(404).json({ error: error.message });
   res.json(data);
 });
 
-// ─── API: UPDATE (PUT) ───
 app.put('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
   const extra = req.body.extra_fields || {};
@@ -72,123 +60,59 @@ app.put('/api/inspections/:id', async (req, res) => {
     location: extra["Location"] || null,
     suggested_next_operation: req.body.suggested_next_operation || extra["process order"] || null,
     total_internal_failure_cost: req.body.total_internal_failure_cost || 0
-    // ✅ REMOVED: accumulated_failure_cost – no longer stored
   };
-  const { data, error } = await supabase
-    .from('rolling_inspections')
-    .update(inspectionData)
-    .eq('id', id)
-    .select();
+  const { data, error } = await supabase.from('rolling_inspections').update(inspectionData).eq('id', id).select();
   if (error) return res.status(400).json({ error: error.message });
   res.json(data[0]);
 });
 
-// ─── API: DELETE ───
 app.delete('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
-  console.log(`DELETE /api/inspections/${id}`);
-  const { error } = await supabase
-    .from('rolling_inspections')
-    .delete()
-    .eq('id', id);
-  if (error) {
-    console.error('Supabase delete error:', error);
-    return res.status(400).json({ error: error.message });
-  }
+  const { error } = await supabase.from('rolling_inspections').delete().eq('id', id);
+  if (error) return res.status(400).json({ error: error.message });
   res.status(204).send();
 });
 
-// ─── API: TELEGRAM AUTH ───
 app.post('/api/telegram-auth', async (req, res) => {
   const telegramData = req.body;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-
-  if (!botToken) {
-    return res.status(500).json({ error: 'Telegram bot token not configured' });
-  }
-
-  if (!validateTelegramData(telegramData, botToken)) {
-    return res.status(401).json({ error: 'Invalid Telegram authentication data' });
-  }
-
+  if (!botToken) return res.status(500).json({ error: 'Bot token not configured' });
+  if (!validateTelegramData(telegramData, botToken)) return res.status(401).json({ error: 'Invalid auth data' });
   const authDate = new Date(telegramData.auth_date * 1000);
   const now = new Date();
-  const dayInMs = 24 * 60 * 60 * 1000;
-  if (now - authDate > dayInMs) {
-    return res.status(401).json({ error: 'Authentication data too old' });
-  }
-
-  const { data: existingUser, error: findError } = await supabase
-    .from('telegram_users')
-    .select('*')
-    .eq('telegram_id', telegramData.id)
-    .maybeSingle();
-
-  if (findError && findError.code !== 'PGRST116') {
-    console.error('Database error:', findError);
-    return res.status(500).json({ error: 'Database error' });
-  }
-
+  if (now - authDate > 24*60*60*1000) return res.status(401).json({ error: 'Auth too old' });
+  const { data: existingUser, error: findError } = await supabase.from('telegram_users').select('*').eq('telegram_id', telegramData.id).maybeSingle();
+  if (findError && findError.code !== 'PGRST116') return res.status(500).json({ error: 'DB error' });
   let user = existingUser;
   if (!user) {
-    const { data: newUser, error: insertError } = await supabase
-      .from('telegram_users')
-      .insert([{
-        telegram_id: telegramData.id,
-        first_name: telegramData.first_name,
-        last_name: telegramData.last_name || '',
-        username: telegramData.username || '',
-        photo_url: telegramData.photo_url || '',
-        auth_date: new Date(telegramData.auth_date * 1000)
-      }])
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error('Insert error:', insertError);
-      return res.status(500).json({ error: 'Could not create user' });
-    }
+    const { data: newUser, error: insertError } = await supabase.from('telegram_users').insert([{
+      telegram_id: telegramData.id,
+      first_name: telegramData.first_name,
+      last_name: telegramData.last_name || '',
+      username: telegramData.username || '',
+      photo_url: telegramData.photo_url || '',
+      auth_date: new Date(telegramData.auth_date * 1000)
+    }]).select().single();
+    if (insertError) return res.status(500).json({ error: 'Could not create user' });
     user = newUser;
   } else {
-    await supabase
-      .from('telegram_users')
-      .update({ auth_date: new Date(telegramData.auth_date * 1000) })
-      .eq('telegram_id', telegramData.id);
+    await supabase.from('telegram_users').update({ auth_date: new Date(telegramData.auth_date * 1000) }).eq('telegram_id', telegramData.id);
   }
-
-  const token = jwt.sign(
-    {
-      telegram_id: user.telegram_id,
-      username: user.username || `${user.first_name} ${user.last_name}`,
-      first_name: user.first_name,
-      last_name: user.last_name
-    },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-
-  res.json({
-    success: true,
-    token,
-    user: {
-      id: user.telegram_id,
-      name: `${user.first_name} ${user.last_name}`,
-      username: user.username
-    }
-  });
+  const token = jwt.sign({
+    telegram_id: user.telegram_id,
+    username: user.username || `${user.first_name} ${user.last_name}`,
+    first_name: user.first_name,
+    last_name: user.last_name
+  }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ success: true, token, user: { id: user.telegram_id, name: `${user.first_name} ${user.last_name}`, username: user.username } });
 });
 
-// ─── API: GET all inspections ───
 app.get('/api/inspections', async (req, res) => {
-  const { data, error } = await supabase
-    .from('rolling_inspections')
-    .select('*')
-    .order('submitted_at', { ascending: false });
+  const { data, error } = await supabase.from('rolling_inspections').select('*').order('submitted_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// ─── API: CREATE (POST) ───
 app.post('/api/inspections', async (req, res) => {
   const extra = req.body.extra_fields || {};
   const inspectionData = {
@@ -203,50 +127,41 @@ app.post('/api/inspections', async (req, res) => {
     location: extra["Location"] || null,
     suggested_next_operation: req.body.suggested_next_operation || extra["process order"] || null,
     total_internal_failure_cost: req.body.total_internal_failure_cost || 0
-    // ✅ REMOVED: accumulated_failure_cost
   };
-  const { data, error } = await supabase
-    .from('rolling_inspections')
-    .insert([inspectionData])
-    .select();
+  const { data, error } = await supabase.from('rolling_inspections').insert([inspectionData]).select();
   if (error) return res.status(400).json({ error: error.message });
   res.status(201).json(data[0]);
 });
 
-// ─── API: Get previous operational cost (labor + machining) ───
-// This endpoint is still used by the frontend, so we keep it.
-app.post('/api/inspections/previous-operational-cost', async (req, res) => {
+app.post('/api/inspections/last-operation', async (req, res) => {
   const { part_name, project_name, subtitle, sub_sub_assembly, drawing_no, tag_no, exclude_id } = req.body;
-
-  if (!part_name) {
-    return res.json({ previous_cost: 0 });
-  }
-
-  let query = supabase
-    .from('rolling_inspections')
-    .select('labor_hours, salary_per_hour, machining_hours, machining_cost_per_hr')
-    .eq('part_name', part_name);
-
+  if (!part_name) return res.json({ last_operation: null });
+  let query = supabase.from('rolling_inspections').select('*').eq('part_name', part_name).order('submitted_at', { ascending: false }).limit(1);
   if (project_name) query = query.eq('project_name', project_name);
   if (subtitle) query = query.eq('subtitle', subtitle);
   if (sub_sub_assembly) query = query.eq('sub_sub_assembly', sub_sub_assembly);
   if (drawing_no) query = query.eq('drawing_no', drawing_no);
   if (tag_no) query = query.eq('tag_no', tag_no);
   if (exclude_id) query = query.neq('id', exclude_id);
-
   const { data, error } = await query;
   if (error) return res.status(400).json({ error: error.message });
-
-  const total = data.reduce((sum, row) => {
-    const laborCost = (row.labor_hours || 0) * (row.salary_per_hour || 0);
-    const machCost = (row.machining_hours || 0) * (row.machining_cost_per_hr || 0);
-    return sum + laborCost + machCost;
-  }, 0);
-
-  res.json({ previous_cost: total });
+  if (!data || data.length === 0) return res.json({ last_operation: null });
+  const record = data[0];
+  res.json({
+    last_operation: {
+      process_type: record.process_type,
+      operation_status: record.operation_status,
+      submitted_at: record.submitted_at,
+      acceptance_rating: record.acceptance_data?.p0?.rating || '—',
+      suggested_next: record.suggested_next_operation || null,
+      delivered_qty: record.delivered_qty,
+      accepted_qty: record.accepted_qty,
+      rework_qty: record.rework_qty,
+      reject_qty: record.reject_qty,
+    }
+  });
 });
 
-// ─── START ───
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
