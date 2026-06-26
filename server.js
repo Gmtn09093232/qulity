@@ -72,7 +72,57 @@ app.delete('/api/inspections/:id', async (req, res) => {
 });
 
 app.post('/api/telegram-auth', async (req, res) => {
-  // ... (unchanged)
+  const telegramData = req.body;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return res.status(500).json({ error: 'Bot token not configured' });
+  if (!validateTelegramData(telegramData, botToken))
+    return res.status(401).json({ error: 'Invalid auth data' });
+  const authDate = new Date(telegramData.auth_date * 1000);
+  const now = new Date();
+  if (now - authDate > 24*60*60*1000) return res.status(401).json({ error: 'Auth too old' });
+  const { data: existingUser, error: findError } = await supabase
+    .from('telegram_users')
+    .select('*')
+    .eq('telegram_id', telegramData.id)
+    .maybeSingle();
+  if (findError && findError.code !== 'PGRST116') return res.status(500).json({ error: 'DB error' });
+  let user = existingUser;
+  if (!user) {
+    const { data: newUser, error: insertError } = await supabase
+      .from('telegram_users')
+      .insert([{
+        telegram_id: telegramData.id,
+        first_name: telegramData.first_name,
+        last_name: telegramData.last_name || '',
+        username: telegramData.username || '',
+        photo_url: telegramData.photo_url || '',
+        auth_date: new Date(telegramData.auth_date * 1000)
+      }])
+      .select()
+      .single();
+    if (insertError) return res.status(500).json({ error: 'Could not create user' });
+    user = newUser;
+  } else {
+    await supabase
+      .from('telegram_users')
+      .update({ auth_date: new Date(telegramData.auth_date * 1000) })
+      .eq('telegram_id', telegramData.id);
+  }
+  const token = jwt.sign({
+    telegram_id: user.telegram_id,
+    username: user.username || `${user.first_name} ${user.last_name}`,
+    first_name: user.first_name,
+    last_name: user.last_name
+  }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({
+    success: true,
+    token,
+    user: {
+      id: user.telegram_id,
+      name: `${user.first_name} ${user.last_name}`,
+      username: user.username
+    }
+  });
 });
 
 app.get('/api/inspections', async (req, res) => {
@@ -105,7 +155,12 @@ app.post('/api/inspections', async (req, res) => {
 app.post('/api/inspections/last-operation', async (req, res) => {
   const { part_name, project_name, subtitle, sub_sub_assembly, drawing_no, tag_no, exclude_id } = req.body;
   if (!part_name) return res.json({ last_operation: null });
-  let query = supabase.from('rolling_inspections').select('*').eq('part_name', part_name).order('submitted_at', { ascending: false }).limit(1);
+  let query = supabase
+    .from('rolling_inspections')
+    .select('*')
+    .eq('part_name', part_name)
+    .order('submitted_at', { ascending: false })
+    .limit(1);
   if (project_name) query = query.eq('project_name', project_name);
   if (subtitle) query = query.eq('subtitle', subtitle);
   if (sub_sub_assembly) query = query.eq('sub_sub_assembly', sub_sub_assembly);
