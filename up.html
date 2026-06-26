@@ -36,9 +36,42 @@
         .suggestion-label { font-weight: 600; color: #166534; }
         .suggestion-value { font-weight: 500; color: #1e293b; }
         .suggestion-badge { background: #f0fdf4; color: #166534; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 600; border: 1px solid #bbf7d0; display: inline-block; }
+        /* ─── Toast notifications ─── */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            background: rgba(10, 10, 30, 0.92);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: #eef3ff;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border-left: 4px solid #4ade80;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: auto;
+            max-width: 400px;
+        }
+        .toast.show { transform: translateX(0); }
+        .toast.error { border-left-color: #f87171; }
+        .toast.info { border-left-color: #60a5fa; }
+        .toast .toast-content { display: flex; align-items: center; gap: 10px; }
+        .toast .toast-icon { font-size: 1.2rem; }
     </style>
 </head>
 <body class="antialiased">
+
+    <!-- ─── Toast container ─── -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <div class="max-w-7xl mx-auto px-4 py-6 md:px-6">
         <!-- Header -->
@@ -141,7 +174,7 @@
 
     <script>
         // ============================================================
-        // FALLBACK PROCESS ORDER – matches dropdown order
+        // FALLBACK PROCESS ORDER – only used when no suggestion stored
         // ============================================================
         const PROCESS_ORDER = [
             "Incoming",
@@ -186,6 +219,28 @@
         let currentModalProject = null;
         let currentFilteredProjects = [];
 
+        // ─── TOAST SYSTEM ───
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <span class="toast-icon"><i class="fa-solid ${icon}"></i></span>
+                    <span>${message}</span>
+                </div>
+            `;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 4000);
+        }
+
+        // ─── Extract field from inspection ───
         function getExtraField(insp, field) {
             if (field === 'Operation Condition') {
                 const raw = insp.operation_status?.trim() || '';
@@ -196,13 +251,17 @@
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
+        // ─── Get the SUGGESTED NEXT OPERATION – PRIORITY: stored column first ───
         function getSuggestedNext(insp) {
+            // 1. Use the dedicated column if present
             if (insp.suggested_next_operation && insp.suggested_next_operation.trim() !== '') {
                 return insp.suggested_next_operation.trim();
             }
+            // 2. Fallback to extra_fields
             if (insp.extra_fields && insp.extra_fields["Suggested Next Operation"]) {
                 return insp.extra_fields["Suggested Next Operation"].trim();
             }
+            // 3. Compute from process type (only as last resort)
             return getNextOperation(insp.process_type);
         }
 
@@ -211,8 +270,8 @@
                 const res = await fetch('/api/inspections');
                 if (!res.ok) throw new Error();
                 return await res.json();
-            } catch {
-                // If you have a mock generator, keep it; otherwise return []
+            } catch (err) {
+                showToast('Failed to load inspections', 'error');
                 return [];
             }
         }
@@ -253,6 +312,7 @@
 
             for (const insp of inspections) {
                 const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
+                const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 const dwgNo = getExtraField(insp, 'Drawing No.') || '—';
                 const tagNo = getExtraField(insp, 'Tag No.') || '—';
@@ -282,6 +342,7 @@
                 if (!subtitlesMap.has(subtitle)) {
                     subtitlesMap.set(subtitle, {
                         name: subtitle,
+                        subSub: subSub,
                         totalInspections: 0,
                         sumDelivered: 0,
                         sumAccepted: 0,
@@ -325,6 +386,7 @@
                 const partsList = Array.from(sub.partsMap.entries()).map(([partName, data]) => {
                     const lastInfo = partLastInsp.get(partName);
                     const suggested = lastInfo ? lastInfo.suggested_next : getNextOperation(lastInfo?.process_type);
+                    // Only add to global set if it's a real suggestion (not fallback "—" or "Complete...")
                     if (suggested && suggested !== '—' && suggested !== 'Complete / No further process') {
                         suggestedNextOpsSet.add(suggested);
                     }
@@ -339,6 +401,7 @@
                 });
                 return {
                     name: sub.name,
+                    subSub: sub.subSub || '—',
                     totalInspections: sub.totalInspections,
                     sumDelivered: sub.sumDelivered,
                     sumAccepted: sub.sumAccepted,
@@ -395,7 +458,7 @@
 
         function exportGlobalToExcel() {
             if (!currentFilteredProjects.length) {
-                alert('No data to export.');
+                showToast('No data to export', 'error');
                 return;
             }
             const rows = [
@@ -416,6 +479,7 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Projects Overview');
             XLSX.writeFile(wb, `projects_overview_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`);
+            showToast('Excel exported', 'success');
         }
 
         function exportModalToExcel() {
@@ -438,12 +502,12 @@
                 filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to); }
             const aggregated = aggregateInspectionsForProject(filtered);
             let rows = [
-                ['Sub‑assembly', 'Inspections', 'Delivered', 'Accepted', 'Rework', 'Reject', 'Conditional',
+                ['Sub‑assembly', 'Sub Sub Assembly', 'Inspections', 'Delivered', 'Accepted', 'Rework', 'Reject', 'Conditional',
                     'Accept %'
                 ]
             ];
             for (const sub of aggregated.subtitlesArray) {
-                rows.push([sub.name, sub.totalInspections, sub.sumDelivered, sub.sumAccepted, sub.sumRework, sub
+                rows.push([sub.name, sub.subSub, sub.totalInspections, sub.sumDelivered, sub.sumAccepted, sub.sumRework, sub
                     .sumReject, sub.sumConditional, sub.acceptRate.toFixed(1) + '%'
                 ]);
                 let parts = sub.partsList;
@@ -453,7 +517,7 @@
                 if (parts.length) {
                     rows.push(['  └─ Parts:']);
                     for (const part of parts) {
-                        rows.push(['    ' + part.part_name, '', part.quantity, '', '', '', '', '']);
+                        rows.push(['    ' + part.part_name, '', '', part.quantity, '', '', '', '', '']);
                         if (part.dwgList || part.tagList) rows.push(['      DWG: ' + part.dwgList, 'Tag: ' + part
                             .tagList, '', '', '', '', '', ''
                         ]);
@@ -464,17 +528,18 @@
                             '', '', '', ''
                         ]);
                     }
-                } else { rows.push(['  No parts match the suggestion filter', '', '', '', '', '', '', '']); }
+                } else { rows.push(['  No parts match the suggestion filter', '', '', '', '', '', '', '', '']); }
                 rows.push([]);
             }
             const ws = XLSX.utils.aoa_to_sheet(rows);
-            ws['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
-            { wch: 12 }];
+            ws['!cols'] = [{ wch: 25 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+            { wch: 12 }, { wch: 12 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, `Project_${currentModalProject.client}_${currentModalProject.title}`);
             XLSX.writeFile(wb,
                 `project_detail_${currentModalProject.client}_${currentModalProject.title}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`
                 );
+            showToast('Excel exported', 'success');
         }
 
         function showPartDetails(partName) {
@@ -482,7 +547,7 @@
             const allInspections = currentModalProject.inspections;
             const partInspections = allInspections.filter(insp => getExtraField(insp, 'Part Name') === partName);
             if (!partInspections.length) {
-                alert('No inspections found for this part.');
+                showToast('No inspections found for this part', 'error');
                 return;
             }
 
@@ -564,7 +629,10 @@
 
         function showProjectDetails(client, title) {
             const project = allProjects.find(p => p.client === client && p.title === title);
-            if (!project) return;
+            if (!project) {
+                showToast('Project not found', 'error');
+                return;
+            }
             currentModalProject = project;
             document.getElementById('modalTitle').innerText = `${client} / ${title}`;
 
@@ -577,6 +645,11 @@
                 if (insp.username) engineerSet.add(insp.username);
                 const op = getExtraField(insp, 'Operation Condition');
                 if (op) opCondSet.add(op);
+                // Collect actual suggestions from the data
+                const sug = getSuggestedNext(insp);
+                if (sug && sug !== '—' && sug !== 'Complete / No further process') {
+                    suggestedSet.add(sug);
+                }
             });
             const agg = aggregateInspectionsForProject(project.inspections);
             if (agg.suggestedNextOps) {
@@ -671,7 +744,10 @@
                         ` :
                             '<div class="text-xs text-gray-400 italic mt-1">No parts match the current filters.</div>';
                         return `<div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
-                            <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
+                                <span class="text-xs text-gray-400">Sub Sub: ${escapeHtml(sub.subSub)}</span>
+                            </div>
                             <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
                                 <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
                                 <div><span class="text-gray-500">Delivered</span><br><span>${sub.sumDelivered.toLocaleString()}</span></div>
@@ -767,10 +843,22 @@
             document.getElementById('filterSubtitle').innerHTML = '<option value="">All Subtitles</option>' + subs.map(s =>
                 `<option>${escapeHtml(s)}</option>`).join('');
 
+            // Collect ALL unique suggestions from the actual data (not computed)
             const allSuggestions = new Set();
             for (const p of projects) {
                 if (p.suggestedNextOps) {
-                    p.suggestedNextOps.forEach(s => allSuggestions.add(s));
+                    p.suggestedNextOps.forEach(s => {
+                        if (s && s !== '—' && s !== 'Complete / No further process') {
+                            allSuggestions.add(s);
+                        }
+                    });
+                }
+                // Also scan each inspection directly
+                for (const insp of p.inspections) {
+                    const sug = getSuggestedNext(insp);
+                    if (sug && sug !== '—' && sug !== 'Complete / No further process') {
+                        allSuggestions.add(sug);
+                    }
                 }
             }
             const sortedSuggestions = Array.from(allSuggestions).sort();
@@ -797,18 +885,23 @@
             allProjects = projects;
             populateFilters(projects, inspections);
             applyFilters();
+            showToast('Data refreshed', 'info');
         }
 
         function escapeHtml(str) { if (!str) return '';
             return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } [m])); }
 
+        // ─── Event listeners ───
         document.getElementById('filterClient').addEventListener('change', applyFilters);
         document.getElementById('filterTitle').addEventListener('change', applyFilters);
         document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
         document.getElementById('filterOpCondition').addEventListener('change', applyFilters);
         document.getElementById('filterStatus').addEventListener('change', applyFilters);
         document.getElementById('filterSuggestedNext').addEventListener('change', applyFilters);
-        window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+        window.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal();
+                closePartModal(e); } });
+
+        // ─── Start ───
         refreshData();
     </script>
 </body>
