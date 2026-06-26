@@ -105,13 +105,6 @@
     .btn-action:hover { transform: scale(1.02); }
     .btn-action:active { transform: scale(0.96); }
 
-    /* ─── Cost summary cards ─── */
-    .cost-card { border-radius: 8px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; }
-    .cost-card .label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-    .cost-card .value { font-size: 1.1rem; font-weight: 600; color: #0f172a; }
-    .cost-card.total { background: #f0fdf4; border-color: #bbf7d0; }
-    .cost-card.total .value { color: #166534; }
-
     @media (max-width: 700px) {
       #secretOverlay .card { padding: 28px 20px; }
       #secretOverlay .card h2 { font-size: 1.4rem; }
@@ -221,7 +214,8 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
+        <!-- ─── Shift | Operator Name | Labor Hours | Machining Hours | Time ─── -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 border-b pb-4">
           <div>
             <label class="font-bold">Shift Number</label>
             <div class="flex gap-4">
@@ -233,6 +227,14 @@
           <div>
             <label class="font-bold" for="operatorName">Operator Name</label>
             <input type="text" id="operatorName" class="w-full border p-1 rounded" placeholder="Operator's name" />
+          </div>
+          <div>
+            <label class="font-bold" for="laborHours">Labor Hours</label>
+            <input type="number" step="0.5" id="laborHours" class="w-full border p-1 rounded" placeholder="e.g. 2.5" />
+          </div>
+          <div>
+            <label class="font-bold" for="machiningHours">Machining Hours</label>
+            <input type="number" step="0.5" id="machiningHours" class="w-full border p-1 rounded" placeholder="e.g. 1.5" />
           </div>
           <div>
             <label class="font-bold">Inspection Time</label>
@@ -256,39 +258,25 @@
           <div><label class="font-bold">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="border p-1 rounded w-full" /></div>
         </div>
 
-        <!-- ─── Internal Failure Costs with Operational Cost ─── -->
+        <!-- ─── Internal Failure Costs ─── -->
         <div class="border p-4 rounded-md">
           <h3 class="font-bold text-lg">Internal Failure Costs</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
             <div><label>Defected Material Cost (ETB)</label> <input type="number" step="0.01" id="defectedMaterialCost" class="border p-1 rounded w-full" /></div>
-            <div><label>Labor Hours</label> <input type="number" step="0.5" id="laborHours" class="border p-1 rounded w-full" /></div>
+            <!-- ─── Labor Hours and Machining Hours removed from here ─── -->
             <div><label class="block">Level</label><select id="levelSelect" class="border p-1 rounded w-full"><option value="">-- Select --</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="custom">Custom</option></select></div>
             <div><label>Salary per Hour (ETB)</label><input type="number" step="0.001" id="salaryPerHour" class="border p-1 rounded w-full" /></div>
             <div><label class="font-bold">Machine Description (Master Data)</label><select id="machineDescriptionSelect" class="border p-1 rounded w-full"><option value="">-- Select Machine --</option></select><p class="text-xs text-gray-500 mt-1">Select machine to auto-fill Machining Cost/Hr</p></div>
-            <div><label>Machining Hours</label><input type="number" step="0.5" id="machiningHours" class="border p-1 rounded w-full" /></div>
             <div><label>Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="border p-1 rounded w-full" /></div>
+            <!-- ─── Machining Hours removed from here ─── -->
           </div>
-
-          <!-- ─── COST SUMMARY ─── -->
-          <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="cost-card">
-              <div class="label">Current Failure Cost</div>
-              <div class="value" id="currentFailureCostDisplay">0.00</div>
-              <input type="hidden" id="totalInternalFailureCost" value="0" />
-            </div>
-            <div class="cost-card">
-              <div class="label">Previous Operational Cost</div>
-              <div class="value text-amber-600" id="previousOperationalCostDisplay">0.00</div>
-              <div class="text-xs text-gray-400">(labor + machining from earlier inspections)</div>
-            </div>
-            <div class="cost-card total">
-              <div class="label">Total Accumulated Cost</div>
-              <div class="value" id="totalAccumulatedCostDisplay">0.00</div>
-              <input type="hidden" id="accumulatedFailureCost" value="0" />
-            </div>
+          <!-- Total Internal Failure Cost (single line) -->
+          <div class="mt-3 p-2 bg-gray-100 rounded">
+            <span class="font-bold">Total Internal Failure Cost (ETB):</span>
+            <span id="totalFailureCostDisplay">0.00</span>
+            <input type="hidden" id="totalInternalFailureCost" />
+            <input type="hidden" id="accumulatedFailureCost" value="0" />
           </div>
-          <!-- ──────────────────────────────────── -->
-
         </div>
 
         <!-- ─── REMOVED: Most Frequent Defects, Defect Correction Slip, Cause of Defects ─── -->
@@ -983,8 +971,8 @@
       const mult = (rework + reject) || 1;
       const total = (mat + lab * sal + machH * machR) * mult;
       document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
-      document.getElementById("currentFailureCostDisplay").innerText = total.toFixed(2);
-      updateTotalAccumulated();
+      document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
+      updateAccumulated();
       return total;
     }
 
@@ -992,8 +980,7 @@
     async function fetchPreviousOperationalCost() {
       const partName = document.getElementById('extra_Part_Name')?.value?.trim();
       if (!partName) {
-        document.getElementById('previousOperationalCostDisplay').innerText = '0.00';
-        updateTotalAccumulated();
+        updateAccumulated();
         return;
       }
 
@@ -1020,20 +1007,20 @@
         });
         if (!resp.ok) throw new Error();
         const data = await resp.json();
-        document.getElementById('previousOperationalCostDisplay').innerText = data.previous_cost.toFixed(2);
-        updateTotalAccumulated();
+        // Store the previous cost in a variable for accumulation (not displayed)
+        window._previousOperationalCost = data.previous_cost || 0;
+        updateAccumulated();
       } catch (err) {
         console.error('Failed to fetch previous operational cost:', err);
-        document.getElementById('previousOperationalCostDisplay').innerText = '0.00';
-        updateTotalAccumulated();
+        window._previousOperationalCost = 0;
+        updateAccumulated();
       }
     }
 
-    function updateTotalAccumulated() {
-      const current = parseFloat(document.getElementById('currentFailureCostDisplay').innerText) || 0;
-      const prev = parseFloat(document.getElementById('previousOperationalCostDisplay').innerText) || 0;
+    function updateAccumulated() {
+      const current = parseFloat(document.getElementById('totalInternalFailureCost').value) || 0;
+      const prev = window._previousOperationalCost || 0;
       const total = current + prev;
-      document.getElementById('totalAccumulatedCostDisplay').innerText = total.toFixed(2);
       document.getElementById('accumulatedFailureCost').value = total.toFixed(2);
     }
 
@@ -1065,8 +1052,8 @@
       refreshDatalistOptions();
       populateSuggestedNextOps();
       document.getElementById('suggestedNextOp').value = '';
-      document.getElementById('previousOperationalCostDisplay').innerText = '0.00';
-      updateTotalAccumulated();
+      window._previousOperationalCost = 0;
+      updateAccumulated();
       showToast('Form reset', 'info');
     }
 
@@ -1213,12 +1200,12 @@
       document.getElementById("machiningCostPerHr").value = inspection.machining_cost_per_hr ?? 0;
       document.getElementById("levelSelect").value = inspection.level || "";
       computeFailureCost();
-      // Restore accumulated cost
+      // Restore accumulated cost (hidden)
       if (inspection.accumulated_failure_cost) {
         document.getElementById('accumulatedFailureCost').value = inspection.accumulated_failure_cost;
-        document.getElementById('totalAccumulatedCostDisplay').innerText = inspection.accumulated_failure_cost.toFixed(2);
+        // Calculate previous cost for internal use (not displayed)
         const prev = inspection.accumulated_failure_cost - (inspection.total_internal_failure_cost || 0);
-        document.getElementById('previousOperationalCostDisplay').innerText = prev.toFixed(2);
+        window._previousOperationalCost = prev;
       }
       setExtraFields(inspection.extra_fields || {});
       setAcceptanceData(inspection.acceptance_data || {});
@@ -1301,7 +1288,7 @@
     // ─── utils ───
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[m])); }
 
-    console.log('🔐 QC Inspection ready – previous operational cost always included.');
+    console.log('🔐 QC Inspection ready – Labor & Machining Hours moved next to Operator Name.');
   </script>
 </body>
 </html>
