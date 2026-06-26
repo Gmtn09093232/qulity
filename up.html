@@ -174,45 +174,8 @@
 
     <script>
         // ============================================================
-        // FALLBACK PROCESS ORDER – only used when no suggestion stored
+        // NO FALLBACK – only use the stored suggested_next_operation
         // ============================================================
-        const PROCESS_ORDER = [
-            "Incoming",
-            "Punching",
-            "Rolling",
-            "Bending",
-            "Welding",
-            "Pressing",
-            "Milling",
-            "Casting",
-            "PatternCore",
-            "Assembling",
-            "Testing",
-            "Painting",
-            "Packaging",
-            "Shearing",
-            "Lathe",
-            "Drilling",
-            "BoringHoning",
-            "Grinding",
-            "Forging",
-            "Molding",
-            "Polishing",
-            "GasCutting",
-            "FastenersAssembly",
-            "Hardening",
-            "Tempering",
-            "Coating"
-        ];
-
-        function getNextOperation(processType) {
-            if (!processType) return '—';
-            let normalized = processType.replace(/\s*(?:Process|Operation|Op\.?)$/i, '').trim();
-            const lower = normalized.toLowerCase();
-            const idx = PROCESS_ORDER.map(p => p.toLowerCase()).indexOf(lower);
-            if (idx === -1 || idx === PROCESS_ORDER.length - 1) return 'Complete / No further process';
-            return PROCESS_ORDER[idx + 1];
-        }
 
         let allProjects = [];
         let allInspectionsRaw = [];
@@ -251,18 +214,18 @@
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
-        // ─── Get the SUGGESTED NEXT OPERATION – PRIORITY: stored column first ───
+        // ─── Get the stored SUGGESTED NEXT OPERATION – NO FALLBACK ───
         function getSuggestedNext(insp) {
-            // 1. Use the dedicated column if present
+            // Only use the dedicated column; if empty, return null/undefined
             if (insp.suggested_next_operation && insp.suggested_next_operation.trim() !== '') {
                 return insp.suggested_next_operation.trim();
             }
-            // 2. Fallback to extra_fields
+            // Also check extra_fields as a fallback (but only if it exists)
             if (insp.extra_fields && insp.extra_fields["Suggested Next Operation"]) {
                 return insp.extra_fields["Suggested Next Operation"].trim();
             }
-            // 3. Compute from process type (only as last resort)
-            return getNextOperation(insp.process_type);
+            // No fallback to computed order – return null
+            return null;
         }
 
         async function fetchInspections() {
@@ -330,12 +293,13 @@
                 const inspDate = new Date(insp.submitted_at);
                 if (!lastDate || inspDate > lastDate) lastDate = inspDate;
 
+                // Update last inspection per part – store the suggested value if any
                 if (!partLastInsp.has(partName) || inspDate > partLastInsp.get(partName).date) {
                     const suggested = getSuggestedNext(insp);
                     partLastInsp.set(partName, {
                         process_type: processType,
                         date: inspDate,
-                        suggested_next: suggested
+                        suggested_next: suggested // may be null
                     });
                 }
 
@@ -385,9 +349,10 @@
             const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => {
                 const partsList = Array.from(sub.partsMap.entries()).map(([partName, data]) => {
                     const lastInfo = partLastInsp.get(partName);
-                    const suggested = lastInfo ? lastInfo.suggested_next : getNextOperation(lastInfo?.process_type);
-                    // Only add to global set if it's a real suggestion (not fallback "—" or "Complete...")
-                    if (suggested && suggested !== '—' && suggested !== 'Complete / No further process') {
+                    // Use stored suggestion or null
+                    const suggested = lastInfo ? lastInfo.suggested_next : null;
+                    // Only add to global set if it's a non-empty string
+                    if (suggested && suggested.trim() !== '') {
                         suggestedNextOpsSet.add(suggested);
                     }
                     return {
@@ -524,7 +489,7 @@
                         if (part.operations) rows.push(['      Operations: ' + part.operations, '', '', '', '', '',
                             '', ''
                         ]);
-                        if (part.suggestedNext) rows.push(['      Suggested Next Operation: ' + part.suggestedNext, '', '', '',
+                        if (part.suggestedNext && part.suggestedNext !== '—') rows.push(['      Suggested Next Operation: ' + part.suggestedNext, '', '', '',
                             '', '', '', ''
                         ]);
                     }
@@ -558,7 +523,7 @@
             const lastInsp = partInspections[partInspections.length - 1];
             const lastProcess = lastInsp?.process_type || '—';
             const lastDate = lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—';
-            const nextOp = lastInsp ? getSuggestedNext(lastInsp) : getNextOperation(lastProcess);
+            const nextOp = lastInsp ? getSuggestedNext(lastInsp) : null; // may be null
 
             let suggestionHtml = `
                 <table class="suggestion-table">
@@ -568,7 +533,7 @@
                     </tr>
                     <tr>
                         <td class="suggestion-label">Suggested Next Operation:</td>
-                        <td class="suggestion-value">${escapeHtml(nextOp)}</td>
+                        <td class="suggestion-value">${nextOp ? escapeHtml(nextOp) : '—'}</td>
                     </tr>
                 </table>
             `;
@@ -647,7 +612,7 @@
                 if (op) opCondSet.add(op);
                 // Collect actual suggestions from the data
                 const sug = getSuggestedNext(insp);
-                if (sug && sug !== '—' && sug !== 'Complete / No further process') {
+                if (sug && sug.trim() !== '') {
                     suggestedSet.add(sug);
                 }
             });
@@ -735,7 +700,7 @@
                                                 <td>${escapeHtml(p.dwgList) || '—'}</td>
                                                 <td>${escapeHtml(p.tagList) || '—'}</td>
                                                 <td class="text-xs">${escapeHtml(p.operations) || '—'}</td>
-                                                <td><span class="suggestion-badge">${escapeHtml(p.suggestedNext) || '—'}</span></td>
+                                                <td>${p.suggestedNext && p.suggestedNext !== '—' ? `<span class="suggestion-badge">${escapeHtml(p.suggestedNext)}</span>` : '—'}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -848,7 +813,7 @@
             for (const p of projects) {
                 if (p.suggestedNextOps) {
                     p.suggestedNextOps.forEach(s => {
-                        if (s && s !== '—' && s !== 'Complete / No further process') {
+                        if (s && s.trim() !== '') {
                             allSuggestions.add(s);
                         }
                     });
@@ -856,7 +821,7 @@
                 // Also scan each inspection directly
                 for (const insp of p.inspections) {
                     const sug = getSuggestedNext(insp);
-                    if (sug && sug !== '—' && sug !== 'Complete / No further process') {
+                    if (sug && sug.trim() !== '') {
                         allSuggestions.add(sug);
                     }
                 }
