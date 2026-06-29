@@ -1,30 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
     <title>Inspection Report | Amhara Metal Industry</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
         @media print {
-            body * { visibility: hidden; }
-            .report-container, .report-container * { visibility: visible; }
-            .report-container { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
-            .no-print { display: none; }
-            .summary-cards { display: none; }
-            .filter-bar, .action-buttons { display: none; }
-            table th, table td { padding: 6px; }
+            body * {
+                visibility: hidden;
+            }
+            .report-container,
+            .report-container * {
+                visibility: visible;
+            }
+            .report-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .summary-cards {
+                display: none !important;
+            }
+            .filter-bar,
+            .action-buttons {
+                display: none !important;
+            }
+            table th,
+            table td {
+                padding: 4px 6px !important;
+                font-size: 0.75rem !important;
+            }
+            .table-wrapper {
+                border-radius: 0 !important;
+            }
         }
-        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background-color: #f1f5f9; position: sticky; top: 0; z-index: 10; padding: 12px 10px; font-weight: 600; color: #0f172a; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
-        tr:hover td { background-color: #f8fafc; }
-        .summary-card { transition: all 0.2s; border-radius: 1rem; }
-        .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        .filter-input:focus { outline: none; ring: 2px solid #3b82f6; border-color: transparent; }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        th {
+            background-color: #f1f5f9;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 10px 8px;
+            font-weight: 600;
+            color: #0f172a;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+        .summary-card {
+            transition: all 0.2s;
+            border-radius: 1rem;
+        }
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        .filter-input:focus {
+            outline: none;
+            ring: 2px solid #3b82f6;
+            border-color: transparent;
+        }
         .loader {
             border: 3px solid #e2e8f0;
             border-top: 3px solid #3b82f6;
@@ -34,559 +95,694 @@
             animation: spin 0.8s linear infinite;
             margin: 20px auto;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .filter-select { min-width: 150px; }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .filter-select {
+            min-width: 150px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .badge-accepted {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-conditional {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+        .badge-rework {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-reject {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .col-delivered {
+            background: #eff6ff;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        .col-accepted {
+            color: #166534;
+        }
+        .col-conditional {
+            color: #6b21a8;
+        }
+        .col-rework {
+            color: #92400e;
+        }
+        .col-reject {
+            color: #991b1b;
+        }
+        .sub-assembly-tag {
+            font-size: 0.7rem;
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 0.1rem 0.5rem;
+            border-radius: 9999px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
 
-<div class="max-w-7xl mx-auto p-4 md:p-6">
-    <!-- Header -->
-    <div class="bg-white rounded-2xl shadow-md p-5 mb-6 flex flex-wrap justify-between items-center border border-gray-100">
-        <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-clipboard-list text-blue-600"></i> 
-                Inspection Report
-            </h1>
-            <p class="text-gray-500 text-sm mt-1">Hierarchical view: Client → Title → Subtitle → Parts</p>
+    <div class="max-w-7xl mx-auto p-4 md:p-6">
+
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-md p-5 mb-6 flex flex-wrap justify-between items-center border border-gray-100">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-clipboard-list text-blue-600"></i>
+                    Inspection Report
+                </h1>
+                <p class="text-gray-500 text-sm mt-1">Hierarchical: Client → Title → Subtitle → Sub Sub Assembly → Parts</p>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
+                <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                    <i class="fas fa-file-excel"></i> Excel (XLSX)
+                </button>
+                <button onclick="copyTableToClipboard()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                    <i class="fas fa-print"></i> Print
+                </button>
+                <button onclick="fetchReportData()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
         </div>
-        <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
-            <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
-                <i class="fas fa-file-excel"></i> Excel (XLSX)
-            </button>
-            <button onclick="copyTableToClipboard()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
-                <i class="fas fa-copy"></i> Copy
-            </button>
-            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
-                <i class="fas fa-print"></i> Print
-            </button>
-            <button onclick="fetchReportData()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
-                <i class="fas fa-sync-alt"></i> Refresh
-            </button>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 no-print summary-cards">
+            <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div><i class="fa-solid fa-boxes-stacked text-2xl text-blue-500"></i></div>
+                    <span class="text-xs text-gray-400">Net</span>
+                </div>
+                <p class="text-2xl font-bold text-slate-800 mt-2" id="totalDeliveredSum">0</p>
+                <p class="text-xs text-gray-500">Delivered (Acc + Cond)</p>
+            </div>
+            <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div><i class="fa-solid fa-check-circle text-2xl text-emerald-500"></i></div>
+                </div>
+                <p class="text-2xl font-bold text-slate-800 mt-2" id="totalAcceptedSum">0</p>
+                <p class="text-xs text-gray-500">Accepted</p>
+            </div>
+            <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div><i class="fa-solid fa-rotate-left text-2xl text-amber-500"></i></div>
+                </div>
+                <p class="text-2xl font-bold text-slate-800 mt-2" id="totalReworkSum">0</p>
+                <p class="text-xs text-gray-500">Rework</p>
+            </div>
+            <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div><i class="fa-solid fa-ban text-2xl text-red-500"></i></div>
+                </div>
+                <p class="text-2xl font-bold text-slate-800 mt-2" id="totalRejectSum">0</p>
+                <p class="text-xs text-gray-500">Reject</p>
+            </div>
+            <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div><i class="fa-solid fa-flag-checkered text-2xl text-purple-500"></i></div>
+                </div>
+                <p class="text-2xl font-bold text-slate-800 mt-2" id="totalConditionalSum">0</p>
+                <p class="text-xs text-gray-500">Conditional</p>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-5 no-print flex flex-col md:flex-row gap-3 flex-wrap items-end">
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-folder-open mr-1"></i> Title</label>
+                <select id="projectFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
+                    <option value="">All Titles</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-solid fa-gears mr-1"></i> Process</label>
+                <select id="processFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
+                    <option value="">All Processes</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-solid fa-user mr-1"></i> QC Engineer</label>
+                <select id="engineerFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
+                    <option value="">All Engineers</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[180px]">
+                <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-magnifying-glass mr-1"></i> Search</label>
+                <input type="text" id="searchInput" placeholder="Type anything…" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition" />
+            </div>
+            <div>
+                <button id="clearFiltersBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2">
+                    <i class="fas fa-eraser"></i> Clear
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Table -->
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden report-container border border-gray-100">
+            <div class="table-wrapper">
+                <table id="reportTable">
+                    <thead>
+                        <tr>
+                            <th class="text-left">👤 Client</th>
+                            <th class="text-left">📁 Title</th>
+                            <th class="text-left">🔖 Subtitle</th>
+                            <th class="text-left">📎 Sub Sub Assembly</th>
+                            <th class="text-left">📄 Drawing No.</th>
+                            <th class="text-left">🔧 Part Name</th>
+                            <th class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc + Cond)</span></th>
+                            <th class="text-right">✅ Accepted</th>
+                            <th class="text-right">🔄 Rework</th>
+                            <th class="text-right">❌ Reject</th>
+                            <th class="text-right">⚠️ Conditional</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        <tr><td colspan="11" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections…</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="reportInfo" class="p-4 text-sm text-gray-500 border-t border-gray-100 flex justify-between items-center bg-gray-50 no-print">
+                <span><i class="fa-regular fa-chart-line"></i> <span id="recordStatus">Ready</span></span>
+                <span id="recordCount" class="font-medium"></span>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-4 flex flex-wrap gap-3 text-xs text-gray-500 no-print">
+            <span><span class="badge badge-accepted">Accepted</span> = passed inspection</span>
+            <span><span class="badge badge-conditional">Conditional</span> = conditionally accepted</span>
+            <span><span class="badge badge-rework">Rework</span> = needs rework</span>
+            <span><span class="badge badge-reject">Reject</span> = rejected</span>
+            <span><i class="fa-solid fa-circle text-blue-400 text-[0.5rem]"></i> <strong>Delivered</strong> = Accepted + Conditional</span>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 no-print">
-        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div><i class="fa-solid fa-cubes text-2xl text-blue-500"></i></div>
-                <span class="text-xs text-gray-400">Total</span>
-            </div>
-            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalDeliveredSum">0</p>
-            <p class="text-xs text-gray-500">Delivered Qty</p>
-        </div>
-        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div><i class="fa-solid fa-check-circle text-2xl text-emerald-500"></i></div>
-            </div>
-            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalAcceptedSum">0</p>
-            <p class="text-xs text-gray-500">Accepted</p>
-        </div>
-        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div><i class="fa-solid fa-rotate-left text-2xl text-amber-500"></i></div>
-            </div>
-            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalReworkSum">0</p>
-            <p class="text-xs text-gray-500">Rework</p>
-        </div>
-        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div><i class="fa-solid fa-ban text-2xl text-red-500"></i></div>
-            </div>
-            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalRejectSum">0</p>
-            <p class="text-xs text-gray-500">Reject</p>
-        </div>
-        <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div><i class="fa-solid fa-flag-checkered text-2xl text-purple-500"></i></div>
-            </div>
-            <p class="text-2xl font-bold text-slate-800 mt-2" id="totalConditionalSum">0</p>
-            <p class="text-xs text-gray-500">Conditional</p>
-        </div>
-    </div>
+    <script>
+        // ---------- Helpers ----------
+        function getExtraField(inspection, fieldName) {
+            return inspection.extra_fields?.[fieldName]?.trim() || '';
+        }
 
-    <!-- Filter Bar -->
-    <div class="bg-white rounded-xl shadow-sm p-4 mb-5 no-print flex flex-col md:flex-row gap-3 flex-wrap items-end">
-        <div class="flex-1 min-w-[150px]">
-            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-folder-open mr-1"></i> Title</label>
-            <select id="projectFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
-                <option value="">All Titles</option>
-            </select>
-        </div>
-        <div class="flex-1 min-w-[150px]">
-            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-solid fa-gears mr-1"></i> Process</label>
-            <select id="processFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
-                <option value="">All Processes</option>
-            </select>
-        </div>
-        <div class="flex-1 min-w-[150px]">
-            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-solid fa-user mr-1"></i> QC Engineer</label>
-            <select id="engineerFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
-                <option value="">All Engineers</option>
-            </select>
-        </div>
-        <div class="flex-1 min-w-[180px]">
-            <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-regular fa-magnifying-glass mr-1"></i> Search</label>
-            <input type="text" id="searchInput" placeholder="Type anything..." class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
-        </div>
-        <div>
-            <button id="clearFiltersBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2">
-                <i class="fas fa-eraser"></i> Clear
-            </button>
-        </div>
-    </div>
+        function getClientName(inspection) {
+            return (inspection.customer_name && inspection.customer_name.trim()) ?
+                inspection.customer_name.trim() :
+                getExtraField(inspection, 'Customer Name');
+        }
 
-    <!-- Main Table Container -->
-    <div class="bg-white rounded-2xl shadow-md overflow-hidden report-container border border-gray-100">
-        <div class="table-wrapper">
-            <table id="reportTable" class="min-w-full">
-                <thead>
-                    <tr class="border-b border-gray-200">
-                        <th class="text-left">👤 Client Name</th>
-                        <th class="text-left">📁 Title</th>
-                        <th class="text-left">🔖 Subtitle</th>
-                        <th class="text-left">📄 Drawing No.</th>
-                        <th class="text-left">🔧 Part Name</th>
-                        <th class="text-right">📦 Delivered</th>
-                        <th class="text-right">✅ Accepted</th>
-                        <th class="text-right">🔄 Rework</th>
-                        <th class="text-right">❌ Reject</th>
-                        <th class="text-right">⚠️ Conditional</th>
-                    </tr>
-                </thead>
-                <tbody id="reportTableBody">
-                    <tr><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections...</p></tr>
-                </tbody>
-            </table>
-        </div>
-        <div id="reportInfo" class="p-4 text-sm text-gray-500 border-t border-gray-100 flex justify-between items-center bg-gray-50 no-print">
-            <span><i class="fa-regular fa-chart-line"></i> <span id="recordStatus">Ready</span></span>
-            <span id="recordCount" class="font-medium"></span>
-        </div>
-    </div>
-</div>
+        function getProjectName(inspection) {
+            return (inspection.project_name && inspection.project_name.trim()) ?
+                inspection.project_name.trim() :
+                getExtraField(inspection, 'Project Name');
+        }
 
-<script>
-    // ---------- Robust field extraction ----------
-    function getExtraField(inspection, fieldName) {
-        return inspection.extra_fields?.[fieldName]?.trim() || '';
-    }
+        function getSubtitle(inspection) {
+            return getExtraField(inspection, 'Subtitle');
+        }
 
-    function getClientName(inspection) {
-        if (inspection.customer_name && inspection.customer_name.trim()) return inspection.customer_name.trim();
-        return getExtraField(inspection, 'Customer Name');
-    }
+        function getSubSubAssembly(inspection) {
+            return getExtraField(inspection, 'Sub Sub Assembly') ||
+                getExtraField(inspection, 'SubAssembly') ||
+                getExtraField(inspection, 'Sub-Assembly') || '';
+        }
 
-    function getProjectName(inspection) {
-        if (inspection.project_name && inspection.project_name.trim()) return inspection.project_name.trim();
-        return getExtraField(inspection, 'Project Name');
-    }
+        function formatQty(value) {
+            if (value === undefined || value === null || value === '') return '-';
+            const num = Number(value);
+            return isNaN(num) ? '-' : num.toLocaleString();
+        }
 
-    function getSubtitle(inspection) {
-        return getExtraField(inspection, 'Subtitle');
-    }
+        function numericQty(value) {
+            if (value === undefined || value === null || value === '') return 0;
+            const num = Number(value);
+            return isNaN(num) ? 0 : num;
+        }
 
-    let allReportRows = [];
-    let uniqueProjectNames = new Set();
-    let uniqueProcessTypes = new Set();
-    let uniqueEngineers = new Set();
+        // ---------- State ----------
+        let allReportRows = [];
+        let uniqueProjectNames = new Set();
+        let uniqueProcessTypes = new Set();
+        let uniqueEngineers = new Set();
 
-    function formatQty(value) {
-        if (value === undefined || value === null || value === '') return '-';
-        const num = Number(value);
-        return isNaN(num) ? '-' : num.toLocaleString();
-    }
+        // ---------- Fetch & Render ----------
+        async function fetchReportData() {
+            const tbody = document.getElementById('reportTableBody');
+            const statusSpan = document.getElementById('recordStatus');
+            try {
+                tbody.innerHTML =
+                    `<tr><td colspan="11" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections…</p></td></tr>`;
+                statusSpan.innerText = 'Loading…';
+                const response = await fetch('/api/inspections');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const inspections = await response.json();
 
-    function numericQty(value) {
-        if (value === undefined || value === null || value === '') return 0;
-        const num = Number(value);
-        return isNaN(num) ? 0 : num;
-    }
+                const rows = [];
+                uniqueProjectNames.clear();
+                uniqueProcessTypes.clear();
+                uniqueEngineers.clear();
+                let sumDelivered = 0,
+                    sumAccepted = 0,
+                    sumRework = 0,
+                    sumReject = 0,
+                    sumConditional = 0;
 
-    async function fetchReportData() {
-        const tbody = document.getElementById('reportTableBody');
-        const statusSpan = document.getElementById('recordStatus');
-        try {
-            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections...</p></tr>`;
-            statusSpan.innerText = 'Loading...';
-            const response = await fetch('/api/inspections');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const inspections = await response.json();
-            
-            const rows = [];
-            uniqueProjectNames.clear();
-            uniqueProcessTypes.clear();
-            uniqueEngineers.clear();
-            let sumDelivered = 0, sumAccepted = 0, sumRework = 0, sumReject = 0, sumConditional = 0;
-            
-            for (const insp of inspections) {
-                const clientName = getClientName(insp);
-                const projectName = getProjectName(insp);
-                const subtitle = getSubtitle(insp);
-                const processType = insp.process_type || '';
-                const engineer = insp.username || '';
-                
-                if (projectName) uniqueProjectNames.add(projectName);
-                if (processType) uniqueProcessTypes.add(processType);
-                if (engineer) uniqueEngineers.add(engineer);
-                
-                const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
-                const partName = getExtraField(insp, 'Part Name') || '-';
-                const deliveredRaw = insp.delivered_qty;
-                const acceptedRaw = insp.accepted_qty;
-                const reworkRaw = insp.rework_qty;
-                const rejectRaw = insp.reject_qty;
-                const conditionalRaw = insp.conditional_accept_qty;
-                
-                const delivered = formatQty(deliveredRaw);
-                const accepted = formatQty(acceptedRaw);
-                const rework = formatQty(reworkRaw);
-                const reject = formatQty(rejectRaw);
-                const conditional = formatQty(conditionalRaw);
-                
-                sumDelivered += numericQty(deliveredRaw);
-                sumAccepted += numericQty(acceptedRaw);
-                sumRework += numericQty(reworkRaw);
-                sumReject += numericQty(rejectRaw);
-                sumConditional += numericQty(conditionalRaw);
-                
-                rows.push({
-                    clientName: clientName || '(no client)',
-                    projectName: projectName || '(no title)',
-                    subtitle: subtitle || '',
-                    drawingNo,
-                    partName,
-                    delivered,
-                    accepted,
-                    rework,
-                    reject,
-                    conditional,
-                    processType,
-                    engineer,
-                    rawSearch: `${clientName} ${projectName} ${subtitle} ${drawingNo} ${partName} ${delivered} ${accepted} ${rework} ${reject} ${conditional} ${processType} ${engineer}`.toLowerCase()
+                for (const insp of inspections) {
+                    const clientName = getClientName(insp);
+                    const projectName = getProjectName(insp);
+                    const subtitle = getSubtitle(insp);
+                    const subSubAssembly = getSubSubAssembly(insp);
+                    const processType = insp.process_type || '';
+                    const engineer = insp.username || '';
+
+                    if (projectName) uniqueProjectNames.add(projectName);
+                    if (processType) uniqueProcessTypes.add(processType);
+                    if (engineer) uniqueEngineers.add(engineer);
+
+                    const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
+                    const partName = getExtraField(insp, 'Part Name') || '-';
+
+                    const accRaw = insp.accepted_qty;
+                    const condRaw = insp.conditional_accept_qty;
+                    const reworkRaw = insp.rework_qty;
+                    const rejectRaw = insp.reject_qty;
+
+                    // Delivered = Accepted + Conditional Accepted
+                    const deliveredRaw = numericQty(accRaw) + numericQty(condRaw);
+
+                    sumDelivered += deliveredRaw;
+                    sumAccepted += numericQty(accRaw);
+                    sumRework += numericQty(reworkRaw);
+                    sumReject += numericQty(rejectRaw);
+                    sumConditional += numericQty(condRaw);
+
+                    rows.push({
+                        clientName: clientName || '(no client)',
+                        projectName: projectName || '(no title)',
+                        subtitle: subtitle || '',
+                        subSubAssembly: subSubAssembly || '',
+                        drawingNo: drawingNo,
+                        partName: partName,
+                        delivered: formatQty(deliveredRaw),
+                        deliveredRaw: deliveredRaw,
+                        accepted: formatQty(accRaw),
+                        acceptedRaw: numericQty(accRaw),
+                        rework: formatQty(reworkRaw),
+                        reworkRaw: numericQty(reworkRaw),
+                        reject: formatQty(rejectRaw),
+                        rejectRaw: numericQty(rejectRaw),
+                        conditional: formatQty(condRaw),
+                        conditionalRaw: numericQty(condRaw),
+                        processType: processType,
+                        engineer: engineer,
+                        rawSearch: `${clientName} ${projectName} ${subtitle} ${subSubAssembly} ${drawingNo} ${partName} ${deliveredRaw} ${accRaw} ${reworkRaw} ${rejectRaw} ${condRaw} ${processType} ${engineer}`
+                            .toLowerCase()
+                    });
+                }
+
+                document.getElementById('totalDeliveredSum').innerText = sumDelivered.toLocaleString();
+                document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
+                document.getElementById('totalReworkSum').innerText = sumRework.toLocaleString();
+                document.getElementById('totalRejectSum').innerText = sumReject.toLocaleString();
+                document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
+
+                // Populate dropdowns
+                const projectSelect = document.getElementById('projectFilterSelect');
+                projectSelect.innerHTML = '<option value="">All Titles</option>';
+                [...uniqueProjectNames].sort().forEach(proj => {
+                    projectSelect.innerHTML += `<option value="${escapeHtml(proj)}">${escapeHtml(proj)}</option>`;
                 });
+
+                const processSelect = document.getElementById('processFilterSelect');
+                processSelect.innerHTML = '<option value="">All Processes</option>';
+                [...uniqueProcessTypes].sort().forEach(proc => {
+                    processSelect.innerHTML += `<option value="${escapeHtml(proc)}">${escapeHtml(proc)}</option>`;
+                });
+
+                const engineerSelect = document.getElementById('engineerFilterSelect');
+                engineerSelect.innerHTML = '<option value="">All Engineers</option>';
+                [...uniqueEngineers].sort().forEach(eng => {
+                    engineerSelect.innerHTML += `<option value="${escapeHtml(eng)}">${escapeHtml(eng)}</option>`;
+                });
+
+                allReportRows = rows;
+                applyFilters();
+                statusSpan.innerText = `✅ Loaded ${rows.length} records`;
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML =
+                    `<tr><td colspan="11" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
+                statusSpan.innerText = '❌ Error';
             }
-            
-            document.getElementById('totalDeliveredSum').innerText = sumDelivered.toLocaleString();
-            document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
-            document.getElementById('totalReworkSum').innerText = sumRework.toLocaleString();
-            document.getElementById('totalRejectSum').innerText = sumReject.toLocaleString();
-            document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
-            
-            // Populate filter dropdowns
-            const projectSelect = document.getElementById('projectFilterSelect');
-            projectSelect.innerHTML = '<option value="">All Titles</option>';
-            [...uniqueProjectNames].sort().forEach(proj => {
-                projectSelect.innerHTML += `<option value="${escapeHtml(proj)}">${escapeHtml(proj)}</option>`;
-            });
+        }
 
-            const processSelect = document.getElementById('processFilterSelect');
-            processSelect.innerHTML = '<option value="">All Processes</option>';
-            [...uniqueProcessTypes].sort().forEach(proc => {
-                processSelect.innerHTML += `<option value="${escapeHtml(proc)}">${escapeHtml(proc)}</option>`;
-            });
+        // ---------- Filtering ----------
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedProject = document.getElementById('projectFilterSelect').value;
+            const selectedProcess = document.getElementById('processFilterSelect').value;
+            const selectedEngineer = document.getElementById('engineerFilterSelect').value;
 
-            const engineerSelect = document.getElementById('engineerFilterSelect');
-            engineerSelect.innerHTML = '<option value="">All Engineers</option>';
-            [...uniqueEngineers].sort().forEach(eng => {
-                engineerSelect.innerHTML += `<option value="${escapeHtml(eng)}">${escapeHtml(eng)}</option>`;
+            let filtered = [...allReportRows];
+            if (selectedProject) filtered = filtered.filter(row => row.projectName === selectedProject);
+            if (selectedProcess) filtered = filtered.filter(row => row.processType === selectedProcess);
+            if (selectedEngineer) filtered = filtered.filter(row => row.engineer === selectedEngineer);
+            if (searchTerm) filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
+
+            renderHierarchicalTable(filtered);
+            document.getElementById('recordCount').innerText =
+                `Showing ${filtered.length} of ${allReportRows.length} records`;
+        }
+
+        // ---------- Hierarchical Render: Client → Title → Subtitle → Sub Sub Assembly → Parts ----------
+        function renderHierarchicalTable(rows) {
+            const tbody = document.getElementById('reportTableBody');
+            if (!rows.length) {
+                tbody.innerHTML =
+                    `<tr><td colspan="11" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
+                return;
+            }
+
+            // Build tree: Client → Title → Subtitle → SubSubAssembly → rows
+            const clientMap = new Map();
+            for (const row of rows) {
+                const client = row.clientName;
+                if (!clientMap.has(client)) {
+                    clientMap.set(client, { clientName: client, titleMap: new Map() });
+                }
+                const clientEntry = clientMap.get(client);
+                const title = row.projectName;
+                if (!clientEntry.titleMap.has(title)) {
+                    clientEntry.titleMap.set(title, { titleName: title, subtitleMap: new Map() });
+                }
+                const titleEntry = clientEntry.titleMap.get(title);
+                const subtitle = row.subtitle || '';
+                if (!titleEntry.subtitleMap.has(subtitle)) {
+                    titleEntry.subtitleMap.set(subtitle, { subtitleName: subtitle, assemblyMap: new Map() });
+                }
+                const subtitleEntry = titleEntry.subtitleMap.get(subtitle);
+                const assembly = row.subSubAssembly || '';
+                if (!subtitleEntry.assemblyMap.has(assembly)) {
+                    subtitleEntry.assemblyMap.set(assembly, { assemblyName: assembly, partRows: [] });
+                }
+                const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
+                assemblyEntry.partRows.push(row);
+            }
+
+            let html = '';
+            for (const clientEntry of clientMap.values()) {
+                let clientTotalRows = 0;
+                for (const titleEntry of clientEntry.titleMap.values()) {
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            clientTotalRows += assemblyEntry.partRows.length;
+                        }
+                    }
+                }
+                let clientRowPrinted = false;
+
+                for (const titleEntry of clientEntry.titleMap.values()) {
+                    let titleTotalRows = 0;
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            titleTotalRows += assemblyEntry.partRows.length;
+                        }
+                    }
+                    let titleRowPrinted = false;
+
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        let subtitleTotalRows = 0;
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            subtitleTotalRows += assemblyEntry.partRows.length;
+                        }
+                        let subtitleRowPrinted = false;
+
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            const partRows = assemblyEntry.partRows;
+                            const assemblyRowspan = partRows.length;
+                            let assemblyRowPrinted = false;
+
+                            for (let i = 0; i < assemblyRowspan; i++) {
+                                const row = partRows[i];
+                                html += `<tr class="hover:bg-gray-50 transition">`;
+
+                                if (!clientRowPrinted && i === 0) {
+                                    html +=
+                                        `<td rowspan="${clientTotalRows}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
+                                    clientRowPrinted = true;
+                                }
+                                if (!titleRowPrinted && i === 0) {
+                                    html +=
+                                        `<td rowspan="${titleTotalRows}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
+                                    titleRowPrinted = true;
+                                }
+                                if (!subtitleRowPrinted && i === 0) {
+                                    html +=
+                                        `<td rowspan="${subtitleTotalRows}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
+                                    subtitleRowPrinted = true;
+                                }
+                                if (!assemblyRowPrinted && i === 0) {
+                                    html +=
+                                        `<td rowspan="${assemblyRowspan}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span></td>`;
+                                    assemblyRowPrinted = true;
+                                }
+
+                                html += `
+                                        <td class="font-mono text-sm">${escapeHtml(row.drawingNo)}</td>
+                                        <td class="font-medium">${escapeHtml(row.partName)}</td>
+                                        <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${row.delivered}</td>
+                                        <td class="text-right tabular-nums col-accepted">${row.accepted}</td>
+                                        <td class="text-right tabular-nums col-rework">${row.rework}</td>
+                                        <td class="text-right tabular-nums col-reject">${row.reject}</td>
+                                        <td class="text-right tabular-nums col-conditional">${row.conditional}</td>
+                                    </tr>`;
+                            }
+                        }
+                    }
+                }
+            }
+            tbody.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
             });
-            
-            allReportRows = rows;
+        }
+
+        // ---------- XLSX Export with merged cells ----------
+        function exportToExcelXLSX() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedProject = document.getElementById('projectFilterSelect').value;
+            const selectedProcess = document.getElementById('processFilterSelect').value;
+            const selectedEngineer = document.getElementById('engineerFilterSelect').value;
+
+            let filteredRows = [...allReportRows];
+            if (selectedProject) filteredRows = filteredRows.filter(row => row.projectName === selectedProject);
+            if (selectedProcess) filteredRows = filteredRows.filter(row => row.processType === selectedProcess);
+            if (selectedEngineer) filteredRows = filteredRows.filter(row => row.engineer === selectedEngineer);
+            if (searchTerm) filteredRows = filteredRows.filter(row => row.rawSearch.includes(searchTerm));
+
+            if (filteredRows.length === 0) {
+                alert('No data to export. Adjust filters.');
+                return;
+            }
+
+            // Build hierarchical structure
+            const clientMap = new Map();
+            for (const row of filteredRows) {
+                const client = row.clientName;
+                if (!clientMap.has(client)) {
+                    clientMap.set(client, { clientName: client, titleMap: new Map() });
+                }
+                const clientEntry = clientMap.get(client);
+                const title = row.projectName;
+                if (!clientEntry.titleMap.has(title)) {
+                    clientEntry.titleMap.set(title, { titleName: title, subtitleMap: new Map() });
+                }
+                const titleEntry = clientEntry.titleMap.get(title);
+                const subtitle = row.subtitle || '';
+                if (!titleEntry.subtitleMap.has(subtitle)) {
+                    titleEntry.subtitleMap.set(subtitle, { subtitleName: subtitle, assemblyMap: new Map() });
+                }
+                const subtitleEntry = titleEntry.subtitleMap.get(subtitle);
+                const assembly = row.subSubAssembly || '';
+                if (!subtitleEntry.assemblyMap.has(assembly)) {
+                    subtitleEntry.assemblyMap.set(assembly, { assemblyName: assembly, partRows: [] });
+                }
+                const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
+                assemblyEntry.partRows.push(row);
+            }
+
+            const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Drawing No.', 'Part Name',
+                'Delivered (Acc+Cond)', 'Accepted', 'Rework', 'Reject', 'Conditional'
+            ];
+            const data = [headers];
+            const merges = [];
+            let currentRowIdx = 1;
+
+            for (const clientEntry of clientMap.values()) {
+                let clientRows = 0;
+                for (const titleEntry of clientEntry.titleMap.values()) {
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            clientRows += assemblyEntry.partRows.length;
+                        }
+                    }
+                }
+                const clientStartRow = currentRowIdx;
+                let firstClientRow = true;
+
+                for (const titleEntry of clientEntry.titleMap.values()) {
+                    let titleRows = 0;
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            titleRows += assemblyEntry.partRows.length;
+                        }
+                    }
+                    const titleStartRow = currentRowIdx;
+                    let firstTitleRow = true;
+
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        let subtitleRows = 0;
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            subtitleRows += assemblyEntry.partRows.length;
+                        }
+                        const subtitleStartRow = currentRowIdx;
+                        let firstSubtitleRow = true;
+
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            const partRows = assemblyEntry.partRows;
+                            const assemblyRows = partRows.length;
+                            const assemblyStartRow = currentRowIdx;
+                            let firstAssemblyRow = true;
+
+                            for (let i = 0; i < assemblyRows; i++) {
+                                const row = partRows[i];
+                                const rowData = [];
+                                rowData.push(firstClientRow && i === 0 ? row.clientName : '');
+                                rowData.push(firstTitleRow && i === 0 ? row.projectName : '');
+                                rowData.push(firstSubtitleRow && i === 0 ? row.subtitle : '');
+                                rowData.push(firstAssemblyRow && i === 0 ? row.subSubAssembly : '');
+                                rowData.push(row.drawingNo);
+                                rowData.push(row.partName);
+                                rowData.push(row.delivered);
+                                rowData.push(row.accepted);
+                                rowData.push(row.rework);
+                                rowData.push(row.reject);
+                                rowData.push(row.conditional);
+                                data.push(rowData);
+                                currentRowIdx++;
+                            }
+                            if (assemblyRows > 1) {
+                                merges.push({ s: { r: assemblyStartRow, c: 3 }, e: { r: assemblyStartRow + assemblyRows - 1,
+                                        c: 3 } });
+                            }
+                            firstAssemblyRow = false;
+                        }
+                        if (subtitleRows > 1) {
+                            merges.push({ s: { r: subtitleStartRow, c: 2 }, e: { r: subtitleStartRow + subtitleRows - 1,
+                                    c: 2 } });
+                        }
+                        firstSubtitleRow = false;
+                    }
+                    if (titleRows > 1) {
+                        merges.push({ s: { r: titleStartRow, c: 1 }, e: { r: titleStartRow + titleRows - 1, c: 1 } });
+                    }
+                    firstTitleRow = false;
+                }
+                if (clientRows > 1) {
+                    merges.push({ s: { r: clientStartRow, c: 0 }, e: { r: clientStartRow + clientRows - 1, c: 0 } });
+                }
+            }
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!merges'] = merges;
+            ws['!cols'] = [
+                { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 18 },
+                { wch: 15 }, { wch: 20 }, { wch: 16 }, { wch: 12 },
+                { wch: 10 }, { wch: 10 }, { wch: 14 }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Inspection Report');
+            XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
+        }
+
+        // ---------- Copy to clipboard (flattened) ----------
+        async function copyTableToClipboard() {
+            const searchTerm = document.getElementById('searchInput').value;
+            const selectedProject = document.getElementById('projectFilterSelect').value;
+            const selectedProcess = document.getElementById('processFilterSelect').value;
+            const selectedEngineer = document.getElementById('engineerFilterSelect').value;
+
+            let dataToCopy = [...allReportRows];
+            if (selectedProject) dataToCopy = dataToCopy.filter(row => row.projectName === selectedProject);
+            if (selectedProcess) dataToCopy = dataToCopy.filter(row => row.processType === selectedProcess);
+            if (selectedEngineer) dataToCopy = dataToCopy.filter(row => row.engineer === selectedEngineer);
+            if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
+
+            if (dataToCopy.length === 0) {
+                alert('No data to copy');
+                return;
+            }
+
+            let tsv =
+                "Client\tTitle\tSubtitle\tSub Sub Assembly\tDrawing No.\tPart Name\tDelivered (Acc+Cond)\tAccepted\tRework\tReject\tConditional\n";
+            for (const row of dataToCopy) {
+                tsv +=
+                    `${row.clientName}\t${row.projectName}\t${row.subtitle}\t${row.subSubAssembly}\t${row.drawingNo}\t${row.partName}\t${row.delivered}\t${row.accepted}\t${row.rework}\t${row.reject}\t${row.conditional}\n`;
+            }
+            try {
+                await navigator.clipboard.writeText(tsv);
+                alert('✅ Table copied to clipboard (tab-separated, ready for Excel)');
+            } catch (err) {
+                alert('❌ Copy failed: ' + err);
+            }
+        }
+
+        // ---------- Clear filters ----------
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('projectFilterSelect').value = '';
+            document.getElementById('processFilterSelect').value = '';
+            document.getElementById('engineerFilterSelect').value = '';
             applyFilters();
-            statusSpan.innerText = `✅ Loaded ${rows.length} records`;
-        } catch (err) {
-            console.error(err);
-            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></tr>`;
-            statusSpan.innerText = '❌ Error';
         }
-    }
-    
-    function applyFilters() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const selectedProject = document.getElementById('projectFilterSelect').value;
-        const selectedProcess = document.getElementById('processFilterSelect').value;
-        const selectedEngineer = document.getElementById('engineerFilterSelect').value;
-        
-        let filtered = [...allReportRows];
-        if (selectedProject) {
-            filtered = filtered.filter(row => row.projectName === selectedProject);
-        }
-        if (selectedProcess) {
-            filtered = filtered.filter(row => row.processType === selectedProcess);
-        }
-        if (selectedEngineer) {
-            filtered = filtered.filter(row => row.engineer === selectedEngineer);
-        }
-        if (searchTerm) {
-            filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
-        }
-        renderHierarchicalTable(filtered);
-        const countSpan = document.getElementById('recordCount');
-        countSpan.innerText = `Showing ${filtered.length} of ${allReportRows.length} records`;
-    }
-    
-    // Strict hierarchical grouping: Client → Title → Subtitle
-    function renderHierarchicalTable(rows) {
-        const tbody = document.getElementById('reportTableBody');
-        if (!rows.length) {
-            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
-            return;
-        }
-        
-        // Build tree: Client -> Title -> Subtitle -> rows
-        const clientMap = new Map();
-        for (const row of rows) {
-            const client = row.clientName;
-            if (!clientMap.has(client)) {
-                clientMap.set(client, { clientName: client, titleMap: new Map() });
-            }
-            const clientEntry = clientMap.get(client);
-            const title = row.projectName;
-            if (!clientEntry.titleMap.has(title)) {
-                clientEntry.titleMap.set(title, { titleName: title, subtitleMap: new Map() });
-            }
-            const titleEntry = clientEntry.titleMap.get(title);
-            const subtitle = row.subtitle || '';
-            if (!titleEntry.subtitleMap.has(subtitle)) {
-                titleEntry.subtitleMap.set(subtitle, { subtitleName: subtitle, partRows: [] });
-            }
-            const subtitleEntry = titleEntry.subtitleMap.get(subtitle);
-            subtitleEntry.partRows.push(row);
-        }
-        
-        let html = '';
-        for (const clientEntry of clientMap.values()) {
-            // Calculate total rows for this client
-            let clientTotalRows = 0;
-            for (const titleEntry of clientEntry.titleMap.values()) {
-                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                    clientTotalRows += subtitleEntry.partRows.length;
-                }
-            }
-            let clientRowPrinted = false;
-            
-            for (const titleEntry of clientEntry.titleMap.values()) {
-                let titleTotalRows = 0;
-                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                    titleTotalRows += subtitleEntry.partRows.length;
-                }
-                let titleRowPrinted = false;
-                
-                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                    const partRows = subtitleEntry.partRows;
-                    const subtitleRowspan = partRows.length;
-                    let subtitleRowPrinted = false;
-                    
-                    for (let i = 0; i < subtitleRowspan; i++) {
-                        const row = partRows[i];
-                        html += `<tr class="hover:bg-gray-50 transition">`;
-                        if (!clientRowPrinted && i === 0) {
-                            html += `<td rowspan="${clientTotalRows}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
-                            clientRowPrinted = true;
-                        }
-                        if (!titleRowPrinted && i === 0) {
-                            html += `<td rowspan="${titleTotalRows}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
-                            titleRowPrinted = true;
-                        }
-                        if (!subtitleRowPrinted && i === 0) {
-                            html += `<td rowspan="${subtitleRowspan}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
-                            subtitleRowPrinted = true;
-                        }
-                        html += `
-                            <td class="font-mono text-sm">${escapeHtml(row.drawingNo)}</td>
-                            <td class="font-medium">${escapeHtml(row.partName)}</td>
-                            <td class="text-right tabular-nums">${row.delivered}</td>
-                            <td class="text-right tabular-nums text-emerald-700">${row.accepted}</td>
-                            <td class="text-right tabular-nums text-amber-600">${row.rework}</td>
-                            <td class="text-right tabular-nums text-red-600">${row.reject}</td>
-                            <td class="text-right tabular-nums text-purple-600">${row.conditional}</td>
-                        </tr>`;
-                    }
-                }
-            }
-        }
-        tbody.innerHTML = html;
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    // ---------- XLSX Export with merged cells (preserves hierarchical grouping) ----------
-    function exportToExcelXLSX() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const selectedProject = document.getElementById('projectFilterSelect').value;
-        const selectedProcess = document.getElementById('processFilterSelect').value;
-        const selectedEngineer = document.getElementById('engineerFilterSelect').value;
-        
-        let filteredRows = [...allReportRows];
-        if (selectedProject) filteredRows = filteredRows.filter(row => row.projectName === selectedProject);
-        if (selectedProcess) filteredRows = filteredRows.filter(row => row.processType === selectedProcess);
-        if (selectedEngineer) filteredRows = filteredRows.filter(row => row.engineer === selectedEngineer);
-        if (searchTerm) filteredRows = filteredRows.filter(row => row.rawSearch.includes(searchTerm));
-        
-        if (filteredRows.length === 0) {
-            alert('No data to export. Adjust filters.');
-            return;
-        }
-        
-        // Build hierarchical structure for the filtered rows
-        const clientMap = new Map();
-        for (const row of filteredRows) {
-            const client = row.clientName;
-            if (!clientMap.has(client)) {
-                clientMap.set(client, { clientName: client, titleMap: new Map() });
-            }
-            const clientEntry = clientMap.get(client);
-            const title = row.projectName;
-            if (!clientEntry.titleMap.has(title)) {
-                clientEntry.titleMap.set(title, { titleName: title, subtitleMap: new Map() });
-            }
-            const titleEntry = clientEntry.titleMap.get(title);
-            const subtitle = row.subtitle || '';
-            if (!titleEntry.subtitleMap.has(subtitle)) {
-                titleEntry.subtitleMap.set(subtitle, { subtitleName: subtitle, partRows: [] });
-            }
-            const subtitleEntry = titleEntry.subtitleMap.get(subtitle);
-            subtitleEntry.partRows.push(row);
-        }
-        
-        const headers = ['Client Name', 'Title', 'Subtitle', 'Drawing No.', 'Part Name', 'Delivered Qty', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept'];
-        const data = [headers];
-        const merges = [];
-        let currentRowIdx = 1;
-        
-        for (const clientEntry of clientMap.values()) {
-            let clientRows = 0;
-            for (const titleEntry of clientEntry.titleMap.values()) {
-                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                    clientRows += subtitleEntry.partRows.length;
-                }
-            }
-            let clientStartRow = currentRowIdx;
-            let firstClientRow = true;
-            
-            for (const titleEntry of clientEntry.titleMap.values()) {
-                let titleRows = 0;
-                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                    titleRows += subtitleEntry.partRows.length;
-                }
-                let titleStartRow = currentRowIdx;
-                let firstTitleRow = true;
-                
-                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                    const partRows = subtitleEntry.partRows;
-                    const subtitleRows = partRows.length;
-                    let subtitleStartRow = currentRowIdx;
-                    let firstSubtitleRow = true;
-                    
-                    for (let i = 0; i < subtitleRows; i++) {
-                        const row = partRows[i];
-                        const rowData = [];
-                        if (firstClientRow && i === 0) {
-                            rowData.push(row.clientName);
-                        } else {
-                            rowData.push('');
-                        }
-                        if (firstTitleRow && i === 0) {
-                            rowData.push(row.projectName);
-                        } else {
-                            rowData.push('');
-                        }
-                        if (firstSubtitleRow && i === 0) {
-                            rowData.push(row.subtitle);
-                        } else {
-                            rowData.push('');
-                        }
-                        rowData.push(row.drawingNo);
-                        rowData.push(row.partName);
-                        rowData.push(row.delivered);
-                        rowData.push(row.accepted);
-                        rowData.push(row.rework);
-                        rowData.push(row.reject);
-                        rowData.push(row.conditional);
-                        data.push(rowData);
-                        currentRowIdx++;
-                    }
-                    if (subtitleRows > 1) {
-                        merges.push({ s: { r: subtitleStartRow, c: 2 }, e: { r: subtitleStartRow + subtitleRows - 1, c: 2 } });
-                    }
-                    firstSubtitleRow = false;
-                }
-                if (titleRows > 1) {
-                    merges.push({ s: { r: titleStartRow, c: 1 }, e: { r: titleStartRow + titleRows - 1, c: 1 } });
-                }
-                firstTitleRow = false;
-            }
-            if (clientRows > 1) {
-                merges.push({ s: { r: clientStartRow, c: 0 }, e: { r: clientStartRow + clientRows - 1, c: 0 } });
-            }
-        }
-        
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        ws['!merges'] = merges;
-        const colWidths = [{wch:20}, {wch:20}, {wch:20}, {wch:15}, {wch:20}, {wch:12}, {wch:12}, {wch:10}, {wch:10}, {wch:15}];
-        ws['!cols'] = colWidths;
-        
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Inspection Report');
-        XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
-    }
-    
-    // Copy to clipboard (flattened)
-    async function copyTableToClipboard() {
-        const searchTerm = document.getElementById('searchInput').value;
-        const selectedProject = document.getElementById('projectFilterSelect').value;
-        const selectedProcess = document.getElementById('processFilterSelect').value;
-        const selectedEngineer = document.getElementById('engineerFilterSelect').value;
-        
-        let dataToCopy = [...allReportRows];
-        if (selectedProject) dataToCopy = dataToCopy.filter(row => row.projectName === selectedProject);
-        if (selectedProcess) dataToCopy = dataToCopy.filter(row => row.processType === selectedProcess);
-        if (selectedEngineer) dataToCopy = dataToCopy.filter(row => row.engineer === selectedEngineer);
-        if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
-        
-        if (dataToCopy.length === 0) {
-            alert('No data to copy');
-            return;
-        }
-        
-        let tsvContent = "Client Name\tTitle\tSubtitle\tDrawing No.\tPart Name\tDelivered Qty\tAccepted Qty\tRework Qty\tReject Qty\tConditional Accept\n";
-        for (const row of dataToCopy) {
-            tsvContent += `${row.clientName}\t${row.projectName}\t${row.subtitle}\t${row.drawingNo}\t${row.partName}\t${row.delivered}\t${row.accepted}\t${row.rework}\t${row.reject}\t${row.conditional}\n`;
-        }
-        try {
-            await navigator.clipboard.writeText(tsvContent);
-            alert('✅ Table copied to clipboard (tab-separated, ready for Excel)');
-        } catch (err) {
-            alert('❌ Copy failed: ' + err);
-        }
-    }
-    
-    function clearFilters() {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('projectFilterSelect').value = '';
-        document.getElementById('processFilterSelect').value = '';
-        document.getElementById('engineerFilterSelect').value = '';
-        applyFilters();
-    }
-    
-    // Event listeners
-    document.getElementById('searchInput').addEventListener('input', () => { if (allReportRows.length) applyFilters(); });
-    document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
-    document.getElementById('processFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
-    document.getElementById('engineerFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
-    document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
-    
-    fetchReportData();
-</script>
+
+        // ---------- Event listeners ----------
+        document.getElementById('searchInput').addEventListener('input', () => { if (allReportRows.length) applyFilters(); });
+        document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length)
+                applyFilters(); });
+        document.getElementById('processFilterSelect').addEventListener('change', () => { if (allReportRows.length)
+                applyFilters(); });
+        document.getElementById('engineerFilterSelect').addEventListener('change', () => { if (allReportRows.length)
+                applyFilters(); });
+        document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+
+        // ---------- Start ----------
+        fetchReportData();
+    </script>
 </body>
 </html>
