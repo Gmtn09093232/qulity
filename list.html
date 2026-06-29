@@ -235,8 +235,8 @@
                             <th class="text-left">📁 Title</th>
                             <th class="text-left">🔖 Subtitle</th>
                             <th class="text-left">📎 Sub Sub Assembly</th>
-                            <th class="text-left">📄 Drawing No.</th>
                             <th class="text-left">🔧 Part Name</th>
+                            <th class="text-left">📄 Drawing No.</th>
                             <th class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc + Cond)</span></th>
                             <th class="text-right">✅ Accepted</th>
                             <th class="text-right">⚠️ Conditional</th>
@@ -423,7 +423,7 @@
                 `Showing ${filtered.length} of ${allReportRows.length} records`;
         }
 
-        // ---------- Hierarchical Render: Client → Title → Subtitle → Sub Sub Assembly → Parts ----------
+        // ---------- Hierarchical Render with Part Name merged ----------
         function renderHierarchicalTable(rows) {
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
@@ -432,7 +432,7 @@
                 return;
             }
 
-            // Build tree
+            // Build tree: Client → Title → Subtitle → SubSubAssembly → PartName → [rows]
             const clientMap = new Map();
             for (const row of rows) {
                 const client = row.clientName;
@@ -452,19 +452,27 @@
                 const subtitleEntry = titleEntry.subtitleMap.get(subtitle);
                 const assembly = row.subSubAssembly || '';
                 if (!subtitleEntry.assemblyMap.has(assembly)) {
-                    subtitleEntry.assemblyMap.set(assembly, { assemblyName: assembly, partRows: [] });
+                    subtitleEntry.assemblyMap.set(assembly, { assemblyName: assembly, partMap: new Map() });
                 }
                 const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
-                assemblyEntry.partRows.push(row);
+                const partName = row.partName;
+                if (!assemblyEntry.partMap.has(partName)) {
+                    assemblyEntry.partMap.set(partName, { partName: partName, partRows: [] });
+                }
+                const partEntry = assemblyEntry.partMap.get(partName);
+                partEntry.partRows.push(row);
             }
 
             let html = '';
             for (const clientEntry of clientMap.values()) {
+                // Calculate total rows for this client (sum of all partRows)
                 let clientTotalRows = 0;
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            clientTotalRows += assemblyEntry.partRows.length;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                clientTotalRows += partEntry.partRows.length;
+                            }
                         }
                     }
                 }
@@ -474,7 +482,9 @@
                     let titleTotalRows = 0;
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            titleTotalRows += assemblyEntry.partRows.length;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                titleTotalRows += partEntry.partRows.length;
+                            }
                         }
                     }
                     let titleRowPrinted = false;
@@ -482,47 +492,61 @@
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         let subtitleTotalRows = 0;
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            subtitleTotalRows += assemblyEntry.partRows.length;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                subtitleTotalRows += partEntry.partRows.length;
+                            }
                         }
                         let subtitleRowPrinted = false;
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            const partRows = assemblyEntry.partRows;
-                            const assemblyRowspan = partRows.length;
+                            let assemblyTotalRows = 0;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                assemblyTotalRows += partEntry.partRows.length;
+                            }
                             let assemblyRowPrinted = false;
 
-                            for (let i = 0; i < assemblyRowspan; i++) {
-                                const row = partRows[i];
-                                html += `<tr class="hover:bg-gray-50 transition">`;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                const partRows = partEntry.partRows;
+                                const partRowspan = partRows.length;
+                                let partRowPrinted = false;
 
-                                if (!clientRowPrinted && i === 0) {
-                                    html +=
-                                        `<td rowspan="${clientTotalRows}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
-                                    clientRowPrinted = true;
-                                }
-                                if (!titleRowPrinted && i === 0) {
-                                    html +=
-                                        `<td rowspan="${titleTotalRows}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
-                                    titleRowPrinted = true;
-                                }
-                                if (!subtitleRowPrinted && i === 0) {
-                                    html +=
-                                        `<td rowspan="${subtitleTotalRows}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
-                                    subtitleRowPrinted = true;
-                                }
-                                if (!assemblyRowPrinted && i === 0) {
-                                    html +=
-                                        `<td rowspan="${assemblyRowspan}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span></td>`;
-                                    assemblyRowPrinted = true;
-                                }
+                                for (let i = 0; i < partRowspan; i++) {
+                                    const row = partRows[i];
+                                    html += `<tr class="hover:bg-gray-50 transition">`;
 
-                                html += `
+                                    if (!clientRowPrinted && i === 0) {
+                                        html +=
+                                            `<td rowspan="${clientTotalRows}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
+                                        clientRowPrinted = true;
+                                    }
+                                    if (!titleRowPrinted && i === 0) {
+                                        html +=
+                                            `<td rowspan="${titleTotalRows}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
+                                        titleRowPrinted = true;
+                                    }
+                                    if (!subtitleRowPrinted && i === 0) {
+                                        html +=
+                                            `<td rowspan="${subtitleTotalRows}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
+                                        subtitleRowPrinted = true;
+                                    }
+                                    if (!assemblyRowPrinted && i === 0) {
+                                        html +=
+                                            `<td rowspan="${assemblyTotalRows}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span></td>`;
+                                        assemblyRowPrinted = true;
+                                    }
+                                    if (!partRowPrinted && i === 0) {
+                                        html +=
+                                            `<td rowspan="${partRowspan}" class="font-medium align-top">${escapeHtml(partEntry.partName)}</td>`;
+                                        partRowPrinted = true;
+                                    }
+
+                                    html += `
                                         <td class="font-mono text-sm">${escapeHtml(row.drawingNo)}</td>
-                                        <td class="font-medium">${escapeHtml(row.partName)}</td>
                                         <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${row.delivered}</td>
                                         <td class="text-right tabular-nums col-accepted">${row.accepted}</td>
                                         <td class="text-right tabular-nums col-conditional">${row.conditional}</td>
                                     </tr>`;
+                                }
                             }
                         }
                     }
@@ -541,7 +565,7 @@
             });
         }
 
-        // ---------- XLSX Export with merged cells (no rework/reject) ----------
+        // ---------- XLSX Export with merged cells (Part Name merged too) ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -559,7 +583,7 @@
                 return;
             }
 
-            // Build hierarchical structure
+            // Build hierarchical structure with part grouping
             const clientMap = new Map();
             for (const row of filteredRows) {
                 const client = row.clientName;
@@ -579,13 +603,18 @@
                 const subtitleEntry = titleEntry.subtitleMap.get(subtitle);
                 const assembly = row.subSubAssembly || '';
                 if (!subtitleEntry.assemblyMap.has(assembly)) {
-                    subtitleEntry.assemblyMap.set(assembly, { assemblyName: assembly, partRows: [] });
+                    subtitleEntry.assemblyMap.set(assembly, { assemblyName: assembly, partMap: new Map() });
                 }
                 const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
-                assemblyEntry.partRows.push(row);
+                const partName = row.partName;
+                if (!assemblyEntry.partMap.has(partName)) {
+                    assemblyEntry.partMap.set(partName, { partName: partName, partRows: [] });
+                }
+                const partEntry = assemblyEntry.partMap.get(partName);
+                partEntry.partRows.push(row);
             }
 
-            const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Drawing No.', 'Part Name',
+            const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Part Name', 'Drawing No.',
                 'Delivered (Acc+Cond)', 'Accepted', 'Conditional'
             ];
             const data = [headers];
@@ -597,7 +626,9 @@
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            clientRows += assemblyEntry.partRows.length;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                clientRows += partEntry.partRows.length;
+                            }
                         }
                     }
                 }
@@ -608,7 +639,9 @@
                     let titleRows = 0;
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            titleRows += assemblyEntry.partRows.length;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                titleRows += partEntry.partRows.length;
+                            }
                         }
                     }
                     const titleStartRow = currentRowIdx;
@@ -617,31 +650,47 @@
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         let subtitleRows = 0;
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            subtitleRows += assemblyEntry.partRows.length;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                subtitleRows += partEntry.partRows.length;
+                            }
                         }
                         const subtitleStartRow = currentRowIdx;
                         let firstSubtitleRow = true;
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            const partRows = assemblyEntry.partRows;
-                            const assemblyRows = partRows.length;
+                            let assemblyRows = 0;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                assemblyRows += partEntry.partRows.length;
+                            }
                             const assemblyStartRow = currentRowIdx;
                             let firstAssemblyRow = true;
 
-                            for (let i = 0; i < assemblyRows; i++) {
-                                const row = partRows[i];
-                                const rowData = [];
-                                rowData.push(firstClientRow && i === 0 ? row.clientName : '');
-                                rowData.push(firstTitleRow && i === 0 ? row.projectName : '');
-                                rowData.push(firstSubtitleRow && i === 0 ? row.subtitle : '');
-                                rowData.push(firstAssemblyRow && i === 0 ? row.subSubAssembly : '');
-                                rowData.push(row.drawingNo);
-                                rowData.push(row.partName);
-                                rowData.push(row.delivered);
-                                rowData.push(row.accepted);
-                                rowData.push(row.conditional);
-                                data.push(rowData);
-                                currentRowIdx++;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                const partRows = partEntry.partRows;
+                                const partRowspan = partRows.length;
+                                const partStartRow = currentRowIdx;
+                                let firstPartRow = true;
+
+                                for (let i = 0; i < partRowspan; i++) {
+                                    const row = partRows[i];
+                                    const rowData = [];
+                                    rowData.push(firstClientRow && i === 0 ? row.clientName : '');
+                                    rowData.push(firstTitleRow && i === 0 ? row.projectName : '');
+                                    rowData.push(firstSubtitleRow && i === 0 ? row.subtitle : '');
+                                    rowData.push(firstAssemblyRow && i === 0 ? row.subSubAssembly : '');
+                                    rowData.push(firstPartRow && i === 0 ? row.partName : '');
+                                    rowData.push(row.drawingNo);
+                                    rowData.push(row.delivered);
+                                    rowData.push(row.accepted);
+                                    rowData.push(row.conditional);
+                                    data.push(rowData);
+                                    currentRowIdx++;
+                                }
+                                if (partRowspan > 1) {
+                                    merges.push({ s: { r: partStartRow, c: 4 }, e: { r: partStartRow + partRowspan - 1,
+                                            c: 4 } });
+                                }
+                                firstPartRow = false;
                             }
                             if (assemblyRows > 1) {
                                 merges.push({ s: { r: assemblyStartRow, c: 3 }, e: { r: assemblyStartRow + assemblyRows - 1,
@@ -669,7 +718,7 @@
             ws['!merges'] = merges;
             ws['!cols'] = [
                 { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 18 },
-                { wch: 15 }, { wch: 20 }, { wch: 16 }, { wch: 12 }, { wch: 14 }
+                { wch: 20 }, { wch: 15 }, { wch: 16 }, { wch: 12 }, { wch: 14 }
             ];
 
             const wb = XLSX.utils.book_new();
@@ -677,7 +726,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard (flattened, no rework/reject) ----------
+        // ---------- Copy to clipboard (flattened, no merges) ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -696,10 +745,10 @@
             }
 
             let tsv =
-                "Client\tTitle\tSubtitle\tSub Sub Assembly\tDrawing No.\tPart Name\tDelivered (Acc+Cond)\tAccepted\tConditional\n";
+                "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tDelivered (Acc+Cond)\tAccepted\tConditional\n";
             for (const row of dataToCopy) {
                 tsv +=
-                    `${row.clientName}\t${row.projectName}\t${row.subtitle}\t${row.subSubAssembly}\t${row.drawingNo}\t${row.partName}\t${row.delivered}\t${row.accepted}\t${row.conditional}\n`;
+                    `${row.clientName}\t${row.projectName}\t${row.subtitle}\t${row.subSubAssembly}\t${row.partName}\t${row.drawingNo}\t${row.delivered}\t${row.accepted}\t${row.conditional}\n`;
             }
             try {
                 await navigator.clipboard.writeText(tsv);
