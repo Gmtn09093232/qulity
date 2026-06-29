@@ -480,7 +480,8 @@
                         quantity: 0,
                         dwgSet: new Set(),
                         tagSet: new Set(),
-                        operationsSet: new Set()
+                        operationsSet: new Set(),
+                        subSub: subSub
                     });
                 }
                 const partData = sub.partsMap.get(partName);
@@ -510,7 +511,8 @@
                         dwgList: Array.from(data.dwgSet).join(', '),
                         tagList: Array.from(data.tagSet).join(', '),
                         operations: Array.from(data.operationsSet).join(', '),
-                        suggestedNext: suggested || '—'
+                        suggestedNext: suggested || '—',
+                        subSub: data.subSub || '—'
                     };
                 });
                 return {
@@ -565,7 +567,6 @@
                 let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ?
                     'Needs Action' : 'On Track');
 
-                // Show only the count of sub-sub assemblies
                 const subSubCount = (p.subSubAssemblyList || []).length;
 
                 return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center font-bold">${subSubCount}</td><td class="text-center">${p.totalInspections}</td><td class="text-center">${p.totalDelivered.toLocaleString()}</td><td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td><td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td><td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td><td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
@@ -644,6 +645,10 @@
                         ]);
                         if (part.operations) rows.push(['      Operations: ' + part.operations, '', '', '', '',
                             '', ''
+                        ]);
+                        // we also include subSub in the part detail export for completeness
+                        if (part.subSub && part.subSub !== '—') rows.push(['      Sub Sub Assembly: ' + part
+                            .subSub, '', '', '', '', '', ''
                         ]);
                         if (part.suggestedNext && part.suggestedNext !== '—') rows.push([
                             '      Suggested Next Operation: ' + part.suggestedNext, '', '', '', '', '',
@@ -845,6 +850,7 @@
                                             <tr>
                                                 <th class="text-center" style="width: 40px;">No.</th>
                                                 <th>Part Name</th>
+                                                <th>Sub Sub Assembly</th>
                                                 <th class="text-center">Total Delivered Qty</th>
                                                 <th>DWG No.</th>
                                                 <th>Tag No.</th>
@@ -859,6 +865,7 @@
                                     <tr>
                                         <td class="text-center text-red-600 font-bold">${idx + 1}</td>
                                         <td><span class="clickable-part" onclick="showPartDetails('${escapeHtml(part.part_name)}')">${escapeHtml(part.part_name)}</span></td>
+                                        <td><span class="subsub-badge" style="font-size:0.6rem;">${escapeHtml(part.subSub)}</span></td>
                                         <td class="text-center">${part.quantity}</td>
                                         <td>${escapeHtml(part.dwgList) || '—'}</td>
                                         <td>${escapeHtml(part.tagList) || '—'}</td>
@@ -876,6 +883,7 @@
                         return `<div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
                             <div class="flex justify-between items-start">
                                 <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
+                                <span class="text-xs text-gray-400">Sub Sub Assembly: <strong>${escapeHtml(sub.subSub)}</strong></span>
                             </div>
                             <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
                                 <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
