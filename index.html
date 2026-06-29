@@ -107,14 +107,6 @@
       #secretOverlay .card { padding: 28px 20px; }
       #secretOverlay .card h2 { font-size: 1.4rem; }
     }
-
-    .suggestion-recent { display: inline-block; font-size: 0.6rem; background: #dbeafe; color: #1e40af; padding: 0 6px; border-radius: 10px; margin-left: 6px; font-weight: 600; letter-spacing: 0.3px; }
-    .suggestion-chip { display: inline-block; background: #eef2ff; padding: 2px 10px; border-radius: 14px; font-size: 0.7rem; color: #4338ca; margin: 2px 4px 2px 0; cursor: pointer; border: 1px solid #c7d2fe; transition: background 0.15s; }
-    .suggestion-chip:hover { background: #c7d2fe; }
-    .suggestion-chip i { font-size: 0.6rem; margin-right: 4px; }
-    .suggestion-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 4px 0 2px 0; min-height: 28px; }
-    .suggestion-bar .label { font-size: 0.7rem; color: #6b7280; margin-right: 4px; }
-    .suggestion-bar .empty { font-size: 0.7rem; color: #9ca3af; font-style: italic; }
   </style>
 </head>
 <body>
@@ -439,10 +431,10 @@
           });
         }
       });
-    setTimeout(() => refreshSuggestionBars(), 300);
+    // No suggestion bars to refresh
   }
 
-  // ─── SUGGESTION SYSTEM ───
+  // ─── SUGGESTION DATA (datalists only) ───
 
   function updateSuggestionsFromInspections(inspections) {
     allClientNames.clear();
@@ -509,7 +501,6 @@
       }
     }
     refreshDatalistOptions();
-    refreshSuggestionBars();
   }
 
   function getSortedValues(set, map) {
@@ -587,123 +578,11 @@
     }
   }
 
-  function refreshSuggestionBars() {
-    const clientVal = document.getElementById('extra_Customer_Name')?.value?.trim() || '';
-    const filter = clientVal || null;
-
-    // Client chips – show last 3
-    renderSuggestionBar('extra_Customer_Name', 'customerNameSuggestions', allClientNames, lastUsedMap.client, null,
-      (val) => fillField('extra_Customer_Name', val), 'Last 3 clients'
-    );
-
-    // Title chips (filtered by client) – show last 3
-    let titleSet = allProjectTitles;
-    let titleMap = lastUsedMap.title;
-    if (filter && clientTitleMap.has(filter)) {
-      const filteredSet = clientTitleMap.get(filter);
-      const filteredMap = new Map();
-      for (const t of filteredSet) {
-        if (lastUsedMap.title.has(t)) filteredMap.set(t, lastUsedMap.title.get(t));
-      }
-      renderSuggestionBar('extra_Project_Name', 'projectNameSuggestions', filteredSet, filteredMap, null,
-        (val) => fillField('extra_Project_Name', val), 'Last 3 titles'
-      );
-    } else {
-      renderSuggestionBar('extra_Project_Name', 'projectNameSuggestions', allProjectTitles, lastUsedMap.title, null,
-        (val) => fillField('extra_Project_Name', val), 'Last 3 titles'
-      );
-    }
-
-    // ─── SUBTITLE SUGGESTION BAR REMOVED ───
-    // No renderSuggestionBar for subtitle – only datalist remains.
-
-    // Sub Sub Assembly chips (filtered by client) – show last 3
-    let subSubSet = allSubSubAssemblies;
-    let subSubMap = lastUsedMap.subSub;
-    if (filter && clientSubSubMap.has(filter)) {
-      const filteredSet = clientSubSubMap.get(filter);
-      const filteredMap = new Map();
-      for (const s of filteredSet) {
-        if (lastUsedMap.subSub.has(s)) filteredMap.set(s, lastUsedMap.subSub.get(s));
-      }
-      renderSuggestionBar('extra_Sub_Sub_Assembly', 'subSubSuggestions', filteredSet, filteredMap, null,
-        (val) => fillField('extra_Sub_Sub_Assembly', val), 'Last 3 sub‑assemblies'
-      );
-    } else {
-      renderSuggestionBar('extra_Sub_Sub_Assembly', 'subSubSuggestions', allSubSubAssemblies, lastUsedMap.subSub, null,
-        (val) => fillField('extra_Sub_Sub_Assembly', val), 'Last 3 sub‑assemblies'
-      );
-    }
-
-    // Part Name chips (filtered by client) – show last 3
-    let partSet = allPartNames;
-    let partMap = lastUsedMap.part;
-    if (filter && clientPartMap.has(filter)) {
-      const filteredSet = clientPartMap.get(filter);
-      const filteredMap = new Map();
-      for (const p of filteredSet) {
-        if (lastUsedMap.part.has(p)) filteredMap.set(p, lastUsedMap.part.get(p));
-      }
-      renderSuggestionBar('extra_Part_Name', 'partNameSuggestions', filteredSet, filteredMap, null,
-        (val) => fillField('extra_Part_Name', val), 'Last 3 parts'
-      );
-    } else {
-      renderSuggestionBar('extra_Part_Name', 'partNameSuggestions', allPartNames, lastUsedMap.part, null,
-        (val) => fillField('extra_Part_Name', val), 'Last 3 parts'
-      );
-    }
-  }
-
-  function renderSuggestionBar(inputId, containerId, valueSet, timeMap, filter, onClick, labelText) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    const values = getSortedValues(valueSet, timeMap);
-    if (values.length === 0) {
-      container.innerHTML =
-        `<span class="empty">${inputId === 'extra_Customer_Name' ? 'No previous clients' : 'No suggestions yet'}</span>`;
-      return;
-    }
-    const top = values.slice(0, 3);
-    let html = `<span class="label">${labelText || 'Last 3'}:</span>`;
-    top.forEach((val, i) => {
-      const isFirst = (i === 0);
-      html += `<span class="suggestion-chip" data-value="${escapeHtml(val)}">`;
-      if (isFirst) html += `<i class="fa-regular fa-clock"></i>`;
-      html += `${escapeHtml(val)}`;
-      if (isFirst) html += ` <span class="suggestion-recent">latest</span>`;
-      html += `</span>`;
-    });
-    if (values.length > 3) {
-      html += `<span class="text-xs text-gray-400">+${values.length - 3} more</span>`;
-    }
-    container.innerHTML = html;
-
-    container.querySelectorAll('.suggestion-chip').forEach(chip => {
-      chip.addEventListener('click', function() {
-        const val = this.dataset.value;
-        if (onClick) onClick(val);
-      });
-    });
-  }
-
-  function fillField(id, value) {
-    const el = document.getElementById(id);
-    if (el) {
-      el.value = value;
-      el.dispatchEvent(new Event('input'));
-      el.dispatchEvent(new Event('change'));
-      if (id === 'extra_Customer_Name') {
-        filterSuggestionsByCurrentClient();
-      }
-    }
-  }
-
   function filterSuggestionsByCurrentClient() {
     const clientInput = document.getElementById('extra_Customer_Name');
     if (clientInput) {
       const val = clientInput.value.trim();
       refreshDatalistOptions(val || null);
-      refreshSuggestionBars();
     }
   }
 
@@ -750,7 +629,6 @@
         if (clientInput && extracted.clientName) {
           clientInput.value = extracted.clientName;
           refreshDatalistOptions(extracted.clientName.trim());
-          refreshSuggestionBars();
         }
         if (titleInput && extracted.projectTitle) titleInput.value = extracted.projectTitle;
         if (drawingInput && extracted.drawingNo) drawingInput.value = extracted.drawingNo;
@@ -1161,23 +1039,22 @@
               `<div><label class="font-bold text-sm">Location</label><select id="${safeId}" class="w-full border p-1 rounded text-sm"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
           } else if (field === "Customer Name") {
             html +=
-              `<div><label class="font-bold text-sm">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist><div id="customerNameSuggestions" class="suggestion-bar"></div></div>`;
+              `<div><label class="font-bold text-sm">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
           } else if (field === "Project Name") {
             html +=
-              `<div><label class="font-bold text-sm">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist><div id="projectNameSuggestions" class="suggestion-bar"></div></div>`;
+              `<div><label class="font-bold text-sm">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
           } else if (field === "Subtitle") {
-            // ─── SUBTITLE: no suggestion bar container ───
             html +=
               `<div><label class="font-bold text-sm">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="w-full border p-1 rounded text-sm" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
           } else if (field === "Sub Sub Assembly") {
             html +=
-              `<div><label class="font-bold text-sm">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="w-full border p-1 rounded text-sm" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist><div id="subSubSuggestions" class="suggestion-bar"></div></div>`;
+              `<div><label class="font-bold text-sm">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="w-full border p-1 rounded text-sm" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
           } else if (field === "Drawing No.") {
             html +=
               `<div><label class="font-bold text-sm">DWG No.</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan"></div>`;
           } else if (field === "Part Name") {
             html +=
-              `<div><label class="font-bold text-sm">Part Name</label><input type="text" id="${safeId}" list="partNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="partNameDatalist"></datalist><div id="partNameSuggestions" class="suggestion-bar"></div></div>`;
+              `<div><label class="font-bold text-sm">Part Name</label><input type="text" id="${safeId}" list="partNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
           } else if (field !== "Work Station") {
             html +=
               `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
@@ -1196,14 +1073,12 @@
       container.innerHTML = html;
 
       refreshDatalistOptions();
-      refreshSuggestionBars();
       const clientInput = document.getElementById('extra_Customer_Name');
       if (clientInput) {
         clientInput.removeEventListener('input', filterSuggestionsByCurrentClient);
         clientInput.addEventListener('input', filterSuggestionsByCurrentClient);
         if (clientInput.value.trim()) {
           refreshDatalistOptions(clientInput.value.trim());
-          refreshSuggestionBars();
         }
       }
       attachQuantityListeners();
@@ -1278,7 +1153,6 @@
         if (el && extra[field] !== undefined) el.value = extra[field];
       });
     }
-    setTimeout(() => refreshSuggestionBars(), 100);
   }
 
   function getAcceptanceData() {
@@ -1413,7 +1287,6 @@
     attachQuantityListeners();
     updateDeliveredQty();
     refreshDatalistOptions();
-    refreshSuggestionBars();
     populateSuggestedNextOps();
     document.getElementById('suggestedNextOp').value = '';
     document.getElementById('lastOperationContainer').classList.add('hidden');
@@ -1521,7 +1394,6 @@
                   </div>
                 </div>`
         ).join("");
-      setTimeout(() => refreshSuggestionBars(), 200);
     } catch (err) { showToast('Error loading history', 'error'); }
   }
 
@@ -1584,10 +1456,8 @@
     const clientInput = document.getElementById('extra_Customer_Name');
     if (clientInput && clientInput.value.trim()) {
       refreshDatalistOptions(clientInput.value.trim());
-      refreshSuggestionBars();
     } else {
       refreshDatalistOptions();
-      refreshSuggestionBars();
     }
     const suggestedInput = document.getElementById('suggestedNextOp');
     if (inspection.suggested_next_operation) suggestedInput.value = inspection.suggested_next_operation;
@@ -1645,7 +1515,7 @@
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
         '>': '&gt;' }[m])); }
 
-  console.log('🔐 QC Inspection ready – subtitle suggestion bar removed, others keep 3 chips.');
+  console.log('🔐 QC Inspection ready – all suggestion bars removed, only datalists remain.');
 </script>
 </body>
 </html>
