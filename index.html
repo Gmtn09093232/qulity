@@ -614,23 +614,8 @@
       );
     }
 
-    // Subtitle chips (filtered by client) – show last 3
-    let subSet = allSubtitles;
-    let subMap = lastUsedMap.subtitle;
-    if (filter && clientSubtitleMap.has(filter)) {
-      const filteredSet = clientSubtitleMap.get(filter);
-      const filteredMap = new Map();
-      for (const s of filteredSet) {
-        if (lastUsedMap.subtitle.has(s)) filteredMap.set(s, lastUsedMap.subtitle.get(s));
-      }
-      renderSuggestionBar('extra_Subtitle', 'subtitleSuggestions', filteredSet, filteredMap, null,
-        (val) => fillField('extra_Subtitle', val), 'Last 3 subtitles'
-      );
-    } else {
-      renderSuggestionBar('extra_Subtitle', 'subtitleSuggestions', allSubtitles, lastUsedMap.subtitle, null,
-        (val) => fillField('extra_Subtitle', val), 'Last 3 subtitles'
-      );
-    }
+    // ─── SUBTITLE SUGGESTION BAR REMOVED ───
+    // No renderSuggestionBar for subtitle – only datalist remains.
 
     // Sub Sub Assembly chips (filtered by client) – show last 3
     let subSubSet = allSubSubAssemblies;
@@ -678,7 +663,6 @@
         `<span class="empty">${inputId === 'extra_Customer_Name' ? 'No previous clients' : 'No suggestions yet'}</span>`;
       return;
     }
-    // ─── ONLY SHOW THE 3 MOST RECENT ───
     const top = values.slice(0, 3);
     let html = `<span class="label">${labelText || 'Last 3'}:</span>`;
     top.forEach((val, i) => {
@@ -1182,8 +1166,9 @@
             html +=
               `<div><label class="font-bold text-sm">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist><div id="projectNameSuggestions" class="suggestion-bar"></div></div>`;
           } else if (field === "Subtitle") {
+            // ─── SUBTITLE: no suggestion bar container ───
             html +=
-              `<div><label class="font-bold text-sm">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="w-full border p-1 rounded text-sm" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist><div id="subtitleSuggestions" class="suggestion-bar"></div></div>`;
+              `<div><label class="font-bold text-sm">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="w-full border p-1 rounded text-sm" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
           } else if (field === "Sub Sub Assembly") {
             html +=
               `<div><label class="font-bold text-sm">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="w-full border p-1 rounded text-sm" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist><div id="subSubSuggestions" class="suggestion-bar"></div></div>`;
@@ -1660,7 +1645,7 @@
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
         '>': '&gt;' }[m])); }
 
-  console.log('🔐 QC Inspection ready – suggestion bars now show only the 3 most recent values.');
+  console.log('🔐 QC Inspection ready – subtitle suggestion bar removed, others keep 3 chips.');
 </script>
 </body>
 </html>
