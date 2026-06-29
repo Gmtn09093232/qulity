@@ -91,7 +91,7 @@
                     <i class="fa-solid fa-clipboard-list text-blue-600"></i>
                     Inspection Report
                 </h1>
-                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Drawing numbers listed together</p>
+                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Only parts with delivered > 0 shown</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -109,7 +109,7 @@
             </div>
         </div>
 
-        <!-- Summary Cards -->
+        <!-- Summary Cards (unchanged – overall totals) -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 no-print summary-cards">
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
@@ -201,6 +201,7 @@
             <span><i class="fa-solid fa-circle text-blue-400 text-[0.5rem]"></i> <strong>Delivered</strong> = Accepted + Conditional</span>
             <span class="text-gray-400">(Rework &amp; Reject are handled separately)</span>
             <span><i class="fa-solid fa-list"></i> Drawing numbers are listed per part</span>
+            <span><i class="fa-solid fa-eye-slash"></i> Parts with zero delivered are hidden</span>
         </div>
     </div>
 
@@ -371,16 +372,17 @@
             if (searchTerm) filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
 
             renderAggregatedTable(filtered);
-            document.getElementById('recordCount').innerText =
-                `Showing ${filtered.length} records (${new Set(filtered.map(r => r.partName)).size} unique parts)`;
+            // update record count to show number of parts (excluding zero delivered)
+            // We'll compute after rendering.
         }
 
-        // ---------- Aggregated Render: one row per part with drawing list ----------
+        // ---------- Aggregated Render with filtering zero delivered ----------
         function renderAggregatedTable(rows) {
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
                 tbody.innerHTML =
                     `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
+                document.getElementById('recordCount').innerText = '0 parts';
                 return;
             }
 
@@ -409,13 +411,12 @@
                 const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
                 const partName = row.partName;
                 if (!assemblyEntry.partMap.has(partName)) {
-                    // Store aggregate values and drawing list
                     assemblyEntry.partMap.set(partName, {
                         partName: partName,
                         deliveredRaw: 0,
                         acceptedRaw: 0,
                         conditionalRaw: 0,
-                        drawings: new Set() // to avoid duplicates
+                        drawings: new Set()
                     });
                 }
                 const partEntry = assemblyEntry.partMap.get(partName);
@@ -427,9 +428,16 @@
                 }
             }
 
-            // Helper to calculate total rows for each group (each part = 1 row)
+            // Helper to count parts with delivered > 0 in an assembly
+            function countParts(assemblyEntry) {
+                let cnt = 0;
+                for (const partEntry of assemblyEntry.partMap.values()) {
+                    if (partEntry.deliveredRaw > 0) cnt++;
+                }
+                return cnt;
+            }
             function totalRowsForAssembly(assemblyEntry) {
-                return assemblyEntry.partMap.size;
+                return countParts(assemblyEntry);
             }
             function totalRowsForSubtitle(subtitleEntry) {
                 let sum = 0;
@@ -454,6 +462,7 @@
             }
 
             let html = '';
+            let totalParts = 0;
 
             for (const clientEntry of clientMap.values()) {
                 const clientTotal = totalRowsForClient(clientEntry);
@@ -472,6 +481,10 @@
                             let assemblyPrinted = false;
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
+                                // Skip parts with zero delivered
+                                if (partEntry.deliveredRaw === 0) continue;
+                                totalParts++;
+
                                 html += `<tr class="hover:bg-gray-50 transition">`;
 
                                 if (!clientPrinted) {
@@ -516,10 +529,18 @@
                 }
             }
 
-            tbody.innerHTML = html;
+            if (totalParts === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No parts with delivered quantity</p></td></tr>`;
+                document.getElementById('recordCount').innerText = '0 parts';
+            } else {
+                tbody.innerHTML = html;
+                document.getElementById('recordCount').innerText =
+                    `Showing ${totalParts} parts (from ${rows.length} inspection records)`;
+            }
         }
 
-        // ---------- XLSX Export (aggregated with drawing list) ----------
+        // ---------- XLSX Export (filter zero delivered) ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -531,11 +552,6 @@
             if (selectedProcess) filteredRows = filteredRows.filter(row => row.processType === selectedProcess);
             if (selectedEngineer) filteredRows = filteredRows.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) filteredRows = filteredRows.filter(row => row.rawSearch.includes(searchTerm));
-
-            if (filteredRows.length === 0) {
-                alert('No data to export. Adjust filters.');
-                return;
-            }
 
             // Build aggregate tree
             const clientMap = new Map();
@@ -579,6 +595,37 @@
                 }
             }
 
+            // Count parts with delivered > 0 for rowspan calculations
+            function countParts(assemblyEntry) {
+                let cnt = 0;
+                for (const partEntry of assemblyEntry.partMap.values()) {
+                    if (partEntry.deliveredRaw > 0) cnt++;
+                }
+                return cnt;
+            }
+            function totalRowsForAssembly(assemblyEntry) { return countParts(assemblyEntry); }
+            function totalRowsForSubtitle(subtitleEntry) {
+                let sum = 0;
+                for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                    sum += totalRowsForAssembly(assemblyEntry);
+                }
+                return sum;
+            }
+            function totalRowsForTitle(titleEntry) {
+                let sum = 0;
+                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                    sum += totalRowsForSubtitle(subtitleEntry);
+                }
+                return sum;
+            }
+            function totalRowsForClient(clientEntry) {
+                let sum = 0;
+                for (const titleEntry of clientEntry.titleMap.values()) {
+                    sum += totalRowsForTitle(titleEntry);
+                }
+                return sum;
+            }
+
             const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Part Name', 'Drawing No.',
                 'Delivered (Acc+Cond)', 'Accepted', 'Conditional'
             ];
@@ -587,41 +634,31 @@
             let currentRow = 1;
 
             for (const clientEntry of clientMap.values()) {
-                let clientRows = 0;
-                for (const titleEntry of clientEntry.titleMap.values()) {
-                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            clientRows += assemblyEntry.partMap.size;
-                        }
-                    }
-                }
+                const clientRows = totalRowsForClient(clientEntry);
+                if (clientRows === 0) continue;
                 const clientStartRow = currentRow;
                 let firstClient = true;
 
                 for (const titleEntry of clientEntry.titleMap.values()) {
-                    let titleRows = 0;
-                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            titleRows += assemblyEntry.partMap.size;
-                        }
-                    }
+                    const titleRows = totalRowsForTitle(titleEntry);
+                    if (titleRows === 0) continue;
                     const titleStartRow = currentRow;
                     let firstTitle = true;
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                        let subtitleRows = 0;
-                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            subtitleRows += assemblyEntry.partMap.size;
-                        }
+                        const subtitleRows = totalRowsForSubtitle(subtitleEntry);
+                        if (subtitleRows === 0) continue;
                         const subtitleStartRow = currentRow;
                         let firstSubtitle = true;
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            let assemblyRows = assemblyEntry.partMap.size;
+                            const assemblyRows = totalRowsForAssembly(assemblyEntry);
+                            if (assemblyRows === 0) continue;
                             const assemblyStartRow = currentRow;
                             let firstAssembly = true;
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
+                                if (partEntry.deliveredRaw === 0) continue;
                                 const drawingList = [...partEntry.drawings].sort().join(', ');
                                 const rowData = [];
                                 rowData.push(firstClient ? clientEntry.clientName : '');
@@ -660,6 +697,11 @@
                 }
             }
 
+            if (data.length === 1) { // only headers
+                alert('No parts with delivered quantity to export.');
+                return;
+            }
+
             const ws = XLSX.utils.aoa_to_sheet(data);
             ws['!merges'] = merges;
             ws['!cols'] = [
@@ -672,7 +714,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard (aggregated with drawings) ----------
+        // ---------- Copy to clipboard (filter zero delivered) ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -685,12 +727,7 @@
             if (selectedEngineer) dataToCopy = dataToCopy.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
 
-            if (dataToCopy.length === 0) {
-                alert('No data to copy');
-                return;
-            }
-
-            // Aggregate by part with drawing list
+            // Aggregate by part with drawing list, skip zero delivered
             const partMap = new Map();
             for (const row of dataToCopy) {
                 const key = `${row.clientName}|${row.projectName}|${row.subtitle}|${row.subSubAssembly}|${row.partName}`;
@@ -716,16 +753,29 @@
                 }
             }
 
+            // Filter out zero delivered parts
+            const filteredEntries = [];
+            for (const entry of partMap.values()) {
+                if (entry.deliveredRaw > 0) {
+                    filteredEntries.push(entry);
+                }
+            }
+
+            if (filteredEntries.length === 0) {
+                alert('No parts with delivered quantity to copy.');
+                return;
+            }
+
             let tsv =
                 "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tDelivered (Acc+Cond)\tAccepted\tConditional\n";
-            for (const entry of partMap.values()) {
+            for (const entry of filteredEntries) {
                 const drawingList = [...entry.drawings].sort().join(', ');
                 tsv +=
                     `${entry.clientName}\t${entry.projectName}\t${entry.subtitle}\t${entry.subSubAssembly}\t${entry.partName}\t${drawingList || '—'}\t${formatQty(entry.deliveredRaw)}\t${formatQty(entry.acceptedRaw)}\t${formatQty(entry.conditionalRaw)}\n`;
             }
             try {
                 await navigator.clipboard.writeText(tsv);
-                alert('✅ Aggregated table (with drawing numbers) copied to clipboard');
+                alert(`✅ Aggregated table (${filteredEntries.length} parts) copied to clipboard`);
             } catch (err) {
                 alert('❌ Copy failed: ' + err);
             }
