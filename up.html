@@ -591,19 +591,10 @@
                 let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ?
                     'Needs Action' : 'On Track');
 
-                // Show only the first sub-sub assembly, with a +N if more
+                // Show only the count of sub-sub assemblies (not names)
                 const list = p.subSubAssemblyList || [];
-                let subSubHtml = '';
-                if (list.length === 0) {
-                    subSubHtml = '<span class="text-slate-400 text-xs">—</span>';
-                } else {
-                    const first = list[0];
-                    const remaining = list.length - 1;
-                    subSubHtml = `<span class="subsub-single">${escapeHtml(first)}</span>`;
-                    if (remaining > 0) {
-                        subSubHtml += ` <span class="subsub-badge-more">+${remaining}</span>`;
-                    }
-                }
+                const subSubCount = list.length;
+                const subSubHtml = `<span class="font-bold">${subSubCount}</span>`;
 
                 return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center">${subSubHtml}</td><td class="text-center">${p.totalInspections}</td><td class="text-center">${p.totalDelivered.toLocaleString()}</td><td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td><td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td><td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td><td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
             }).join('');
