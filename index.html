@@ -383,7 +383,6 @@
   }
 
   // ─── APP INIT ───
-  // Global sets and maps for suggestions
   let allClientNames = new Set();
   let allProjectTitles = new Set();
   let allSubtitles = new Set();
@@ -446,7 +445,6 @@
   // ─── SUGGESTION SYSTEM ───
 
   function updateSuggestionsFromInspections(inspections) {
-    // Clear all sets and maps
     allClientNames.clear();
     allProjectTitles.clear();
     allSubtitles.clear();
@@ -476,7 +474,6 @@
         if (!lastUsedMap.client.has(client) || ts > lastUsedMap.client.get(client)) {
           lastUsedMap.client.set(client, ts);
         }
-        // Update client maps for dependent fields
         if (title) {
           allProjectTitles.add(title);
           if (!lastUsedMap.title.has(title) || ts > lastUsedMap.title.get(title)) {
@@ -528,7 +525,6 @@
   function refreshDatalistOptions(clientFilter) {
     const filter = (clientFilter && clientFilter.trim() !== '') ? clientFilter.trim() : null;
 
-    // Client datalist
     const clientDL = document.getElementById("customerNameDatalist");
     if (clientDL) {
       clientDL.innerHTML = "";
@@ -539,13 +535,11 @@
       });
     }
 
-    // Title datalist
     const titleDL = document.getElementById("projectNameDatalist");
     if (titleDL) {
       titleDL.innerHTML = "";
       let titles = filter && clientTitleMap.has(filter) ? Array.from(clientTitleMap.get(filter)) : Array.from(
         allProjectTitles);
-      // Sort by recency globally
       titles.sort((a, b) => (lastUsedMap.title.get(b) || 0) - (lastUsedMap.title.get(a) || 0));
       titles.forEach(n => {
         const o = document.createElement("option");
@@ -554,7 +548,6 @@
       });
     }
 
-    // Subtitle datalist
     const subtitleDL = document.getElementById("subtitleDatalist");
     if (subtitleDL) {
       subtitleDL.innerHTML = "";
@@ -568,7 +561,6 @@
       });
     }
 
-    // Sub Sub Assembly datalist
     const subSubDL = document.getElementById("subSubDatalist");
     if (subSubDL) {
       subSubDL.innerHTML = "";
@@ -582,7 +574,6 @@
       });
     }
 
-    // Part Name datalist
     const partDL = document.getElementById("partNameDatalist");
     if (partDL) {
       partDL.innerHTML = "";
@@ -600,12 +591,12 @@
     const clientVal = document.getElementById('extra_Customer_Name')?.value?.trim() || '';
     const filter = clientVal || null;
 
-    // Client chips
+    // Client chips – show last 3
     renderSuggestionBar('extra_Customer_Name', 'customerNameSuggestions', allClientNames, lastUsedMap.client, null,
-      (val) => fillField('extra_Customer_Name', val)
+      (val) => fillField('extra_Customer_Name', val), 'Last 3 clients'
     );
 
-    // Title chips (filtered by client)
+    // Title chips (filtered by client) – show last 3
     let titleSet = allProjectTitles;
     let titleMap = lastUsedMap.title;
     if (filter && clientTitleMap.has(filter)) {
@@ -615,15 +606,15 @@
         if (lastUsedMap.title.has(t)) filteredMap.set(t, lastUsedMap.title.get(t));
       }
       renderSuggestionBar('extra_Project_Name', 'projectNameSuggestions', filteredSet, filteredMap, null,
-        (val) => fillField('extra_Project_Name', val)
+        (val) => fillField('extra_Project_Name', val), 'Last 3 titles'
       );
     } else {
       renderSuggestionBar('extra_Project_Name', 'projectNameSuggestions', allProjectTitles, lastUsedMap.title, null,
-        (val) => fillField('extra_Project_Name', val)
+        (val) => fillField('extra_Project_Name', val), 'Last 3 titles'
       );
     }
 
-    // Subtitle chips (filtered by client)
+    // Subtitle chips (filtered by client) – show last 3
     let subSet = allSubtitles;
     let subMap = lastUsedMap.subtitle;
     if (filter && clientSubtitleMap.has(filter)) {
@@ -633,15 +624,15 @@
         if (lastUsedMap.subtitle.has(s)) filteredMap.set(s, lastUsedMap.subtitle.get(s));
       }
       renderSuggestionBar('extra_Subtitle', 'subtitleSuggestions', filteredSet, filteredMap, null,
-        (val) => fillField('extra_Subtitle', val)
+        (val) => fillField('extra_Subtitle', val), 'Last 3 subtitles'
       );
     } else {
       renderSuggestionBar('extra_Subtitle', 'subtitleSuggestions', allSubtitles, lastUsedMap.subtitle, null,
-        (val) => fillField('extra_Subtitle', val)
+        (val) => fillField('extra_Subtitle', val), 'Last 3 subtitles'
       );
     }
 
-    // Sub Sub Assembly chips (filtered by client)
+    // Sub Sub Assembly chips (filtered by client) – show last 3
     let subSubSet = allSubSubAssemblies;
     let subSubMap = lastUsedMap.subSub;
     if (filter && clientSubSubMap.has(filter)) {
@@ -651,15 +642,15 @@
         if (lastUsedMap.subSub.has(s)) filteredMap.set(s, lastUsedMap.subSub.get(s));
       }
       renderSuggestionBar('extra_Sub_Sub_Assembly', 'subSubSuggestions', filteredSet, filteredMap, null,
-        (val) => fillField('extra_Sub_Sub_Assembly', val)
+        (val) => fillField('extra_Sub_Sub_Assembly', val), 'Last 3 sub‑assemblies'
       );
     } else {
       renderSuggestionBar('extra_Sub_Sub_Assembly', 'subSubSuggestions', allSubSubAssemblies, lastUsedMap.subSub, null,
-        (val) => fillField('extra_Sub_Sub_Assembly', val)
+        (val) => fillField('extra_Sub_Sub_Assembly', val), 'Last 3 sub‑assemblies'
       );
     }
 
-    // Part Name chips (filtered by client)
+    // Part Name chips (filtered by client) – show last 3
     let partSet = allPartNames;
     let partMap = lastUsedMap.part;
     if (filter && clientPartMap.has(filter)) {
@@ -669,16 +660,16 @@
         if (lastUsedMap.part.has(p)) filteredMap.set(p, lastUsedMap.part.get(p));
       }
       renderSuggestionBar('extra_Part_Name', 'partNameSuggestions', filteredSet, filteredMap, null,
-        (val) => fillField('extra_Part_Name', val)
+        (val) => fillField('extra_Part_Name', val), 'Last 3 parts'
       );
     } else {
       renderSuggestionBar('extra_Part_Name', 'partNameSuggestions', allPartNames, lastUsedMap.part, null,
-        (val) => fillField('extra_Part_Name', val)
+        (val) => fillField('extra_Part_Name', val), 'Last 3 parts'
       );
     }
   }
 
-  function renderSuggestionBar(inputId, containerId, valueSet, timeMap, filter, onClick) {
+  function renderSuggestionBar(inputId, containerId, valueSet, timeMap, filter, onClick, labelText) {
     const container = document.getElementById(containerId);
     if (!container) return;
     const values = getSortedValues(valueSet, timeMap);
@@ -687,8 +678,9 @@
         `<span class="empty">${inputId === 'extra_Customer_Name' ? 'No previous clients' : 'No suggestions yet'}</span>`;
       return;
     }
-    const top = values.slice(0, 6);
-    let html = `<span class="label">${inputId === 'extra_Customer_Name' ? 'Recent clients' : inputId === 'extra_Project_Name' ? 'Recent titles' : inputId === 'extra_Subtitle' ? 'Recent subtitles' : inputId === 'extra_Sub_Sub_Assembly' ? 'Recent sub‑assemblies' : 'Recent parts'}:</span>`;
+    // ─── ONLY SHOW THE 3 MOST RECENT ───
+    const top = values.slice(0, 3);
+    let html = `<span class="label">${labelText || 'Last 3'}:</span>`;
     top.forEach((val, i) => {
       const isFirst = (i === 0);
       html += `<span class="suggestion-chip" data-value="${escapeHtml(val)}">`;
@@ -697,12 +689,11 @@
       if (isFirst) html += ` <span class="suggestion-recent">latest</span>`;
       html += `</span>`;
     });
-    if (values.length > 6) {
-      html += `<span class="text-xs text-gray-400">+${values.length - 6} more</span>`;
+    if (values.length > 3) {
+      html += `<span class="text-xs text-gray-400">+${values.length - 3} more</span>`;
     }
     container.innerHTML = html;
 
-    // Attach click events
     container.querySelectorAll('.suggestion-chip').forEach(chip => {
       chip.addEventListener('click', function() {
         const val = this.dataset.value;
@@ -717,7 +708,6 @@
       el.value = value;
       el.dispatchEvent(new Event('input'));
       el.dispatchEvent(new Event('change'));
-      // If client changes, refresh all suggestions
       if (id === 'extra_Customer_Name') {
         filterSuggestionsByCurrentClient();
       }
@@ -1670,7 +1660,7 @@
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
         '>': '&gt;' }[m])); }
 
-  console.log('🔐 QC Inspection ready – all key fields now have smart suggestions.');
+  console.log('🔐 QC Inspection ready – suggestion bars now show only the 3 most recent values.');
 </script>
 </body>
 </html>
