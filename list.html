@@ -73,15 +73,6 @@
         tr:hover td {
             background-color: #f8fafc;
         }
-        .subtotal-row td {
-            background-color: #f3f4f6 !important;
-            font-weight: 600;
-            border-top: 2px solid #d1d5db;
-            border-bottom: 2px solid #d1d5db;
-        }
-        .subtotal-row:hover td {
-            background-color: #e5e7eb !important;
-        }
         .summary-card {
             transition: all 0.2s;
             border-radius: 1rem;
@@ -146,11 +137,6 @@
             border-radius: 9999px;
             display: inline-block;
         }
-        .subtotal-label {
-            font-size: 0.8rem;
-            color: #4b5563;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
@@ -164,7 +150,7 @@
                     <i class="fa-solid fa-clipboard-list text-blue-600"></i>
                     Inspection Report
                 </h1>
-                <p class="text-gray-500 text-sm mt-1">Hierarchical with part subtotals</p>
+                <p class="text-gray-500 text-sm mt-1">Aggregated by Part (summed across Drawing Numbers)</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -273,7 +259,7 @@
             <span><span class="badge badge-conditional">Conditional</span> = conditionally accepted</span>
             <span><i class="fa-solid fa-circle text-blue-400 text-[0.5rem]"></i> <strong>Delivered</strong> = Accepted + Conditional</span>
             <span class="text-gray-400">(Rework &amp; Reject are handled separately)</span>
-            <span class="text-gray-600"><i class="fa-solid fa-calculator"></i> <strong>Subtotal</strong> rows show totals per part</span>
+            <span><i class="fa-solid fa-layer-group"></i> Parts are aggregated – drawing numbers are not listed individually</span>
         </div>
     </div>
 
@@ -443,13 +429,13 @@
             if (selectedEngineer) filtered = filtered.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
 
-            renderHierarchicalTable(filtered);
+            renderAggregatedTable(filtered);
             document.getElementById('recordCount').innerText =
-                `Showing ${filtered.length} of ${allReportRows.length} records`;
+                `Showing ${filtered.length} records (${new Set(filtered.map(r => r.partName)).size} unique parts)`;
         }
 
-        // ---------- Hierarchical Render with Part Subtotals ----------
-        function renderHierarchicalTable(rows) {
+        // ---------- Aggregated Render: one row per part (summed across drawings) ----------
+        function renderAggregatedTable(rows) {
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
                 tbody.innerHTML =
@@ -457,7 +443,7 @@
                 return;
             }
 
-            // Build tree: Client → Title → Subtitle → SubSubAssembly → PartName → [rows]
+            // Build tree: Client → Title → Subtitle → SubSubAssembly → PartName → aggregate row
             const clientMap = new Map();
             for (const row of rows) {
                 const client = row.clientName;
@@ -482,23 +468,25 @@
                 const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
                 const partName = row.partName;
                 if (!assemblyEntry.partMap.has(partName)) {
-                    assemblyEntry.partMap.set(partName, { partName: partName, partRows: [] });
+                    // Store aggregate values
+                    assemblyEntry.partMap.set(partName, {
+                        partName: partName,
+                        deliveredRaw: 0,
+                        acceptedRaw: 0,
+                        conditionalRaw: 0,
+                        count: 0
+                    });
                 }
                 const partEntry = assemblyEntry.partMap.get(partName);
-                partEntry.partRows.push(row);
+                partEntry.deliveredRaw += row.deliveredRaw;
+                partEntry.acceptedRaw += row.acceptedRaw;
+                partEntry.conditionalRaw += row.conditionalRaw;
+                partEntry.count += 1;
             }
 
-            // Helper: total rows for a part including its subtotal row
-            function totalRowsForPart(partEntry) {
-                return partEntry.partRows.length + 1; // detail rows + subtotal
-            }
-
+            // Helper to calculate total rows for each group (each part = 1 row)
             function totalRowsForAssembly(assemblyEntry) {
-                let sum = 0;
-                for (const partEntry of assemblyEntry.partMap.values()) {
-                    sum += totalRowsForPart(partEntry);
-                }
-                return sum;
+                return assemblyEntry.partMap.size;
             }
 
             function totalRowsForSubtitle(subtitleEntry) {
@@ -543,77 +531,43 @@
                             const assemblyTotal = totalRowsForAssembly(assemblyEntry);
                             let assemblyPrinted = false;
 
+                            // For each part in this assembly, output one row
+                            let partIndex = 0;
                             for (const partEntry of assemblyEntry.partMap.values()) {
-                                const partRows = partEntry.partRows;
-                                const detailCount = partRows.length;
+                                const rowspan = 1; // each part is one row
+                                html += `<tr class="hover:bg-gray-50 transition">`;
 
-                                // --- Detail rows ---
-                                for (let i = 0; i < detailCount; i++) {
-                                    const row = partRows[i];
-                                    html += `<tr class="hover:bg-gray-50 transition">`;
-
-                                    // Client
-                                    if (!clientPrinted && i === 0) {
-                                        html +=
-                                            `<td rowspan="${clientTotal}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
-                                        clientPrinted = true;
-                                    }
-                                    // Title
-                                    if (!titlePrinted && i === 0) {
-                                        html +=
-                                            `<td rowspan="${titleTotal}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
-                                        titlePrinted = true;
-                                    }
-                                    // Subtitle
-                                    if (!subtitlePrinted && i === 0) {
-                                        html +=
-                                            `<td rowspan="${subtitleTotal}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
-                                        subtitlePrinted = true;
-                                    }
-                                    // Assembly
-                                    if (!assemblyPrinted && i === 0) {
-                                        html +=
-                                            `<td rowspan="${assemblyTotal}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span></td>`;
-                                        assemblyPrinted = true;
-                                    }
-                                    // Part Name (merged only for detail rows)
-                                    if (i === 0) {
-                                        html +=
-                                            `<td rowspan="${detailCount}" class="font-medium align-top">${escapeHtml(partEntry.partName)}</td>`;
-                                    }
-                                    // Drawing No, quantities
-                                    html += `
-                                        <td class="font-mono text-sm">${escapeHtml(row.drawingNo)}</td>
-                                        <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${row.delivered}</td>
-                                        <td class="text-right tabular-nums col-accepted">${row.accepted}</td>
-                                        <td class="text-right tabular-nums col-conditional">${row.conditional}</td>
-                                    `;
-                                    html += `</tr>`;
+                                if (!clientPrinted) {
+                                    html +=
+                                        `<td rowspan="${clientTotal}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
+                                    clientPrinted = true;
+                                }
+                                if (!titlePrinted) {
+                                    html +=
+                                        `<td rowspan="${titleTotal}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
+                                    titlePrinted = true;
+                                }
+                                if (!subtitlePrinted) {
+                                    html +=
+                                        `<td rowspan="${subtitleTotal}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
+                                    subtitlePrinted = true;
+                                }
+                                if (!assemblyPrinted) {
+                                    html +=
+                                        `<td rowspan="${assemblyTotal}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span></td>`;
+                                    assemblyPrinted = true;
                                 }
 
-                                // --- Subtotal row for this part ---
-                                let sumDel = 0,
-                                    sumAcc = 0,
-                                    sumCond = 0;
-                                for (const r of partRows) {
-                                    sumDel += r.deliveredRaw;
-                                    sumAcc += r.acceptedRaw;
-                                    sumCond += r.conditionalRaw;
-                                }
-                                html += `<tr class="subtotal-row">`;
-                                // The first 4 columns (Client, Title, Subtitle, Assembly) are covered by rowspans from the first detail row,
-                                // so we skip them. We output:
-                                // - Part Name: "Subtotal" (col 4)
-                                // - Drawing No: "—" (col 5)
-                                // - Delivered, Accepted, Conditional sums (cols 6,7,8)
+                                // Part Name and Drawing No column (Drawing No becomes "—")
                                 html += `
-                                    <td class="align-top text-gray-600 subtotal-label">Subtotal</td>
+                                    <td class="font-medium align-top">${escapeHtml(partEntry.partName)}</td>
                                     <td class="font-mono text-sm text-gray-400">—</td>
-                                    <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${formatQty(sumDel)}</td>
-                                    <td class="text-right tabular-nums font-bold col-accepted">${formatQty(sumAcc)}</td>
-                                    <td class="text-right tabular-nums font-bold col-conditional">${formatQty(sumCond)}</td>
+                                    <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${formatQty(partEntry.deliveredRaw)}</td>
+                                    <td class="text-right tabular-nums col-accepted">${formatQty(partEntry.acceptedRaw)}</td>
+                                    <td class="text-right tabular-nums col-conditional">${formatQty(partEntry.conditionalRaw)}</td>
                                 `;
                                 html += `</tr>`;
+                                partIndex++;
                             }
                         }
                     }
@@ -623,7 +577,7 @@
             tbody.innerHTML = html;
         }
 
-        // ---------- XLSX Export (with subtotals if desired, but we keep flat for simplicity) ----------
+        // ---------- XLSX Export (aggregated by part, no drawing details) ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -641,7 +595,7 @@
                 return;
             }
 
-            // Build hierarchical structure with part subtotals for Excel
+            // Build aggregate tree
             const clientMap = new Map();
             for (const row of filteredRows) {
                 const client = row.clientName;
@@ -666,10 +620,17 @@
                 const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
                 const partName = row.partName;
                 if (!assemblyEntry.partMap.has(partName)) {
-                    assemblyEntry.partMap.set(partName, { partName: partName, partRows: [] });
+                    assemblyEntry.partMap.set(partName, {
+                        partName: partName,
+                        deliveredRaw: 0,
+                        acceptedRaw: 0,
+                        conditionalRaw: 0
+                    });
                 }
                 const partEntry = assemblyEntry.partMap.get(partName);
-                partEntry.partRows.push(row);
+                partEntry.deliveredRaw += row.deliveredRaw;
+                partEntry.acceptedRaw += row.acceptedRaw;
+                partEntry.conditionalRaw += row.conditionalRaw;
             }
 
             const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Part Name', 'Drawing No.',
@@ -684,9 +645,7 @@
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            for (const partEntry of assemblyEntry.partMap.values()) {
-                                clientRows += partEntry.partRows.length + 1; // detail + subtotal
-                            }
+                            clientRows += assemblyEntry.partMap.size;
                         }
                     }
                 }
@@ -697,9 +656,7 @@
                     let titleRows = 0;
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            for (const partEntry of assemblyEntry.partMap.values()) {
-                                titleRows += partEntry.partRows.length + 1;
-                            }
+                            titleRows += assemblyEntry.partMap.size;
                         }
                     }
                     const titleStartRow = currentRow;
@@ -708,90 +665,48 @@
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         let subtitleRows = 0;
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            for (const partEntry of assemblyEntry.partMap.values()) {
-                                subtitleRows += partEntry.partRows.length + 1;
-                            }
+                            subtitleRows += assemblyEntry.partMap.size;
                         }
                         const subtitleStartRow = currentRow;
                         let firstSubtitle = true;
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            let assemblyRows = 0;
-                            for (const partEntry of assemblyEntry.partMap.values()) {
-                                assemblyRows += partEntry.partRows.length + 1;
-                            }
+                            let assemblyRows = assemblyEntry.partMap.size;
                             const assemblyStartRow = currentRow;
                             let firstAssembly = true;
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
-                                const partRows = partEntry.partRows;
-                                const detailCount = partRows.length;
-                                const partStartRow = currentRow;
-                                let firstPart = true;
-
-                                // Detail rows
-                                for (let i = 0; i < detailCount; i++) {
-                                    const row = partRows[i];
-                                    const rowData = [];
-                                    rowData.push((firstClient && i === 0) ? row.clientName : '');
-                                    rowData.push((firstTitle && i === 0) ? row.projectName : '');
-                                    rowData.push((firstSubtitle && i === 0) ? row.subtitle : '');
-                                    rowData.push((firstAssembly && i === 0) ? row.subSubAssembly : '');
-                                    rowData.push((firstPart && i === 0) ? row.partName : '');
-                                    rowData.push(row.drawingNo);
-                                    rowData.push(row.delivered);
-                                    rowData.push(row.accepted);
-                                    rowData.push(row.conditional);
-                                    data.push(rowData);
-                                    currentRow++;
-                                }
-
-                                // Subtotal row for this part
-                                let sumDel = 0,
-                                    sumAcc = 0,
-                                    sumCond = 0;
-                                for (const r of partRows) {
-                                    sumDel += r.deliveredRaw;
-                                    sumAcc += r.acceptedRaw;
-                                    sumCond += r.conditionalRaw;
-                                }
-                                const subRow = [];
-                                subRow.push(''); // Client
-                                subRow.push(''); // Title
-                                subRow.push(''); // Subtitle
-                                subRow.push(''); // Assembly
-                                subRow.push('Subtotal');
-                                subRow.push('—');
-                                subRow.push(formatQty(sumDel));
-                                subRow.push(formatQty(sumAcc));
-                                subRow.push(formatQty(sumCond));
-                                data.push(subRow);
+                                const rowData = [];
+                                rowData.push(firstClient ? clientEntry.clientName : '');
+                                rowData.push(firstTitle ? titleEntry.titleName : '');
+                                rowData.push(firstSubtitle ? subtitleEntry.subtitleName : '');
+                                rowData.push(firstAssembly ? assemblyEntry.assemblyName : '');
+                                rowData.push(partEntry.partName);
+                                rowData.push('—'); // Drawing No.
+                                rowData.push(formatQty(partEntry.deliveredRaw));
+                                rowData.push(formatQty(partEntry.acceptedRaw));
+                                rowData.push(formatQty(partEntry.conditionalRaw));
+                                data.push(rowData);
                                 currentRow++;
 
-                                // Merges: Part Name for detail rows only (not subtotal)
-                                if (detailCount > 1) {
-                                    merges.push({ s: { r: partStartRow, c: 4 }, e: { r: partStartRow + detailCount - 1,
-                                            c: 4 } });
-                                }
-                                // Assembly merge: detail + subtotal rows
-                                if (assemblyRows > 1) {
-                                    merges.push({ s: { r: assemblyStartRow, c: 3 }, e: { r: assemblyStartRow + assemblyRows -
-                                            1, c: 3 } });
-                                }
-                                firstPart = false;
+                                firstClient = false;
+                                firstTitle = false;
+                                firstSubtitle = false;
+                                firstAssembly = false;
                             }
-                            firstAssembly = false;
+                            if (assemblyRows > 1) {
+                                merges.push({ s: { r: assemblyStartRow, c: 3 }, e: { r: assemblyStartRow + assemblyRows -
+                                        1, c: 3 } });
+                            }
                         }
                         if (subtitleRows > 1) {
                             merges.push({ s: { r: subtitleStartRow, c: 2 }, e: { r: subtitleStartRow + subtitleRows - 1,
                                     c: 2 } });
                         }
-                        firstSubtitle = false;
                     }
                     if (titleRows > 1) {
                         merges.push({ s: { r: titleStartRow, c: 1 }, e: { r: titleStartRow + titleRows - 1, c: 1 } });
                     }
-                    firstTitle = false;
                 }
                 if (clientRows > 1) {
                     merges.push({ s: { r: clientStartRow, c: 0 }, e: { r: clientStartRow + clientRows - 1, c: 0 } });
@@ -810,7 +725,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard (flat, no subtotals) ----------
+        // ---------- Copy to clipboard (aggregated flat) ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -828,15 +743,37 @@
                 return;
             }
 
-            let tsv =
-                "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tDelivered (Acc+Cond)\tAccepted\tConditional\n";
+            // Aggregate by part (sum across drawings) for copy
+            const partMap = new Map();
             for (const row of dataToCopy) {
+                const key = `${row.clientName}|${row.projectName}|${row.subtitle}|${row.subSubAssembly}|${row.partName}`;
+                if (!partMap.has(key)) {
+                    partMap.set(key, {
+                        clientName: row.clientName,
+                        projectName: row.projectName,
+                        subtitle: row.subtitle,
+                        subSubAssembly: row.subSubAssembly,
+                        partName: row.partName,
+                        deliveredRaw: 0,
+                        acceptedRaw: 0,
+                        conditionalRaw: 0
+                    });
+                }
+                const entry = partMap.get(key);
+                entry.deliveredRaw += row.deliveredRaw;
+                entry.acceptedRaw += row.acceptedRaw;
+                entry.conditionalRaw += row.conditionalRaw;
+            }
+
+            let tsv =
+                "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDelivered (Acc+Cond)\tAccepted\tConditional\n";
+            for (const entry of partMap.values()) {
                 tsv +=
-                    `${row.clientName}\t${row.projectName}\t${row.subtitle}\t${row.subSubAssembly}\t${row.partName}\t${row.drawingNo}\t${row.delivered}\t${row.accepted}\t${row.conditional}\n`;
+                    `${entry.clientName}\t${entry.projectName}\t${entry.subtitle}\t${entry.subSubAssembly}\t${entry.partName}\t${formatQty(entry.deliveredRaw)}\t${formatQty(entry.acceptedRaw)}\t${formatQty(entry.conditionalRaw)}\n`;
             }
             try {
                 await navigator.clipboard.writeText(tsv);
-                alert('✅ Table copied to clipboard (tab-separated, ready for Excel)');
+                alert('✅ Aggregated table copied to clipboard (tab-separated)');
             } catch (err) {
                 alert('❌ Copy failed: ' + err);
             }
