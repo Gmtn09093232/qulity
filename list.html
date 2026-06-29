@@ -11,49 +11,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            .report-container,
-            .report-container * {
-                visibility: visible;
-            }
-            .report-container {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                margin: 0;
-                padding: 0;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .summary-cards {
-                display: none !important;
-            }
-            .filter-bar,
-            .action-buttons {
-                display: none !important;
-            }
-            table th,
-            table td {
-                padding: 4px 6px !important;
-                font-size: 0.75rem !important;
-            }
-            .table-wrapper {
-                border-radius: 0 !important;
-            }
+            body * { visibility: hidden; }
+            .report-container, .report-container * { visibility: visible; }
+            .report-container { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .summary-cards { display: none !important; }
+            .filter-bar, .action-buttons { display: none !important; }
+            table th, table td { padding: 4px 6px !important; font-size: 0.75rem !important; }
+            .table-wrapper { border-radius: 0 !important; }
         }
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 1rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.82rem;
-        }
+        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
         th {
             background-color: #f1f5f9;
             position: sticky;
@@ -65,27 +33,14 @@
             border-bottom: 2px solid #e2e8f0;
             white-space: nowrap;
         }
-        td {
-            padding: 8px 6px;
-            border-bottom: 1px solid #e2e8f0;
-            vertical-align: top;
-        }
-        tr:hover td {
-            background-color: #f8fafc;
-        }
+        td { padding: 8px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+        tr:hover td { background-color: #f8fafc; }
         .summary-card {
             transition: all 0.2s;
             border-radius: 1rem;
         }
-        .summary-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-        }
-        .filter-input:focus {
-            outline: none;
-            ring: 2px solid #3b82f6;
-            border-color: transparent;
-        }
+        .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .filter-input:focus { outline: none; ring: 2px solid #3b82f6; border-color: transparent; }
         .loader {
             border: 3px solid #e2e8f0;
             border-top: 3px solid #3b82f6;
@@ -95,14 +50,7 @@
             animation: spin 0.8s linear infinite;
             margin: 20px auto;
         }
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .badge {
             display: inline-block;
             padding: 0.15rem 0.6rem;
@@ -110,25 +58,11 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
-        .badge-accepted {
-            background: #dcfce7;
-            color: #166534;
-        }
-        .badge-conditional {
-            background: #f3e8ff;
-            color: #6b21a8;
-        }
-        .col-delivered {
-            background: #eff6ff;
-            font-weight: 600;
-            color: #1e40af;
-        }
-        .col-accepted {
-            color: #166534;
-        }
-        .col-conditional {
-            color: #6b21a8;
-        }
+        .badge-accepted { background: #dcfce7; color: #166534; }
+        .badge-conditional { background: #f3e8ff; color: #6b21a8; }
+        .col-delivered { background: #eff6ff; font-weight: 600; color: #1e40af; }
+        .col-accepted { color: #166534; }
+        .col-conditional { color: #6b21a8; }
         .sub-assembly-tag {
             font-size: 0.7rem;
             background: #eef2ff;
@@ -136,6 +70,13 @@
             padding: 0.1rem 0.5rem;
             border-radius: 9999px;
             display: inline-block;
+        }
+        .drawing-list {
+            font-size: 0.75rem;
+            color: #4b5563;
+            max-width: 200px;
+            display: inline-block;
+            word-break: break-word;
         }
     </style>
 </head>
@@ -150,7 +91,7 @@
                     <i class="fa-solid fa-clipboard-list text-blue-600"></i>
                     Inspection Report
                 </h1>
-                <p class="text-gray-500 text-sm mt-1">Aggregated by Part (summed across Drawing Numbers)</p>
+                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Drawing numbers listed together</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -259,7 +200,7 @@
             <span><span class="badge badge-conditional">Conditional</span> = conditionally accepted</span>
             <span><i class="fa-solid fa-circle text-blue-400 text-[0.5rem]"></i> <strong>Delivered</strong> = Accepted + Conditional</span>
             <span class="text-gray-400">(Rework &amp; Reject are handled separately)</span>
-            <span><i class="fa-solid fa-layer-group"></i> Parts are aggregated – drawing numbers are not listed individually</span>
+            <span><i class="fa-solid fa-list"></i> Drawing numbers are listed per part</span>
         </div>
     </div>
 
@@ -434,7 +375,7 @@
                 `Showing ${filtered.length} records (${new Set(filtered.map(r => r.partName)).size} unique parts)`;
         }
 
-        // ---------- Aggregated Render: one row per part (summed across drawings) ----------
+        // ---------- Aggregated Render: one row per part with drawing list ----------
         function renderAggregatedTable(rows) {
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
@@ -443,7 +384,7 @@
                 return;
             }
 
-            // Build tree: Client → Title → Subtitle → SubSubAssembly → PartName → aggregate row
+            // Build tree: Client → Title → Subtitle → SubSubAssembly → PartName → aggregate data
             const clientMap = new Map();
             for (const row of rows) {
                 const client = row.clientName;
@@ -468,27 +409,28 @@
                 const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
                 const partName = row.partName;
                 if (!assemblyEntry.partMap.has(partName)) {
-                    // Store aggregate values
+                    // Store aggregate values and drawing list
                     assemblyEntry.partMap.set(partName, {
                         partName: partName,
                         deliveredRaw: 0,
                         acceptedRaw: 0,
                         conditionalRaw: 0,
-                        count: 0
+                        drawings: new Set() // to avoid duplicates
                     });
                 }
                 const partEntry = assemblyEntry.partMap.get(partName);
                 partEntry.deliveredRaw += row.deliveredRaw;
                 partEntry.acceptedRaw += row.acceptedRaw;
                 partEntry.conditionalRaw += row.conditionalRaw;
-                partEntry.count += 1;
+                if (row.drawingNo && row.drawingNo !== '-') {
+                    partEntry.drawings.add(row.drawingNo);
+                }
             }
 
             // Helper to calculate total rows for each group (each part = 1 row)
             function totalRowsForAssembly(assemblyEntry) {
                 return assemblyEntry.partMap.size;
             }
-
             function totalRowsForSubtitle(subtitleEntry) {
                 let sum = 0;
                 for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
@@ -496,7 +438,6 @@
                 }
                 return sum;
             }
-
             function totalRowsForTitle(titleEntry) {
                 let sum = 0;
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -504,7 +445,6 @@
                 }
                 return sum;
             }
-
             function totalRowsForClient(clientEntry) {
                 let sum = 0;
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -531,10 +471,7 @@
                             const assemblyTotal = totalRowsForAssembly(assemblyEntry);
                             let assemblyPrinted = false;
 
-                            // For each part in this assembly, output one row
-                            let partIndex = 0;
                             for (const partEntry of assemblyEntry.partMap.values()) {
-                                const rowspan = 1; // each part is one row
                                 html += `<tr class="hover:bg-gray-50 transition">`;
 
                                 if (!clientPrinted) {
@@ -558,16 +495,21 @@
                                     assemblyPrinted = true;
                                 }
 
-                                // Part Name and Drawing No column (Drawing No becomes "—")
+                                // Part Name
+                                html += `<td class="font-medium align-top">${escapeHtml(partEntry.partName)}</td>`;
+
+                                // Drawing Numbers: join with comma
+                                const drawingList = [...partEntry.drawings].sort().join(', ');
+                                html +=
+                                    `<td class="font-mono text-sm drawing-list">${escapeHtml(drawingList) || '—'}</td>`;
+
+                                // Quantities
                                 html += `
-                                    <td class="font-medium align-top">${escapeHtml(partEntry.partName)}</td>
-                                    <td class="font-mono text-sm text-gray-400">—</td>
                                     <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${formatQty(partEntry.deliveredRaw)}</td>
                                     <td class="text-right tabular-nums col-accepted">${formatQty(partEntry.acceptedRaw)}</td>
                                     <td class="text-right tabular-nums col-conditional">${formatQty(partEntry.conditionalRaw)}</td>
                                 `;
                                 html += `</tr>`;
-                                partIndex++;
                             }
                         }
                     }
@@ -577,7 +519,7 @@
             tbody.innerHTML = html;
         }
 
-        // ---------- XLSX Export (aggregated by part, no drawing details) ----------
+        // ---------- XLSX Export (aggregated with drawing list) ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -624,13 +566,17 @@
                         partName: partName,
                         deliveredRaw: 0,
                         acceptedRaw: 0,
-                        conditionalRaw: 0
+                        conditionalRaw: 0,
+                        drawings: new Set()
                     });
                 }
                 const partEntry = assemblyEntry.partMap.get(partName);
                 partEntry.deliveredRaw += row.deliveredRaw;
                 partEntry.acceptedRaw += row.acceptedRaw;
                 partEntry.conditionalRaw += row.conditionalRaw;
+                if (row.drawingNo && row.drawingNo !== '-') {
+                    partEntry.drawings.add(row.drawingNo);
+                }
             }
 
             const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Part Name', 'Drawing No.',
@@ -676,13 +622,14 @@
                             let firstAssembly = true;
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
+                                const drawingList = [...partEntry.drawings].sort().join(', ');
                                 const rowData = [];
                                 rowData.push(firstClient ? clientEntry.clientName : '');
                                 rowData.push(firstTitle ? titleEntry.titleName : '');
                                 rowData.push(firstSubtitle ? subtitleEntry.subtitleName : '');
                                 rowData.push(firstAssembly ? assemblyEntry.assemblyName : '');
                                 rowData.push(partEntry.partName);
-                                rowData.push('—'); // Drawing No.
+                                rowData.push(drawingList || '—');
                                 rowData.push(formatQty(partEntry.deliveredRaw));
                                 rowData.push(formatQty(partEntry.acceptedRaw));
                                 rowData.push(formatQty(partEntry.conditionalRaw));
@@ -717,7 +664,7 @@
             ws['!merges'] = merges;
             ws['!cols'] = [
                 { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 18 },
-                { wch: 20 }, { wch: 15 }, { wch: 16 }, { wch: 12 }, { wch: 14 }
+                { wch: 20 }, { wch: 25 }, { wch: 16 }, { wch: 12 }, { wch: 14 }
             ];
 
             const wb = XLSX.utils.book_new();
@@ -725,7 +672,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard (aggregated flat) ----------
+        // ---------- Copy to clipboard (aggregated with drawings) ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -743,7 +690,7 @@
                 return;
             }
 
-            // Aggregate by part (sum across drawings) for copy
+            // Aggregate by part with drawing list
             const partMap = new Map();
             for (const row of dataToCopy) {
                 const key = `${row.clientName}|${row.projectName}|${row.subtitle}|${row.subSubAssembly}|${row.partName}`;
@@ -756,24 +703,29 @@
                         partName: row.partName,
                         deliveredRaw: 0,
                         acceptedRaw: 0,
-                        conditionalRaw: 0
+                        conditionalRaw: 0,
+                        drawings: new Set()
                     });
                 }
                 const entry = partMap.get(key);
                 entry.deliveredRaw += row.deliveredRaw;
                 entry.acceptedRaw += row.acceptedRaw;
                 entry.conditionalRaw += row.conditionalRaw;
+                if (row.drawingNo && row.drawingNo !== '-') {
+                    entry.drawings.add(row.drawingNo);
+                }
             }
 
             let tsv =
-                "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDelivered (Acc+Cond)\tAccepted\tConditional\n";
+                "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tDelivered (Acc+Cond)\tAccepted\tConditional\n";
             for (const entry of partMap.values()) {
+                const drawingList = [...entry.drawings].sort().join(', ');
                 tsv +=
-                    `${entry.clientName}\t${entry.projectName}\t${entry.subtitle}\t${entry.subSubAssembly}\t${entry.partName}\t${formatQty(entry.deliveredRaw)}\t${formatQty(entry.acceptedRaw)}\t${formatQty(entry.conditionalRaw)}\n`;
+                    `${entry.clientName}\t${entry.projectName}\t${entry.subtitle}\t${entry.subSubAssembly}\t${entry.partName}\t${drawingList || '—'}\t${formatQty(entry.deliveredRaw)}\t${formatQty(entry.acceptedRaw)}\t${formatQty(entry.conditionalRaw)}\n`;
             }
             try {
                 await navigator.clipboard.writeText(tsv);
-                alert('✅ Aggregated table copied to clipboard (tab-separated)');
+                alert('✅ Aggregated table (with drawing numbers) copied to clipboard');
             } catch (err) {
                 alert('❌ Copy failed: ' + err);
             }
