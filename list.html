@@ -103,9 +103,6 @@
                 transform: rotate(360deg);
             }
         }
-        .filter-select {
-            min-width: 150px;
-        }
         .badge {
             display: inline-block;
             padding: 0.15rem 0.6rem;
@@ -121,14 +118,6 @@
             background: #f3e8ff;
             color: #6b21a8;
         }
-        .badge-rework {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        .badge-reject {
-            background: #fee2e2;
-            color: #991b1b;
-        }
         .col-delivered {
             background: #eff6ff;
             font-weight: 600;
@@ -139,12 +128,6 @@
         }
         .col-conditional {
             color: #6b21a8;
-        }
-        .col-rework {
-            color: #92400e;
-        }
-        .col-reject {
-            color: #991b1b;
         }
         .sub-assembly-tag {
             font-size: 0.7rem;
@@ -185,8 +168,8 @@
             </div>
         </div>
 
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 no-print summary-cards">
+        <!-- Summary Cards (only Delivered, Accepted, Conditional) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 no-print summary-cards">
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div><i class="fa-solid fa-boxes-stacked text-2xl text-blue-500"></i></div>
@@ -201,20 +184,6 @@
                 </div>
                 <p class="text-2xl font-bold text-slate-800 mt-2" id="totalAcceptedSum">0</p>
                 <p class="text-xs text-gray-500">Accepted</p>
-            </div>
-            <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between">
-                    <div><i class="fa-solid fa-rotate-left text-2xl text-amber-500"></i></div>
-                </div>
-                <p class="text-2xl font-bold text-slate-800 mt-2" id="totalReworkSum">0</p>
-                <p class="text-xs text-gray-500">Rework</p>
-            </div>
-            <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between">
-                    <div><i class="fa-solid fa-ban text-2xl text-red-500"></i></div>
-                </div>
-                <p class="text-2xl font-bold text-slate-800 mt-2" id="totalRejectSum">0</p>
-                <p class="text-xs text-gray-500">Reject</p>
             </div>
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
@@ -270,13 +239,11 @@
                             <th class="text-left">🔧 Part Name</th>
                             <th class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc + Cond)</span></th>
                             <th class="text-right">✅ Accepted</th>
-                            <th class="text-right">🔄 Rework</th>
-                            <th class="text-right">❌ Reject</th>
                             <th class="text-right">⚠️ Conditional</th>
                         </tr>
                     </thead>
                     <tbody id="reportTableBody">
-                        <tr><td colspan="11" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections…</p></td></tr>
+                        <tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections…</p></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -290,9 +257,8 @@
         <div class="mt-4 flex flex-wrap gap-3 text-xs text-gray-500 no-print">
             <span><span class="badge badge-accepted">Accepted</span> = passed inspection</span>
             <span><span class="badge badge-conditional">Conditional</span> = conditionally accepted</span>
-            <span><span class="badge badge-rework">Rework</span> = needs rework</span>
-            <span><span class="badge badge-reject">Reject</span> = rejected</span>
             <span><i class="fa-solid fa-circle text-blue-400 text-[0.5rem]"></i> <strong>Delivered</strong> = Accepted + Conditional</span>
+            <span class="text-gray-400">(Rework &amp; Reject are handled in separate correction sheets)</span>
         </div>
     </div>
 
@@ -348,7 +314,7 @@
             const statusSpan = document.getElementById('recordStatus');
             try {
                 tbody.innerHTML =
-                    `<tr><td colspan="11" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections…</p></td></tr>`;
+                    `<tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections…</p></td></tr>`;
                 statusSpan.innerText = 'Loading…';
                 const response = await fetch('/api/inspections');
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -360,8 +326,6 @@
                 uniqueEngineers.clear();
                 let sumDelivered = 0,
                     sumAccepted = 0,
-                    sumRework = 0,
-                    sumReject = 0,
                     sumConditional = 0;
 
                 for (const insp of inspections) {
@@ -381,16 +345,10 @@
 
                     const accRaw = insp.accepted_qty;
                     const condRaw = insp.conditional_accept_qty;
-                    const reworkRaw = insp.rework_qty;
-                    const rejectRaw = insp.reject_qty;
-
-                    // Delivered = Accepted + Conditional Accepted
                     const deliveredRaw = numericQty(accRaw) + numericQty(condRaw);
 
                     sumDelivered += deliveredRaw;
                     sumAccepted += numericQty(accRaw);
-                    sumRework += numericQty(reworkRaw);
-                    sumReject += numericQty(rejectRaw);
                     sumConditional += numericQty(condRaw);
 
                     rows.push({
@@ -404,23 +362,17 @@
                         deliveredRaw: deliveredRaw,
                         accepted: formatQty(accRaw),
                         acceptedRaw: numericQty(accRaw),
-                        rework: formatQty(reworkRaw),
-                        reworkRaw: numericQty(reworkRaw),
-                        reject: formatQty(rejectRaw),
-                        rejectRaw: numericQty(rejectRaw),
                         conditional: formatQty(condRaw),
                         conditionalRaw: numericQty(condRaw),
                         processType: processType,
                         engineer: engineer,
-                        rawSearch: `${clientName} ${projectName} ${subtitle} ${subSubAssembly} ${drawingNo} ${partName} ${deliveredRaw} ${accRaw} ${reworkRaw} ${rejectRaw} ${condRaw} ${processType} ${engineer}`
+                        rawSearch: `${clientName} ${projectName} ${subtitle} ${subSubAssembly} ${drawingNo} ${partName} ${deliveredRaw} ${accRaw} ${condRaw} ${processType} ${engineer}`
                             .toLowerCase()
                     });
                 }
 
                 document.getElementById('totalDeliveredSum').innerText = sumDelivered.toLocaleString();
                 document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
-                document.getElementById('totalReworkSum').innerText = sumRework.toLocaleString();
-                document.getElementById('totalRejectSum').innerText = sumReject.toLocaleString();
                 document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
 
                 // Populate dropdowns
@@ -448,7 +400,7 @@
             } catch (err) {
                 console.error(err);
                 tbody.innerHTML =
-                    `<tr><td colspan="11" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
+                    `<tr><td colspan="9" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
                 statusSpan.innerText = '❌ Error';
             }
         }
@@ -476,11 +428,11 @@
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
                 tbody.innerHTML =
-                    `<tr><td colspan="11" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
+                    `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
                 return;
             }
 
-            // Build tree: Client → Title → Subtitle → SubSubAssembly → rows
+            // Build tree
             const clientMap = new Map();
             for (const row of rows) {
                 const client = row.clientName;
@@ -569,8 +521,6 @@
                                         <td class="font-medium">${escapeHtml(row.partName)}</td>
                                         <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${row.delivered}</td>
                                         <td class="text-right tabular-nums col-accepted">${row.accepted}</td>
-                                        <td class="text-right tabular-nums col-rework">${row.rework}</td>
-                                        <td class="text-right tabular-nums col-reject">${row.reject}</td>
                                         <td class="text-right tabular-nums col-conditional">${row.conditional}</td>
                                     </tr>`;
                             }
@@ -591,7 +541,7 @@
             });
         }
 
-        // ---------- XLSX Export with merged cells ----------
+        // ---------- XLSX Export with merged cells (no rework/reject) ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -636,7 +586,7 @@
             }
 
             const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Drawing No.', 'Part Name',
-                'Delivered (Acc+Cond)', 'Accepted', 'Rework', 'Reject', 'Conditional'
+                'Delivered (Acc+Cond)', 'Accepted', 'Conditional'
             ];
             const data = [headers];
             const merges = [];
@@ -689,8 +639,6 @@
                                 rowData.push(row.partName);
                                 rowData.push(row.delivered);
                                 rowData.push(row.accepted);
-                                rowData.push(row.rework);
-                                rowData.push(row.reject);
                                 rowData.push(row.conditional);
                                 data.push(rowData);
                                 currentRowIdx++;
@@ -721,8 +669,7 @@
             ws['!merges'] = merges;
             ws['!cols'] = [
                 { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 18 },
-                { wch: 15 }, { wch: 20 }, { wch: 16 }, { wch: 12 },
-                { wch: 10 }, { wch: 10 }, { wch: 14 }
+                { wch: 15 }, { wch: 20 }, { wch: 16 }, { wch: 12 }, { wch: 14 }
             ];
 
             const wb = XLSX.utils.book_new();
@@ -730,7 +677,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard (flattened) ----------
+        // ---------- Copy to clipboard (flattened, no rework/reject) ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -749,10 +696,10 @@
             }
 
             let tsv =
-                "Client\tTitle\tSubtitle\tSub Sub Assembly\tDrawing No.\tPart Name\tDelivered (Acc+Cond)\tAccepted\tRework\tReject\tConditional\n";
+                "Client\tTitle\tSubtitle\tSub Sub Assembly\tDrawing No.\tPart Name\tDelivered (Acc+Cond)\tAccepted\tConditional\n";
             for (const row of dataToCopy) {
                 tsv +=
-                    `${row.clientName}\t${row.projectName}\t${row.subtitle}\t${row.subSubAssembly}\t${row.drawingNo}\t${row.partName}\t${row.delivered}\t${row.accepted}\t${row.rework}\t${row.reject}\t${row.conditional}\n`;
+                    `${row.clientName}\t${row.projectName}\t${row.subtitle}\t${row.subSubAssembly}\t${row.drawingNo}\t${row.partName}\t${row.delivered}\t${row.accepted}\t${row.conditional}\n`;
             }
             try {
                 await navigator.clipboard.writeText(tsv);
