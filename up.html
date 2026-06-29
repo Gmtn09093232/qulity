@@ -227,6 +227,16 @@
             margin: 0.1rem 0.15rem;
             white-space: nowrap;
         }
+        .subsub-single {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.1rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+            border: 1px solid #93b5e8;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -581,14 +591,15 @@
                 let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ?
                     'Needs Action' : 'On Track');
 
-                let subSubHtml = '';
+                // Show only the first sub-sub assembly, with a +N if more
                 const list = p.subSubAssemblyList || [];
+                let subSubHtml = '';
                 if (list.length === 0) {
                     subSubHtml = '<span class="text-slate-400 text-xs">—</span>';
                 } else {
-                    const shown = list.slice(0, 3);
-                    const remaining = list.length - 3;
-                    subSubHtml = shown.map(s => `<span class="subsub-badge">${escapeHtml(s)}</span>`).join(' ');
+                    const first = list[0];
+                    const remaining = list.length - 1;
+                    subSubHtml = `<span class="subsub-single">${escapeHtml(first)}</span>`;
                     if (remaining > 0) {
                         subSubHtml += ` <span class="subsub-badge-more">+${remaining}</span>`;
                     }
@@ -610,13 +621,14 @@
                 return;
             }
             const rows = [
-                ['Client', 'Project Title', 'Sub‑assemblies', 'Sub Sub Assembly', 'Inspections', 'Delivered Qty',
+                ['Client', 'Project Title', 'Sub‑assemblies', 'Sub Sub Assembly (first)', 'Inspections', 'Delivered Qty',
                     'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept', 'Accept %', 'Last Inspection',
                     'Status'
                 ]
             ];
             for (const p of currentFilteredProjects) {
-                rows.push([p.client, p.title, p.subtitlesArray.length, (p.subSubAssemblyList || []).join(', '), p
+                const firstSubSub = (p.subSubAssemblyList && p.subSubAssemblyList.length) ? p.subSubAssemblyList[0] : '';
+                rows.push([p.client, p.title, p.subtitlesArray.length, firstSubSub, p
                     .totalInspections, p.totalDelivered, p.totalAccepted, p.totalRework, p.totalReject, p
                     .totalConditional, p.acceptanceRate + '%', p.lastDateStr, p.followStatus === 'critical' ?
                     'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track')
@@ -671,8 +683,8 @@
                     for (const [ss, parts] of Object.entries(grouped)) {
                         rows.push([`  └─ Sub Sub: ${ss}`]);
                         for (const part of parts) {
-                            rows.push(['    ' + part.part_name, part.subSub || '—', '', part.quantity, '', '', '', '',
-                            '']);
+                            rows.push(['    ' + part.part_name, '', '', part.quantity, '', '', '', '',
+                            '']); // sub-sub column left empty (already in header)
                             if (part.dwgList || part.tagList) rows.push(['      DWG: ' + part.dwgList, 'Tag: ' + part
                                 .tagList, '', '', '', '', '', ''
                             ]);
@@ -889,7 +901,6 @@
                                             <tr>
                                                 <th class="text-center" style="width: 40px;">No.</th>
                                                 <th>Part Name</th>
-                                                <th>Sub Sub Assembly</th>
                                                 <th class="text-center">Total Delivered Qty</th>
                                                 <th>DWG No.</th>
                                                 <th>Tag No.</th>
@@ -906,8 +917,7 @@
                                 // Header row for this sub-sub assembly
                                 partsTableHtml += `
                                     <tr class="group-header">
-                                        <td colspan="2"><i class="fa-solid fa-folder-open mr-1"></i> ${escapeHtml(ss)}</td>
-                                        <td colspan="6"></td>
+                                        <td colspan="7"><i class="fa-solid fa-folder-open mr-1"></i> Sub Sub: ${escapeHtml(ss)}</td>
                                     </tr>
                                 `;
                                 // Parts in this group
@@ -916,7 +926,6 @@
                                         <tr>
                                             <td class="text-center text-red-600 font-bold">${rowIdx}</td>
                                             <td><span class="clickable-part" onclick="showPartDetails('${escapeHtml(part.part_name)}')">${escapeHtml(part.part_name)}</span></td>
-                                            <td><span class="subsub-badge" style="font-size:0.6rem;">${escapeHtml(ss)}</span></td>
                                             <td class="text-center">${part.quantity}</td>
                                             <td>${escapeHtml(part.dwgList) || '—'}</td>
                                             <td>${escapeHtml(part.tagList) || '—'}</td>
