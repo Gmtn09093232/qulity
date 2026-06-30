@@ -35,6 +35,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             padding: 1rem;
             transition: 0.2s;
+            border: 1px solid #f1f5f9;
         }
         .chart-box:hover {
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
@@ -50,6 +51,8 @@
         }
         .chart-box h3 i {
             color: #3b82f6;
+            width: 20px;
+            text-align: center;
         }
         .chart-container {
             position: relative;
@@ -66,20 +69,13 @@
                 height: 250px;
             }
         }
+        .chart-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
         .table-responsive {
             overflow-x: auto;
-        }
-        .badge-pulse {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.6;
-            }
         }
         .empty-chart-msg {
             display: flex;
@@ -87,13 +83,17 @@
             justify-content: center;
             height: 100%;
             color: #94a3b8;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             flex-direction: column;
             gap: 4px;
         }
         .empty-chart-msg i {
             font-size: 1.5rem;
-            opacity: 0.5;
+            opacity: 0.4;
+        }
+        /* Fix for chart.js legend overlap */
+        .chart-container .chartjs-legend {
+            margin-top: 4px;
         }
     </style>
 </head>
@@ -166,7 +166,7 @@
                 <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">hover for details</span>
             </div>
 
-            <!-- Chart Grid -->
+            <!-- Chart Grid – 6 charts -->
             <div class="chart-grid" id="chartGrid">
                 <!-- Bar Chart -->
                 <div class="chart-box">
@@ -295,7 +295,7 @@
         //  STATE
         // ──────────────────────────────────────────────
         let allInspections = [];
-        let chartInstances = {}; // store all chart objects keyed by id
+        let chartInstances = {};
         let currentFilteredData = [];
 
         const RESULT_COLORS = {
@@ -304,7 +304,6 @@
             'Reject': '#ef4444',
             'Conditional Accept': '#3b82f6'
         };
-        const RESULT_LABELS = ['Accepted', 'Rework', 'Reject', 'Conditional Accept'];
 
         // ──────────────────────────────────────────────
         //  HELPERS
@@ -516,7 +515,6 @@
             const tbody = document.getElementById('resultsTableBody');
             if (totalQuantity === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No quantity data available</td></tr>';
-                // Destroy all charts and show empty messages
                 destroyAllCharts();
                 showEmptyChartMessages();
                 return;
@@ -543,10 +541,11 @@
         }
 
         // ──────────────────────────────────────────────
-        //  RENDER ALL CHARTS
+        //  RENDER ALL CHARTS – fixed for all 6 types
         // ──────────────────────────────────────────────
         function renderAllCharts(items, totalQuantity) {
             destroyAllCharts();
+            clearEmptyMessages();
 
             const chartConfigs = [
                 { id: 'chartBar', type: 'bar', label: 'Bar' },
@@ -559,19 +558,24 @@
 
             chartConfigs.forEach(cfg => {
                 const canvas = document.getElementById(cfg.id);
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-
-                // Build chart data & options based on type
-                const chartData = buildChartData(items, cfg.type);
-                if (!chartData) {
-                    // Show empty message on canvas
-                    showEmptyOnCanvas(canvas);
+                if (!canvas) {
+                    console.warn(`Canvas #${cfg.id} not found`);
                     return;
                 }
+                const ctx = canvas.getContext('2d');
 
-                const chart = new Chart(ctx, chartData);
-                chartInstances[cfg.id] = chart;
+                try {
+                    const chartData = buildChartData(items, cfg.type);
+                    if (!chartData) {
+                        showEmptyOnCanvas(canvas);
+                        return;
+                    }
+                    const chart = new Chart(ctx, chartData);
+                    chartInstances[cfg.id] = chart;
+                } catch (err) {
+                    console.error(`Error creating chart ${cfg.id}:`, err);
+                    showEmptyOnCanvas(canvas);
+                }
             });
         }
 
@@ -583,6 +587,7 @@
 
             if (total === 0) return null;
 
+            // Base config
             let config = {
                 type: type,
                 data: {},
@@ -615,7 +620,7 @@
                 }
             };
 
-            // ── Bar ──
+            // ── Bar (vertical) ──
             if (type === 'bar') {
                 config.data = {
                     labels: labels,
@@ -654,8 +659,8 @@
                     y: { grid: { display: false } }
                 };
             }
-            // ── Pie / Doughnut ──
-            else if (type === 'pie' || type === 'doughnut') {
+            // ── Pie ──
+            else if (type === 'pie') {
                 config.data = {
                     labels: labels,
                     datasets: [{
@@ -666,9 +671,22 @@
                         hoverOffset: 8
                     }]
                 };
-                if (type === 'doughnut') {
-                    config.data.datasets[0].cutout = '55%';
-                }
+                config.options.plugins.legend.position = 'right';
+                config.options.scales = {};
+            }
+            // ── Doughnut ──
+            else if (type === 'doughnut') {
+                config.data = {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        hoverOffset: 8,
+                        cutout: '55%'
+                    }]
+                };
                 config.options.plugins.legend.position = 'right';
                 config.options.scales = {};
             }
@@ -696,7 +714,7 @@
                     datasets: [{
                         label: 'Quantity',
                         data: values,
-                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
                         borderColor: '#3b82f6',
                         borderWidth: 2,
                         pointBackgroundColor: colors,
@@ -718,10 +736,21 @@
 
         function destroyAllCharts() {
             Object.keys(chartInstances).forEach(key => {
-                if (chartInstances[key]) {
-                    chartInstances[key].destroy();
-                    delete chartInstances[key];
-                }
+                try {
+                    if (chartInstances[key]) {
+                        chartInstances[key].destroy();
+                    }
+                } catch (e) { /* ignore */ }
+                delete chartInstances[key];
+            });
+        }
+
+        function clearEmptyMessages() {
+            document.querySelectorAll('.chart-container').forEach(container => {
+                const msg = container.querySelector('.empty-chart-msg');
+                if (msg) msg.remove();
+                const canvas = container.querySelector('canvas');
+                if (canvas) canvas.style.display = 'block';
             });
         }
 
@@ -735,35 +764,16 @@
 
         function showEmptyOnCanvas(canvas) {
             const parent = canvas.parentElement;
-            // Remove any existing empty message
-            const existing = parent.querySelector('.empty-chart-msg');
+            if (!parent) return;
+            let existing = parent.querySelector('.empty-chart-msg');
             if (existing) existing.remove();
-            // Show message overlay
             const div = document.createElement('div');
             div.className = 'empty-chart-msg';
             div.innerHTML = `<i class="fas fa-chart-simple"></i><span>No data</span>`;
             parent.style.position = 'relative';
             parent.appendChild(div);
-            // Hide canvas
             canvas.style.display = 'none';
         }
-
-        // Override to clear empty messages when data exists
-        function clearEmptyMessages() {
-            document.querySelectorAll('.chart-container').forEach(container => {
-                const msg = container.querySelector('.empty-chart-msg');
-                if (msg) msg.remove();
-                const canvas = container.querySelector('canvas');
-                if (canvas) canvas.style.display = 'block';
-            });
-        }
-
-        // Modify updateResultsByQuantity to clear empty messages before rendering
-        const originalUpdateResults = updateResultsByQuantity;
-        updateResultsByQuantity = function(data) {
-            clearEmptyMessages();
-            originalUpdateResults(data);
-        };
 
         // ──────────────────────────────────────────────
         //  FAILURE COST BY PROCESS
