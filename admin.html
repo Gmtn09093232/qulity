@@ -14,55 +14,57 @@
             transform: translateY(-2px);
             transition: 0.2s;
         }
-        .chart-container {
-            position: relative;
-            height: 320px;
-            width: 100%;
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
         }
-        .chart-tab-btn {
-            transition: all 0.2s;
-            border-radius: 8px;
-            font-weight: 500;
-            padding: 8px 18px;
-            border: 2px solid transparent;
-            background: #f1f5f9;
-            color: #475569;
-            cursor: pointer;
+        @media (min-width: 640px) {
+            .chart-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .chart-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        .chart-box {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 1rem;
+            transition: 0.2s;
+        }
+        .chart-box:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+        .chart-box h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.875rem;
         }
-        .chart-tab-btn:hover {
-            background: #e2e8f0;
-            color: #1e293b;
+        .chart-box h3 i {
+            color: #3b82f6;
         }
-        .chart-tab-btn.active {
-            background: #1e3a5f;
-            color: white;
-            border-color: #1e3a5f;
-            box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
         }
-        .chart-tab-btn i {
-            font-size: 1rem;
-        }
-        .chart-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        @media (max-width: 640px) {
-            .chart-tab-btn {
-                font-size: 0.75rem;
-                padding: 6px 12px;
-            }
-            .chart-tab-btn i {
-                font-size: 0.8rem;
+        @media (min-width: 640px) {
+            .chart-container {
+                height: 220px;
             }
         }
-        .fade-transition {
-            transition: opacity 0.25s ease;
+        @media (min-width: 1024px) {
+            .chart-container {
+                height: 250px;
+            }
         }
         .table-responsive {
             overflow-x: auto;
@@ -78,6 +80,20 @@
             50% {
                 opacity: 0.6;
             }
+        }
+        .empty-chart-msg {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .empty-chart-msg i {
+            font-size: 1.5rem;
+            opacity: 0.5;
         }
     </style>
 </head>
@@ -143,47 +159,49 @@
             </div>
         </div>
 
-        <!-- Results Distribution – with MULTIPLE CHART TYPES (tabs) -->
+        <!-- Results Distribution – ALL CHART TYPES displayed simultaneously -->
         <div class="bg-white rounded-lg shadow p-4 mb-6">
             <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-                <h2 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-chart-bar text-blue-600"></i> Results Distribution (by Quantity)</h2>
-                <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">click chart type to switch</span>
+                <h2 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-chart-pie text-blue-600"></i> Results Distribution (by Quantity) – All Views</h2>
+                <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">hover for details</span>
             </div>
 
-            <!-- Chart Type Tabs -->
-            <div class="chart-tabs" id="chartTabs">
-                <button class="chart-tab-btn active" data-type="bar" onclick="setChartType('bar')">
-                    <i class="fas fa-chart-bar"></i> Bar
-                </button>
-                <button class="chart-tab-btn" data-type="pie" onclick="setChartType('pie')">
-                    <i class="fas fa-chart-pie"></i> Pie
-                </button>
-                <button class="chart-tab-btn" data-type="doughnut" onclick="setChartType('doughnut')">
-                    <i class="fas fa-circle"></i> Doughnut
-                </button>
-                <button class="chart-tab-btn" data-type="horizontalBar" onclick="setChartType('horizontalBar')">
-                    <i class="fas fa-chart-bar fa-rotate-90"></i> Horizontal
-                </button>
-                <button class="chart-tab-btn" data-type="polarArea" onclick="setChartType('polarArea')">
-                    <i class="fas fa-chart-area"></i> Polar
-                </button>
-                <button class="chart-tab-btn" data-type="radar" onclick="setChartType('radar')">
-                    <i class="fas fa-chart-line"></i> Radar
-                </button>
+            <!-- Chart Grid -->
+            <div class="chart-grid" id="chartGrid">
+                <!-- Bar Chart -->
+                <div class="chart-box">
+                    <h3><i class="fas fa-chart-bar"></i> Bar</h3>
+                    <div class="chart-container"><canvas id="chartBar"></canvas></div>
+                </div>
+                <!-- Pie Chart -->
+                <div class="chart-box">
+                    <h3><i class="fas fa-chart-pie"></i> Pie</h3>
+                    <div class="chart-container"><canvas id="chartPie"></canvas></div>
+                </div>
+                <!-- Doughnut Chart -->
+                <div class="chart-box">
+                    <h3><i class="fas fa-circle"></i> Doughnut</h3>
+                    <div class="chart-container"><canvas id="chartDoughnut"></canvas></div>
+                </div>
+                <!-- Horizontal Bar -->
+                <div class="chart-box">
+                    <h3><i class="fas fa-chart-bar fa-rotate-90"></i> Horizontal</h3>
+                    <div class="chart-container"><canvas id="chartHorizontal"></canvas></div>
+                </div>
+                <!-- Polar Area -->
+                <div class="chart-box">
+                    <h3><i class="fas fa-chart-area"></i> Polar</h3>
+                    <div class="chart-container"><canvas id="chartPolar"></canvas></div>
+                </div>
+                <!-- Radar -->
+                <div class="chart-box">
+                    <h3><i class="fas fa-chart-line"></i> Radar</h3>
+                    <div class="chart-container"><canvas id="chartRadar"></canvas></div>
+                </div>
             </div>
 
-            <!-- Chart Canvas -->
-            <div class="chart-container fade-transition" id="chartWrapper">
-                <canvas id="resultChart"></canvas>
-            </div>
-
-            <!-- Small note below chart -->
-            <div class="text-xs text-gray-400 mt-2 text-center">
-                <i class="fas fa-info-circle"></i> Hover over chart elements for details
-            </div>
-
-            <!-- Table below chart (kept for data reference) -->
-            <div class="mt-4 border-t pt-4">
+            <!-- Data Table (below charts) -->
+            <div class="mt-6 border-t pt-4">
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm border-collapse">
                         <thead class="bg-gray-100">
@@ -277,16 +295,14 @@
         //  STATE
         // ──────────────────────────────────────────────
         let allInspections = [];
-        let resultChart = null;
-        let currentChartType = 'bar';
+        let chartInstances = {}; // store all chart objects keyed by id
         let currentFilteredData = [];
 
         const RESULT_COLORS = {
             'Accepted': '#22c55e',
             'Rework': '#eab308',
             'Reject': '#ef4444',
-            'Conditional Accept': '#3b82f6',
-            'Conditional Accepted': '#3b82f6'
+            'Conditional Accept': '#3b82f6'
         };
         const RESULT_LABELS = ['Accepted', 'Rework', 'Reject', 'Conditional Accept'];
 
@@ -476,7 +492,7 @@
         }
 
         // ──────────────────────────────────────────────
-        //  RESULTS DISTRIBUTION (with chart type switching)
+        //  RESULTS DISTRIBUTION – generate data & render all charts
         // ──────────────────────────────────────────────
         function getResultTotals(data) {
             let accepted = 0,
@@ -500,8 +516,9 @@
             const tbody = document.getElementById('resultsTableBody');
             if (totalQuantity === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No quantity data available</td></tr>';
-                if (resultChart) { resultChart.destroy();
-                    resultChart = null; }
+                // Destroy all charts and show empty messages
+                destroyAllCharts();
+                showEmptyChartMessages();
                 return;
             }
 
@@ -521,31 +538,52 @@
                 </tr>
             `).join('');
 
-            // Render chart with current type
-            renderChart(items, totalQuantity, currentChartType);
+            // Render all six charts
+            renderAllCharts(items, totalQuantity);
         }
 
         // ──────────────────────────────────────────────
-        //  CHART RENDER (supports multiple types)
+        //  RENDER ALL CHARTS
         // ──────────────────────────────────────────────
-        function renderChart(items, totalQuantity, type) {
-            const ctx = document.getElementById('resultChart').getContext('2d');
-            if (resultChart) { resultChart.destroy();
-                resultChart = null; }
+        function renderAllCharts(items, totalQuantity) {
+            destroyAllCharts();
 
-            if (!items || items.length === 0 || totalQuantity === 0) {
-                // Show empty state on canvas
-                const canvas = document.getElementById('resultChart');
-                const parent = canvas.parentElement;
-                // We'll just draw nothing – chart will be empty
-                return;
-            }
+            const chartConfigs = [
+                { id: 'chartBar', type: 'bar', label: 'Bar' },
+                { id: 'chartPie', type: 'pie', label: 'Pie' },
+                { id: 'chartDoughnut', type: 'doughnut', label: 'Doughnut' },
+                { id: 'chartHorizontal', type: 'horizontalBar', label: 'Horizontal' },
+                { id: 'chartPolar', type: 'polarArea', label: 'Polar' },
+                { id: 'chartRadar', type: 'radar', label: 'Radar' }
+            ];
 
+            chartConfigs.forEach(cfg => {
+                const canvas = document.getElementById(cfg.id);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+
+                // Build chart data & options based on type
+                const chartData = buildChartData(items, cfg.type);
+                if (!chartData) {
+                    // Show empty message on canvas
+                    showEmptyOnCanvas(canvas);
+                    return;
+                }
+
+                const chart = new Chart(ctx, chartData);
+                chartInstances[cfg.id] = chart;
+            });
+        }
+
+        function buildChartData(items, type) {
             const labels = items.map(d => d.label);
             const values = items.map(d => d.value);
             const colors = items.map(d => d.color);
+            const total = values.reduce((a, b) => a + b, 0);
 
-            let chartConfig = {
+            if (total === 0) return null;
+
+            let config = {
                 type: type,
                 data: {},
                 options: {
@@ -554,21 +592,21 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { font: { size: 12 }, padding: 16, usePointStyle: true, pointStyle: 'circle' }
+                            labels: {
+                                font: { size: 10 },
+                                padding: 8,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                boxWidth: 10
+                            }
                         },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     let label = context.label || '';
-                                    let val = context.parsed;
                                     let raw = context.raw;
-                                    if (type === 'pie' || type === 'doughnut' || type === 'polarArea' || type ===
-                                        'radar') {
-                                        let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        let pct = total > 0 ? ((raw / total) * 100).toFixed(1) : 0;
-                                        return `${label}: ${raw.toLocaleString()} (${pct}%)`;
-                                    }
-                                    return `${label}: ${raw.toLocaleString()}`;
+                                    let pct = total > 0 ? ((raw / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ${raw.toLocaleString()} (${pct}%)`;
                                 }
                             }
                         }
@@ -577,9 +615,9 @@
                 }
             };
 
-            // ── Bar (vertical) ──
+            // ── Bar ──
             if (type === 'bar') {
-                chartConfig.data = {
+                config.data = {
                     labels: labels,
                     datasets: [{
                         label: 'Total Quantity',
@@ -587,20 +625,18 @@
                         backgroundColor: colors.map(c => c + 'CC'),
                         borderColor: colors,
                         borderWidth: 2,
-                        borderRadius: 6,
-                        barPercentage: 0.65
+                        borderRadius: 4,
+                        barPercentage: 0.6
                     }]
                 };
-                chartConfig.options.scales = {
-                    y: { beginAtZero: true, title: { display: true, text: 'Quantity' }, ticks: { callback: v => v
-                                .toLocaleString() } },
+                config.options.scales = {
+                    y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() }, grid: { color: '#e9ecef' } },
                     x: { grid: { display: false } }
                 };
             }
-
             // ── Horizontal Bar ──
             else if (type === 'horizontalBar') {
-                chartConfig.data = {
+                config.data = {
                     labels: labels,
                     datasets: [{
                         label: 'Total Quantity',
@@ -608,72 +644,54 @@
                         backgroundColor: colors.map(c => c + 'CC'),
                         borderColor: colors,
                         borderWidth: 2,
-                        borderRadius: 6,
-                        barPercentage: 0.65
+                        borderRadius: 4,
+                        barPercentage: 0.6
                     }]
                 };
-                chartConfig.options.scales = {
-                    x: { beginAtZero: true, title: { display: true, text: 'Quantity' }, ticks: { callback: v => v
-                                .toLocaleString() } },
+                config.options.indexAxis = 'y';
+                config.options.scales = {
+                    x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() }, grid: { color: '#e9ecef' } },
                     y: { grid: { display: false } }
                 };
-                chartConfig.options.indexAxis = 'y';
             }
-
-            // ── Pie ──
-            else if (type === 'pie') {
-                chartConfig.data = {
+            // ── Pie / Doughnut ──
+            else if (type === 'pie' || type === 'doughnut') {
+                config.data = {
                     labels: labels,
                     datasets: [{
                         data: values,
                         backgroundColor: colors,
                         borderColor: '#ffffff',
                         borderWidth: 2,
-                        hoverOffset: 12
+                        hoverOffset: 8
                     }]
                 };
-                chartConfig.options.plugins.legend.position = 'right';
-                chartConfig.options.scales = {};
+                if (type === 'doughnut') {
+                    config.data.datasets[0].cutout = '55%';
+                }
+                config.options.plugins.legend.position = 'right';
+                config.options.scales = {};
             }
-
-            // ── Doughnut ──
-            else if (type === 'doughnut') {
-                chartConfig.data = {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: colors,
-                        borderColor: '#ffffff',
-                        borderWidth: 2,
-                        hoverOffset: 12,
-                        cutout: '55%'
-                    }]
-                };
-                chartConfig.options.plugins.legend.position = 'right';
-                chartConfig.options.scales = {};
-            }
-
             // ── Polar Area ──
             else if (type === 'polarArea') {
-                chartConfig.data = {
+                config.data = {
                     labels: labels,
                     datasets: [{
                         data: values,
                         backgroundColor: colors.map(c => c + 'CC'),
                         borderColor: colors,
                         borderWidth: 2,
-                        hoverOffset: 12
+                        hoverOffset: 8
                     }]
                 };
-                chartConfig.options.plugins.legend.position = 'right';
-                chartConfig.options.scales = {
+                config.options.plugins.legend.position = 'right';
+                config.options.scales = {
                     r: { beginAtZero: true, ticks: { stepSize: Math.ceil(Math.max(...values) / 5) || 1 } }
                 };
             }
-
             // ── Radar ──
             else if (type === 'radar') {
-                chartConfig.data = {
+                config.data = {
                     labels: labels,
                     datasets: [{
                         label: 'Quantity',
@@ -684,39 +702,68 @@
                         pointBackgroundColor: colors,
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
-                        pointRadius: 6,
+                        pointRadius: 4,
                         fill: true,
                         tension: 0.1
                     }]
                 };
-                chartConfig.options.scales = {
+                config.options.scales = {
                     r: { beginAtZero: true, ticks: { stepSize: Math.ceil(Math.max(...values) / 5) || 1 } }
                 };
-                chartConfig.options.plugins.legend.position = 'bottom';
+                config.options.plugins.legend.position = 'bottom';
             }
 
-            // Create chart
-            resultChart = new Chart(ctx, chartConfig);
+            return config;
         }
 
-        // ──────────────────────────────────────────────
-        //  CHART TYPE SWITCHER
-        // ──────────────────────────────────────────────
-        function setChartType(type) {
-            currentChartType = type;
-            // Update active tab
-            document.querySelectorAll('.chart-tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.type === type);
+        function destroyAllCharts() {
+            Object.keys(chartInstances).forEach(key => {
+                if (chartInstances[key]) {
+                    chartInstances[key].destroy();
+                    delete chartInstances[key];
+                }
             });
-            // Re-render with current data
-            if (currentFilteredData.length > 0) {
-                updateResultsByQuantity(currentFilteredData);
-            } else {
-                // If no data, just render empty
-                if (resultChart) { resultChart.destroy();
-                    resultChart = null; }
-            }
         }
+
+        function showEmptyChartMessages() {
+            const ids = ['chartBar', 'chartPie', 'chartDoughnut', 'chartHorizontal', 'chartPolar', 'chartRadar'];
+            ids.forEach(id => {
+                const canvas = document.getElementById(id);
+                if (canvas) showEmptyOnCanvas(canvas);
+            });
+        }
+
+        function showEmptyOnCanvas(canvas) {
+            const parent = canvas.parentElement;
+            // Remove any existing empty message
+            const existing = parent.querySelector('.empty-chart-msg');
+            if (existing) existing.remove();
+            // Show message overlay
+            const div = document.createElement('div');
+            div.className = 'empty-chart-msg';
+            div.innerHTML = `<i class="fas fa-chart-simple"></i><span>No data</span>`;
+            parent.style.position = 'relative';
+            parent.appendChild(div);
+            // Hide canvas
+            canvas.style.display = 'none';
+        }
+
+        // Override to clear empty messages when data exists
+        function clearEmptyMessages() {
+            document.querySelectorAll('.chart-container').forEach(container => {
+                const msg = container.querySelector('.empty-chart-msg');
+                if (msg) msg.remove();
+                const canvas = container.querySelector('canvas');
+                if (canvas) canvas.style.display = 'block';
+            });
+        }
+
+        // Modify updateResultsByQuantity to clear empty messages before rendering
+        const originalUpdateResults = updateResultsByQuantity;
+        updateResultsByQuantity = function(data) {
+            clearEmptyMessages();
+            originalUpdateResults(data);
+        };
 
         // ──────────────────────────────────────────────
         //  FAILURE COST BY PROCESS
