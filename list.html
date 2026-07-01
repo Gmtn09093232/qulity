@@ -11,17 +11,56 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
         @media print {
-            body * { visibility: hidden; }
-            .report-container, .report-container * { visibility: visible; }
-            .report-container { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
-            .no-print { display: none !important; }
-            .summary-cards { display: none !important; }
-            .filter-bar, .action-buttons { display: none !important; }
-            table th, table td { padding: 4px 6px !important; font-size: 0.75rem !important; }
-            .table-wrapper { border-radius: 0 !important; }
+            body * {
+                visibility: hidden;
+            }
+            .report-container,
+            .report-container * {
+                visibility: visible;
+            }
+            .report-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .summary-cards {
+                display: none !important;
+            }
+            .filter-bar,
+            .action-buttons {
+                display: none !important;
+            }
+            table th,
+            table td {
+                padding: 4px 6px !important;
+                font-size: 0.7rem !important;
+            }
+            .table-wrapper {
+                border-radius: 0 !important;
+            }
+            .manual-input {
+                border: 1px solid #ccc !important;
+                background: #fff !important;
+                font-size: 0.7rem !important;
+                padding: 2px 4px !important;
+                width: 60px !important;
+            }
         }
-        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
         th {
             background-color: #f1f5f9;
             position: sticky;
@@ -33,14 +72,27 @@
             border-bottom: 2px solid #e2e8f0;
             white-space: nowrap;
         }
-        td { padding: 8px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
-        tr:hover td { background-color: #f8fafc; }
+        td {
+            padding: 6px 6px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+        tr:hover td {
+            background-color: #f8fafc;
+        }
         .summary-card {
             transition: all 0.2s;
             border-radius: 1rem;
         }
-        .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        .filter-input:focus { outline: none; ring: 2px solid #3b82f6; border-color: transparent; }
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        .filter-input:focus {
+            outline: none;
+            ring: 2px solid #3b82f6;
+            border-color: transparent;
+        }
         .loader {
             border: 3px solid #e2e8f0;
             border-top: 3px solid #3b82f6;
@@ -50,7 +102,14 @@
             animation: spin 0.8s linear infinite;
             margin: 20px auto;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
         .badge {
             display: inline-block;
             padding: 0.15rem 0.6rem;
@@ -58,11 +117,25 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
-        .badge-accepted { background: #dcfce7; color: #166534; }
-        .badge-conditional { background: #f3e8ff; color: #6b21a8; }
-        .col-delivered { background: #eff6ff; font-weight: 600; color: #1e40af; }
-        .col-accepted { color: #166534; }
-        .col-conditional { color: #6b21a8; }
+        .badge-accepted {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-conditional {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+        .col-delivered {
+            background: #eff6ff;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        .col-accepted {
+            color: #166534;
+        }
+        .col-conditional {
+            color: #6b21a8;
+        }
         .sub-assembly-tag {
             font-size: 0.7rem;
             background: #eef2ff;
@@ -78,6 +151,127 @@
             display: inline-block;
             word-break: break-word;
         }
+        .group-row-title {
+            background-color: #f0f9ff;
+            font-weight: 600;
+        }
+        .group-row-title td {
+            border-top: 2px solid #93c5fd;
+            border-bottom: 2px solid #93c5fd;
+        }
+        .group-row-subtitle {
+            background-color: #f5f3ff;
+            font-weight: 500;
+        }
+        .group-row-subtitle td {
+            border-top: 1px solid #c4b5fd;
+            border-bottom: 1px solid #c4b5fd;
+        }
+        .group-row-assembly {
+            background-color: #fefce8;
+            font-weight: 500;
+        }
+        .group-row-assembly td {
+            border-top: 1px solid #fde68a;
+            border-bottom: 1px solid #fde68a;
+        }
+        .part-row td {
+            background-color: #ffffff;
+        }
+        .part-row:hover td {
+            background-color: #f8fafc;
+        }
+        .manual-input {
+            width: 72px;
+            padding: 4px 6px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            background: #fafafa;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .manual-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+            background: #fff;
+        }
+        .manual-input.variance-positive {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+        .manual-input.variance-negative {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        .variance-value {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .variance-positive {
+            color: #16a34a;
+        }
+        .variance-negative {
+            color: #dc2626;
+        }
+        .variance-zero {
+            color: #6b7280;
+        }
+        .group-label {
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: #4b5563;
+            letter-spacing: 0.3px;
+        }
+        .group-name {
+            font-weight: 600;
+        }
+        .manual-col-header {
+            background: #eef2ff;
+            color: #4338ca;
+        }
+        .variance-col-header {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .part-indent {
+            padding-left: 20px !important;
+        }
+        .rowspan-fix {
+            vertical-align: middle !important;
+        }
+        .group-summary-row td {
+            padding: 8px 6px;
+        }
+        .group-summary-row .manual-input {
+            width: 80px;
+        }
+        .table-footer-info {
+            font-size: 0.75rem;
+        }
+        .filter-bar label {
+            font-weight: 500;
+        }
+        /* responsive tweaks */
+        @media (max-width: 640px) {
+            .manual-input {
+                width: 56px;
+                font-size: 0.7rem;
+                padding: 2px 4px;
+            }
+            table {
+                font-size: 0.7rem;
+            }
+            th,
+            td {
+                padding: 4px 4px;
+            }
+            .group-name {
+                font-size: 0.75rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
@@ -91,7 +285,7 @@
                     <i class="fa-solid fa-clipboard-list text-blue-600"></i>
                     Inspection Report
                 </h1>
-                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Only parts with delivered > 0 shown</p>
+                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Manual totals at Title / Subtitle / Sub‑Assembly levels</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -109,7 +303,7 @@
             </div>
         </div>
 
-        <!-- Summary Cards (unchanged – overall totals) -->
+        <!-- Summary Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 no-print summary-cards">
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
@@ -178,13 +372,15 @@
                             <th class="text-left">📎 Sub Sub Assembly</th>
                             <th class="text-left">🔧 Part Name</th>
                             <th class="text-left">📄 Drawing No.</th>
-                            <th class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc + Cond)</span></th>
+                            <th class="text-right manual-col-header" style="min-width:90px;">✏️ Manual Total</th>
+                            <th class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc+Cond)</span></th>
+                            <th class="text-right variance-col-header" style="min-width:80px;">📊 Variance</th>
                             <th class="text-right">✅ Accepted</th>
                             <th class="text-right">⚠️ Conditional</th>
                         </tr>
                     </thead>
                     <tbody id="reportTableBody">
-                        <tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections…</p></td></tr>
+                        <tr><td colspan="11" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections…</p></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -202,6 +398,8 @@
             <span class="text-gray-400">(Rework &amp; Reject are handled separately)</span>
             <span><i class="fa-solid fa-list"></i> Drawing numbers are listed per part</span>
             <span><i class="fa-solid fa-eye-slash"></i> Parts with zero delivered are hidden</span>
+            <span class="text-blue-700"><i class="fa-regular fa-pen-to-square"></i> <strong>Manual Total</strong> = enter planned/expected qty per group</span>
+            <span class="text-amber-700"><i class="fa-solid fa-calculator"></i> <strong>Variance</strong> = Manual − Delivered</span>
         </div>
     </div>
 
@@ -255,11 +453,32 @@
             });
         }
 
+        function safeStr(v) { return (v || '').toString(); }
+
         // ---------- State ----------
         let allReportRows = [];
         let uniqueProjectNames = new Set();
         let uniqueProcessTypes = new Set();
         let uniqueEngineers = new Set();
+
+        // Store manual values per group key
+        const manualStore = new Map(); // key -> number
+
+        function getGroupKey(type, client, title, subtitle, assembly) {
+            return `${type}|${client}|${title}|${subtitle}|${assembly}`;
+        }
+
+        function getManualValue(key) {
+            return manualStore.has(key) ? manualStore.get(key) : null;
+        }
+
+        function setManualValue(key, val) {
+            if (val === null || val === undefined || isNaN(val) || val === '') {
+                manualStore.delete(key);
+            } else {
+                manualStore.set(key, Number(val));
+            }
+        }
 
         // ---------- Fetch ----------
         async function fetchReportData() {
@@ -267,7 +486,7 @@
             const statusSpan = document.getElementById('recordStatus');
             try {
                 tbody.innerHTML =
-                    `<tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections…</p></td></tr>`;
+                    `<tr><td colspan="11" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections…</p></td></tr>`;
                 statusSpan.innerText = 'Loading…';
                 const response = await fetch('/api/inspections');
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -353,7 +572,7 @@
             } catch (err) {
                 console.error(err);
                 tbody.innerHTML =
-                    `<tr><td colspan="9" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
+                    `<tr><td colspan="11" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
                 statusSpan.innerText = '❌ Error';
             }
         }
@@ -372,21 +591,19 @@
             if (searchTerm) filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
 
             renderAggregatedTable(filtered);
-            // update record count to show number of parts (excluding zero delivered)
-            // We'll compute after rendering.
         }
 
-        // ---------- Aggregated Render with filtering zero delivered ----------
+        // ---------- Aggregated Render with Manual Totals & Variance ----------
         function renderAggregatedTable(rows) {
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
                 tbody.innerHTML =
-                    `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
+                    `<tr><td colspan="11" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
                 document.getElementById('recordCount').innerText = '0 parts';
                 return;
             }
 
-            // Build tree: Client → Title → Subtitle → SubSubAssembly → PartName → aggregate data
+            // Build tree: Client → Title → Subtitle → SubSubAssembly → PartName
             const clientMap = new Map();
             for (const row of rows) {
                 const client = row.clientName;
@@ -428,7 +645,7 @@
                 }
             }
 
-            // Helper to count parts with delivered > 0 in an assembly
+            // ---- Helper: count rows (parts) per assembly ----
             function countParts(assemblyEntry) {
                 let cnt = 0;
                 for (const partEntry of assemblyEntry.partMap.values()) {
@@ -436,9 +653,9 @@
                 }
                 return cnt;
             }
-            function totalRowsForAssembly(assemblyEntry) {
-                return countParts(assemblyEntry);
-            }
+
+            function totalRowsForAssembly(assemblyEntry) { return countParts(assemblyEntry); }
+
             function totalRowsForSubtitle(subtitleEntry) {
                 let sum = 0;
                 for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
@@ -446,6 +663,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForTitle(titleEntry) {
                 let sum = 0;
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -453,6 +671,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForClient(clientEntry) {
                 let sum = 0;
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -461,86 +680,542 @@
                 return sum;
             }
 
-            let html = '';
-            let totalParts = 0;
+            // ---- Build row data with hierarchy ----
+            // We'll build an array of row objects, each with:
+            // type: 'title' | 'subtitle' | 'assembly' | 'part'
+            // client, title, subtitle, assembly, partName, drawingNo
+            // delivered, accepted, conditional, deliveredRaw, acceptedRaw, conditionalRaw
+            // manualKey (for group rows), manualValue
+            // rowspan counts for each level
+
+            const allRows = [];
 
             for (const clientEntry of clientMap.values()) {
+                const clientName = clientEntry.clientName;
                 const clientTotal = totalRowsForClient(clientEntry);
-                let clientPrinted = false;
 
                 for (const titleEntry of clientEntry.titleMap.values()) {
+                    const titleName = titleEntry.titleName;
                     const titleTotal = totalRowsForTitle(titleEntry);
-                    let titlePrinted = false;
+
+                    // ---- Title summary row ----
+                    let titleDelivered = 0,
+                        titleAccepted = 0,
+                        titleConditional = 0;
+                    for (const subEntry of titleEntry.subtitleMap.values()) {
+                        for (const assEntry of subEntry.assemblyMap.values()) {
+                            for (const partEntry of assEntry.partMap.values()) {
+                                if (partEntry.deliveredRaw === 0) continue;
+                                titleDelivered += partEntry.deliveredRaw;
+                                titleAccepted += partEntry.acceptedRaw;
+                                titleConditional += partEntry.conditionalRaw;
+                            }
+                        }
+                    }
+                    const titleKey = getGroupKey('title', clientName, titleName, '', '');
+                    const titleManual = getManualValue(titleKey);
+
+                    allRows.push({
+                        type: 'title',
+                        client: clientName,
+                        title: titleName,
+                        subtitle: '',
+                        assembly: '',
+                        partName: '',
+                        drawingNo: '',
+                        deliveredRaw: titleDelivered,
+                        acceptedRaw: titleAccepted,
+                        conditionalRaw: titleConditional,
+                        manualKey: titleKey,
+                        manualValue: titleManual,
+                        rowspanClient: clientTotal,
+                        rowspanTitle: titleTotal,
+                        rowspanSubtitle: 0,
+                        rowspanAssembly: 0,
+                        isGroup: true,
+                        level: 0
+                    });
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        const subtitleName = subtitleEntry.subtitleName;
                         const subtitleTotal = totalRowsForSubtitle(subtitleEntry);
-                        let subtitlePrinted = false;
+                        if (subtitleTotal === 0) continue;
+
+                        // ---- Subtitle summary row ----
+                        let subDelivered = 0,
+                            subAccepted = 0,
+                            subConditional = 0;
+                        for (const assEntry of subtitleEntry.assemblyMap.values()) {
+                            for (const partEntry of assEntry.partMap.values()) {
+                                if (partEntry.deliveredRaw === 0) continue;
+                                subDelivered += partEntry.deliveredRaw;
+                                subAccepted += partEntry.acceptedRaw;
+                                subConditional += partEntry.conditionalRaw;
+                            }
+                        }
+                        const subKey = getGroupKey('subtitle', clientName, titleName, subtitleName, '');
+                        const subManual = getManualValue(subKey);
+
+                        allRows.push({
+                            type: 'subtitle',
+                            client: clientName,
+                            title: titleName,
+                            subtitle: subtitleName,
+                            assembly: '',
+                            partName: '',
+                            drawingNo: '',
+                            deliveredRaw: subDelivered,
+                            acceptedRaw: subAccepted,
+                            conditionalRaw: subConditional,
+                            manualKey: subKey,
+                            manualValue: subManual,
+                            rowspanClient: 0,
+                            rowspanTitle: 0,
+                            rowspanSubtitle: subtitleTotal,
+                            rowspanAssembly: 0,
+                            isGroup: true,
+                            level: 1
+                        });
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            const assemblyName = assemblyEntry.assemblyName;
                             const assemblyTotal = totalRowsForAssembly(assemblyEntry);
-                            let assemblyPrinted = false;
+                            if (assemblyTotal === 0) continue;
 
+                            // ---- Assembly summary row ----
+                            let assDelivered = 0,
+                                assAccepted = 0,
+                                assConditional = 0;
                             for (const partEntry of assemblyEntry.partMap.values()) {
-                                // Skip parts with zero delivered
                                 if (partEntry.deliveredRaw === 0) continue;
-                                totalParts++;
+                                assDelivered += partEntry.deliveredRaw;
+                                assAccepted += partEntry.acceptedRaw;
+                                assConditional += partEntry.conditionalRaw;
+                            }
+                            const assKey = getGroupKey('assembly', clientName, titleName, subtitleName, assemblyName);
+                            const assManual = getManualValue(assKey);
 
-                                html += `<tr class="hover:bg-gray-50 transition">`;
+                            allRows.push({
+                                type: 'assembly',
+                                client: clientName,
+                                title: titleName,
+                                subtitle: subtitleName,
+                                assembly: assemblyName,
+                                partName: '',
+                                drawingNo: '',
+                                deliveredRaw: assDelivered,
+                                acceptedRaw: assAccepted,
+                                conditionalRaw: assConditional,
+                                manualKey: assKey,
+                                manualValue: assManual,
+                                rowspanClient: 0,
+                                rowspanTitle: 0,
+                                rowspanSubtitle: 0,
+                                rowspanAssembly: assemblyTotal,
+                                isGroup: true,
+                                level: 2
+                            });
 
-                                if (!clientPrinted) {
-                                    html +=
-                                        `<td rowspan="${clientTotal}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
-                                    clientPrinted = true;
-                                }
-                                if (!titlePrinted) {
-                                    html +=
-                                        `<td rowspan="${titleTotal}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
-                                    titlePrinted = true;
-                                }
-                                if (!subtitlePrinted) {
-                                    html +=
-                                        `<td rowspan="${subtitleTotal}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
-                                    subtitlePrinted = true;
-                                }
-                                if (!assemblyPrinted) {
-                                    html +=
-                                        `<td rowspan="${assemblyTotal}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span></td>`;
-                                    assemblyPrinted = true;
-                                }
-
-                                // Part Name
-                                html += `<td class="font-medium align-top">${escapeHtml(partEntry.partName)}</td>`;
-
-                                // Drawing Numbers: join with comma
+                            // ---- Part rows ----
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                if (partEntry.deliveredRaw === 0) continue;
                                 const drawingList = [...partEntry.drawings].sort().join(', ');
-                                html +=
-                                    `<td class="font-mono text-sm drawing-list">${escapeHtml(drawingList) || '—'}</td>`;
-
-                                // Quantities
-                                html += `
-                                    <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${formatQty(partEntry.deliveredRaw)}</td>
-                                    <td class="text-right tabular-nums col-accepted">${formatQty(partEntry.acceptedRaw)}</td>
-                                    <td class="text-right tabular-nums col-conditional">${formatQty(partEntry.conditionalRaw)}</td>
-                                `;
-                                html += `</tr>`;
+                                allRows.push({
+                                    type: 'part',
+                                    client: clientName,
+                                    title: titleName,
+                                    subtitle: subtitleName,
+                                    assembly: assemblyName,
+                                    partName: partEntry.partName,
+                                    drawingNo: drawingList || '—',
+                                    deliveredRaw: partEntry.deliveredRaw,
+                                    acceptedRaw: partEntry.acceptedRaw,
+                                    conditionalRaw: partEntry.conditionalRaw,
+                                    manualKey: '',
+                                    manualValue: null,
+                                    rowspanClient: 0,
+                                    rowspanTitle: 0,
+                                    rowspanSubtitle: 0,
+                                    rowspanAssembly: 0,
+                                    isGroup: false,
+                                    level: 3
+                                });
                             }
                         }
                     }
                 }
             }
 
-            if (totalParts === 0) {
+            // ---- Render table ----
+            let html = '';
+            let totalParts = 0;
+
+            // We need to compute rowspan for each row based on the actual count of rows under each group
+            // Since we already built the rows, we can compute rowspans by counting
+
+            // First pass: count how many rows belong to each group
+            // We'll use the rowspan values already computed but need to adjust for the actual number of rows rendered
+
+            // Actually we already computed rowspan counts using the totalRowsFor* functions.
+            // But those counts include all parts, and we filter out zero-delivered parts.
+            // So we need to recompute based on the actual rows we're about to render.
+
+            // Let's recompute rowspans from the allRows array.
+
+            // For each row, we need to know how many rows are under this group.
+            // We can compute this by counting rows that belong to the same group.
+
+            // For Title rows: count all rows with the same client+title
+            // For Subtitle rows: count all rows with the same client+title+subtitle
+            // For Assembly rows: count all rows with the same client+title+subtitle+assembly
+
+            const rowSpanMap = new Map();
+
+            // Compute rowspans for Title groups
+            const titleGroups = new Map();
+            for (let i = 0; i < allRows.length; i++) {
+                const r = allRows[i];
+                if (r.type === 'title') {
+                    const key = `${r.client}|${r.title}`;
+                    titleGroups.set(key, { start: i, count: 0 });
+                }
+            }
+            for (let i = 0; i < allRows.length; i++) {
+                const r = allRows[i];
+                const key = `${r.client}|${r.title}`;
+                if (titleGroups.has(key)) {
+                    titleGroups.get(key).count++;
+                }
+            }
+            // Assign rowspanTitle to title rows
+            for (const [key, info] of titleGroups) {
+                const row = allRows[info.start];
+                if (row) row.rowspanTitle = info.count;
+            }
+
+            // Compute rowspans for Subtitle groups
+            const subtitleGroups = new Map();
+            for (let i = 0; i < allRows.length; i++) {
+                const r = allRows[i];
+                if (r.type === 'subtitle') {
+                    const key = `${r.client}|${r.title}|${r.subtitle}`;
+                    subtitleGroups.set(key, { start: i, count: 0 });
+                }
+            }
+            for (let i = 0; i < allRows.length; i++) {
+                const r = allRows[i];
+                const key = `${r.client}|${r.title}|${r.subtitle}`;
+                if (subtitleGroups.has(key) && r.type !== 'title') {
+                    subtitleGroups.get(key).count++;
+                }
+            }
+            for (const [key, info] of subtitleGroups) {
+                const row = allRows[info.start];
+                if (row) row.rowspanSubtitle = info.count;
+            }
+
+            // Compute rowspans for Assembly groups
+            const assemblyGroups = new Map();
+            for (let i = 0; i < allRows.length; i++) {
+                const r = allRows[i];
+                if (r.type === 'assembly') {
+                    const key = `${r.client}|${r.title}|${r.subtitle}|${r.assembly}`;
+                    assemblyGroups.set(key, { start: i, count: 0 });
+                }
+            }
+            for (let i = 0; i < allRows.length; i++) {
+                const r = allRows[i];
+                const key = `${r.client}|${r.title}|${r.subtitle}|${r.assembly}`;
+                if (assemblyGroups.has(key) && r.type !== 'title' && r.type !== 'subtitle') {
+                    assemblyGroups.get(key).count++;
+                }
+            }
+            for (const [key, info] of assemblyGroups) {
+                const row = allRows[info.start];
+                if (row) row.rowspanAssembly = info.count;
+            }
+
+            // Also compute client rowspans
+            const clientGroups = new Map();
+            for (let i = 0; i < allRows.length; i++) {
+                const r = allRows[i];
+                if (r.type === 'title') {
+                    const key = r.client;
+                    if (!clientGroups.has(key)) {
+                        clientGroups.set(key, { start: i, count: 0 });
+                    }
+                }
+            }
+            for (let i = 0; i < allRows.length; i++) {
+                const r = allRows[i];
+                if (clientGroups.has(r.client)) {
+                    clientGroups.get(r.client).count++;
+                }
+            }
+            for (const [key, info] of clientGroups) {
+                const row = allRows[info.start];
+                if (row) row.rowspanClient = info.count;
+            }
+
+            // ---- Render ----
+            let renderedCount = 0;
+            let prevClient = '',
+                prevTitle = '',
+                prevSubtitle = '',
+                prevAssembly = '';
+            let clientRendered = false,
+                titleRendered = false,
+                subtitleRendered = false,
+                assemblyRendered = false;
+
+            // Track which groups have been rendered
+            const renderedClients = new Set();
+            const renderedTitles = new Set();
+            const renderedSubtitles = new Set();
+            const renderedAssemblies = new Set();
+
+            for (let i = 0; i < allRows.length; i++) {
+                const r = allRows[i];
+                const isGroup = r.isGroup;
+                const level = r.level;
+
+                let rowClass = 'part-row';
+                if (r.type === 'title') rowClass = 'group-row-title';
+                else if (r.type === 'subtitle') rowClass = 'group-row-subtitle';
+                else if (r.type === 'assembly') rowClass = 'group-row-assembly';
+
+                const clientKey = r.client;
+                const titleKey = `${r.client}|${r.title}`;
+                const subtitleKey = `${r.client}|${r.title}|${r.subtitle}`;
+                const assemblyKey = `${r.client}|${r.title}|${r.subtitle}|${r.assembly}`;
+
+                const showClient = r.type === 'title' && !renderedClients.has(clientKey);
+                const showTitle = r.type === 'title' && !renderedTitles.has(titleKey);
+                const showSubtitle = r.type === 'subtitle' && !renderedSubtitles.has(subtitleKey);
+                const showAssembly = r.type === 'assembly' && !renderedAssemblies.has(assemblyKey);
+
+                if (showClient) renderedClients.add(clientKey);
+                if (showTitle) renderedTitles.add(titleKey);
+                if (showSubtitle) renderedSubtitles.add(subtitleKey);
+                if (showAssembly) renderedAssemblies.add(assemblyKey);
+
+                const clientSpan = (showClient && r.type === 'title') ? r.rowspanClient : 0;
+                const titleSpan = (showTitle && r.type === 'title') ? r.rowspanTitle : 0;
+                const subtitleSpan = (showSubtitle && r.type === 'subtitle') ? r.rowspanSubtitle : 0;
+                const assemblySpan = (showAssembly && r.type === 'assembly') ? r.rowspanAssembly : 0;
+
+                // Manual input value
+                let manualVal = '';
+                let manualInputHtml = '';
+                if (isGroup) {
+                    const val = r.manualValue !== null && r.manualValue !== undefined ? r.manualValue : '';
+                    const deliveredVal = r.deliveredRaw || 0;
+                    const displayVal = (val !== '' && val !== null && !isNaN(val)) ? val : '';
+                    manualInputHtml =
+                        `<input type="number" class="manual-input" data-key="${escapeHtml(r.manualKey)}" data-delivered="${deliveredVal}" value="${displayVal}" placeholder="${deliveredVal}" step="1" min="0" />`;
+                } else {
+                    manualInputHtml = '';
+                }
+
+                // Variance
+                let varianceHtml = '';
+                if (isGroup) {
+                    const deliveredVal = r.deliveredRaw || 0;
+                    const manualValNum = r.manualValue !== null && r.manualValue !== undefined && !isNaN(r.manualValue) ?
+                        Number(r.manualValue) :
+                        null;
+                    let variance = null;
+                    if (manualValNum !== null && !isNaN(manualValNum)) {
+                        variance = manualValNum - deliveredVal;
+                    }
+                    if (variance !== null) {
+                        const vClass = variance > 0 ? 'variance-positive' : (variance < 0 ? 'variance-negative' :
+                            'variance-zero');
+                        const sign = variance > 0 ? '+' : '';
+                        varianceHtml =
+                            `<span class="variance-value ${vClass}">${sign}${variance.toLocaleString()}</span>`;
+                    } else {
+                        varianceHtml = `<span class="text-gray-400 text-xs">—</span>`;
+                    }
+                } else {
+                    varianceHtml = '';
+                }
+
+                // Build row
+                html += `<tr class="${rowClass} group-summary-row">`;
+
+                // Client
+                if (showClient && r.type === 'title') {
+                    html += `<td rowspan="${clientSpan}" class="font-bold align-middle">${escapeHtml(r.client)}</td>`;
+                } else if (r.type === 'part' && i > 0) {
+                    // For part rows, client is already rendered via rowspan
+                    // We'll skip it
+                } else if (r.type !== 'title') {
+                    // Don't render client again
+                }
+
+                // Title
+                if (showTitle && r.type === 'title') {
+                    html +=
+                    `<td rowspan="${titleSpan}" class="font-bold align-middle group-name">${escapeHtml(r.title)}</td>`;
+                } else if (r.type === 'part' || r.type === 'subtitle' || r.type === 'assembly') {
+                    // Title is already rendered via rowspan from the title row
+                }
+
+                // Subtitle
+                if (showSubtitle && r.type === 'subtitle') {
+                    html +=
+                        `<td rowspan="${subtitleSpan}" class="font-semibold align-middle group-name">${escapeHtml(r.subtitle) || '—'}</td>`;
+                } else if (r.type === 'part' || r.type === 'assembly') {
+                    // Subtitle already rendered
+                }
+
+                // Assembly
+                if (showAssembly && r.type === 'assembly') {
+                    html +=
+                        `<td rowspan="${assemblySpan}" class="align-middle"><span class="sub-assembly-tag">${escapeHtml(r.assembly) || '—'}</span></td>`;
+                } else if (r.type === 'part') {
+                    // Assembly already rendered
+                }
+
+                // Part Name
+                if (r.type === 'part') {
+                    html += `<td class="font-medium align-middle">${escapeHtml(r.partName)}</td>`;
+                } else {
+                    html += `<td class="text-gray-400 text-xs align-middle">—</td>`;
+                }
+
+                // Drawing No.
+                if (r.type === 'part') {
+                    html += `<td class="font-mono text-sm drawing-list align-middle">${escapeHtml(r.drawingNo)}</td>`;
+                } else {
+                    html += `<td class="text-gray-400 text-xs align-middle">—</td>`;
+                }
+
+                // Manual Total
+                if (isGroup) {
+                    html += `<td class="text-center align-middle">${manualInputHtml}</td>`;
+                } else {
+                    html += `<td class="text-center text-gray-300 text-xs">—</td>`;
+                }
+
+                // Delivered
+                const deliveredVal = r.deliveredRaw || 0;
+                html +=
+                    `<td class="text-right tabular-nums font-bold text-blue-700 col-delivered align-middle">${formatQty(deliveredVal)}</td>`;
+
+                // Variance
+                if (isGroup) {
+                    html += `<td class="text-center align-middle font-mono">${varianceHtml}</td>`;
+                } else {
+                    html += `<td class="text-center text-gray-300 text-xs">—</td>`;
+                }
+
+                // Accepted
+                html +=
+                    `<td class="text-right tabular-nums col-accepted align-middle">${formatQty(r.acceptedRaw || 0)}</td>`;
+
+                // Conditional
+                html +=
+                    `<td class="text-right tabular-nums col-conditional align-middle">${formatQty(r.conditionalRaw || 0)}</td>`;
+
+                html += `</tr>`;
+                renderedCount++;
+
+                if (r.type === 'part') totalParts++;
+            }
+
+            // ---- Attach event listeners for manual inputs ----
+            // We'll do this after rendering via a setTimeout
+
+            if (totalParts === 0 && renderedCount === 0) {
                 tbody.innerHTML =
-                    `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No parts with delivered quantity</p></td></tr>`;
+                    `<tr><td colspan="11" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No parts with delivered quantity</p></td></tr>`;
                 document.getElementById('recordCount').innerText = '0 parts';
+                return;
+            }
+
+            tbody.innerHTML = html;
+            document.getElementById('recordCount').innerText =
+                `Showing ${totalParts} parts (from ${rows.length} inspection records) — ${renderedCount} total rows`;
+
+            // ---- Wire up manual inputs ----
+            tbody.querySelectorAll('.manual-input').forEach(input => {
+                const key = input.dataset.key;
+                const deliveredVal = parseFloat(input.dataset.delivered) || 0;
+
+                // Set initial value from store or use delivered as default
+                let stored = getManualValue(key);
+                if (stored !== null && !isNaN(stored) && stored !== '') {
+                    input.value = stored;
+                } else {
+                    // If no stored value, use delivered as placeholder but don't set value
+                    // So user can see the delivered as placeholder
+                    input.placeholder = deliveredVal.toString();
+                }
+
+                input.addEventListener('input', function(e) {
+                    const val = parseFloat(this.value);
+                    const key = this.dataset.key;
+                    if (!isNaN(val) && val >= 0) {
+                        setManualValue(key, val);
+                    } else {
+                        setManualValue(key, null);
+                    }
+                    // Update variance for this row
+                    updateVarianceForRow(this);
+                });
+
+                input.addEventListener('blur', function(e) {
+                    // If empty, restore placeholder
+                    if (this.value === '') {
+                        const delivered = parseFloat(this.dataset.delivered) || 0;
+                        this.placeholder = delivered.toString();
+                        const key = this.dataset.key;
+                        setManualValue(key, null);
+                        updateVarianceForRow(this);
+                    }
+                });
+            });
+        }
+
+        // ---- Update variance for a single row ----
+        function updateVarianceForRow(inputElement) {
+            const tr = inputElement.closest('tr');
+            if (!tr) return;
+            const deliveredCell = tr.querySelector('td:nth-child(8)'); // Delivered column
+            const varianceCell = tr.querySelector('td:nth-child(9)'); // Variance column
+            if (!deliveredCell || !varianceCell) return;
+
+            const deliveredText = deliveredCell.textContent.trim().replace(/,/g, '');
+            const deliveredVal = parseFloat(deliveredText) || 0;
+
+            const manualVal = parseFloat(inputElement.value);
+            let variance = null;
+            if (!isNaN(manualVal) && manualVal >= 0) {
+                variance = manualVal - deliveredVal;
+            }
+
+            if (variance !== null) {
+                const vClass = variance > 0 ? 'variance-positive' : (variance < 0 ? 'variance-negative' : 'variance-zero');
+                const sign = variance > 0 ? '+' : '';
+                varianceCell.innerHTML =
+                    `<span class="variance-value ${vClass}">${sign}${variance.toLocaleString()}</span>`;
+                // Also update the manual store
+                const key = inputElement.dataset.key;
+                if (key) {
+                    setManualValue(key, manualVal);
+                }
             } else {
-                tbody.innerHTML = html;
-                document.getElementById('recordCount').innerText =
-                    `Showing ${totalParts} parts (from ${rows.length} inspection records)`;
+                varianceCell.innerHTML = `<span class="text-gray-400 text-xs">—</span>`;
+                const key = inputElement.dataset.key;
+                if (key) {
+                    setManualValue(key, null);
+                }
             }
         }
 
-        // ---------- XLSX Export (filter zero delivered) ----------
+        // ---------- XLSX Export with manual totals ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -553,7 +1228,7 @@
             if (selectedEngineer) filteredRows = filteredRows.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) filteredRows = filteredRows.filter(row => row.rawSearch.includes(searchTerm));
 
-            // Build aggregate tree
+            // Build tree
             const clientMap = new Map();
             for (const row of filteredRows) {
                 const client = row.clientName;
@@ -595,118 +1270,114 @@
                 }
             }
 
-            // Count parts with delivered > 0 for rowspan calculations
-            function countParts(assemblyEntry) {
-                let cnt = 0;
-                for (const partEntry of assemblyEntry.partMap.values()) {
-                    if (partEntry.deliveredRaw > 0) cnt++;
-                }
-                return cnt;
-            }
-            function totalRowsForAssembly(assemblyEntry) { return countParts(assemblyEntry); }
-            function totalRowsForSubtitle(subtitleEntry) {
-                let sum = 0;
-                for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                    sum += totalRowsForAssembly(assemblyEntry);
-                }
-                return sum;
-            }
-            function totalRowsForTitle(titleEntry) {
-                let sum = 0;
-                for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                    sum += totalRowsForSubtitle(subtitleEntry);
-                }
-                return sum;
-            }
-            function totalRowsForClient(clientEntry) {
-                let sum = 0;
-                for (const titleEntry of clientEntry.titleMap.values()) {
-                    sum += totalRowsForTitle(titleEntry);
-                }
-                return sum;
+            // Helper to get manual value for a group
+            function getManualForGroup(type, client, title, subtitle, assembly) {
+                const key = getGroupKey(type, client, title, subtitle, assembly);
+                return getManualValue(key);
             }
 
+            // Build flat data for Excel
+            const excelRows = [];
             const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Part Name', 'Drawing No.',
-                'Delivered (Acc+Cond)', 'Accepted', 'Conditional'
+                'Manual Total', 'Delivered', 'Variance', 'Accepted', 'Conditional'
             ];
-            const data = [headers];
-            const merges = [];
-            let currentRow = 1;
+            excelRows.push(headers);
 
             for (const clientEntry of clientMap.values()) {
-                const clientRows = totalRowsForClient(clientEntry);
-                if (clientRows === 0) continue;
-                const clientStartRow = currentRow;
-                let firstClient = true;
-
+                const client = clientEntry.clientName;
                 for (const titleEntry of clientEntry.titleMap.values()) {
-                    const titleRows = totalRowsForTitle(titleEntry);
-                    if (titleRows === 0) continue;
-                    const titleStartRow = currentRow;
-                    let firstTitle = true;
+                    const title = titleEntry.titleName;
+                    // Title summary
+                    let tDel = 0,
+                        tAcc = 0,
+                        tCond = 0;
+                    for (const sub of titleEntry.subtitleMap.values()) {
+                        for (const ass of sub.assemblyMap.values()) {
+                            for (const p of ass.partMap.values()) {
+                                if (p.deliveredRaw === 0) continue;
+                                tDel += p.deliveredRaw;
+                                tAcc += p.acceptedRaw;
+                                tCond += p.conditionalRaw;
+                            }
+                        }
+                    }
+                    const tManual = getManualForGroup('title', client, title, '', '');
+                    const tVar = (tManual !== null && !isNaN(tManual)) ? tManual - tDel : null;
+                    excelRows.push([client, title, '', '', '', '',
+                        tManual !== null ? tManual : '',
+                        tDel,
+                        tVar !== null ? tVar : '',
+                        tAcc, tCond
+                    ]);
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
-                        const subtitleRows = totalRowsForSubtitle(subtitleEntry);
-                        if (subtitleRows === 0) continue;
-                        const subtitleStartRow = currentRow;
-                        let firstSubtitle = true;
+                        const subtitle = subtitleEntry.subtitleName;
+                        let sDel = 0,
+                            sAcc = 0,
+                            sCond = 0;
+                        for (const ass of subtitleEntry.assemblyMap.values()) {
+                            for (const p of ass.partMap.values()) {
+                                if (p.deliveredRaw === 0) continue;
+                                sDel += p.deliveredRaw;
+                                sAcc += p.acceptedRaw;
+                                sCond += p.conditionalRaw;
+                            }
+                        }
+                        const sManual = getManualForGroup('subtitle', client, title, subtitle, '');
+                        const sVar = (sManual !== null && !isNaN(sManual)) ? sManual - sDel : null;
+                        excelRows.push(['', '', subtitle, '', '', '',
+                            sManual !== null ? sManual : '',
+                            sDel,
+                            sVar !== null ? sVar : '',
+                            sAcc, sCond
+                        ]);
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
-                            const assemblyRows = totalRowsForAssembly(assemblyEntry);
-                            if (assemblyRows === 0) continue;
-                            const assemblyStartRow = currentRow;
-                            let firstAssembly = true;
+                            const assembly = assemblyEntry.assemblyName;
+                            let aDel = 0,
+                                aAcc = 0,
+                                aCond = 0;
+                            for (const p of assemblyEntry.partMap.values()) {
+                                if (p.deliveredRaw === 0) continue;
+                                aDel += p.deliveredRaw;
+                                aAcc += p.acceptedRaw;
+                                aCond += p.conditionalRaw;
+                            }
+                            const aManual = getManualForGroup('assembly', client, title, subtitle, assembly);
+                            const aVar = (aManual !== null && !isNaN(aManual)) ? aManual - aDel : null;
+                            excelRows.push(['', '', '', assembly, '', '',
+                                aManual !== null ? aManual : '',
+                                aDel,
+                                aVar !== null ? aVar : '',
+                                aAcc, aCond
+                            ]);
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
                                 const drawingList = [...partEntry.drawings].sort().join(', ');
-                                const rowData = [];
-                                rowData.push(firstClient ? clientEntry.clientName : '');
-                                rowData.push(firstTitle ? titleEntry.titleName : '');
-                                rowData.push(firstSubtitle ? subtitleEntry.subtitleName : '');
-                                rowData.push(firstAssembly ? assemblyEntry.assemblyName : '');
-                                rowData.push(partEntry.partName);
-                                rowData.push(drawingList || '—');
-                                rowData.push(formatQty(partEntry.deliveredRaw));
-                                rowData.push(formatQty(partEntry.acceptedRaw));
-                                rowData.push(formatQty(partEntry.conditionalRaw));
-                                data.push(rowData);
-                                currentRow++;
-
-                                firstClient = false;
-                                firstTitle = false;
-                                firstSubtitle = false;
-                                firstAssembly = false;
-                            }
-                            if (assemblyRows > 1) {
-                                merges.push({ s: { r: assemblyStartRow, c: 3 }, e: { r: assemblyStartRow + assemblyRows -
-                                        1, c: 3 } });
+                                excelRows.push(['', '', '', '', partEntry.partName, drawingList || '—',
+                                    '',
+                                    partEntry.deliveredRaw,
+                                    '',
+                                    partEntry.acceptedRaw,
+                                    partEntry.conditionalRaw
+                                ]);
                             }
                         }
-                        if (subtitleRows > 1) {
-                            merges.push({ s: { r: subtitleStartRow, c: 2 }, e: { r: subtitleStartRow + subtitleRows - 1,
-                                    c: 2 } });
-                        }
                     }
-                    if (titleRows > 1) {
-                        merges.push({ s: { r: titleStartRow, c: 1 }, e: { r: titleStartRow + titleRows - 1, c: 1 } });
-                    }
-                }
-                if (clientRows > 1) {
-                    merges.push({ s: { r: clientStartRow, c: 0 }, e: { r: clientStartRow + clientRows - 1, c: 0 } });
                 }
             }
 
-            if (data.length === 1) { // only headers
+            if (excelRows.length === 1) {
                 alert('No parts with delivered quantity to export.');
                 return;
             }
 
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!merges'] = merges;
+            const ws = XLSX.utils.aoa_to_sheet(excelRows);
             ws['!cols'] = [
-                { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 18 },
-                { wch: 20 }, { wch: 25 }, { wch: 16 }, { wch: 12 }, { wch: 14 }
+                { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 18 },
+                { wch: 22 }, { wch: 28 }, { wch: 14 }, { wch: 14 },
+                { wch: 14 }, { wch: 14 }, { wch: 14 }
             ];
 
             const wb = XLSX.utils.book_new();
@@ -714,7 +1385,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard (filter zero delivered) ----------
+        // ---------- Copy to clipboard ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -727,55 +1398,125 @@
             if (selectedEngineer) dataToCopy = dataToCopy.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
 
-            // Aggregate by part with drawing list, skip zero delivered
-            const partMap = new Map();
+            // Build tree and export as TSV with manual totals
+            const clientMap = new Map();
             for (const row of dataToCopy) {
-                const key = `${row.clientName}|${row.projectName}|${row.subtitle}|${row.subSubAssembly}|${row.partName}`;
-                if (!partMap.has(key)) {
-                    partMap.set(key, {
-                        clientName: row.clientName,
-                        projectName: row.projectName,
-                        subtitle: row.subtitle,
-                        subSubAssembly: row.subSubAssembly,
-                        partName: row.partName,
+                const client = row.clientName;
+                if (!clientMap.has(client)) {
+                    clientMap.set(client, { clientName: client, titleMap: new Map() });
+                }
+                const clientEntry = clientMap.get(client);
+                const title = row.projectName;
+                if (!clientEntry.titleMap.has(title)) {
+                    clientEntry.titleMap.set(title, { titleName: title, subtitleMap: new Map() });
+                }
+                const titleEntry = clientEntry.titleMap.get(title);
+                const subtitle = row.subtitle || '';
+                if (!titleEntry.subtitleMap.has(subtitle)) {
+                    titleEntry.subtitleMap.set(subtitle, { subtitleName: subtitle, assemblyMap: new Map() });
+                }
+                const subtitleEntry = titleEntry.subtitleMap.get(subtitle);
+                const assembly = row.subSubAssembly || '';
+                if (!subtitleEntry.assemblyMap.has(assembly)) {
+                    subtitleEntry.assemblyMap.set(assembly, { assemblyName: assembly, partMap: new Map() });
+                }
+                const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
+                const partName = row.partName;
+                if (!assemblyEntry.partMap.has(partName)) {
+                    assemblyEntry.partMap.set(partName, {
+                        partName: partName,
                         deliveredRaw: 0,
                         acceptedRaw: 0,
                         conditionalRaw: 0,
                         drawings: new Set()
                     });
                 }
-                const entry = partMap.get(key);
-                entry.deliveredRaw += row.deliveredRaw;
-                entry.acceptedRaw += row.acceptedRaw;
-                entry.conditionalRaw += row.conditionalRaw;
+                const partEntry = assemblyEntry.partMap.get(partName);
+                partEntry.deliveredRaw += row.deliveredRaw;
+                partEntry.acceptedRaw += row.acceptedRaw;
+                partEntry.conditionalRaw += row.conditionalRaw;
                 if (row.drawingNo && row.drawingNo !== '-') {
-                    entry.drawings.add(row.drawingNo);
+                    partEntry.drawings.add(row.drawingNo);
                 }
             }
 
-            // Filter out zero delivered parts
-            const filteredEntries = [];
-            for (const entry of partMap.values()) {
-                if (entry.deliveredRaw > 0) {
-                    filteredEntries.push(entry);
+            let tsv = "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tManual Total\tDelivered\tVariance\tAccepted\tConditional\n";
+
+            for (const clientEntry of clientMap.values()) {
+                const client = clientEntry.clientName;
+                for (const titleEntry of clientEntry.titleMap.values()) {
+                    const title = titleEntry.titleName;
+                    let tDel = 0,
+                        tAcc = 0,
+                        tCond = 0;
+                    for (const sub of titleEntry.subtitleMap.values()) {
+                        for (const ass of sub.assemblyMap.values()) {
+                            for (const p of ass.partMap.values()) {
+                                if (p.deliveredRaw === 0) continue;
+                                tDel += p.deliveredRaw;
+                                tAcc += p.acceptedRaw;
+                                tCond += p.conditionalRaw;
+                            }
+                        }
+                    }
+                    const tManual = getManualValue(getGroupKey('title', client, title, '', ''));
+                    const tVar = (tManual !== null && !isNaN(tManual)) ? tManual - tDel : '';
+                    tsv +=
+                        `${client}\t${title}\t\t\t\t\t${tManual !== null ? tManual : ''}\t${tDel}\t${tVar !== '' ? tVar : ''}\t${tAcc}\t${tCond}\n`;
+
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        const subtitle = subtitleEntry.subtitleName;
+                        let sDel = 0,
+                            sAcc = 0,
+                            sCond = 0;
+                        for (const ass of subtitleEntry.assemblyMap.values()) {
+                            for (const p of ass.partMap.values()) {
+                                if (p.deliveredRaw === 0) continue;
+                                sDel += p.deliveredRaw;
+                                sAcc += p.acceptedRaw;
+                                sCond += p.conditionalRaw;
+                            }
+                        }
+                        const sManual = getManualValue(getGroupKey('subtitle', client, title, subtitle, ''));
+                        const sVar = (sManual !== null && !isNaN(sManual)) ? sManual - sDel : '';
+                        tsv +=
+                            `\t\t${subtitle}\t\t\t\t${sManual !== null ? sManual : ''}\t${sDel}\t${sVar !== '' ? sVar : ''}\t${sAcc}\t${sCond}\n`;
+
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            const assembly = assemblyEntry.assemblyName;
+                            let aDel = 0,
+                                aAcc = 0,
+                                aCond = 0;
+                            for (const p of assemblyEntry.partMap.values()) {
+                                if (p.deliveredRaw === 0) continue;
+                                aDel += p.deliveredRaw;
+                                aAcc += p.acceptedRaw;
+                                aCond += p.conditionalRaw;
+                            }
+                            const aManual = getManualValue(getGroupKey('assembly', client, title, subtitle, assembly));
+                            const aVar = (aManual !== null && !isNaN(aManual)) ? aManual - aDel : '';
+                            tsv +=
+                                `\t\t\t${assembly}\t\t\t${aManual !== null ? aManual : ''}\t${aDel}\t${aVar !== '' ? aVar : ''}\t${aAcc}\t${aCond}\n`;
+
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                if (partEntry.deliveredRaw === 0) continue;
+                                const drawingList = [...partEntry.drawings].sort().join(', ');
+                                tsv +=
+                                    `\t\t\t\t${partEntry.partName}\t${drawingList || '—'}\t\t${partEntry.deliveredRaw}\t\t${partEntry.acceptedRaw}\t${partEntry.conditionalRaw}\n`;
+                            }
+                        }
+                    }
                 }
             }
 
-            if (filteredEntries.length === 0) {
+            if (tsv.split('\n').length <= 2) {
                 alert('No parts with delivered quantity to copy.');
                 return;
             }
 
-            let tsv =
-                "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tDelivered (Acc+Cond)\tAccepted\tConditional\n";
-            for (const entry of filteredEntries) {
-                const drawingList = [...entry.drawings].sort().join(', ');
-                tsv +=
-                    `${entry.clientName}\t${entry.projectName}\t${entry.subtitle}\t${entry.subSubAssembly}\t${entry.partName}\t${drawingList || '—'}\t${formatQty(entry.deliveredRaw)}\t${formatQty(entry.acceptedRaw)}\t${formatQty(entry.conditionalRaw)}\n`;
-            }
             try {
                 await navigator.clipboard.writeText(tsv);
-                alert(`✅ Aggregated table (${filteredEntries.length} parts) copied to clipboard`);
+                alert('✅ Table copied to clipboard (includes manual totals & variance)');
             } catch (err) {
                 alert('❌ Copy failed: ' + err);
             }
