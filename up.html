@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-    <title>Project Follow‑Up | Sub‑Assembly View</title>
+    <title>Project Follow‑Up</title>
     <script src="https://cdn.tailwindcss.com">
     </script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js">
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ... (styles remain unchanged) ... */
         body {
             background: #f1f5f9;
             font-family: 'Inter', system-ui, sans-serif;
@@ -239,6 +238,7 @@
             display: inline-block;
             border: 1px solid #93b5e8;
         }
+        /* Part status color classes */
         .part-status-reject {
             color: #dc2626 !important;
         }
@@ -251,6 +251,7 @@
         .part-status-accept {
             color: #059669 !important;
         }
+        /* small status dot */
         .status-dot {
             display: inline-block;
             width: 8px;
@@ -276,14 +277,11 @@
             align-items: center;
             gap: 4px;
         }
-        .badge-completed {
-            background: #d1fae5;
-            color: #065f46;
-        }
     </style>
 </head>
 <body class="antialiased">
 
+    <!-- Toast container -->
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="max-w-7xl mx-auto px-4 py-6 md:px-6">
@@ -292,9 +290,9 @@
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-flag-checkered text-indigo-600"></i>
-                    Project Follow‑Up (Sub‑Assembly View)
+                    Project Follow‑Up
                 </h1>
-                <p class="text-slate-500 text-sm">Track sub‑assemblies and parts – suggestions read from QC inspection data</p>
+               
             </div>
             <div class="flex gap-3 flex-wrap">
                 <button onclick="exportGlobalToExcel()" class="btn-excel btn-excel-sm"><i class="fa-solid fa-file-excel"></i> Export Excel (Projects)</button>
@@ -316,15 +314,7 @@
                     <option value="ending">Ending</option>
                 </select>
             </div>
-            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Status</label>
-                <select id="filterStatus" class="filter-select w-full">
-                    <option value="">All Status</option>
-                    <option value="needs_action">Needs Action</option>
-                    <option value="on_track">On Track</option>
-                    <option value="critical">Critical</option>
-                    <option value="completed">Completed (End)</option>
-                </select>
-            </div>
+            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Status</label><select id="filterStatus" class="filter-select w-full"><option value="">All Status</option><option value="needs_action">Needs Action</option><option value="on_track">On Track</option><option value="critical">Critical</option></select></div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Suggested Next Operation</label>
                 <select id="filterSuggestedNext" class="filter-select w-full">
                     <option value="">All</option>
@@ -478,7 +468,6 @@
                     lastDateStr: aggregated.lastDateStr,
                     acceptanceRate: aggregated.acceptanceRate,
                     followStatus: aggregated.followStatus,
-                    isComplete: aggregated.isComplete,
                     suggestedNextOps: aggregated.suggestedNextOps || [],
                     subSubAssemblyList: aggregated.subSubAssemblyList || []
                 };
@@ -496,7 +485,7 @@
             let totalInspections = 0;
             let lastDate = null;
             const subtitlesMap = new Map();
-            const partLastInsp = new Map(); // partName -> { suggested_next, date, ... }
+            const partLastInsp = new Map();
             const subSubAssemblySet = new Set();
 
             for (const insp of inspections) {
@@ -520,7 +509,6 @@
                 const inspDate = new Date(insp.submitted_at);
                 if (!lastDate || inspDate > lastDate) lastDate = inspDate;
 
-                // Store latest suggested next for each part
                 if (!partLastInsp.has(partName) || inspDate > partLastInsp.get(partName).date) {
                     const suggested = getSuggestedNext(insp);
                     partLastInsp.set(partName, {
@@ -558,6 +546,7 @@
                         tagSet: new Set(),
                         operationsSet: new Set(),
                         subSub: subSub,
+                        // Status counters per part (aggregated across all inspections)
                         rejectCount: 0,
                         reworkCount: 0,
                         conditionalCount: 0,
@@ -569,6 +558,7 @@
                 if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
                 if (tagNo !== '—') partData.tagSet.add(tagNo);
                 partData.operationsSet.add(opDesc);
+                // Accumulate status counts
                 partData.rejectCount += (insp.reject_qty || 0);
                 partData.reworkCount += (insp.rework_qty || 0);
                 partData.conditionalCount += (insp.conditional_accept_qty || 0);
@@ -577,30 +567,9 @@
             }
 
             const acceptanceRate = totalDelivered ? (totalAccepted / totalDelivered) * 100 : 0;
-
-            // ---- Determine if project is COMPLETE (End) ----
-            // Complete if: every distinct part has a latest suggested_next that is null or empty.
-            let isComplete = true;
-            if (partLastInsp.size === 0) {
-                isComplete = false; // no parts means not started
-            } else {
-                for (const [part, info] of partLastInsp) {
-                    const nextOp = info.suggested_next;
-                    if (nextOp && nextOp.trim() !== '' && nextOp.trim().toLowerCase() !== 'complete') {
-                        isComplete = false;
-                        break;
-                    }
-                }
-            }
-
             let followStatus = 'on_track';
-            if (isComplete) {
-                followStatus = 'completed';
-            } else if (totalReject / totalDelivered >= 0.5) {
-                followStatus = 'critical';
-            } else if (totalRework + totalReject > 0) {
-                followStatus = 'needs_action';
-            }
+            if (totalReject / totalDelivered >= 0.5) followStatus = 'critical';
+            else if (totalRework + totalReject > 0) followStatus = 'needs_action';
 
             const suggestedNextOpsSet = new Set();
             const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => {
@@ -618,6 +587,7 @@
                         operations: Array.from(data.operationsSet).join(', '),
                         suggestedNext: suggested || '—',
                         subSub: data.subSub || '—',
+                        // Status counts for color coding
                         rejectCount: data.rejectCount,
                         reworkCount: data.reworkCount,
                         conditionalCount: data.conditionalCount,
@@ -648,7 +618,6 @@
                 lastDate,
                 acceptanceRate: acceptanceRate.toFixed(1),
                 followStatus,
-                isComplete,
                 lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
                 subtitlesArray,
                 suggestedNextOps: Array.from(suggestedNextOpsSet),
@@ -665,16 +634,19 @@
             return Array.from(subs).sort();
         }
 
+        // ─── Helper: determine part status color class ───
         function getPartStatusClass(part) {
             const rej = part.rejectCount || 0;
             const rework = part.reworkCount || 0;
             const cond = part.conditionalCount || 0;
+            // Priority: reject > rework > conditional > accept
             if (rej > 0) return 'part-status-reject';
             if (rework > 0) return 'part-status-rework';
             if (cond > 0) return 'part-status-conditional';
             return 'part-status-accept';
         }
 
+        // ─── Helper: get status dot HTML ───
         function getStatusDot(part) {
             const rej = part.rejectCount || 0;
             const rework = part.reworkCount || 0;
@@ -692,21 +664,10 @@
                     '<tr><td colspan="14" class="text-center py-10">No projects found</td>'; return; }
             tbody.innerHTML = projects.map(p => {
                 const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
-                let statusBadge = '';
-                let statusText = '';
-                if (p.isComplete) {
-                    statusBadge = 'badge-completed';
-                    statusText = 'Completed';
-                } else if (p.followStatus === 'critical') {
-                    statusBadge = 'bg-red-100 text-red-700';
-                    statusText = 'Critical';
-                } else if (p.followStatus === 'needs_action') {
-                    statusBadge = 'bg-amber-100 text-amber-700';
-                    statusText = 'Needs Action';
-                } else {
-                    statusBadge = 'bg-emerald-100 text-emerald-700';
-                    statusText = 'On Track';
-                }
+                let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' : (p.followStatus ===
+                    'needs_action' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700');
+                let statusText = p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ?
+                    'Needs Action' : 'On Track');
 
                 const list = p.subSubAssemblyList || [];
                 const subSubCount = list.length;
@@ -735,11 +696,10 @@
             ];
             for (const p of currentFilteredProjects) {
                 const firstSubSub = (p.subSubAssemblyList && p.subSubAssemblyList.length) ? p.subSubAssemblyList[0] : '';
-                let statusText = p.isComplete ? 'Completed' : (p.followStatus === 'critical' ? 'Critical' : (p
-                    .followStatus === 'needs_action' ? 'Needs Action' : 'On Track'));
                 rows.push([p.client, p.title, p.subtitlesArray.length, firstSubSub, p
                     .totalInspections, p.totalDelivered, p.totalAccepted, p.totalRework, p.totalReject, p
-                    .totalConditional, p.acceptanceRate + '%', p.lastDateStr, statusText
+                    .totalConditional, p.acceptanceRate + '%', p.lastDateStr, p.followStatus === 'critical' ?
+                    'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track')
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(rows);
@@ -988,6 +948,7 @@
             function renderFilterableSubAssemblies(aggregated) {
                 let html = '';
                 if (aggregated.subtitlesArray.length) {
+                    // Build a legend for the status colors
                     const legendHtml = `
                         <div class="flex flex-wrap gap-3 text-xs mb-3 p-2 bg-slate-50 rounded-lg border">
                             <span class="font-medium text-slate-600 mr-1">Status legend:</span>
@@ -1011,7 +972,7 @@
                             let rowIdx = 1;
                             partsTableHtml = `
                                 <div class="mt-3">
-                                    <div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components (grouped by Sub Sub Assembly)</div>
+                                    <div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components</div>
                                     <table class="parts-table">
                                         <thead>
                                             <tr>
@@ -1147,7 +1108,6 @@
             if (status === 'needs_action') filtered = filtered.filter(p => p.followStatus === 'needs_action');
             else if (status === 'critical') filtered = filtered.filter(p => p.followStatus === 'critical');
             else if (status === 'on_track') filtered = filtered.filter(p => p.followStatus === 'on_track');
-            else if (status === 'completed') filtered = filtered.filter(p => p.isComplete === true);
             if (suggested) {
                 filtered = filtered.filter(p => p.suggestedNextOps && p.suggestedNextOps.includes(suggested));
             }
@@ -1213,6 +1173,7 @@
             return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } [m]));
         }
 
+        // ─── Event listeners ───
         document.getElementById('filterClient').addEventListener('change', applyFilters);
         document.getElementById('filterTitle').addEventListener('change', applyFilters);
         document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
@@ -1222,6 +1183,7 @@
         window.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal();
                 closePartModal(e); } });
 
+        // ─── Start ───
         refreshData();
     </script>
 </body>
