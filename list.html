@@ -41,9 +41,6 @@
             .table-wrapper {
                 border-radius: 0 !important;
             }
-            .title-meta {
-                font-size: 0.65rem !important;
-            }
             .manual-edit-btn {
                 display: none !important;
             }
@@ -69,7 +66,7 @@
             white-space: nowrap;
         }
         td {
-            padding: 8px 6px;
+            padding: 6px 4px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: top;
         }
@@ -148,66 +145,14 @@
             word-break: break-word;
         }
 
-        /* Title cell with meta */
-        .title-cell {
-            min-width: 140px;
-        }
         .title-name {
             font-weight: 600;
             color: #0f172a;
             display: block;
             line-height: 1.3;
+            margin-bottom: 2px;
         }
 
-        /* Meta badge styles */
-        .title-meta {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.25rem 0.6rem;
-            margin-top: 3px;
-            font-size: 0.7rem;
-            color: #475569;
-            padding: 2px 8px 2px 6px;
-            border-radius: 999px;
-            border: 1px solid #e9edf2;
-            width: fit-content;
-        }
-        .title-meta .meta-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            white-space: nowrap;
-        }
-        .title-meta .meta-badge i {
-            font-size: 0.6rem;
-            opacity: 0.7;
-        }
-        .title-meta .meta-divider {
-            color: #d1d5db;
-            font-weight: 300;
-        }
-        .title-meta .parts-count {
-            font-weight: 600;
-            color: #1e40af;
-        }
-        .title-meta .deliv-count {
-            font-weight: 600;
-            color: #0b6e4f;
-        }
-        .title-meta .deliv-pct {
-            font-weight: 700;
-            color: #7c3aed;
-        }
-        .title-meta .manual-indicator {
-            color: #b45309;
-            font-weight: 600;
-            font-size: 0.65rem;
-            background: #fef3c7;
-            padding: 0 6px;
-            border-radius: 12px;
-            margin-left: 2px;
-        }
         .manual-edit-btn {
             background: none;
             border: none;
@@ -219,31 +164,6 @@
         }
         .manual-edit-btn:hover {
             color: #2563eb;
-        }
-        .cmp-bar-wrap {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-left: 2px;
-        }
-        .cmp-bar-bg {
-            width: 40px;
-            height: 4px;
-            background: #e2e8f0;
-            border-radius: 4px;
-            overflow: hidden;
-            display: inline-block;
-        }
-        .cmp-bar-fill {
-            height: 100%;
-            background: #3b82f6;
-            border-radius: 4px;
-            transition: width 0.3s;
-        }
-        .cmp-bar-label {
-            font-size: 0.6rem;
-            color: #64748b;
-            font-weight: 500;
         }
 
         .manual-edit-popup {
@@ -311,23 +231,68 @@
         .manual-edit-popup .popup-actions button.danger:hover {
             background: #dc2626;
         }
-        .title-meta-wrap {
-            position: relative;
-            display: inline-block;
-        }
 
-        /* Specific meta backgrounds */
-        .meta-title {
-            background: #eff6ff;
-            border-color: #bfdbfe;
+        /* Card badge styles */
+        .badge-card {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            padding: 6px 10px;
+            display: inline-block;
+            min-width: 140px;
+            width: 100%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
         }
-        .meta-subtitle {
-            background: #eef2ff;
-            border-color: #c7d2fe;
+        .badge-card:hover {
+            border-color: #94a3b8;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        .meta-assembly {
-            background: #f5f3ff;
-            border-color: #ddd6fe;
+        .badge-card .stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            line-height: 1.4;
+        }
+        .badge-card .stat-label {
+            color: #6b7280;
+        }
+        .badge-card .stat-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .badge-card .progress-bar {
+            width: 100%;
+            height: 3px;
+            background-color: #e5e7eb;
+            border-radius: 999px;
+            margin: 4px 0;
+            overflow: hidden;
+        }
+        .badge-card .progress-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+        .badge-card .footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2px;
+            min-height: 16px;
+        }
+        .badge-card .manual-tag {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: #b45309;
+            background-color: #fef3c7;
+            padding: 0 6px;
+            border-radius: 999px;
+            border: 1px solid #fcd34d;
+        }
+        .badge-card .actual-pct {
+            font-size: 0.6rem;
+            color: #6b7280;
         }
     </style>
 </head>
@@ -428,8 +393,8 @@
                         <tr>
                             <th class="text-left">👤 Client</th>
                             <th class="text-left" style="min-width:180px;">📁 Title</th>
-                            <th class="text-left">🔖 Subtitle</th>
-                            <th class="text-left">📎 Sub Sub Assembly</th>
+                            <th class="text-left" style="min-width:180px;">🔖 Subtitle</th>
+                            <th class="text-left" style="min-width:180px;">📎 Sub Sub Assembly</th>
                             <th class="text-left">🔧 Part Name</th>
                             <th class="text-left">📄 Drawing No.</th>
                             <th class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc + Cond)</span></th>
@@ -668,39 +633,50 @@
             renderAggregatedTable(filtered);
         }
 
-        // ---------- Render Meta Badge ----------
-        function renderMetaBadge(level, id, partsCount, totalDeliv, isManual) {
-            let delivPct = 0;
-            if (partsCount > 0) delivPct = (totalDeliv / partsCount) * 100;
+        // ---------- Render Card Badge ----------
+        function renderMetaBadge(partsCount, totalDeliv, isManual, originalParts, originalDeliv) {
+            const displayPct = (partsCount > 0) ? (totalDeliv / partsCount) * 100 : 0;
+            const actualPct = (originalParts > 0) ? (originalDeliv / originalParts) * 100 : 0;
 
-            let metaClass = 'meta-title';
-            let levelLabel = 'Title';
-            if (level === 'subtitle') {
-                metaClass = 'meta-subtitle';
-                levelLabel = 'Subtitle';
-            } else if (level === 'assembly') {
-                metaClass = 'meta-assembly';
-                levelLabel = 'Sub Sub Assembly';
+            let barColor = 'bg-blue-500';
+            if (displayPct > 100) barColor = 'bg-red-500';
+            else if (displayPct >= 80) barColor = 'bg-green-500';
+            else if (displayPct >= 50) barColor = 'bg-yellow-500';
+
+            // Format numbers
+            const formattedDeliv = formatQty(totalDeliv);
+            const displayPctStr = displayPct.toFixed(1);
+            const actualPctStr = actualPct.toFixed(1);
+
+            let manualTagHtml = '';
+            let actualPctHtml = '';
+            if (isManual) {
+                manualTagHtml = `<span class="manual-tag">manual</span>`;
+                actualPctHtml = `<span class="actual-pct">actual ${actualPctStr}%</span>`;
             }
 
             return `
-                <span class="title-meta-wrap">
-                    <span class="title-meta ${metaClass}">
-                        <span class="meta-badge"><i class="fa-regular fa-cube"></i> <span class="parts-count">${partsCount}</span> parts</span>
-                        <span class="meta-divider">|</span>
-                        <span class="meta-badge"><i class="fa-regular fa-box"></i> <span class="deliv-count">${formatQty(totalDeliv)}</span> deliv</span>
-                        <span class="meta-divider">|</span>
-                        <span class="meta-badge"><i class="fa-regular fa-percent"></i> <span class="deliv-pct">${delivPct.toFixed(1)}%</span></span>
-                        <span class="cmp-bar-wrap">
-                            <span class="cmp-bar-bg"><span class="cmp-bar-fill" style="width:${Math.min(100, delivPct)}%"></span></span>
-                            <span class="cmp-bar-label">${delivPct.toFixed(0)}%</span>
-                        </span>
-                        ${isManual ? '<span class="manual-indicator">✏️ manual</span>' : ''}
-                        <button class="manual-edit-btn no-print" onclick="openManualEdit('${level}', '${escapeHtml(id)}', ${partsCount}, ${totalDeliv})" title="Manual override for ${levelLabel}">
-                            <i class="fa-regular fa-pen-to-square"></i>
-                        </button>
-                    </span>
-                </span>
+                <div class="badge-card">
+                    <div class="stat-row">
+                        <span class="stat-label">Parts</span>
+                        <span class="stat-value">${partsCount}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Deliv</span>
+                        <span class="stat-value">${formattedDeliv}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">%</span>
+                        <span class="stat-value">${displayPctStr}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${barColor}" style="width: ${Math.min(100, displayPct)}%"></div>
+                    </div>
+                    <div class="footer-row">
+                        ${manualTagHtml}
+                        ${actualPctHtml}
+                    </div>
+                </div>
             `;
         }
 
@@ -843,48 +819,58 @@
                     let titlePrinted = false;
 
                     const titleName = titleEntry.titleName;
-                    const titleManual = overridesTitle[titleName];
-                    let titleParts = titleEntry.partsSet.size;
-                    let titleDeliv = titleEntry.totalDelivered;
+                    const rawTitleParts = titleEntry.partsSet.size;
+                    const rawTitleDeliv = titleEntry.totalDelivered;
+                    let displayTitleParts = rawTitleParts;
+                    let displayTitleDeliv = rawTitleDeliv;
                     let isTitleManual = false;
+                    const titleManual = overridesTitle[titleName];
                     if (titleManual) {
-                        titleParts = titleManual.parts;
-                        titleDeliv = titleManual.delivered;
+                        displayTitleParts = titleManual.parts;
+                        displayTitleDeliv = titleManual.delivered;
                         isTitleManual = true;
                     }
-                    const titleMeta = renderMetaBadge('title', titleName, titleParts, titleDeliv, isTitleManual);
+                    const titleBadge = renderMetaBadge(displayTitleParts, displayTitleDeliv, isTitleManual, rawTitleParts,
+                        rawTitleDeliv);
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitleTotal = totalRowsForSubtitle(subtitleEntry);
                         let subtitlePrinted = false;
 
                         const subtitleId = `${clientEntry.clientName}|${titleName}|${subtitleEntry.subtitleName}`;
-                        const subtitleManual = overridesSubtitle[subtitleId];
-                        let subtitleParts = subtitleEntry.partsSet.size;
-                        let subtitleDeliv = subtitleEntry.totalDelivered;
+                        const rawSubtitleParts = subtitleEntry.partsSet.size;
+                        const rawSubtitleDeliv = subtitleEntry.totalDelivered;
+                        let displaySubtitleParts = rawSubtitleParts;
+                        let displaySubtitleDeliv = rawSubtitleDeliv;
                         let isSubtitleManual = false;
+                        const subtitleManual = overridesSubtitle[subtitleId];
                         if (subtitleManual) {
-                            subtitleParts = subtitleManual.parts;
-                            subtitleDeliv = subtitleManual.delivered;
+                            displaySubtitleParts = subtitleManual.parts;
+                            displaySubtitleDeliv = subtitleManual.delivered;
                             isSubtitleManual = true;
                         }
-                        const subtitleMeta = renderMetaBadge('subtitle', subtitleId, subtitleParts, subtitleDeliv, isSubtitleManual);
+                        const subtitleBadge = renderMetaBadge(displaySubtitleParts, displaySubtitleDeliv, isSubtitleManual,
+                            rawSubtitleParts, rawSubtitleDeliv);
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
                             const assemblyTotal = totalRowsForAssembly(assemblyEntry);
                             let assemblyPrinted = false;
 
-                            const assemblyId = `${clientEntry.clientName}|${titleName}|${subtitleEntry.subtitleName}|${assemblyEntry.assemblyName}`;
-                            const assemblyManual = overridesAssembly[assemblyId];
-                            let assemblyParts = assemblyEntry.partsSet.size;
-                            let assemblyDeliv = assemblyEntry.totalDelivered;
+                            const assemblyId =
+                                `${clientEntry.clientName}|${titleName}|${subtitleEntry.subtitleName}|${assemblyEntry.assemblyName}`;
+                            const rawAssemblyParts = assemblyEntry.partsSet.size;
+                            const rawAssemblyDeliv = assemblyEntry.totalDelivered;
+                            let displayAssemblyParts = rawAssemblyParts;
+                            let displayAssemblyDeliv = rawAssemblyDeliv;
                             let isAssemblyManual = false;
+                            const assemblyManual = overridesAssembly[assemblyId];
                             if (assemblyManual) {
-                                assemblyParts = assemblyManual.parts;
-                                assemblyDeliv = assemblyManual.delivered;
+                                displayAssemblyParts = assemblyManual.parts;
+                                displayAssemblyDeliv = assemblyManual.delivered;
                                 isAssemblyManual = true;
                             }
-                            const assemblyMeta = renderMetaBadge('assembly', assemblyId, assemblyParts, assemblyDeliv, isAssemblyManual);
+                            const assemblyBadge = renderMetaBadge(displayAssemblyParts, displayAssemblyDeliv,
+                                isAssemblyManual, rawAssemblyParts, rawAssemblyDeliv);
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
@@ -899,20 +885,38 @@
                                 }
 
                                 if (!titlePrinted) {
-                                    html +=
-                                        `<td rowspan="${titleTotal}" class="align-top"><div class="title-cell"><span class="title-name">${escapeHtml(titleEntry.titleName)}</span>${titleMeta}</div></td>`;
+                                    html += `
+                                            <td rowspan="${titleTotal}" class="align-top">
+                                                <div class="title-name">${escapeHtml(titleEntry.titleName)}</div>
+                                                ${titleBadge}
+                                                <button class="manual-edit-btn no-print" onclick="openManualEdit('title', '${escapeHtml(titleName)}', ${displayTitleParts}, ${displayTitleDeliv})" title="Manual override for Title">
+                                                    <i class="fa-regular fa-pen-to-square"></i>
+                                                </button>
+                                            </td>`;
                                     titlePrinted = true;
                                 }
 
                                 if (!subtitlePrinted) {
-                                    html +=
-                                        `<td rowspan="${subtitleTotal}" class="align-top">${escapeHtml(subtitleEntry.subtitleName)}${subtitleMeta}</td>`;
+                                    html += `
+                                            <td rowspan="${subtitleTotal}" class="align-top">
+                                                <div class="text-sm font-medium text-gray-700">${escapeHtml(subtitleEntry.subtitleName) || '—'}</div>
+                                                ${subtitleBadge}
+                                                <button class="manual-edit-btn no-print" onclick="openManualEdit('subtitle', '${escapeHtml(subtitleId)}', ${displaySubtitleParts}, ${displaySubtitleDeliv})" title="Manual override for Subtitle">
+                                                    <i class="fa-regular fa-pen-to-square"></i>
+                                                </button>
+                                            </td>`;
                                     subtitlePrinted = true;
                                 }
 
                                 if (!assemblyPrinted) {
-                                    html +=
-                                        `<td rowspan="${assemblyTotal}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span>${assemblyMeta}</td>`;
+                                    html += `
+                                            <td rowspan="${assemblyTotal}" class="align-top">
+                                                <div class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</div>
+                                                ${assemblyBadge}
+                                                <button class="manual-edit-btn no-print" onclick="openManualEdit('assembly', '${escapeHtml(assemblyId)}', ${displayAssemblyParts}, ${displayAssemblyDeliv})" title="Manual override for Sub Sub Assembly">
+                                                    <i class="fa-regular fa-pen-to-square"></i>
+                                                </button>
+                                            </td>`;
                                     assemblyPrinted = true;
                                 }
 
@@ -980,7 +984,7 @@
             setTimeout(() => document.getElementById('manualPartsInput')?.focus(), 50);
         }
 
-        // ---------- XLSX Export (with all manual levels) ----------
+        // ---------- XLSX Export ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -1074,14 +1078,12 @@
                     titleEntry.partsSet = titleParts;
                     titleEntry.totalDelivered = titleDeliv;
 
-                    // Apply manual overrides for Title
                     const titleManual = overridesTitle[titleEntry.titleName];
                     if (titleManual) {
                         titleEntry.partsSet = new Set(Array(titleManual.parts).fill('manual'));
                         titleEntry.totalDelivered = titleManual.delivered;
                     }
 
-                    // Apply manual overrides for Subtitle & Assembly
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitleId = `${clientEntry.clientName}|${titleEntry.titleName}|${subtitleEntry.subtitleName}`;
                         const subtitleManual = overridesSubtitle[subtitleId];
@@ -1110,7 +1112,9 @@
                 }
                 return cnt;
             }
+
             function totalRowsForAssembly(assemblyEntry) { return countParts(assemblyEntry); }
+
             function totalRowsForSubtitle(subtitleEntry) {
                 let sum = 0;
                 for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
@@ -1118,6 +1122,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForTitle(titleEntry) {
                 let sum = 0;
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -1125,6 +1130,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForClient(clientEntry) {
                 let sum = 0;
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -1137,7 +1143,8 @@
                 'Client',
                 'Title', 'Title #Parts', 'Title Total Deliv', 'Title Deliv/Part %',
                 'Subtitle', 'Subtitle #Parts', 'Subtitle Total Deliv', 'Subtitle Deliv/Part %',
-                'Sub Sub Assembly', 'Sub Sub Assembly #Parts', 'Sub Sub Assembly Total Deliv', 'Sub Sub Assembly Deliv/Part %',
+                'Sub Sub Assembly', 'Sub Sub Assembly #Parts', 'Sub Sub Assembly Total Deliv',
+                'Sub Sub Assembly Deliv/Part %',
                 'Part Name', 'Drawing No.', 'Delivered', 'Accepted', 'Conditional'
             ];
             const data = [headers];
@@ -1260,7 +1267,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard (with all manual levels) ----------
+        // ---------- Copy to clipboard ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
