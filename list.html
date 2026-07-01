@@ -50,6 +50,9 @@
             .manual-edit-btn {
                 display: none !important;
             }
+            .comparison-card {
+                display: none !important;
+            }
         }
         .table-wrapper {
             overflow-x: auto;
@@ -197,7 +200,6 @@
             font-weight: 600;
             color: #0b6e4f;
         }
-        /* manual override style */
         .title-meta .manual-indicator {
             color: #b45309;
             font-weight: 600;
@@ -245,20 +247,19 @@
             font-weight: 500;
         }
 
-        /* small inline edit popup */
         .manual-edit-popup {
             display: none;
-            position: absolute;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: white;
             border: 1px solid #d1d5db;
-            border-radius: 12px;
-            padding: 12px 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            z-index: 50;
-            min-width: 200px;
-            top: 100%;
-            left: 0;
-            margin-top: 4px;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            min-width: 280px;
         }
         .manual-edit-popup.active {
             display: block;
@@ -268,24 +269,24 @@
             font-weight: 500;
             color: #4b5563;
             display: block;
-            margin-top: 6px;
+            margin-top: 8px;
         }
         .manual-edit-popup input {
             width: 100%;
             border: 1px solid #d1d5db;
             border-radius: 8px;
-            padding: 4px 8px;
-            font-size: 0.8rem;
+            padding: 6px 10px;
+            font-size: 0.9rem;
             margin-top: 2px;
         }
         .manual-edit-popup .popup-actions {
             display: flex;
             gap: 8px;
-            margin-top: 10px;
+            margin-top: 14px;
             justify-content: flex-end;
         }
         .manual-edit-popup .popup-actions button {
-            padding: 4px 14px;
+            padding: 6px 16px;
             border-radius: 8px;
             font-size: 0.75rem;
             border: none;
@@ -314,6 +315,64 @@
         .title-meta-wrap {
             position: relative;
             display: inline-block;
+        }
+
+        /* Comparison card */
+        .comparison-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 12px 20px;
+            border: 1px solid #e9edf2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .comparison-card .cmp-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px 12px;
+            flex-wrap: wrap;
+            margin-right: 16px;
+        }
+        .comparison-card .cmp-item .label {
+            font-size: 0.7rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .comparison-card .cmp-item .value {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .comparison-card .cmp-item .value.positive {
+            color: #16a34a;
+        }
+        .comparison-card .cmp-item .value.negative {
+            color: #dc2626;
+        }
+        .comparison-card .cmp-item .value.neutral {
+            color: #6b7280;
+        }
+        .comparison-card .cmp-divider {
+            color: #d1d5db;
+            font-weight: 300;
+            margin: 0 4px;
+        }
+        .comparison-card .badge-pct {
+            background: #f1f5f9;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .comparison-card .badge-pct.positive {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .comparison-card .badge-pct.negative {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .comparison-card .badge-pct.neutral {
+            background: #f1f5f9;
+            color: #475569;
         }
     </style>
 </head>
@@ -346,6 +405,33 @@
                 <button onclick="clearAllManualOverrides()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
                     <i class="fas fa-undo-alt"></i> Reset Manual
                 </button>
+            </div>
+        </div>
+
+        <!-- ─── NEW: Manual vs Actual Comparison Card ─── -->
+        <div class="comparison-card mb-5 no-print" id="comparisonCard">
+            <div class="flex flex-wrap items-center gap-2 md:gap-4">
+                <span class="text-sm font-semibold text-slate-700"><i class="fa-regular fa-scale-balanced text-amber-600 mr-1"></i>Manual vs Actual</span>
+                <span class="cmp-divider">|</span>
+                <span class="cmp-item">
+                    <span class="label"><i class="fa-regular fa-pen-to-square text-amber-500"></i> Manual Total</span>
+                    <span class="value" id="manualTotalDisplay">0</span>
+                </span>
+                <span class="cmp-item">
+                    <span class="label"><i class="fa-regular fa-chart-bar text-blue-500"></i> Actual Total</span>
+                    <span class="value" id="actualTotalDisplay">0</span>
+                </span>
+                <span class="cmp-divider">|</span>
+                <span class="cmp-item">
+                    <span class="label"><i class="fa-regular fa-circle-minus"></i> Difference</span>
+                    <span class="value" id="diffDisplay">0</span>
+                </span>
+                <span class="cmp-item">
+                    <span class="label"><i class="fa-regular fa-percent"></i> % Variance</span>
+                    <span class="badge-pct" id="pctDisplay">0%</span>
+                </span>
+                <span class="cmp-divider">|</span>
+                <span class="text-xs text-gray-400" id="manualCountDisplay">0 titles overridden</span>
             </div>
         </div>
 
@@ -451,7 +537,7 @@
             <span><i class="fa-solid fa-list"></i> Drawing numbers are listed per part</span>
             <span><i class="fa-solid fa-eye-slash"></i> Parts with zero delivered are hidden</span>
             <span><i class="fa-solid fa-pen text-amber-600"></i> <strong>Manual override</strong> – click ✏️ to edit parts &amp; delivered per title</span>
-            <span><i class="fa-solid fa-undo-alt text-amber-600"></i> Reset Manual clears all overrides</span>
+            <span><i class="fa-solid fa-scale-balanced text-amber-600"></i> <strong>Manual vs Actual</strong> shows variance</span>
         </div>
     </div>
 
@@ -474,7 +560,6 @@
                 overrides[title] = { parts: Number(parts), delivered: Number(delivered) };
             }
             localStorage.setItem(MANUAL_KEY, JSON.stringify(overrides));
-            // re-render
             applyFilters();
         }
 
@@ -607,7 +692,6 @@
                 document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
                 document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
 
-                // Populate dropdowns
                 const projectSelect = document.getElementById('projectFilterSelect');
                 projectSelect.innerHTML = '<option value="">All Titles</option>';
                 [...uniqueProjectNames].sort().forEach(proj => {
@@ -651,9 +735,49 @@
             if (searchTerm) filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
 
             renderAggregatedTable(filtered);
+            updateComparisonCard(filtered);
         }
 
-        // ---------- Aggregated Render with manual override support ----------
+        // ---------- Update Comparison Card ----------
+        function updateComparisonCard(rows) {
+            const overrides = getManualOverrides();
+            let manualTotal = 0;
+            let overrideCount = 0;
+
+            // Compute manual total from overrides that exist in the current data
+            const titlesInData = new Set(rows.map(r => r.projectName));
+            for (const [title, val] of Object.entries(overrides)) {
+                if (titlesInData.has(title)) {
+                    manualTotal += val.delivered || 0;
+                    overrideCount++;
+                }
+            }
+
+            // Actual total from data (sum of deliveredRaw across all rows)
+            let actualTotal = 0;
+            for (const row of rows) {
+                actualTotal += row.deliveredRaw;
+            }
+
+            const diff = manualTotal - actualTotal;
+            const pct = manualTotal !== 0 ? (diff / manualTotal) * 100 : 0;
+
+            document.getElementById('manualTotalDisplay').textContent = formatQty(manualTotal);
+            document.getElementById('actualTotalDisplay').textContent = formatQty(actualTotal);
+
+            const diffEl = document.getElementById('diffDisplay');
+            diffEl.textContent = (diff >= 0 ? '+' : '') + formatQty(diff);
+            diffEl.className = 'value ' + (diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'neutral');
+
+            const pctEl = document.getElementById('pctDisplay');
+            const pctFormatted = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+            pctEl.textContent = pctFormatted;
+            pctEl.className = 'badge-pct ' + (pct > 0 ? 'positive' : pct < 0 ? 'negative' : 'neutral');
+
+            document.getElementById('manualCountDisplay').textContent = `${overrideCount} titles overridden`;
+        }
+
+        // ---------- Aggregated Render ----------
         function renderAggregatedTable(rows) {
             const tbody = document.getElementById('reportTableBody');
             const totalPartsCard = document.getElementById('totalPartsSum');
@@ -666,7 +790,6 @@
                 return;
             }
 
-            // Build tree
             const clientMap = new Map();
             for (const row of rows) {
                 const client = row.clientName;
@@ -713,7 +836,6 @@
                 }
             }
 
-            // Second pass: compute title stats
             for (const clientEntry of clientMap.values()) {
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     let totalDeliv = 0;
@@ -733,7 +855,6 @@
                 }
             }
 
-            // Helpers for rowspan
             function countParts(assemblyEntry) {
                 let cnt = 0;
                 for (const partEntry of assemblyEntry.partMap.values()) {
@@ -768,7 +889,6 @@
                 return sum;
             }
 
-            // ── Render ──
             let html = '';
             let totalParts = 0;
             const overrides = getManualOverrides();
@@ -781,7 +901,6 @@
                     const titleTotal = totalRowsForTitle(titleEntry);
                     let titlePrinted = false;
 
-                    // Title metadata – check manual override
                     const titleName = titleEntry.titleName;
                     const manual = overrides[titleName];
                     let partsCount = titleEntry.partsSet.size;
@@ -872,7 +991,6 @@
                 }
             }
 
-            // Update total parts card (based on calculated, not manual)
             let calcTotalParts = 0;
             for (const clientEntry of clientMap.values()) {
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -894,18 +1012,10 @@
 
         // ---------- Manual edit popup ----------
         function openManualEdit(title, currentParts, currentDeliv) {
-            // Close any open popup
             document.querySelectorAll('.manual-edit-popup').forEach(el => el.remove());
 
             const popup = document.createElement('div');
             popup.className = 'manual-edit-popup active';
-            popup.style.position = 'fixed';
-            popup.style.top = '50%';
-            popup.style.left = '50%';
-            popup.style.transform = 'translate(-50%, -50%)';
-            popup.style.zIndex = '999';
-            popup.style.minWidth = '280px';
-            popup.style.boxShadow = '0 20px 60px rgba(0,0,0,0.3)';
             popup.innerHTML = `
                     <div style="font-weight:600; margin-bottom:8px; font-size:0.9rem;">Manual override for <span style="color:#2563eb;">${escapeHtml(title)}</span></div>
                     <label>Parts (unique parts)</label>
@@ -925,24 +1035,14 @@
                 `;
             document.body.appendChild(popup);
 
-            // Click outside to close
             popup.addEventListener('click', function(e) {
                 if (e.target === popup) popup.remove();
             });
 
-            // Focus first input
             setTimeout(() => document.getElementById('manualPartsInput')?.focus(), 50);
         }
 
-        // Override save function to also close popup if open
-        const originalSave = saveManualOverride;
-        saveManualOverride = function(title, parts, delivered) {
-            originalSave(title, parts, delivered);
-            // Close any open popup
-            document.querySelectorAll('.manual-edit-popup').forEach(el => el.remove());
-        };
-
-        // ---------- XLSX Export (with manual overrides) ----------
+        // ---------- XLSX Export ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -955,7 +1055,6 @@
             if (selectedEngineer) filteredRows = filteredRows.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) filteredRows = filteredRows.filter(row => row.rawSearch.includes(searchTerm));
 
-            // Build tree with title meta
             const clientMap = new Map();
             for (const row of filteredRows) {
                 const client = row.clientName;
@@ -1002,7 +1101,6 @@
                 }
             }
 
-            // Second pass: compute title stats with manual overrides
             const overrides = getManualOverrides();
             for (const clientEntry of clientMap.values()) {
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -1018,7 +1116,6 @@
                             }
                         }
                     }
-                    // Apply manual override if exists
                     const manual = overrides[titleEntry.titleName];
                     if (manual) {
                         titleEntry.partsSet = new Set(Array(manual.parts).fill('manual'));
@@ -1159,7 +1256,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard (with manual overrides) ----------
+        // ---------- Copy to clipboard ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -1172,7 +1269,6 @@
             if (selectedEngineer) dataToCopy = dataToCopy.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
 
-            // Aggregate, include manual overrides
             const partMap = new Map();
             const titleMeta = new Map();
 
@@ -1210,7 +1306,6 @@
                 }
             }
 
-            // Apply manual overrides to titleMeta
             const overrides = getManualOverrides();
             for (const [title, meta] of titleMeta) {
                 if (overrides[title]) {
