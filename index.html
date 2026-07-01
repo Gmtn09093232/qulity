@@ -351,13 +351,53 @@
             }
         }
 
-        /* Part List dropdown styling */
-        .part-list-dropdown {
-            background-color: #f8fafc;
+        /* Part List multi-select and quantity table */
+        .part-list-multi {
+            min-height: 60px;
         }
-        .part-list-dropdown:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        .part-qty-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .part-qty-table td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .part-qty-table input[type="number"] {
+            width: 70px;
+            padding: 2px 4px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+        .remove-part-btn {
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0 4px;
+        }
+        .remove-part-btn:hover {
+            color: #dc2626;
+        }
+        .part-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .part-list-container select {
+            width: 100%;
+        }
+        .selected-parts-container {
+            margin-top: 6px;
+            background: #f9fafb;
+            border-radius: 6px;
+            padding: 8px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .selected-parts-container .empty-msg {
+            color: #9ca3af;
+            font-style: italic;
+            padding: 4px 0;
         }
     </style>
 </head>
@@ -653,6 +693,9 @@
         let currentEngineer = '';
         let g_allInspections = [];
 
+        // Store selected parts with quantities for assembly
+        let selectedParts = []; // array of {part: string, qty: number}
+
         const engineerFromUrl = new URLSearchParams(window.location.search).get('engineer');
         if (engineerFromUrl) {
             currentEngineer = decodeURIComponent(engineerFromUrl);
@@ -662,14 +705,12 @@
             f.classList.add('bg-gray-100');
         }
 
-        // ─── PART LIST DROPDOWN HELPERS ───
+        // ─── PART LIST MULTI-SELECT HELPERS ───
 
-        /** Check if current process is one of the "assembly" types that need Part List */
         function isAssemblyProcess() {
             return currentProcess === 'Assembling' || currentProcess === 'FastenersAssembly';
         }
 
-        /** Get current filter values from the form */
         function getPartListFilters() {
             const client = document.getElementById('extra_Customer_Name')?.value?.trim() || '';
             const title = document.getElementById('extra_Project_Name')?.value?.trim() || '';
@@ -678,47 +719,43 @@
             return { client, title, subtitle, subSub };
         }
 
-        /** Populate the Part List dropdown based on current filters */
-        function populatePartListDropdown(keepSelectedValue) {
+        function findMatchingParts(filters) {
+            const { client, title, subtitle, subSub } = filters;
+            const partsSet = new Set();
+            if (!client && !title) return [];
+            for (const insp of g_allInspections) {
+                const extra = insp.extra_fields || {};
+                const inspClient = (extra['Customer Name'] || '').trim();
+                const inspTitle = (extra['Project Name'] || '').trim();
+                const inspSubtitle = (extra['Subtitle'] || '').trim();
+                const inspSubSub = (extra['Sub Sub Assembly'] || '').trim();
+                const inspPart = (extra['Part Name'] || '').trim();
+                if (!inspPart) continue;
+                let match = true;
+                if (client && inspClient !== client) match = false;
+                if (match && title && inspTitle !== title) match = false;
+                if (match && subtitle && inspSubtitle !== subtitle) match = false;
+                if (match && subSub && subtitle && inspSubSub !== subSub) match = false; // only if subtitle present
+                if (match) partsSet.add(inspPart);
+            }
+            return Array.from(partsSet);
+        }
+
+        // Populate the multi-select with options
+        function populatePartListMultiSelect() {
             const selectEl = document.getElementById('extra_Tag_No_');
-            if (!selectEl) return;
-
-            // Only operate if we're in an assembly process
-            if (!isAssemblyProcess()) {
-                // If it's a text input (not a dropdown), we're done
-                if (selectEl.tagName !== 'SELECT') return;
-                // If it's a select but we're not in assembly, convert back to text input
-                // This shouldn't happen normally, but handle defensively
-                return;
-            }
-
+            if (!selectEl || !isAssemblyProcess()) return;
             const filters = getPartListFilters();
-            const selectedVal = keepSelectedValue ? selectEl.value : '';
-
-            // Clear existing options (keep the first "default" option)
-            selectEl.innerHTML = '<option value="">-- Select Part --</option>';
-
-            // If we have no client or title, show a message
-            if (!filters.client && !filters.title) {
-                const opt = document.createElement('option');
-                opt.value = '';
-                opt.textContent = '⏳ Enter Client & Title first';
-                opt.disabled = true;
-                selectEl.appendChild(opt);
-                return;
-            }
-
-            // Find matching parts from inspection history
             const parts = findMatchingParts(filters);
-
+            // Clear options (keep first default)
+            selectEl.innerHTML = '<option value="">-- Select Parts --</option>';
             if (parts.length === 0) {
                 const opt = document.createElement('option');
                 opt.value = '';
-                opt.textContent = '🔍 No matching parts found';
+                opt.textContent = '⏳ No parts found';
                 opt.disabled = true;
                 selectEl.appendChild(opt);
             } else {
-                // Sort parts alphabetically
                 parts.sort((a, b) => a.localeCompare(b));
                 parts.forEach(p => {
                     const opt = document.createElement('option');
@@ -727,94 +764,111 @@
                     selectEl.appendChild(opt);
                 });
             }
-
-            // Restore selection if possible
-            if (selectedVal && parts.includes(selectedVal)) {
-                selectEl.value = selectedVal;
-            }
-        }
-
-        /** Find parts (Part Name values) from inspections matching the given filters */
-        function findMatchingParts(filters) {
-            const { client, title, subtitle, subSub } = filters;
-            const partsSet = new Set();
-
-            // If no client and no title, return empty (need at least one filter)
-            if (!client && !title) return [];
-
-            for (const insp of g_allInspections) {
-                const extra = insp.extra_fields || {};
-                const inspClient = (extra['Customer Name'] || '').trim();
-                const inspTitle = (extra['Project Name'] || '').trim();
-                const inspSubtitle = (extra['Subtitle'] || '').trim();
-                const inspSubSub = (extra['Sub Sub Assembly'] || '').trim();
-                const inspPart = (extra['Part Name'] || '').trim();
-
-                // Skip if no part name
-                if (!inspPart) continue;
-
-                // Apply filters (AND logic, skip empty filter values)
-                let match = true;
-                if (client && inspClient !== client) match = false;
-                if (match && title && inspTitle !== title) match = false;
-                if (match && subtitle && inspSubtitle !== subtitle) match = false;
-                // Only filter by subSub if subtitle is present (user said: "if the title have only subtitle do not conseder sub sub assmbelly")
-                // Meaning: if subtitle exists but subSub is empty, we don't filter by subSub.
-                // But if subtitle is empty, we also don't filter by subSub (since it's a sub-field).
-                // Actually, re-reading: "if the title have only subtitle do not conseder sub sub assmbelly"
-                // This means: if there's a subtitle (i.e., subtitle is not empty) but no sub sub assembly,
-                // then we should NOT consider sub sub assembly in the filter.
-                // So: only filter by subSub if BOTH subtitle AND subSub are non-empty in the filter.
-                // AND the inspection must have the same subSub (or no subSub, but if filter has subSub, it must match).
-                if (match && subSub) {
-                    // Only apply subSub filter if subtitle is also present (per user's instruction)
-                    if (subtitle) {
-                        if (inspSubSub !== subSub) match = false;
-                    } else {
-                        // If subtitle is empty but subSub is not, we don't use subSub as filter
-                        // (since subSub is only meaningful with subtitle)
-                        // Do nothing - skip subSub filter
-                    }
-                }
-
-                if (match) {
-                    partsSet.add(inspPart);
-                }
-            }
-
-            return Array.from(partsSet);
-        }
-
-        /** Refresh Part List when any filter field changes */
-        function refreshPartList() {
-            if (isAssemblyProcess()) {
-                const selectEl = document.getElementById('extra_Tag_No_');
-                if (selectEl && selectEl.tagName === 'SELECT') {
-                    populatePartListDropdown(true);
-                }
-            }
-        }
-
-        /** Attach filter-change listeners to refresh the Part List */
-        function attachPartListListeners() {
-            const fields = ['extra_Customer_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly'];
-            fields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    // Remove old listeners to avoid duplicates
-                    el.removeEventListener('change', refreshPartList);
-                    el.removeEventListener('input', refreshPartListDebounced);
-                    el.addEventListener('change', refreshPartList);
-                    el.addEventListener('input', refreshPartListDebounced);
+            // Restore previously selected values (if any) - we do that via selectedParts array
+            // We'll set the selected attribute for options that are in selectedParts
+            const selectedPartNames = selectedParts.map(item => item.part);
+            Array.from(selectEl.options).forEach(opt => {
+                if (opt.value && selectedPartNames.includes(opt.value)) {
+                    opt.selected = true;
                 }
             });
         }
 
-        let _partListTimer = null;
+        // Render the table of selected parts with quantity inputs
+        function renderSelectedPartsTable() {
+            const container = document.getElementById('selectedPartsContainer');
+            if (!container) return;
+            if (!isAssemblyProcess()) {
+                container.innerHTML = '';
+                return;
+            }
+            if (selectedParts.length === 0) {
+                container.innerHTML = `<div class="empty-msg">No parts selected</div>`;
+                return;
+            }
+            let html = `<table class="part-qty-table"><tbody>`;
+            selectedParts.forEach((item, index) => {
+                html += `<tr>
+                            <td><span class="font-medium">${escapeHtml(item.part)}</span></td>
+                            <td><input type="number" min="1" step="1" value="${item.qty}" data-index="${index}" class="part-qty-input" /></td>
+                            <td><span class="remove-part-btn" data-index="${index}"><i class="fa-regular fa-trash-can"></i></span></td>
+                        </tr>`;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+            // Attach events
+            container.querySelectorAll('.part-qty-input').forEach(inp => {
+                inp.addEventListener('input', function() {
+                    const idx = parseInt(this.dataset.index);
+                    const val = parseInt(this.value) || 1;
+                    if (val > 0) {
+                        selectedParts[idx].qty = val;
+                    } else {
+                        this.value = 1;
+                        selectedParts[idx].qty = 1;
+                    }
+                    updateAcceptedQtyFromParts();
+                });
+            });
+            container.querySelectorAll('.remove-part-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index);
+                    selectedParts.splice(idx, 1);
+                    // Also unselect in multi-select
+                    const selectEl = document.getElementById('extra_Tag_No_');
+                    if (selectEl) {
+                        const removedPart = selectedParts[idx] ? selectedParts[idx].part : null;
+                        // Rebuild selected options
+                        const selectedNames = selectedParts.map(i => i.part);
+                        Array.from(selectEl.options).forEach(opt => {
+                            if (opt.value && selectedNames.includes(opt.value)) {
+                                opt.selected = true;
+                            } else {
+                                opt.selected = false;
+                            }
+                        });
+                    }
+                    renderSelectedPartsTable();
+                    updateAcceptedQtyFromParts();
+                });
+            });
+        }
 
-        function refreshPartListDebounced() {
-            clearTimeout(_partListTimer);
-            _partListTimer = setTimeout(refreshPartList, 300);
+        // Update Accepted Qty field with sum of quantities
+        function updateAcceptedQtyFromParts() {
+            const total = selectedParts.reduce((sum, item) => sum + (item.qty || 0), 0);
+            const acceptedField = document.getElementById('acceptedQty');
+            if (acceptedField) {
+                acceptedField.value = total;
+                // Also trigger updateDeliveredQty (but it's readonly anyway)
+                updateDeliveredQty();
+            }
+        }
+
+        // Handle multi-select change: add newly selected parts to the list
+        function onPartListSelectChange() {
+            const selectEl = document.getElementById('extra_Tag_No_');
+            if (!selectEl || !isAssemblyProcess()) return;
+            const selectedOptions = Array.from(selectEl.selectedOptions);
+            const selectedValues = selectedOptions.map(opt => opt.value).filter(v => v !== '');
+            // Add any new parts that are not already in selectedParts
+            let added = false;
+            selectedValues.forEach(val => {
+                if (!selectedParts.some(item => item.part === val)) {
+                    selectedParts.push({ part: val, qty: 1 });
+                    added = true;
+                }
+            });
+            // Remove parts that are no longer selected
+            selectedParts = selectedParts.filter(item => selectedValues.includes(item.part));
+            if (added) {
+                renderSelectedPartsTable();
+                updateAcceptedQtyFromParts();
+            } else {
+                // Still re-render to keep consistency
+                renderSelectedPartsTable();
+                updateAcceptedQtyFromParts();
+            }
         }
 
         // ─── END PART LIST HELPERS ───
@@ -847,11 +901,13 @@
                     });
                 }
             });
-            // Attach Part List listeners after fields exist
+            // Attach Part List listeners
             attachPartListListeners();
-            // Initial population of Part List (if assembly process)
             if (isAssemblyProcess()) {
-                setTimeout(() => populatePartListDropdown(false), 200);
+                setTimeout(() => {
+                    populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                }, 300);
             }
         }
 
@@ -1056,9 +1112,11 @@
                     if (drawingInput && extracted.drawingNo) drawingInput.value = extracted.drawingNo;
                     if (partInput && extracted.partName) partInput.value = extracted.partName;
                     showToast('✅ Document scanned and fields auto-filled!', 'success');
-                    // Refresh part list if assembly
                     if (isAssemblyProcess()) {
-                        setTimeout(() => populatePartListDropdown(false), 300);
+                        setTimeout(() => {
+                            populatePartListMultiSelect();
+                            renderSelectedPartsTable();
+                        }, 300);
                     }
                 } catch (err) {
                     console.error(err);
@@ -1483,10 +1541,19 @@
                             html +=
                                 `<div><label class="font-bold text-sm">Part Name</label><input type="text" id="${safeId}" list="partNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
                         } else if (field === "Tag No.") {
-                            // ─── PART LIST DROPDOWN ───
+                            // ─── PART LIST MULTI-SELECT ───
                             if (isAssemblyProcess()) {
-                                html +=
-                                    `<div><label class="font-bold text-sm">Part List</label><select id="${safeId}" class="w-full border p-1 rounded text-sm part-list-dropdown"><option value="">-- Select Part --</option></select></div>`;
+                                html += `
+                                        <div class="part-list-container">
+                                          <label class="font-bold text-sm">Part List (multi-select)</label>
+                                          <select id="${safeId}" multiple size="4" class="w-full border p-1 rounded text-sm part-list-multi">
+                                            <option value="">-- Select Parts --</option>
+                                          </select>
+                                          <div id="selectedPartsContainer" class="selected-parts-container">
+                                            <div class="empty-msg">No parts selected</div>
+                                          </div>
+                                        </div>
+                                      `;
                             } else {
                                 html +=
                                     `<div><label class="font-bold text-sm">Tag No.</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" placeholder="Tag number"></div>`;
@@ -1526,7 +1593,15 @@
                 attachPartListListeners();
                 // Populate Part List if assembly
                 if (isAssemblyProcess()) {
-                    setTimeout(() => populatePartListDropdown(false), 200);
+                    // Clear selectedParts if not in edit mode
+                    if (!isEditMode) selectedParts = [];
+                    setTimeout(() => {
+                        populatePartListMultiSelect();
+                        renderSelectedPartsTable();
+                        if (selectedParts.length > 0) {
+                            updateAcceptedQtyFromParts();
+                        }
+                    }, 200);
                 }
             }
         }
@@ -1536,9 +1611,11 @@
             renderDynamicFields();
             populateMachineDropdown();
             populateSuggestedNextOps();
-            // Refresh Part List if assembly
             if (isAssemblyProcess()) {
-                setTimeout(() => populatePartListDropdown(false), 300);
+                setTimeout(() => {
+                    populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                }, 300);
             }
         }
 
@@ -1567,7 +1644,14 @@
                 def.extraFields.forEach(field => {
                     const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                     const el = document.getElementById(id);
-                    if (el) extra[field] = el.value;
+                    if (el) {
+                        if (field === "Tag No." && isAssemblyProcess()) {
+                            // Store selectedParts as JSON array
+                            extra[field] = JSON.stringify(selectedParts);
+                        } else {
+                            extra[field] = el.value;
+                        }
+                    }
                 });
             }
             return extra;
@@ -1600,12 +1684,34 @@
                 def.extraFields.forEach(field => {
                     const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                     const el = document.getElementById(id);
-                    if (el && extra[field] !== undefined) el.value = extra[field];
+                    if (el && extra[field] !== undefined) {
+                        if (field === "Tag No." && isAssemblyProcess()) {
+                            // Parse JSON array
+                            try {
+                                const parsed = JSON.parse(extra[field]);
+                                if (Array.isArray(parsed)) {
+                                    selectedParts = parsed;
+                                } else {
+                                    selectedParts = [];
+                                }
+                            } catch (e) {
+                                selectedParts = [];
+                            }
+                            // We'll populate the multi-select and table after render
+                        } else {
+                            el.value = extra[field];
+                        }
+                    }
                 });
             }
-            // If assembly and Tag No. is a select, populate it
             if (isAssemblyProcess()) {
-                setTimeout(() => populatePartListDropdown(false), 200);
+                setTimeout(() => {
+                    populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                    if (selectedParts.length > 0) {
+                        updateAcceptedQtyFromParts();
+                    }
+                }, 200);
             }
         }
 
@@ -1730,6 +1836,7 @@
 
         function resetForm() {
             document.getElementById("inspectionForm").reset();
+            selectedParts = [];
             renderDynamicFields();
             computeFailureCost();
             isEditMode = false;
@@ -1746,9 +1853,11 @@
             populateSuggestedNextOps();
             document.getElementById('suggestedNextOp').value = '';
             document.getElementById('lastOperationContainer').classList.add('hidden');
-            // Refresh Part List if assembly
             if (isAssemblyProcess()) {
-                setTimeout(() => populatePartListDropdown(false), 300);
+                setTimeout(() => {
+                    populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                }, 300);
             }
             showToast('Form reset', 'info');
         }
@@ -1857,9 +1966,11 @@
                               </div>
                             </div>`
                     ).join("");
-                // Refresh Part List after history loads
                 if (isAssemblyProcess()) {
-                    setTimeout(() => populatePartListDropdown(false), 300);
+                    setTimeout(() => {
+                        populatePartListMultiSelect();
+                        renderSelectedPartsTable();
+                    }, 300);
                 }
             } catch (err) { showToast('Error loading history', 'error'); }
         }
@@ -1933,9 +2044,14 @@
             const partName = document.getElementById('extra_Part_Name')?.value?.trim();
             if (partName) fetchLastOperation();
 
-            // If assembly, populate Part List
             if (isAssemblyProcess()) {
-                setTimeout(() => populatePartListDropdown(false), 300);
+                setTimeout(() => {
+                    populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                    if (selectedParts.length > 0) {
+                        updateAcceptedQtyFromParts();
+                    }
+                }, 300);
             }
         }
 
@@ -1967,6 +2083,57 @@
             }
         }
 
+        // ─── EVENT BINDING FOR PART LIST ───
+
+        function attachPartListListeners() {
+            const selectEl = document.getElementById('extra_Tag_No_');
+            if (selectEl && isAssemblyProcess()) {
+                selectEl.removeEventListener('change', onPartListSelectChange);
+                selectEl.addEventListener('change', onPartListSelectChange);
+            }
+            // Also attach filter change to refresh options
+            const filterFields = ['extra_Customer_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly'];
+            filterFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.removeEventListener('change', onFilterChange);
+                    el.removeEventListener('input', onFilterChangeDebounced);
+                    el.addEventListener('change', onFilterChange);
+                    el.addEventListener('input', onFilterChangeDebounced);
+                }
+            });
+        }
+
+        let _filterTimer = null;
+
+        function onFilterChangeDebounced() {
+            clearTimeout(_filterTimer);
+            _filterTimer = setTimeout(onFilterChange, 300);
+        }
+
+        function onFilterChange() {
+            if (isAssemblyProcess()) {
+                populatePartListMultiSelect();
+                // Keep selected parts that are still in the new options
+                const selectEl = document.getElementById('extra_Tag_No_');
+                if (selectEl) {
+                    const availableOptions = Array.from(selectEl.options).map(o => o.value).filter(v => v !== '');
+                    selectedParts = selectedParts.filter(item => availableOptions.includes(item.part));
+                    // Update selected attributes
+                    const selectedNames = selectedParts.map(i => i.part);
+                    Array.from(selectEl.options).forEach(opt => {
+                        if (opt.value && selectedNames.includes(opt.value)) {
+                            opt.selected = true;
+                        } else {
+                            opt.selected = false;
+                        }
+                    });
+                    renderSelectedPartsTable();
+                    updateAcceptedQtyFromParts();
+                }
+            }
+        }
+
         document.getElementById("levelSelect").addEventListener("change", function(e) {
             const lvl = e.target.value;
             const salField = document.getElementById("salaryPerHour");
@@ -1990,7 +2157,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('🔐 QC Inspection ready – Part List dropdown active for Assembly processes.');
+        console.log('🔐 QC Inspection ready – Part List multi-select with quantity tracking active.');
     </script>
 </body>
 </html>
