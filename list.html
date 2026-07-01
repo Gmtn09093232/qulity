@@ -11,18 +11,56 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
         @media print {
-            body * { visibility: hidden; }
-            .report-container, .report-container * { visibility: visible; }
-            .report-container { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
-            .no-print { display: none !important; }
-            .summary-cards { display: none !important; }
-            .filter-bar, .action-buttons { display: none !important; }
-            table th, table td { padding: 4px 6px !important; font-size: 0.7rem !important; }
-            .table-wrapper { border-radius: 0 !important; }
-            .manual-input { border: 1px solid #ccc !important; background: #fff !important; font-size: 0.7rem !important; padding: 2px 4px !important; width: 60px !important; }
+            body * {
+                visibility: hidden;
+            }
+            .report-container,
+            .report-container * {
+                visibility: visible;
+            }
+            .report-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .summary-cards {
+                display: none !important;
+            }
+            .filter-bar,
+            .action-buttons {
+                display: none !important;
+            }
+            table th,
+            table td {
+                padding: 4px 6px !important;
+                font-size: 0.7rem !important;
+            }
+            .table-wrapper {
+                border-radius: 0 !important;
+            }
+            .manual-input {
+                border: 1px solid #ccc !important;
+                background: #fff !important;
+                font-size: 0.7rem !important;
+                padding: 2px 4px !important;
+                width: 60px !important;
+            }
         }
-        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
         th {
             background-color: #f1f5f9;
             position: sticky;
@@ -42,14 +80,27 @@
             font-size: 0.7rem;
             color: #4338ca;
         }
-        td { padding: 6px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
-        tr:hover td { background-color: #f8fafc; }
+        td {
+            padding: 6px 6px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+        tr:hover td {
+            background-color: #f8fafc;
+        }
         .summary-card {
             transition: all 0.2s;
             border-radius: 1rem;
         }
-        .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        .filter-input:focus { outline: none; ring: 2px solid #3b82f6; border-color: transparent; }
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        .filter-input:focus {
+            outline: none;
+            ring: 2px solid #3b82f6;
+            border-color: transparent;
+        }
         .loader {
             border: 3px solid #e2e8f0;
             border-top: 3px solid #3b82f6;
@@ -59,7 +110,14 @@
             animation: spin 0.8s linear infinite;
             margin: 20px auto;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
         .badge {
             display: inline-block;
             padding: 0.15rem 0.6rem;
@@ -67,11 +125,25 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
-        .badge-accepted { background: #dcfce7; color: #166534; }
-        .badge-conditional { background: #f3e8ff; color: #6b21a8; }
-        .col-delivered { background: #eff6ff; font-weight: 600; color: #1e40af; }
-        .col-accepted { color: #166534; }
-        .col-conditional { color: #6b21a8; }
+        .badge-accepted {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-conditional {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+        .col-delivered {
+            background: #eff6ff;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        .col-accepted {
+            color: #166534;
+        }
+        .col-conditional {
+            color: #6b21a8;
+        }
         .sub-assembly-tag {
             font-size: 0.7rem;
             background: #eef2ff;
@@ -87,14 +159,36 @@
             display: inline-block;
             word-break: break-word;
         }
-        .group-row-title { background-color: #f0f9ff; font-weight: 600; }
-        .group-row-title td { border-top: 2px solid #93c5fd; border-bottom: 2px solid #93c5fd; }
-        .group-row-subtitle { background-color: #f5f3ff; font-weight: 500; }
-        .group-row-subtitle td { border-top: 1px solid #c4b5fd; border-bottom: 1px solid #c4b5fd; }
-        .group-row-assembly { background-color: #fefce8; font-weight: 500; }
-        .group-row-assembly td { border-top: 1px solid #fde68a; border-bottom: 1px solid #fde68a; }
-        .part-row td { background-color: #ffffff; }
-        .part-row:hover td { background-color: #f8fafc; }
+        .group-row-title {
+            background-color: #f0f9ff;
+            font-weight: 600;
+        }
+        .group-row-title td {
+            border-top: 2px solid #93c5fd;
+            border-bottom: 2px solid #93c5fd;
+        }
+        .group-row-subtitle {
+            background-color: #f5f3ff;
+            font-weight: 500;
+        }
+        .group-row-subtitle td {
+            border-top: 1px solid #c4b5fd;
+            border-bottom: 1px solid #c4b5fd;
+        }
+        .group-row-assembly {
+            background-color: #fefce8;
+            font-weight: 500;
+        }
+        .group-row-assembly td {
+            border-top: 1px solid #fde68a;
+            border-bottom: 1px solid #fde68a;
+        }
+        .part-row td {
+            background-color: #ffffff;
+        }
+        .part-row:hover td {
+            background-color: #f8fafc;
+        }
         .manual-input {
             width: 72px;
             padding: 4px 6px;
@@ -112,28 +206,80 @@
             outline: none;
             background: #fff;
         }
-        .variance-value { font-weight: 700; font-size: 0.85rem; }
-        .variance-positive { color: #16a34a; }
-        .variance-negative { color: #dc2626; }
-        .variance-zero { color: #6b7280; }
-        .group-label { font-weight: 600; font-size: 0.75rem; color: #4b5563; letter-spacing: 0.3px; }
-        .group-name { font-weight: 600; }
-        .manual-col-header { background: #eef2ff; color: #4338ca; }
-        .variance-col-header { background: #fef3c7; color: #92400e; }
-        .part-indent { padding-left: 20px !important; }
-        .rowspan-fix { vertical-align: middle !important; }
-        .group-summary-row td { padding: 8px 6px; }
-        .group-summary-row .manual-input { width: 80px; }
-        .table-footer-info { font-size: 0.75rem; }
-        .filter-bar label { font-weight: 500; }
-        .group-header-row th { background-color: #e0e7ff; border-bottom: 2px solid #818cf8; }
-        .group-header-row th:first-child { border-top-left-radius: 0.5rem; }
-        .group-header-row th:last-child { border-top-right-radius: 0.5rem; }
+        .variance-value {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .variance-positive {
+            color: #16a34a;
+        }
+        .variance-negative {
+            color: #dc2626;
+        }
+        .variance-zero {
+            color: #6b7280;
+        }
+        .group-label {
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: #4b5563;
+            letter-spacing: 0.3px;
+        }
+        .group-name {
+            font-weight: 600;
+        }
+        .manual-col-header {
+            background: #eef2ff;
+            color: #4338ca;
+        }
+        .variance-col-header {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .part-indent {
+            padding-left: 20px !important;
+        }
+        .rowspan-fix {
+            vertical-align: middle !important;
+        }
+        .group-summary-row td {
+            padding: 8px 6px;
+        }
+        .group-summary-row .manual-input {
+            width: 80px;
+        }
+        .table-footer-info {
+            font-size: 0.75rem;
+        }
+        .filter-bar label {
+            font-weight: 500;
+        }
+        .group-header-row th {
+            background-color: #e0e7ff;
+            border-bottom: 2px solid #818cf8;
+        }
+        .group-header-row th:first-child {
+            border-top-left-radius: 0.5rem;
+        }
+        .group-header-row th:last-child {
+            border-top-right-radius: 0.5rem;
+        }
         @media (max-width: 640px) {
-            .manual-input { width: 56px; font-size: 0.7rem; padding: 2px 4px; }
-            table { font-size: 0.7rem; }
-            th, td { padding: 4px 4px; }
-            .group-name { font-size: 0.75rem; }
+            .manual-input {
+                width: 56px;
+                font-size: 0.7rem;
+                padding: 2px 4px;
+            }
+            table {
+                font-size: 0.7rem;
+            }
+            th,
+            td {
+                padding: 4px 4px;
+            }
+            .group-name {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -148,7 +294,7 @@
                     <i class="fa-solid fa-clipboard-list text-blue-600"></i>
                     Inspection Report
                 </h1>
-                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Manual totals at Title / Subtitle / Sub‑Assembly levels</p>
+                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Manual totals only at Title level</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
                 <button onclick="clearAllManuals()" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -163,8 +309,8 @@
                 <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
                     <i class="fas fa-print"></i> Print
                 </button>
-                <button onclick="fetchReportData()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
-                    <i class="fas fa-sync-alt"></i> Refresh
+                <button onclick="resetToSampleData()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                    <i class="fas fa-database"></i> Sample Data
                 </button>
             </div>
         </div>
@@ -239,7 +385,7 @@
                             <th rowspan="2" class="text-left">📎 Sub Sub Assembly</th>
                             <th rowspan="2" class="text-left">🔧 Part Name</th>
                             <th rowspan="2" class="text-left">📄 Drawing No.</th>
-                            <th colspan="2" class="text-center bg-indigo-50 text-indigo-800">📊 Manual Totals &amp; Variance Comparison</th>
+                            <th colspan="2" class="text-center bg-indigo-50 text-indigo-800">📊 Manual Totals &amp; Variance (Title only)</th>
                             <th rowspan="2" class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc+Cond)</span></th>
                             <th rowspan="2" class="text-right">✅ Accepted</th>
                             <th rowspan="2" class="text-right">⚠️ Conditional</th>
@@ -251,7 +397,7 @@
                         </tr>
                     </thead>
                     <tbody id="reportTableBody">
-                        <tr><td colspan="11" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading inspections…</p></td></tr>
+                        <tr><td colspan="11" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Loading sample data…</p></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -269,13 +415,111 @@
             <span class="text-gray-400">(Rework &amp; Reject are handled separately)</span>
             <span><i class="fa-solid fa-list"></i> Drawing numbers are listed per part</span>
             <span><i class="fa-solid fa-eye-slash"></i> Parts with zero delivered are hidden</span>
-            <span class="text-blue-700"><i class="fa-regular fa-pen-to-square"></i> <strong>Manual Total</strong> = enter planned/expected qty per group</span>
-            <span class="text-amber-700"><i class="fa-solid fa-calculator"></i> <strong>Variance</strong> = Manual − Delivered</span>
+            <span class="text-blue-700"><i class="fa-regular fa-pen-to-square"></i> <strong>Manual Total</strong> – only for Title rows</span>
+            <span class="text-amber-700"><i class="fa-solid fa-calculator"></i> <strong>Variance</strong> = Manual − Delivered (Title only)</span>
         </div>
     </div>
 
     <script>
-        // ---------- Helpers ----------
+        // ============================================================
+        //  SAMPLE DATA – built right in, no API needed
+        // ============================================================
+        const SAMPLE_INSPECTIONS = [{
+            "customer_name": "ATI",
+            "project_name": "LIMESTONE",
+            "process_type": "Fabrication",
+            "username": "Alice",
+            "accepted_qty": 2,
+            "conditional_accept_qty": 0,
+            "extra_fields": {
+                "Subtitle": "clon and deuct sub",
+                "Sub Sub Assembly": "cyclone inlet sub sub",
+                "Part Name": "cyclone inlet plate",
+                "Drawing No.": "LC1-1/4-2/2-1/3-2/2-1/5"
+            }
+        }, {
+            "customer_name": "ATI",
+            "project_name": "LIMESTONE",
+            "process_type": "Fabrication",
+            "username": "Alice",
+            "accepted_qty": 1,
+            "conditional_accept_qty": 0,
+            "extra_fields": {
+                "Subtitle": "cyclon and deuct sub",
+                "Sub Sub Assembly": "cyclon sub sub",
+                "Part Name": "inlet duct flange",
+                "Drawing No.": "LC1-1/4-2/2-3/3-4/4"
+            }
+        }, {
+            "customer_name": "ATI",
+            "project_name": "LIMESTONE",
+            "process_type": "Fabrication",
+            "username": "Alice",
+            "accepted_qty": 1,
+            "conditional_accept_qty": 0,
+            "extra_fields": {
+                "Subtitle": "cyclon and deuct sub",
+                "Sub Sub Assembly": "cyclon sub sub",
+                "Part Name": "inlet duct 2",
+                "Drawing No.": "LC1-1/4-2/2-3/3-3/4"
+            }
+        }, {
+            "customer_name": "ATI",
+            "project_name": "LIMESTONE",
+            "process_type": "Fabrication",
+            "username": "Alice",
+            "accepted_qty": 1,
+            "conditional_accept_qty": 0,
+            "extra_fields": {
+                "Subtitle": "cyclon and deuct sub",
+                "Sub Sub Assembly": "cyclon sub sub",
+                "Part Name": "inlet duct",
+                "Drawing No.": "LC1-1/4-2/2-3/3-2/4"
+            }
+        }, {
+            "customer_name": "ATI",
+            "project_name": "LIMESTONE",
+            "process_type": "Fabrication",
+            "username": "Alice",
+            "accepted_qty": 2,
+            "conditional_accept_qty": 0,
+            "extra_fields": {
+                "Subtitle": "cyclon and deuct sub",
+                "Sub Sub Assembly": "cyclon sub sub",
+                "Part Name": "cyclone inlet sheet 2",
+                "Drawing No.": "LC1-1/4-2/2-3/3-1/1-3/5"
+            }
+        }, {
+            "customer_name": "ATI",
+            "project_name": "LIMESTONE",
+            "process_type": "Fabrication",
+            "username": "Alice",
+            "accepted_qty": 1,
+            "conditional_accept_qty": 0,
+            "extra_fields": {
+                "Subtitle": "cyclon and deuct sub",
+                "Sub Sub Assembly": "cyclon sub sub",
+                "Part Name": "cyclone inlet sheet 1",
+                "Drawing No.": "LC1-1/4-2/2-3/3-1/1-2/5"
+            }
+        }, {
+            "customer_name": "ATI",
+            "project_name": "LIMESTONE",
+            "process_type": "Fabrication",
+            "username": "Alice",
+            "accepted_qty": 2,
+            "conditional_accept_qty": 0,
+            "extra_fields": {
+                "Subtitle": "cyclon and deuct sub",
+                "Sub Sub Assembly": "cyclon sub sub",
+                "Part Name": "Cyclone inlet sheet",
+                "Drawing No.": "LC1-1/4-2/2-3/3-1/1-1/5"
+            }
+        }];
+
+        // ============================================================
+        //  HELPERS
+        // ============================================================
         function getExtraField(inspection, fieldName) {
             return inspection.extra_fields?.[fieldName]?.trim() || '';
         }
@@ -324,14 +568,16 @@
             });
         }
 
-        // ---------- State ----------
+        // ============================================================
+        //  STATE
+        // ============================================================
         let allReportRows = [];
         let uniqueProjectNames = new Set();
         let uniqueProcessTypes = new Set();
         let uniqueEngineers = new Set();
 
-        // Store manual values per group key
-        const manualStore = new Map(); // key -> number
+        // Only store manual values for Title groups
+        const manualStore = new Map();
 
         function getGroupKey(type, client, title, subtitle, assembly) {
             return `${type}|${client}|${title}|${subtitle}|${assembly}`;
@@ -349,20 +595,15 @@
             }
         }
 
-        // ---------- Clear all manuals ----------
         function clearAllManuals() {
             manualStore.clear();
-            // Re-render the table with current filters
-            applyFilters();
-            // Also clear all input fields directly
             document.querySelectorAll('.manual-input').forEach(input => {
                 input.value = '';
                 const delivered = parseFloat(input.dataset.delivered) || 0;
                 input.placeholder = delivered.toString();
-                // Update variance to '—'
                 const tr = input.closest('tr');
                 if (tr) {
-                    const varianceCell = tr.querySelector('td:nth-child(9)');
+                    const varianceCell = tr.querySelector('td:nth-child(8)');
                     if (varianceCell) {
                         varianceCell.innerHTML = `<span class="text-gray-400 text-xs">—</span>`;
                     }
@@ -370,7 +611,92 @@
             });
         }
 
-        // ---------- Fetch ----------
+        // ============================================================
+        //  LOAD DATA (from sample or API)
+        // ============================================================
+        function loadInspections(inspections) {
+            const rows = [];
+            uniqueProjectNames.clear();
+            uniqueProcessTypes.clear();
+            uniqueEngineers.clear();
+            let sumDelivered = 0,
+                sumAccepted = 0,
+                sumConditional = 0;
+
+            for (const insp of inspections) {
+                const clientName = getClientName(insp);
+                const projectName = getProjectName(insp);
+                const subtitle = getSubtitle(insp);
+                const subSubAssembly = getSubSubAssembly(insp);
+                const processType = insp.process_type || '';
+                const engineer = insp.username || '';
+
+                if (projectName) uniqueProjectNames.add(projectName);
+                if (processType) uniqueProcessTypes.add(processType);
+                if (engineer) uniqueEngineers.add(engineer);
+
+                const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
+                const partName = getExtraField(insp, 'Part Name') || '-';
+
+                const accRaw = insp.accepted_qty;
+                const condRaw = insp.conditional_accept_qty;
+                const deliveredRaw = numericQty(accRaw) + numericQty(condRaw);
+
+                sumDelivered += deliveredRaw;
+                sumAccepted += numericQty(accRaw);
+                sumConditional += numericQty(condRaw);
+
+                rows.push({
+                    clientName: clientName || '(no client)',
+                    projectName: projectName || '(no title)',
+                    subtitle: subtitle || '',
+                    subSubAssembly: subSubAssembly || '',
+                    drawingNo: drawingNo,
+                    partName: partName,
+                    delivered: formatQty(deliveredRaw),
+                    deliveredRaw: deliveredRaw,
+                    accepted: formatQty(accRaw),
+                    acceptedRaw: numericQty(accRaw),
+                    conditional: formatQty(condRaw),
+                    conditionalRaw: numericQty(condRaw),
+                    processType: processType,
+                    engineer: engineer,
+                    rawSearch: `${clientName} ${projectName} ${subtitle} ${subSubAssembly} ${drawingNo} ${partName} ${deliveredRaw} ${accRaw} ${condRaw} ${processType} ${engineer}`
+                        .toLowerCase()
+                });
+            }
+
+            document.getElementById('totalDeliveredSum').innerText = sumDelivered.toLocaleString();
+            document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
+            document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
+
+            // Populate dropdowns
+            const projectSelect = document.getElementById('projectFilterSelect');
+            projectSelect.innerHTML = '<option value="">All Titles</option>';
+            [...uniqueProjectNames].sort().forEach(proj => {
+                projectSelect.innerHTML += `<option value="${escapeHtml(proj)}">${escapeHtml(proj)}</option>`;
+            });
+
+            const processSelect = document.getElementById('processFilterSelect');
+            processSelect.innerHTML = '<option value="">All Processes</option>';
+            [...uniqueProcessTypes].sort().forEach(proc => {
+                processSelect.innerHTML += `<option value="${escapeHtml(proc)}">${escapeHtml(proc)}</option>`;
+            });
+
+            const engineerSelect = document.getElementById('engineerFilterSelect');
+            engineerSelect.innerHTML = '<option value="">All Engineers</option>';
+            [...uniqueEngineers].sort().forEach(eng => {
+                engineerSelect.innerHTML += `<option value="${escapeHtml(eng)}">${escapeHtml(eng)}</option>`;
+            });
+
+            allReportRows = rows;
+            applyFilters();
+            document.getElementById('recordStatus').innerText = `✅ Loaded ${rows.length} records`;
+        }
+
+        // ============================================================
+        //  FETCH (from API) or fallback to sample
+        // ============================================================
         async function fetchReportData() {
             const tbody = document.getElementById('reportTableBody');
             const statusSpan = document.getElementById('recordStatus');
@@ -378,96 +704,27 @@
                 tbody.innerHTML =
                     `<tr><td colspan="11" class="text-center py-12"><div class="loader"></div><p class="text-gray-500 mt-2">Fetching inspections…</p></td></tr>`;
                 statusSpan.innerText = 'Loading…';
+
                 const response = await fetch('/api/inspections');
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const inspections = await response.json();
-
-                const rows = [];
-                uniqueProjectNames.clear();
-                uniqueProcessTypes.clear();
-                uniqueEngineers.clear();
-                let sumDelivered = 0,
-                    sumAccepted = 0,
-                    sumConditional = 0;
-
-                for (const insp of inspections) {
-                    const clientName = getClientName(insp);
-                    const projectName = getProjectName(insp);
-                    const subtitle = getSubtitle(insp);
-                    const subSubAssembly = getSubSubAssembly(insp);
-                    const processType = insp.process_type || '';
-                    const engineer = insp.username || '';
-
-                    if (projectName) uniqueProjectNames.add(projectName);
-                    if (processType) uniqueProcessTypes.add(processType);
-                    if (engineer) uniqueEngineers.add(engineer);
-
-                    const drawingNo = getExtraField(insp, 'Drawing No.') || '-';
-                    const partName = getExtraField(insp, 'Part Name') || '-';
-
-                    const accRaw = insp.accepted_qty;
-                    const condRaw = insp.conditional_accept_qty;
-                    const deliveredRaw = numericQty(accRaw) + numericQty(condRaw);
-
-                    sumDelivered += deliveredRaw;
-                    sumAccepted += numericQty(accRaw);
-                    sumConditional += numericQty(condRaw);
-
-                    rows.push({
-                        clientName: clientName || '(no client)',
-                        projectName: projectName || '(no title)',
-                        subtitle: subtitle || '',
-                        subSubAssembly: subSubAssembly || '',
-                        drawingNo: drawingNo,
-                        partName: partName,
-                        delivered: formatQty(deliveredRaw),
-                        deliveredRaw: deliveredRaw,
-                        accepted: formatQty(accRaw),
-                        acceptedRaw: numericQty(accRaw),
-                        conditional: formatQty(condRaw),
-                        conditionalRaw: numericQty(condRaw),
-                        processType: processType,
-                        engineer: engineer,
-                        rawSearch: `${clientName} ${projectName} ${subtitle} ${subSubAssembly} ${drawingNo} ${partName} ${deliveredRaw} ${accRaw} ${condRaw} ${processType} ${engineer}`
-                            .toLowerCase()
-                    });
-                }
-
-                document.getElementById('totalDeliveredSum').innerText = sumDelivered.toLocaleString();
-                document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
-                document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
-
-                // Populate dropdowns
-                const projectSelect = document.getElementById('projectFilterSelect');
-                projectSelect.innerHTML = '<option value="">All Titles</option>';
-                [...uniqueProjectNames].sort().forEach(proj => {
-                    projectSelect.innerHTML += `<option value="${escapeHtml(proj)}">${escapeHtml(proj)}</option>`;
-                });
-
-                const processSelect = document.getElementById('processFilterSelect');
-                processSelect.innerHTML = '<option value="">All Processes</option>';
-                [...uniqueProcessTypes].sort().forEach(proc => {
-                    processSelect.innerHTML += `<option value="${escapeHtml(proc)}">${escapeHtml(proc)}</option>`;
-                });
-
-                const engineerSelect = document.getElementById('engineerFilterSelect');
-                engineerSelect.innerHTML = '<option value="">All Engineers</option>';
-                [...uniqueEngineers].sort().forEach(eng => {
-                    engineerSelect.innerHTML += `<option value="${escapeHtml(eng)}">${escapeHtml(eng)}</option>`;
-                });
-
-                allReportRows = rows;
-                applyFilters();
-                statusSpan.innerText = `✅ Loaded ${rows.length} records`;
+                loadInspections(inspections);
+                statusSpan.innerText = `✅ Loaded ${inspections.length} records from API`;
             } catch (err) {
-                console.error(err);
-                tbody.innerHTML =
-                    `<tr><td colspan="11" class="text-center py-12 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Error loading data. Make sure backend API is running at /api/inspections</p></td></tr>`;
-                statusSpan.innerText = '❌ Error';
+                console.warn('API unavailable, using sample data:', err);
+                statusSpan.innerText = '⚠️ Using sample data (API not available)';
+                loadInspections(SAMPLE_INSPECTIONS);
             }
         }
 
-        // ---------- Filtering ----------
+        function resetToSampleData() {
+            loadInspections(SAMPLE_INSPECTIONS);
+            document.getElementById('recordStatus').innerText = '🔄 Using sample data';
+        }
+
+        // ============================================================
+        //  FILTERING
+        // ============================================================
         function applyFilters() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -483,7 +740,9 @@
             renderAggregatedTable(filtered);
         }
 
-        // ---------- Aggregated Render with Manual Totals & Variance ----------
+        // ============================================================
+        //  RENDER AGGREGATED TABLE – manual inputs only for Title
+        // ============================================================
         function renderAggregatedTable(rows) {
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
@@ -493,7 +752,7 @@
                 return;
             }
 
-            // Build tree: Client → Title → Subtitle → SubSubAssembly → PartName
+            // Build tree
             const clientMap = new Map();
             for (const row of rows) {
                 const client = row.clientName;
@@ -535,7 +794,7 @@
                 }
             }
 
-            // Helper: count rows (parts) per assembly
+            // Helpers
             function countParts(assemblyEntry) {
                 let cnt = 0;
                 for (const partEntry of assemblyEntry.partMap.values()) {
@@ -543,7 +802,9 @@
                 }
                 return cnt;
             }
+
             function totalRowsForAssembly(assemblyEntry) { return countParts(assemblyEntry); }
+
             function totalRowsForSubtitle(subtitleEntry) {
                 let sum = 0;
                 for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
@@ -551,6 +812,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForTitle(titleEntry) {
                 let sum = 0;
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -558,6 +820,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForClient(clientEntry) {
                 let sum = 0;
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -566,7 +829,7 @@
                 return sum;
             }
 
-            // Build row data array
+            // Build flat rows
             const allRows = [];
             for (const clientEntry of clientMap.values()) {
                 const clientName = clientEntry.clientName;
@@ -576,8 +839,9 @@
                     const titleName = titleEntry.titleName;
                     const titleTotal = totalRowsForTitle(titleEntry);
 
-                    // Title summary
-                    let titleDelivered = 0, titleAccepted = 0, titleConditional = 0;
+                    let titleDelivered = 0,
+                        titleAccepted = 0,
+                        titleConditional = 0;
                     for (const subEntry of titleEntry.subtitleMap.values()) {
                         for (const assEntry of subEntry.assemblyMap.values()) {
                             for (const partEntry of assEntry.partMap.values()) {
@@ -617,7 +881,9 @@
                         const subtitleTotal = totalRowsForSubtitle(subtitleEntry);
                         if (subtitleTotal === 0) continue;
 
-                        let subDelivered = 0, subAccepted = 0, subConditional = 0;
+                        let subDelivered = 0,
+                            subAccepted = 0,
+                            subConditional = 0;
                         for (const assEntry of subtitleEntry.assemblyMap.values()) {
                             for (const partEntry of assEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
@@ -626,9 +892,7 @@
                                 subConditional += partEntry.conditionalRaw;
                             }
                         }
-                        const subKey = getGroupKey('subtitle', clientName, titleName, subtitleName, '');
-                        const subManual = getManualValue(subKey);
-
+                        // No manual for subtitle
                         allRows.push({
                             type: 'subtitle',
                             client: clientName,
@@ -640,8 +904,8 @@
                             deliveredRaw: subDelivered,
                             acceptedRaw: subAccepted,
                             conditionalRaw: subConditional,
-                            manualKey: subKey,
-                            manualValue: subManual,
+                            manualKey: '',
+                            manualValue: null,
                             rowspanClient: 0,
                             rowspanTitle: 0,
                             rowspanSubtitle: subtitleTotal,
@@ -655,16 +919,16 @@
                             const assemblyTotal = totalRowsForAssembly(assemblyEntry);
                             if (assemblyTotal === 0) continue;
 
-                            let assDelivered = 0, assAccepted = 0, assConditional = 0;
+                            let assDelivered = 0,
+                                assAccepted = 0,
+                                assConditional = 0;
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
                                 assDelivered += partEntry.deliveredRaw;
                                 assAccepted += partEntry.acceptedRaw;
                                 assConditional += partEntry.conditionalRaw;
                             }
-                            const assKey = getGroupKey('assembly', clientName, titleName, subtitleName, assemblyName);
-                            const assManual = getManualValue(assKey);
-
+                            // No manual for assembly
                             allRows.push({
                                 type: 'assembly',
                                 client: clientName,
@@ -676,8 +940,8 @@
                                 deliveredRaw: assDelivered,
                                 acceptedRaw: assAccepted,
                                 conditionalRaw: assConditional,
-                                manualKey: assKey,
-                                manualValue: assManual,
+                                manualKey: '',
+                                manualValue: null,
                                 rowspanClient: 0,
                                 rowspanTitle: 0,
                                 rowspanSubtitle: 0,
@@ -686,7 +950,6 @@
                                 level: 2
                             });
 
-                            // Part rows
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
                                 const drawingList = [...partEntry.drawings].sort().join(', ');
@@ -716,7 +979,7 @@
                 }
             }
 
-            // Compute rowspans dynamically
+            // Compute rowspans
             const titleGroups = new Map();
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
@@ -788,14 +1051,16 @@
                 if (row) row.rowspanClient = info.count;
             }
 
-            // Render
+            // Render HTML
             let html = '';
             let totalParts = 0;
-            const renderedClients = new Set(), renderedTitles = new Set(), renderedSubtitles = new Set(), renderedAssemblies = new Set();
+            const renderedClients = new Set(),
+                renderedTitles = new Set(),
+                renderedSubtitles = new Set(),
+                renderedAssemblies = new Set();
 
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
-                const isGroup = r.isGroup;
                 let rowClass = 'part-row';
                 if (r.type === 'title') rowClass = 'group-row-title';
                 else if (r.type === 'subtitle') rowClass = 'group-row-subtitle';
@@ -821,21 +1086,21 @@
                 const subtitleSpan = showSubtitle ? r.rowspanSubtitle : 0;
                 const assemblySpan = showAssembly ? r.rowspanAssembly : 0;
 
-                // Manual input
+                // Manual input: only for Title rows
                 let manualInputHtml = '';
-                if (isGroup) {
+                if (r.isGroup && r.type === 'title') {
                     const val = r.manualValue !== null && r.manualValue !== undefined ? r.manualValue : '';
                     const deliveredVal = r.deliveredRaw || 0;
                     const displayVal = (val !== '' && val !== null && !isNaN(val)) ? val : '';
                     manualInputHtml =
                         `<input type="number" class="manual-input" data-key="${escapeHtml(r.manualKey)}" data-delivered="${deliveredVal}" value="${displayVal}" placeholder="${deliveredVal}" step="1" min="0" />`;
                 } else {
-                    manualInputHtml = '';
+                    manualInputHtml = ''; // no input for subtitle/assembly/part
                 }
 
-                // Variance
+                // Variance: only for Title rows
                 let varianceHtml = '';
-                if (isGroup) {
+                if (r.isGroup && r.type === 'title') {
                     const deliveredVal = r.deliveredRaw || 0;
                     const manualValNum = r.manualValue !== null && r.manualValue !== undefined && !isNaN(r.manualValue) ?
                         Number(r.manualValue) : null;
@@ -844,7 +1109,8 @@
                         variance = manualValNum - deliveredVal;
                     }
                     if (variance !== null) {
-                        const vClass = variance > 0 ? 'variance-positive' : (variance < 0 ? 'variance-negative' : 'variance-zero');
+                        const vClass = variance > 0 ? 'variance-positive' : (variance < 0 ? 'variance-negative' :
+                            'variance-zero');
                         const sign = variance > 0 ? '+' : '';
                         varianceHtml =
                             `<span class="variance-value ${vClass}">${sign}${variance.toLocaleString()}</span>`;
@@ -852,75 +1118,55 @@
                         varianceHtml = `<span class="text-gray-400 text-xs">—</span>`;
                     }
                 } else {
-                    varianceHtml = '';
+                    varianceHtml = `<span class="text-gray-300 text-xs">—</span>`;
                 }
 
                 html += `<tr class="${rowClass} group-summary-row">`;
 
-                // Client
                 if (showClient && r.type === 'title') {
                     html += `<td rowspan="${clientSpan}" class="font-bold align-middle">${escapeHtml(r.client)}</td>`;
                 }
-
-                // Title
                 if (showTitle && r.type === 'title') {
                     html +=
-                    `<td rowspan="${titleSpan}" class="font-bold align-middle group-name">${escapeHtml(r.title)}</td>`;
+                        `<td rowspan="${titleSpan}" class="font-bold align-middle group-name">${escapeHtml(r.title)}</td>`;
                 }
-
-                // Subtitle
                 if (showSubtitle && r.type === 'subtitle') {
                     html +=
                         `<td rowspan="${subtitleSpan}" class="font-semibold align-middle group-name">${escapeHtml(r.subtitle) || '—'}</td>`;
                 }
-
-                // Assembly
                 if (showAssembly && r.type === 'assembly') {
                     html +=
                         `<td rowspan="${assemblySpan}" class="align-middle"><span class="sub-assembly-tag">${escapeHtml(r.assembly) || '—'}</span></td>`;
                 }
-
-                // Part Name
                 if (r.type === 'part') {
                     html += `<td class="font-medium align-middle">${escapeHtml(r.partName)}</td>`;
                 } else {
                     html += `<td class="text-gray-400 text-xs align-middle">—</td>`;
                 }
-
-                // Drawing No.
                 if (r.type === 'part') {
                     html += `<td class="font-mono text-sm drawing-list align-middle">${escapeHtml(r.drawingNo)}</td>`;
                 } else {
                     html += `<td class="text-gray-400 text-xs align-middle">—</td>`;
                 }
-
-                // Manual Total
-                if (isGroup) {
+                // Manual Total column
+                if (r.isGroup && r.type === 'title') {
                     html += `<td class="text-center align-middle">${manualInputHtml}</td>`;
                 } else {
                     html += `<td class="text-center text-gray-300 text-xs">—</td>`;
                 }
-
-                // Variance
-                if (isGroup) {
+                // Variance column
+                if (r.isGroup && r.type === 'title') {
                     html += `<td class="text-center align-middle font-mono">${varianceHtml}</td>`;
                 } else {
                     html += `<td class="text-center text-gray-300 text-xs">—</td>`;
                 }
-
-                // Delivered
                 const deliveredVal = r.deliveredRaw || 0;
                 html +=
                     `<td class="text-right tabular-nums font-bold text-blue-700 col-delivered align-middle">${formatQty(deliveredVal)}</td>`;
-
-                // Accepted
                 html +=
                     `<td class="text-right tabular-nums col-accepted align-middle">${formatQty(r.acceptedRaw || 0)}</td>`;
-
-                // Conditional
                 html +=
                     `<td class="text-right tabular-nums col-conditional align-middle">${formatQty(r.conditionalRaw || 0)}</td>`;
-
                 html += `</tr>`;
                 if (r.type === 'part') totalParts++;
             }
@@ -936,7 +1182,7 @@
             document.getElementById('recordCount').innerText =
                 `Showing ${totalParts} parts (from ${rows.length} inspection records) — ${allRows.length} total rows`;
 
-            // Wire up manual inputs
+            // Wire up manual inputs (only for Title rows)
             tbody.querySelectorAll('.manual-input').forEach(input => {
                 const key = input.dataset.key;
                 const deliveredVal = parseFloat(input.dataset.delivered) || 0;
@@ -971,19 +1217,15 @@
             });
         }
 
-        // Update variance for a single row
         function updateVarianceForRow(inputElement) {
             const tr = inputElement.closest('tr');
             if (!tr) return;
-            // Columns: index 0 Client, 1 Title, 2 Subtitle, 3 Assembly, 4 Part, 5 Drawing, 6 Manual, 7 Variance, 8 Delivered, 9 Accepted, 10 Conditional
-            const deliveredCell = tr.querySelector('td:nth-child(8)'); // Delivered is 8th? Actually we have 11 cols, indices 0-10. Delivered is at index 8? Let's count: 0 Client, 1 Title, 2 Subtitle, 3 Assembly, 4 Part, 5 Drawing, 6 Manual, 7 Variance, 8 Delivered, 9 Accepted, 10 Conditional. Yes.
-            const varianceCell = tr.querySelector('td:nth-child(7)'); // Variance is 7th? Wait: we output Manual at col 6, Variance at col 7, Delivered at col 8. Let's check: after Drawing (col5), we have Manual (col6), Variance (col7), Delivered (col8), Accepted (col9), Conditional (col10). So varianceCell is td:nth-child(7) (since 1-indexed: 1=Client,2=Title,3=Subtitle,4=Assembly,5=Part,6=Drawing,7=Manual,8=Variance,9=Delivered,10=Accepted,11=Conditional). So variance is 8th child.
-            const varianceCell = tr.querySelector('td:nth-child(8)');
+            const deliveredCell = tr.querySelector('td:nth-child(9)'); // Delivered column
+            const varianceCell = tr.querySelector('td:nth-child(8)'); // Variance column
             if (!deliveredCell || !varianceCell) return;
 
             const deliveredText = deliveredCell.textContent.trim().replace(/,/g, '');
             const deliveredVal = parseFloat(deliveredText) || 0;
-
             const manualVal = parseFloat(inputElement.value);
             let variance = null;
             if (!isNaN(manualVal) && manualVal >= 0) {
@@ -1004,7 +1246,9 @@
             }
         }
 
-        // ---------- Export to Excel ----------
+        // ============================================================
+        //  EXPORT / COPY (include manual only for Title)
+        // ============================================================
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -1058,14 +1302,14 @@
                 }
             }
 
-            function getManualForGroup(type, client, title, subtitle, assembly) {
-                const key = getGroupKey(type, client, title, subtitle, assembly);
+            function getManualForTitle(client, title) {
+                const key = getGroupKey('title', client, title, '', '');
                 return getManualValue(key);
             }
 
             const excelRows = [];
             const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Part Name', 'Drawing No.',
-                'Manual Total', 'Delivered', 'Variance', 'Accepted', 'Conditional'
+                'Manual Total (Title)', 'Delivered', 'Variance (Title)', 'Accepted', 'Conditional'
             ];
             excelRows.push(headers);
 
@@ -1073,7 +1317,9 @@
                 const client = clientEntry.clientName;
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     const title = titleEntry.titleName;
-                    let tDel = 0, tAcc = 0, tCond = 0;
+                    let tDel = 0,
+                        tAcc = 0,
+                        tCond = 0;
                     for (const sub of titleEntry.subtitleMap.values()) {
                         for (const ass of sub.assemblyMap.values()) {
                             for (const p of ass.partMap.values()) {
@@ -1084,7 +1330,7 @@
                             }
                         }
                     }
-                    const tManual = getManualForGroup('title', client, title, '', '');
+                    const tManual = getManualForTitle(client, title);
                     const tVar = (tManual !== null && !isNaN(tManual)) ? tManual - tDel : null;
                     excelRows.push([client, title, '', '', '', '',
                         tManual !== null ? tManual : '',
@@ -1095,7 +1341,9 @@
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitle = subtitleEntry.subtitleName;
-                        let sDel = 0, sAcc = 0, sCond = 0;
+                        let sDel = 0,
+                            sAcc = 0,
+                            sCond = 0;
                         for (const ass of subtitleEntry.assemblyMap.values()) {
                             for (const p of ass.partMap.values()) {
                                 if (p.deliveredRaw === 0) continue;
@@ -1104,30 +1352,28 @@
                                 sCond += p.conditionalRaw;
                             }
                         }
-                        const sManual = getManualForGroup('subtitle', client, title, subtitle, '');
-                        const sVar = (sManual !== null && !isNaN(sManual)) ? sManual - sDel : null;
                         excelRows.push(['', '', subtitle, '', '', '',
-                            sManual !== null ? sManual : '',
+                            '', // no manual for subtitle
                             sDel,
-                            sVar !== null ? sVar : '',
+                            '', // no variance for subtitle
                             sAcc, sCond
                         ]);
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
                             const assembly = assemblyEntry.assemblyName;
-                            let aDel = 0, aAcc = 0, aCond = 0;
+                            let aDel = 0,
+                                aAcc = 0,
+                                aCond = 0;
                             for (const p of assemblyEntry.partMap.values()) {
                                 if (p.deliveredRaw === 0) continue;
                                 aDel += p.deliveredRaw;
                                 aAcc += p.acceptedRaw;
                                 aCond += p.conditionalRaw;
                             }
-                            const aManual = getManualForGroup('assembly', client, title, subtitle, assembly);
-                            const aVar = (aManual !== null && !isNaN(aManual)) ? aManual - aDel : null;
                             excelRows.push(['', '', '', assembly, '', '',
-                                aManual !== null ? aManual : '',
+                                '', // no manual for assembly
                                 aDel,
-                                aVar !== null ? aVar : '',
+                                '', // no variance for assembly
                                 aAcc, aCond
                             ]);
 
@@ -1161,11 +1407,11 @@
 
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Inspection Report');
-            XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
+            XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard ----------
         async function copyTableToClipboard() {
+            // Similar to export, but we'll generate a TSV with manual only for Title
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
             const selectedProcess = document.getElementById('processFilterSelect').value;
@@ -1218,13 +1464,15 @@
                 }
             }
 
-            let tsv = "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tManual Total\tDelivered\tVariance\tAccepted\tConditional\n";
+            let tsv = "Client\tTitle\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tManual Total (Title)\tDelivered\tVariance (Title)\tAccepted\tConditional\n";
 
             for (const clientEntry of clientMap.values()) {
                 const client = clientEntry.clientName;
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     const title = titleEntry.titleName;
-                    let tDel = 0, tAcc = 0, tCond = 0;
+                    let tDel = 0,
+                        tAcc = 0,
+                        tCond = 0;
                     for (const sub of titleEntry.subtitleMap.values()) {
                         for (const ass of sub.assemblyMap.values()) {
                             for (const p of ass.partMap.values()) {
@@ -1242,7 +1490,9 @@
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitle = subtitleEntry.subtitleName;
-                        let sDel = 0, sAcc = 0, sCond = 0;
+                        let sDel = 0,
+                            sAcc = 0,
+                            sCond = 0;
                         for (const ass of subtitleEntry.assemblyMap.values()) {
                             for (const p of ass.partMap.values()) {
                                 if (p.deliveredRaw === 0) continue;
@@ -1251,24 +1501,22 @@
                                 sCond += p.conditionalRaw;
                             }
                         }
-                        const sManual = getManualValue(getGroupKey('subtitle', client, title, subtitle, ''));
-                        const sVar = (sManual !== null && !isNaN(sManual)) ? sManual - sDel : '';
                         tsv +=
-                            `\t\t${subtitle}\t\t\t\t${sManual !== null ? sManual : ''}\t${sDel}\t${sVar !== '' ? sVar : ''}\t${sAcc}\t${sCond}\n`;
+                            `\t\t${subtitle}\t\t\t\t\t${sDel}\t\t${sAcc}\t${sCond}\n`;
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
                             const assembly = assemblyEntry.assemblyName;
-                            let aDel = 0, aAcc = 0, aCond = 0;
+                            let aDel = 0,
+                                aAcc = 0,
+                                aCond = 0;
                             for (const p of assemblyEntry.partMap.values()) {
                                 if (p.deliveredRaw === 0) continue;
                                 aDel += p.deliveredRaw;
                                 aAcc += p.acceptedRaw;
                                 aCond += p.conditionalRaw;
                             }
-                            const aManual = getManualValue(getGroupKey('assembly', client, title, subtitle, assembly));
-                            const aVar = (aManual !== null && !isNaN(aManual)) ? aManual - aDel : '';
                             tsv +=
-                                `\t\t\t${assembly}\t\t\t${aManual !== null ? aManual : ''}\t${aDel}\t${aVar !== '' ? aVar : ''}\t${aAcc}\t${aCond}\n`;
+                                `\t\t\t${assembly}\t\t\t\t${aDel}\t\t${aAcc}\t${aCond}\n`;
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
@@ -1288,13 +1536,15 @@
 
             try {
                 await navigator.clipboard.writeText(tsv);
-                alert('✅ Table copied to clipboard (includes manual totals & variance)');
+                alert('✅ Table copied to clipboard (manual totals & variance only for Title)');
             } catch (err) {
                 alert('❌ Copy failed: ' + err);
             }
         }
 
-        // ---------- Clear filters ----------
+        // ============================================================
+        //  CLEAR FILTERS
+        // ============================================================
         function clearFilters() {
             document.getElementById('searchInput').value = '';
             document.getElementById('projectFilterSelect').value = '';
@@ -1303,14 +1553,21 @@
             applyFilters();
         }
 
-        // ---------- Event listeners ----------
+        // ============================================================
+        //  EVENT LISTENERS
+        // ============================================================
         document.getElementById('searchInput').addEventListener('input', () => { if (allReportRows.length) applyFilters(); });
-        document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
-        document.getElementById('processFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
-        document.getElementById('engineerFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
+        document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length)
+                applyFilters(); });
+        document.getElementById('processFilterSelect').addEventListener('change', () => { if (allReportRows.length)
+                applyFilters(); });
+        document.getElementById('engineerFilterSelect').addEventListener('change', () => { if (allReportRows.length)
+                applyFilters(); });
         document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
 
-        // ---------- Start ----------
+        // ============================================================
+        //  START
+        // ============================================================
         fetchReportData();
     </script>
 </body>
