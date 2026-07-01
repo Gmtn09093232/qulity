@@ -11,88 +11,45 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            .report-container,
-            .report-container * {
-                visibility: visible;
-            }
-            .report-container {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                margin: 0;
-                padding: 0;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .summary-cards {
-                display: none !important;
-            }
-            .filter-bar,
-            .action-buttons {
-                display: none !important;
-            }
-            table th,
-            table td {
-                padding: 4px 6px !important;
-                font-size: 0.7rem !important;
-            }
-            .table-wrapper {
-                border-radius: 0 !important;
-            }
-            .manual-input {
-                border: 1px solid #ccc !important;
-                background: #fff !important;
-                font-size: 0.7rem !important;
-                padding: 2px 4px !important;
-                width: 60px !important;
-            }
+            body * { visibility: hidden; }
+            .report-container, .report-container * { visibility: visible; }
+            .report-container { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .summary-cards { display: none !important; }
+            .filter-bar, .action-buttons { display: none !important; }
+            table th, table td { padding: 4px 6px !important; font-size: 0.7rem !important; }
+            .table-wrapper { border-radius: 0 !important; }
+            .manual-input { border: 1px solid #ccc !important; background: #fff !important; font-size: 0.7rem !important; padding: 2px 4px !important; width: 60px !important; }
         }
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 1rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.82rem;
-        }
+        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
         th {
             background-color: #f1f5f9;
             position: sticky;
             top: 0;
             z-index: 10;
-            padding: 10px 8px;
+            padding: 8px 6px;
             font-weight: 600;
             color: #0f172a;
             border-bottom: 2px solid #e2e8f0;
             white-space: nowrap;
+            text-align: center;
         }
-        td {
-            padding: 6px 6px;
-            border-bottom: 1px solid #e2e8f0;
-            vertical-align: middle;
+        th.sub-header {
+            background-color: #eef2ff;
+            border-bottom: 1px solid #c7d2fe;
+            font-weight: 500;
+            font-size: 0.7rem;
+            color: #4338ca;
         }
-        tr:hover td {
-            background-color: #f8fafc;
-        }
+        td { padding: 6px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        tr:hover td { background-color: #f8fafc; }
         .summary-card {
             transition: all 0.2s;
             border-radius: 1rem;
         }
-        .summary-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-        }
-        .filter-input:focus {
-            outline: none;
-            ring: 2px solid #3b82f6;
-            border-color: transparent;
-        }
+        .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .filter-input:focus { outline: none; ring: 2px solid #3b82f6; border-color: transparent; }
         .loader {
             border: 3px solid #e2e8f0;
             border-top: 3px solid #3b82f6;
@@ -102,14 +59,7 @@
             animation: spin 0.8s linear infinite;
             margin: 20px auto;
         }
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .badge {
             display: inline-block;
             padding: 0.15rem 0.6rem;
@@ -117,25 +67,11 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
-        .badge-accepted {
-            background: #dcfce7;
-            color: #166534;
-        }
-        .badge-conditional {
-            background: #f3e8ff;
-            color: #6b21a8;
-        }
-        .col-delivered {
-            background: #eff6ff;
-            font-weight: 600;
-            color: #1e40af;
-        }
-        .col-accepted {
-            color: #166534;
-        }
-        .col-conditional {
-            color: #6b21a8;
-        }
+        .badge-accepted { background: #dcfce7; color: #166534; }
+        .badge-conditional { background: #f3e8ff; color: #6b21a8; }
+        .col-delivered { background: #eff6ff; font-weight: 600; color: #1e40af; }
+        .col-accepted { color: #166534; }
+        .col-conditional { color: #6b21a8; }
         .sub-assembly-tag {
             font-size: 0.7rem;
             background: #eef2ff;
@@ -151,36 +87,14 @@
             display: inline-block;
             word-break: break-word;
         }
-        .group-row-title {
-            background-color: #f0f9ff;
-            font-weight: 600;
-        }
-        .group-row-title td {
-            border-top: 2px solid #93c5fd;
-            border-bottom: 2px solid #93c5fd;
-        }
-        .group-row-subtitle {
-            background-color: #f5f3ff;
-            font-weight: 500;
-        }
-        .group-row-subtitle td {
-            border-top: 1px solid #c4b5fd;
-            border-bottom: 1px solid #c4b5fd;
-        }
-        .group-row-assembly {
-            background-color: #fefce8;
-            font-weight: 500;
-        }
-        .group-row-assembly td {
-            border-top: 1px solid #fde68a;
-            border-bottom: 1px solid #fde68a;
-        }
-        .part-row td {
-            background-color: #ffffff;
-        }
-        .part-row:hover td {
-            background-color: #f8fafc;
-        }
+        .group-row-title { background-color: #f0f9ff; font-weight: 600; }
+        .group-row-title td { border-top: 2px solid #93c5fd; border-bottom: 2px solid #93c5fd; }
+        .group-row-subtitle { background-color: #f5f3ff; font-weight: 500; }
+        .group-row-subtitle td { border-top: 1px solid #c4b5fd; border-bottom: 1px solid #c4b5fd; }
+        .group-row-assembly { background-color: #fefce8; font-weight: 500; }
+        .group-row-assembly td { border-top: 1px solid #fde68a; border-bottom: 1px solid #fde68a; }
+        .part-row td { background-color: #ffffff; }
+        .part-row:hover td { background-color: #f8fafc; }
         .manual-input {
             width: 72px;
             padding: 4px 6px;
@@ -198,79 +112,28 @@
             outline: none;
             background: #fff;
         }
-        .manual-input.variance-positive {
-            border-color: #22c55e;
-            background: #f0fdf4;
-        }
-        .manual-input.variance-negative {
-            border-color: #ef4444;
-            background: #fef2f2;
-        }
-        .variance-value {
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-        .variance-positive {
-            color: #16a34a;
-        }
-        .variance-negative {
-            color: #dc2626;
-        }
-        .variance-zero {
-            color: #6b7280;
-        }
-        .group-label {
-            font-weight: 600;
-            font-size: 0.75rem;
-            color: #4b5563;
-            letter-spacing: 0.3px;
-        }
-        .group-name {
-            font-weight: 600;
-        }
-        .manual-col-header {
-            background: #eef2ff;
-            color: #4338ca;
-        }
-        .variance-col-header {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        .part-indent {
-            padding-left: 20px !important;
-        }
-        .rowspan-fix {
-            vertical-align: middle !important;
-        }
-        .group-summary-row td {
-            padding: 8px 6px;
-        }
-        .group-summary-row .manual-input {
-            width: 80px;
-        }
-        .table-footer-info {
-            font-size: 0.75rem;
-        }
-        .filter-bar label {
-            font-weight: 500;
-        }
-        /* responsive tweaks */
+        .variance-value { font-weight: 700; font-size: 0.85rem; }
+        .variance-positive { color: #16a34a; }
+        .variance-negative { color: #dc2626; }
+        .variance-zero { color: #6b7280; }
+        .group-label { font-weight: 600; font-size: 0.75rem; color: #4b5563; letter-spacing: 0.3px; }
+        .group-name { font-weight: 600; }
+        .manual-col-header { background: #eef2ff; color: #4338ca; }
+        .variance-col-header { background: #fef3c7; color: #92400e; }
+        .part-indent { padding-left: 20px !important; }
+        .rowspan-fix { vertical-align: middle !important; }
+        .group-summary-row td { padding: 8px 6px; }
+        .group-summary-row .manual-input { width: 80px; }
+        .table-footer-info { font-size: 0.75rem; }
+        .filter-bar label { font-weight: 500; }
+        .group-header-row th { background-color: #e0e7ff; border-bottom: 2px solid #818cf8; }
+        .group-header-row th:first-child { border-top-left-radius: 0.5rem; }
+        .group-header-row th:last-child { border-top-right-radius: 0.5rem; }
         @media (max-width: 640px) {
-            .manual-input {
-                width: 56px;
-                font-size: 0.7rem;
-                padding: 2px 4px;
-            }
-            table {
-                font-size: 0.7rem;
-            }
-            th,
-            td {
-                padding: 4px 4px;
-            }
-            .group-name {
-                font-size: 0.75rem;
-            }
+            .manual-input { width: 56px; font-size: 0.7rem; padding: 2px 4px; }
+            table { font-size: 0.7rem; }
+            th, td { padding: 4px 4px; }
+            .group-name { font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -288,6 +151,9 @@
                 <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Manual totals at Title / Subtitle / Sub‑Assembly levels</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
+                <button onclick="clearAllManuals()" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                    <i class="fas fa-undo-alt"></i> Clear Manuals
+                </button>
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
                     <i class="fas fa-file-excel"></i> Excel (XLSX)
                 </button>
@@ -365,18 +231,23 @@
             <div class="table-wrapper">
                 <table id="reportTable">
                     <thead>
-                        <tr>
-                            <th class="text-left">👤 Client</th>
-                            <th class="text-left">📁 Title</th>
-                            <th class="text-left">🔖 Subtitle</th>
-                            <th class="text-left">📎 Sub Sub Assembly</th>
-                            <th class="text-left">🔧 Part Name</th>
-                            <th class="text-left">📄 Drawing No.</th>
-                            <th class="text-right manual-col-header" style="min-width:90px;">✏️ Manual Total</th>
-                            <th class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc+Cond)</span></th>
-                            <th class="text-right variance-col-header" style="min-width:80px;">📊 Variance</th>
-                            <th class="text-right">✅ Accepted</th>
-                            <th class="text-right">⚠️ Conditional</th>
+                        <!-- First header row: group headers -->
+                        <tr class="group-header-row">
+                            <th rowspan="2" class="text-left">👤 Client</th>
+                            <th rowspan="2" class="text-left">📁 Title</th>
+                            <th rowspan="2" class="text-left">🔖 Subtitle</th>
+                            <th rowspan="2" class="text-left">📎 Sub Sub Assembly</th>
+                            <th rowspan="2" class="text-left">🔧 Part Name</th>
+                            <th rowspan="2" class="text-left">📄 Drawing No.</th>
+                            <th colspan="2" class="text-center bg-indigo-50 text-indigo-800">📊 Manual Totals &amp; Variance Comparison</th>
+                            <th rowspan="2" class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc+Cond)</span></th>
+                            <th rowspan="2" class="text-right">✅ Accepted</th>
+                            <th rowspan="2" class="text-right">⚠️ Conditional</th>
+                        </tr>
+                        <!-- Second header row: sub-headers -->
+                        <tr class="sub-header">
+                            <th class="text-center manual-col-header" style="min-width:90px;">✏️ Manual Total</th>
+                            <th class="text-center variance-col-header" style="min-width:80px;">📊 Variance</th>
                         </tr>
                     </thead>
                     <tbody id="reportTableBody">
@@ -453,8 +324,6 @@
             });
         }
 
-        function safeStr(v) { return (v || '').toString(); }
-
         // ---------- State ----------
         let allReportRows = [];
         let uniqueProjectNames = new Set();
@@ -478,6 +347,27 @@
             } else {
                 manualStore.set(key, Number(val));
             }
+        }
+
+        // ---------- Clear all manuals ----------
+        function clearAllManuals() {
+            manualStore.clear();
+            // Re-render the table with current filters
+            applyFilters();
+            // Also clear all input fields directly
+            document.querySelectorAll('.manual-input').forEach(input => {
+                input.value = '';
+                const delivered = parseFloat(input.dataset.delivered) || 0;
+                input.placeholder = delivered.toString();
+                // Update variance to '—'
+                const tr = input.closest('tr');
+                if (tr) {
+                    const varianceCell = tr.querySelector('td:nth-child(9)');
+                    if (varianceCell) {
+                        varianceCell.innerHTML = `<span class="text-gray-400 text-xs">—</span>`;
+                    }
+                }
+            });
         }
 
         // ---------- Fetch ----------
@@ -645,7 +535,7 @@
                 }
             }
 
-            // ---- Helper: count rows (parts) per assembly ----
+            // Helper: count rows (parts) per assembly
             function countParts(assemblyEntry) {
                 let cnt = 0;
                 for (const partEntry of assemblyEntry.partMap.values()) {
@@ -653,9 +543,7 @@
                 }
                 return cnt;
             }
-
             function totalRowsForAssembly(assemblyEntry) { return countParts(assemblyEntry); }
-
             function totalRowsForSubtitle(subtitleEntry) {
                 let sum = 0;
                 for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
@@ -663,7 +551,6 @@
                 }
                 return sum;
             }
-
             function totalRowsForTitle(titleEntry) {
                 let sum = 0;
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -671,7 +558,6 @@
                 }
                 return sum;
             }
-
             function totalRowsForClient(clientEntry) {
                 let sum = 0;
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -680,16 +566,8 @@
                 return sum;
             }
 
-            // ---- Build row data with hierarchy ----
-            // We'll build an array of row objects, each with:
-            // type: 'title' | 'subtitle' | 'assembly' | 'part'
-            // client, title, subtitle, assembly, partName, drawingNo
-            // delivered, accepted, conditional, deliveredRaw, acceptedRaw, conditionalRaw
-            // manualKey (for group rows), manualValue
-            // rowspan counts for each level
-
+            // Build row data array
             const allRows = [];
-
             for (const clientEntry of clientMap.values()) {
                 const clientName = clientEntry.clientName;
                 const clientTotal = totalRowsForClient(clientEntry);
@@ -698,10 +576,8 @@
                     const titleName = titleEntry.titleName;
                     const titleTotal = totalRowsForTitle(titleEntry);
 
-                    // ---- Title summary row ----
-                    let titleDelivered = 0,
-                        titleAccepted = 0,
-                        titleConditional = 0;
+                    // Title summary
+                    let titleDelivered = 0, titleAccepted = 0, titleConditional = 0;
                     for (const subEntry of titleEntry.subtitleMap.values()) {
                         for (const assEntry of subEntry.assemblyMap.values()) {
                             for (const partEntry of assEntry.partMap.values()) {
@@ -741,10 +617,7 @@
                         const subtitleTotal = totalRowsForSubtitle(subtitleEntry);
                         if (subtitleTotal === 0) continue;
 
-                        // ---- Subtitle summary row ----
-                        let subDelivered = 0,
-                            subAccepted = 0,
-                            subConditional = 0;
+                        let subDelivered = 0, subAccepted = 0, subConditional = 0;
                         for (const assEntry of subtitleEntry.assemblyMap.values()) {
                             for (const partEntry of assEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
@@ -782,10 +655,7 @@
                             const assemblyTotal = totalRowsForAssembly(assemblyEntry);
                             if (assemblyTotal === 0) continue;
 
-                            // ---- Assembly summary row ----
-                            let assDelivered = 0,
-                                assAccepted = 0,
-                                assConditional = 0;
+                            let assDelivered = 0, assAccepted = 0, assConditional = 0;
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
                                 assDelivered += partEntry.deliveredRaw;
@@ -816,7 +686,7 @@
                                 level: 2
                             });
 
-                            // ---- Part rows ----
+                            // Part rows
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
                                 const drawingList = [...partEntry.drawings].sort().join(', ');
@@ -846,32 +716,7 @@
                 }
             }
 
-            // ---- Render table ----
-            let html = '';
-            let totalParts = 0;
-
-            // We need to compute rowspan for each row based on the actual count of rows under each group
-            // Since we already built the rows, we can compute rowspans by counting
-
-            // First pass: count how many rows belong to each group
-            // We'll use the rowspan values already computed but need to adjust for the actual number of rows rendered
-
-            // Actually we already computed rowspan counts using the totalRowsFor* functions.
-            // But those counts include all parts, and we filter out zero-delivered parts.
-            // So we need to recompute based on the actual rows we're about to render.
-
-            // Let's recompute rowspans from the allRows array.
-
-            // For each row, we need to know how many rows are under this group.
-            // We can compute this by counting rows that belong to the same group.
-
-            // For Title rows: count all rows with the same client+title
-            // For Subtitle rows: count all rows with the same client+title+subtitle
-            // For Assembly rows: count all rows with the same client+title+subtitle+assembly
-
-            const rowSpanMap = new Map();
-
-            // Compute rowspans for Title groups
+            // Compute rowspans dynamically
             const titleGroups = new Map();
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
@@ -883,17 +728,13 @@
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
                 const key = `${r.client}|${r.title}`;
-                if (titleGroups.has(key)) {
-                    titleGroups.get(key).count++;
-                }
+                if (titleGroups.has(key)) titleGroups.get(key).count++;
             }
-            // Assign rowspanTitle to title rows
             for (const [key, info] of titleGroups) {
                 const row = allRows[info.start];
                 if (row) row.rowspanTitle = info.count;
             }
 
-            // Compute rowspans for Subtitle groups
             const subtitleGroups = new Map();
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
@@ -905,16 +746,13 @@
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
                 const key = `${r.client}|${r.title}|${r.subtitle}`;
-                if (subtitleGroups.has(key) && r.type !== 'title') {
-                    subtitleGroups.get(key).count++;
-                }
+                if (subtitleGroups.has(key) && r.type !== 'title') subtitleGroups.get(key).count++;
             }
             for (const [key, info] of subtitleGroups) {
                 const row = allRows[info.start];
                 if (row) row.rowspanSubtitle = info.count;
             }
 
-            // Compute rowspans for Assembly groups
             const assemblyGroups = new Map();
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
@@ -926,59 +764,38 @@
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
                 const key = `${r.client}|${r.title}|${r.subtitle}|${r.assembly}`;
-                if (assemblyGroups.has(key) && r.type !== 'title' && r.type !== 'subtitle') {
-                    assemblyGroups.get(key).count++;
-                }
+                if (assemblyGroups.has(key) && r.type !== 'title' && r.type !== 'subtitle') assemblyGroups.get(key).count++;
             }
             for (const [key, info] of assemblyGroups) {
                 const row = allRows[info.start];
                 if (row) row.rowspanAssembly = info.count;
             }
 
-            // Also compute client rowspans
             const clientGroups = new Map();
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
                 if (r.type === 'title') {
                     const key = r.client;
-                    if (!clientGroups.has(key)) {
-                        clientGroups.set(key, { start: i, count: 0 });
-                    }
+                    if (!clientGroups.has(key)) clientGroups.set(key, { start: i, count: 0 });
                 }
             }
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
-                if (clientGroups.has(r.client)) {
-                    clientGroups.get(r.client).count++;
-                }
+                if (clientGroups.has(r.client)) clientGroups.get(r.client).count++;
             }
             for (const [key, info] of clientGroups) {
                 const row = allRows[info.start];
                 if (row) row.rowspanClient = info.count;
             }
 
-            // ---- Render ----
-            let renderedCount = 0;
-            let prevClient = '',
-                prevTitle = '',
-                prevSubtitle = '',
-                prevAssembly = '';
-            let clientRendered = false,
-                titleRendered = false,
-                subtitleRendered = false,
-                assemblyRendered = false;
-
-            // Track which groups have been rendered
-            const renderedClients = new Set();
-            const renderedTitles = new Set();
-            const renderedSubtitles = new Set();
-            const renderedAssemblies = new Set();
+            // Render
+            let html = '';
+            let totalParts = 0;
+            const renderedClients = new Set(), renderedTitles = new Set(), renderedSubtitles = new Set(), renderedAssemblies = new Set();
 
             for (let i = 0; i < allRows.length; i++) {
                 const r = allRows[i];
                 const isGroup = r.isGroup;
-                const level = r.level;
-
                 let rowClass = 'part-row';
                 if (r.type === 'title') rowClass = 'group-row-title';
                 else if (r.type === 'subtitle') rowClass = 'group-row-subtitle';
@@ -999,13 +816,12 @@
                 if (showSubtitle) renderedSubtitles.add(subtitleKey);
                 if (showAssembly) renderedAssemblies.add(assemblyKey);
 
-                const clientSpan = (showClient && r.type === 'title') ? r.rowspanClient : 0;
-                const titleSpan = (showTitle && r.type === 'title') ? r.rowspanTitle : 0;
-                const subtitleSpan = (showSubtitle && r.type === 'subtitle') ? r.rowspanSubtitle : 0;
-                const assemblySpan = (showAssembly && r.type === 'assembly') ? r.rowspanAssembly : 0;
+                const clientSpan = showClient ? r.rowspanClient : 0;
+                const titleSpan = showTitle ? r.rowspanTitle : 0;
+                const subtitleSpan = showSubtitle ? r.rowspanSubtitle : 0;
+                const assemblySpan = showAssembly ? r.rowspanAssembly : 0;
 
-                // Manual input value
-                let manualVal = '';
+                // Manual input
                 let manualInputHtml = '';
                 if (isGroup) {
                     const val = r.manualValue !== null && r.manualValue !== undefined ? r.manualValue : '';
@@ -1022,15 +838,13 @@
                 if (isGroup) {
                     const deliveredVal = r.deliveredRaw || 0;
                     const manualValNum = r.manualValue !== null && r.manualValue !== undefined && !isNaN(r.manualValue) ?
-                        Number(r.manualValue) :
-                        null;
+                        Number(r.manualValue) : null;
                     let variance = null;
                     if (manualValNum !== null && !isNaN(manualValNum)) {
                         variance = manualValNum - deliveredVal;
                     }
                     if (variance !== null) {
-                        const vClass = variance > 0 ? 'variance-positive' : (variance < 0 ? 'variance-negative' :
-                            'variance-zero');
+                        const vClass = variance > 0 ? 'variance-positive' : (variance < 0 ? 'variance-negative' : 'variance-zero');
                         const sign = variance > 0 ? '+' : '';
                         varianceHtml =
                             `<span class="variance-value ${vClass}">${sign}${variance.toLocaleString()}</span>`;
@@ -1041,41 +855,29 @@
                     varianceHtml = '';
                 }
 
-                // Build row
                 html += `<tr class="${rowClass} group-summary-row">`;
 
                 // Client
                 if (showClient && r.type === 'title') {
                     html += `<td rowspan="${clientSpan}" class="font-bold align-middle">${escapeHtml(r.client)}</td>`;
-                } else if (r.type === 'part' && i > 0) {
-                    // For part rows, client is already rendered via rowspan
-                    // We'll skip it
-                } else if (r.type !== 'title') {
-                    // Don't render client again
                 }
 
                 // Title
                 if (showTitle && r.type === 'title') {
                     html +=
                     `<td rowspan="${titleSpan}" class="font-bold align-middle group-name">${escapeHtml(r.title)}</td>`;
-                } else if (r.type === 'part' || r.type === 'subtitle' || r.type === 'assembly') {
-                    // Title is already rendered via rowspan from the title row
                 }
 
                 // Subtitle
                 if (showSubtitle && r.type === 'subtitle') {
                     html +=
                         `<td rowspan="${subtitleSpan}" class="font-semibold align-middle group-name">${escapeHtml(r.subtitle) || '—'}</td>`;
-                } else if (r.type === 'part' || r.type === 'assembly') {
-                    // Subtitle already rendered
                 }
 
                 // Assembly
                 if (showAssembly && r.type === 'assembly') {
                     html +=
                         `<td rowspan="${assemblySpan}" class="align-middle"><span class="sub-assembly-tag">${escapeHtml(r.assembly) || '—'}</span></td>`;
-                } else if (r.type === 'part') {
-                    // Assembly already rendered
                 }
 
                 // Part Name
@@ -1099,17 +901,17 @@
                     html += `<td class="text-center text-gray-300 text-xs">—</td>`;
                 }
 
-                // Delivered
-                const deliveredVal = r.deliveredRaw || 0;
-                html +=
-                    `<td class="text-right tabular-nums font-bold text-blue-700 col-delivered align-middle">${formatQty(deliveredVal)}</td>`;
-
                 // Variance
                 if (isGroup) {
                     html += `<td class="text-center align-middle font-mono">${varianceHtml}</td>`;
                 } else {
                     html += `<td class="text-center text-gray-300 text-xs">—</td>`;
                 }
+
+                // Delivered
+                const deliveredVal = r.deliveredRaw || 0;
+                html +=
+                    `<td class="text-right tabular-nums font-bold text-blue-700 col-delivered align-middle">${formatQty(deliveredVal)}</td>`;
 
                 // Accepted
                 html +=
@@ -1120,15 +922,10 @@
                     `<td class="text-right tabular-nums col-conditional align-middle">${formatQty(r.conditionalRaw || 0)}</td>`;
 
                 html += `</tr>`;
-                renderedCount++;
-
                 if (r.type === 'part') totalParts++;
             }
 
-            // ---- Attach event listeners for manual inputs ----
-            // We'll do this after rendering via a setTimeout
-
-            if (totalParts === 0 && renderedCount === 0) {
+            if (totalParts === 0 && allRows.length === 0) {
                 tbody.innerHTML =
                     `<tr><td colspan="11" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No parts with delivered quantity</p></td></tr>`;
                 document.getElementById('recordCount').innerText = '0 parts';
@@ -1137,20 +934,17 @@
 
             tbody.innerHTML = html;
             document.getElementById('recordCount').innerText =
-                `Showing ${totalParts} parts (from ${rows.length} inspection records) — ${renderedCount} total rows`;
+                `Showing ${totalParts} parts (from ${rows.length} inspection records) — ${allRows.length} total rows`;
 
-            // ---- Wire up manual inputs ----
+            // Wire up manual inputs
             tbody.querySelectorAll('.manual-input').forEach(input => {
                 const key = input.dataset.key;
                 const deliveredVal = parseFloat(input.dataset.delivered) || 0;
 
-                // Set initial value from store or use delivered as default
                 let stored = getManualValue(key);
                 if (stored !== null && !isNaN(stored) && stored !== '') {
                     input.value = stored;
                 } else {
-                    // If no stored value, use delivered as placeholder but don't set value
-                    // So user can see the delivered as placeholder
                     input.placeholder = deliveredVal.toString();
                 }
 
@@ -1162,12 +956,10 @@
                     } else {
                         setManualValue(key, null);
                     }
-                    // Update variance for this row
                     updateVarianceForRow(this);
                 });
 
                 input.addEventListener('blur', function(e) {
-                    // If empty, restore placeholder
                     if (this.value === '') {
                         const delivered = parseFloat(this.dataset.delivered) || 0;
                         this.placeholder = delivered.toString();
@@ -1179,12 +971,14 @@
             });
         }
 
-        // ---- Update variance for a single row ----
+        // Update variance for a single row
         function updateVarianceForRow(inputElement) {
             const tr = inputElement.closest('tr');
             if (!tr) return;
-            const deliveredCell = tr.querySelector('td:nth-child(8)'); // Delivered column
-            const varianceCell = tr.querySelector('td:nth-child(9)'); // Variance column
+            // Columns: index 0 Client, 1 Title, 2 Subtitle, 3 Assembly, 4 Part, 5 Drawing, 6 Manual, 7 Variance, 8 Delivered, 9 Accepted, 10 Conditional
+            const deliveredCell = tr.querySelector('td:nth-child(8)'); // Delivered is 8th? Actually we have 11 cols, indices 0-10. Delivered is at index 8? Let's count: 0 Client, 1 Title, 2 Subtitle, 3 Assembly, 4 Part, 5 Drawing, 6 Manual, 7 Variance, 8 Delivered, 9 Accepted, 10 Conditional. Yes.
+            const varianceCell = tr.querySelector('td:nth-child(7)'); // Variance is 7th? Wait: we output Manual at col 6, Variance at col 7, Delivered at col 8. Let's check: after Drawing (col5), we have Manual (col6), Variance (col7), Delivered (col8), Accepted (col9), Conditional (col10). So varianceCell is td:nth-child(7) (since 1-indexed: 1=Client,2=Title,3=Subtitle,4=Assembly,5=Part,6=Drawing,7=Manual,8=Variance,9=Delivered,10=Accepted,11=Conditional). So variance is 8th child.
+            const varianceCell = tr.querySelector('td:nth-child(8)');
             if (!deliveredCell || !varianceCell) return;
 
             const deliveredText = deliveredCell.textContent.trim().replace(/,/g, '');
@@ -1201,21 +995,16 @@
                 const sign = variance > 0 ? '+' : '';
                 varianceCell.innerHTML =
                     `<span class="variance-value ${vClass}">${sign}${variance.toLocaleString()}</span>`;
-                // Also update the manual store
                 const key = inputElement.dataset.key;
-                if (key) {
-                    setManualValue(key, manualVal);
-                }
+                if (key) setManualValue(key, manualVal);
             } else {
                 varianceCell.innerHTML = `<span class="text-gray-400 text-xs">—</span>`;
                 const key = inputElement.dataset.key;
-                if (key) {
-                    setManualValue(key, null);
-                }
+                if (key) setManualValue(key, null);
             }
         }
 
-        // ---------- XLSX Export with manual totals ----------
+        // ---------- Export to Excel ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -1228,7 +1017,6 @@
             if (selectedEngineer) filteredRows = filteredRows.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) filteredRows = filteredRows.filter(row => row.rawSearch.includes(searchTerm));
 
-            // Build tree
             const clientMap = new Map();
             for (const row of filteredRows) {
                 const client = row.clientName;
@@ -1270,13 +1058,11 @@
                 }
             }
 
-            // Helper to get manual value for a group
             function getManualForGroup(type, client, title, subtitle, assembly) {
                 const key = getGroupKey(type, client, title, subtitle, assembly);
                 return getManualValue(key);
             }
 
-            // Build flat data for Excel
             const excelRows = [];
             const headers = ['Client', 'Title', 'Subtitle', 'Sub Sub Assembly', 'Part Name', 'Drawing No.',
                 'Manual Total', 'Delivered', 'Variance', 'Accepted', 'Conditional'
@@ -1287,10 +1073,7 @@
                 const client = clientEntry.clientName;
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     const title = titleEntry.titleName;
-                    // Title summary
-                    let tDel = 0,
-                        tAcc = 0,
-                        tCond = 0;
+                    let tDel = 0, tAcc = 0, tCond = 0;
                     for (const sub of titleEntry.subtitleMap.values()) {
                         for (const ass of sub.assemblyMap.values()) {
                             for (const p of ass.partMap.values()) {
@@ -1312,9 +1095,7 @@
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitle = subtitleEntry.subtitleName;
-                        let sDel = 0,
-                            sAcc = 0,
-                            sCond = 0;
+                        let sDel = 0, sAcc = 0, sCond = 0;
                         for (const ass of subtitleEntry.assemblyMap.values()) {
                             for (const p of ass.partMap.values()) {
                                 if (p.deliveredRaw === 0) continue;
@@ -1334,9 +1115,7 @@
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
                             const assembly = assemblyEntry.assemblyName;
-                            let aDel = 0,
-                                aAcc = 0,
-                                aCond = 0;
+                            let aDel = 0, aAcc = 0, aCond = 0;
                             for (const p of assemblyEntry.partMap.values()) {
                                 if (p.deliveredRaw === 0) continue;
                                 aDel += p.deliveredRaw;
@@ -1398,7 +1177,6 @@
             if (selectedEngineer) dataToCopy = dataToCopy.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
 
-            // Build tree and export as TSV with manual totals
             const clientMap = new Map();
             for (const row of dataToCopy) {
                 const client = row.clientName;
@@ -1446,9 +1224,7 @@
                 const client = clientEntry.clientName;
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     const title = titleEntry.titleName;
-                    let tDel = 0,
-                        tAcc = 0,
-                        tCond = 0;
+                    let tDel = 0, tAcc = 0, tCond = 0;
                     for (const sub of titleEntry.subtitleMap.values()) {
                         for (const ass of sub.assemblyMap.values()) {
                             for (const p of ass.partMap.values()) {
@@ -1466,9 +1242,7 @@
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitle = subtitleEntry.subtitleName;
-                        let sDel = 0,
-                            sAcc = 0,
-                            sCond = 0;
+                        let sDel = 0, sAcc = 0, sCond = 0;
                         for (const ass of subtitleEntry.assemblyMap.values()) {
                             for (const p of ass.partMap.values()) {
                                 if (p.deliveredRaw === 0) continue;
@@ -1484,9 +1258,7 @@
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
                             const assembly = assemblyEntry.assemblyName;
-                            let aDel = 0,
-                                aAcc = 0,
-                                aCond = 0;
+                            let aDel = 0, aAcc = 0, aCond = 0;
                             for (const p of assemblyEntry.partMap.values()) {
                                 if (p.deliveredRaw === 0) continue;
                                 aDel += p.deliveredRaw;
@@ -1533,12 +1305,9 @@
 
         // ---------- Event listeners ----------
         document.getElementById('searchInput').addEventListener('input', () => { if (allReportRows.length) applyFilters(); });
-        document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length)
-                applyFilters(); });
-        document.getElementById('processFilterSelect').addEventListener('change', () => { if (allReportRows.length)
-                applyFilters(); });
-        document.getElementById('engineerFilterSelect').addEventListener('change', () => { if (allReportRows.length)
-                applyFilters(); });
+        document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
+        document.getElementById('processFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
+        document.getElementById('engineerFilterSelect').addEventListener('change', () => { if (allReportRows.length) applyFilters(); });
         document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
 
         // ---------- Start ----------
