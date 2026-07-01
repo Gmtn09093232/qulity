@@ -91,7 +91,6 @@
             font-size: 1.5rem;
             opacity: 0.4;
         }
-        /* Fix for chart.js legend overlap */
         .chart-container .chartjs-legend {
             margin-top: 4px;
         }
@@ -159,7 +158,7 @@
                     <h3><i class="fas fa-circle"></i> Doughnut</h3>
                     <div class="chart-container"><canvas id="chartDoughnut"></canvas></div>
                 </div>
-                <!-- Horizontal Bar -->
+                <!-- Horizontal Bar (FIXED) -->
                 <div class="chart-box">
                     <h3><i class="fas fa-chart-bar fa-rotate-90"></i> Horizontal</h3>
                     <div class="chart-container"><canvas id="chartHorizontal"></canvas></div>
@@ -496,7 +495,7 @@
         }
 
         // ──────────────────────────────────────────────
-        //  RENDER ALL CHARTS – fixed for all 6 types
+        //  RENDER ALL CHARTS – FIXED for horizontal bar
         // ──────────────────────────────────────────────
         function renderAllCharts(items, totalQuantity) {
             destroyAllCharts();
@@ -542,7 +541,7 @@
 
             if (total === 0) return null;
 
-            // Base config
+            // Base config – type will be overridden for horizontalBar
             let config = {
                 type: type,
                 data: {},
@@ -594,8 +593,9 @@
                     x: { grid: { display: false } }
                 };
             }
-            // ── Horizontal Bar ──
+            // ── Horizontal Bar (FIXED: use 'bar' type + indexAxis: 'y') ──
             else if (type === 'horizontalBar') {
+                config.type = 'bar'; // critical: Chart.js v4 uses 'bar' with indexAxis
                 config.data = {
                     labels: labels,
                     datasets: [{
