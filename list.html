@@ -200,6 +200,10 @@
             font-weight: 600;
             color: #0b6e4f;
         }
+        .title-meta .deliv-pct {
+            font-weight: 700;
+            color: #7c3aed;
+        }
         .title-meta .manual-indicator {
             color: #b45309;
             font-weight: 600;
@@ -374,6 +378,9 @@
             background: #f1f5f9;
             color: #475569;
         }
+        .comparison-card .cmp-item .value.deliv-pct {
+            color: #7c3aed;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
@@ -408,7 +415,7 @@
             </div>
         </div>
 
-        <!-- ─── NEW: Manual vs Actual Comparison Card ─── -->
+        <!-- ─── Comparison Card (updated) ─── -->
         <div class="comparison-card mb-5 no-print" id="comparisonCard">
             <div class="flex flex-wrap items-center gap-2 md:gap-4">
                 <span class="text-sm font-semibold text-slate-700"><i class="fa-regular fa-scale-balanced text-amber-600 mr-1"></i>Manual vs Actual</span>
@@ -429,6 +436,11 @@
                 <span class="cmp-item">
                     <span class="label"><i class="fa-regular fa-percent"></i> % Variance</span>
                     <span class="badge-pct" id="pctDisplay">0%</span>
+                </span>
+                <span class="cmp-divider">|</span>
+                <span class="cmp-item">
+                    <span class="label"><i class="fa-regular fa-divide"></i> Deliver/Part %</span>
+                    <span class="value deliv-pct" id="delivPartPct">0%</span>
                 </span>
                 <span class="cmp-divider">|</span>
                 <span class="text-xs text-gray-400" id="manualCountDisplay">0 titles overridden</span>
@@ -537,7 +549,7 @@
             <span><i class="fa-solid fa-list"></i> Drawing numbers are listed per part</span>
             <span><i class="fa-solid fa-eye-slash"></i> Parts with zero delivered are hidden</span>
             <span><i class="fa-solid fa-pen text-amber-600"></i> <strong>Manual override</strong> – click ✏️ to edit parts &amp; delivered per title</span>
-            <span><i class="fa-solid fa-scale-balanced text-amber-600"></i> <strong>Manual vs Actual</strong> shows variance</span>
+            <span><i class="fa-solid fa-divide text-purple-600"></i> <strong>Deliver/Part %</strong> = (Delivered ÷ Parts) × 100</span>
         </div>
     </div>
 
@@ -738,22 +750,22 @@
             updateComparisonCard(filtered);
         }
 
-        // ---------- Update Comparison Card ----------
+        // ---------- Update Comparison Card (with Deliver/Part %) ----------
         function updateComparisonCard(rows) {
             const overrides = getManualOverrides();
             let manualTotal = 0;
+            let manualParts = 0;
             let overrideCount = 0;
 
-            // Compute manual total from overrides that exist in the current data
             const titlesInData = new Set(rows.map(r => r.projectName));
             for (const [title, val] of Object.entries(overrides)) {
                 if (titlesInData.has(title)) {
                     manualTotal += val.delivered || 0;
+                    manualParts += val.parts || 0;
                     overrideCount++;
                 }
             }
 
-            // Actual total from data (sum of deliveredRaw across all rows)
             let actualTotal = 0;
             for (const row of rows) {
                 actualTotal += row.deliveredRaw;
@@ -761,6 +773,12 @@
 
             const diff = manualTotal - actualTotal;
             const pct = manualTotal !== 0 ? (diff / manualTotal) * 100 : 0;
+
+            // Deliver/Part % based on manual totals
+            let delivPartPct = 0;
+            if (manualParts > 0) {
+                delivPartPct = (manualTotal / manualParts) * 100;
+            }
 
             document.getElementById('manualTotalDisplay').textContent = formatQty(manualTotal);
             document.getElementById('actualTotalDisplay').textContent = formatQty(actualTotal);
@@ -774,10 +792,11 @@
             pctEl.textContent = pctFormatted;
             pctEl.className = 'badge-pct ' + (pct > 0 ? 'positive' : pct < 0 ? 'negative' : 'neutral');
 
+            document.getElementById('delivPartPct').textContent = delivPartPct.toFixed(1) + '%';
             document.getElementById('manualCountDisplay').textContent = `${overrideCount} titles overridden`;
         }
 
-        // ---------- Aggregated Render ----------
+        // ---------- Aggregated Render (with Deliver/Part % per title) ----------
         function renderAggregatedTable(rows) {
             const tbody = document.getElementById('reportTableBody');
             const totalPartsCard = document.getElementById('totalPartsSum');
@@ -913,15 +932,23 @@
                         isManual = true;
                     }
 
+                    // Deliver/Part %
+                    let delivPct = 0;
+                    if (partsCount > 0) {
+                        delivPct = (totalDeliv / partsCount) * 100;
+                    }
+
                     const metaHtml = `
                             <span class="title-meta-wrap">
                                 <span class="title-meta">
                                     <span class="meta-badge"><i class="fa-regular fa-cube"></i> <span class="parts-count">${partsCount}</span> parts</span>
                                     <span class="meta-divider">|</span>
                                     <span class="meta-badge"><i class="fa-regular fa-box"></i> <span class="deliv-count">${formatQty(totalDeliv)}</span> deliv</span>
+                                    <span class="meta-divider">|</span>
+                                    <span class="meta-badge"><i class="fa-regular fa-percent"></i> <span class="deliv-pct">${delivPct.toFixed(1)}%</span></span>
                                     <span class="cmp-bar-wrap">
-                                        <span class="cmp-bar-bg"><span class="cmp-bar-fill" style="width:${Math.min(100, (partsCount / (totalDeliv || 1)) * 30)}%"></span></span>
-                                        <span class="cmp-bar-label">${totalDeliv > 0 ? Math.round((partsCount / totalDeliv) * 100) : 0}%</span>
+                                        <span class="cmp-bar-bg"><span class="cmp-bar-fill" style="width:${Math.min(100, delivPct)}%"></span></span>
+                                        <span class="cmp-bar-label">${delivPct.toFixed(0)}%</span>
                                     </span>
                                     ${isManual ? '<span class="manual-indicator">✏️ manual</span>' : ''}
                                     <button class="manual-edit-btn no-print" onclick="openManualEdit('${escapeHtml(titleName)}', ${partsCount}, ${totalDeliv})" title="Manual override">
@@ -1161,8 +1188,8 @@
                 return sum;
             }
 
-            const headers = ['Client', 'Title', '#Parts (manual)', 'Total Deliv (manual)', 'Subtitle', 'Sub Sub Assembly',
-                'Part Name', 'Drawing No.', 'Delivered', 'Accepted', 'Conditional'
+            const headers = ['Client', 'Title', '#Parts (manual)', 'Total Deliv (manual)', 'Deliver/Part %',
+                'Subtitle', 'Sub Sub Assembly', 'Part Name', 'Drawing No.', 'Delivered', 'Accepted', 'Conditional'
             ];
             const data = [headers];
             const merges = [];
@@ -1181,6 +1208,7 @@
                     let firstTitle = true;
                     const partsCount = titleEntry.partsSet.size;
                     const totalDeliv = titleEntry.totalDelivered;
+                    const delivPct = partsCount > 0 ? (totalDeliv / partsCount) * 100 : 0;
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitleRows = totalRowsForSubtitle(subtitleEntry);
@@ -1202,6 +1230,7 @@
                                 rowData.push(firstTitle ? titleEntry.titleName : '');
                                 rowData.push(firstTitle ? partsCount : '');
                                 rowData.push(firstTitle ? formatQty(totalDeliv) : '');
+                                rowData.push(firstTitle ? delivPct.toFixed(1) + '%' : '');
                                 rowData.push(firstSubtitle ? subtitleEntry.subtitleName : '');
                                 rowData.push(firstAssembly ? assemblyEntry.assemblyName : '');
                                 rowData.push(partEntry.partName);
@@ -1218,19 +1247,20 @@
                                 firstAssembly = false;
                             }
                             if (assemblyRows > 1) {
-                                merges.push({ s: { r: assemblyStartRow, c: 5 }, e: { r: assemblyStartRow + assemblyRows -
-                                        1, c: 5 } });
+                                merges.push({ s: { r: assemblyStartRow, c: 6 }, e: { r: assemblyStartRow + assemblyRows -
+                                        1, c: 6 } });
                             }
                         }
                         if (subtitleRows > 1) {
-                            merges.push({ s: { r: subtitleStartRow, c: 4 }, e: { r: subtitleStartRow + subtitleRows - 1,
-                                    c: 4 } });
+                            merges.push({ s: { r: subtitleStartRow, c: 5 }, e: { r: subtitleStartRow + subtitleRows - 1,
+                                    c: 5 } });
                         }
                     }
                     if (titleRows > 1) {
                         merges.push({ s: { r: titleStartRow, c: 1 }, e: { r: titleStartRow + titleRows - 1, c: 1 } });
                         merges.push({ s: { r: titleStartRow, c: 2 }, e: { r: titleStartRow + titleRows - 1, c: 2 } });
                         merges.push({ s: { r: titleStartRow, c: 3 }, e: { r: titleStartRow + titleRows - 1, c: 3 } });
+                        merges.push({ s: { r: titleStartRow, c: 4 }, e: { r: titleStartRow + titleRows - 1, c: 4 } });
                     }
                 }
                 if (clientRows > 1) {
@@ -1246,7 +1276,7 @@
             const ws = XLSX.utils.aoa_to_sheet(data);
             ws['!merges'] = merges;
             ws['!cols'] = [
-                { wch: 18 }, { wch: 22 }, { wch: 14 }, { wch: 16 },
+                { wch: 18 }, { wch: 22 }, { wch: 14 }, { wch: 16 }, { wch: 14 },
                 { wch: 18 }, { wch: 18 }, { wch: 20 }, { wch: 25 },
                 { wch: 14 }, { wch: 12 }, { wch: 14 }
             ];
@@ -1327,12 +1357,15 @@
             }
 
             let tsv =
-                "Client\tTitle\t#Parts (manual)\tTotal Deliv (manual)\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tDelivered\tAccepted\tConditional\n";
+                "Client\tTitle\t#Parts (manual)\tTotal Deliv (manual)\tDeliver/Part %\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tDelivered\tAccepted\tConditional\n";
             for (const entry of filteredEntries) {
                 const drawingList = [...entry.drawings].sort().join(', ');
                 const meta = titleMeta.get(entry.projectName) || { partsSet: new Set(), totalDeliv: 0 };
+                const parts = meta.partsSet.size;
+                const deliv = meta.totalDeliv;
+                const pct = parts > 0 ? (deliv / parts) * 100 : 0;
                 tsv +=
-                    `${entry.clientName}\t${entry.projectName}\t${meta.partsSet.size}\t${formatQty(meta.totalDeliv)}\t${entry.subtitle}\t${entry.subSubAssembly}\t${entry.partName}\t${drawingList || '—'}\t${formatQty(entry.deliveredRaw)}\t${formatQty(entry.acceptedRaw)}\t${formatQty(entry.conditionalRaw)}\n`;
+                    `${entry.clientName}\t${entry.projectName}\t${parts}\t${formatQty(deliv)}\t${pct.toFixed(1)}%\t${entry.subtitle}\t${entry.subSubAssembly}\t${entry.partName}\t${drawingList || '—'}\t${formatQty(entry.deliveredRaw)}\t${formatQty(entry.acceptedRaw)}\t${formatQty(entry.conditionalRaw)}\n`;
             }
 
             try {
