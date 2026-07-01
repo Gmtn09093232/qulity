@@ -29,9 +29,6 @@
             .no-print {
                 display: none !important;
             }
-            .summary-cards {
-                display: none !important;
-            }
             .filter-bar,
             .action-buttons {
                 display: none !important;
@@ -48,9 +45,6 @@
                 font-size: 0.65rem !important;
             }
             .manual-edit-btn {
-                display: none !important;
-            }
-            .comparison-card {
                 display: none !important;
             }
         }
@@ -320,67 +314,6 @@
             position: relative;
             display: inline-block;
         }
-
-        /* Comparison card */
-        .comparison-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 12px 20px;
-            border: 1px solid #e9edf2;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-        .comparison-card .cmp-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px 12px;
-            flex-wrap: wrap;
-            margin-right: 16px;
-        }
-        .comparison-card .cmp-item .label {
-            font-size: 0.7rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-        .comparison-card .cmp-item .value {
-            font-weight: 700;
-            font-size: 1rem;
-        }
-        .comparison-card .cmp-item .value.positive {
-            color: #16a34a;
-        }
-        .comparison-card .cmp-item .value.negative {
-            color: #dc2626;
-        }
-        .comparison-card .cmp-item .value.neutral {
-            color: #6b7280;
-        }
-        .comparison-card .cmp-divider {
-            color: #d1d5db;
-            font-weight: 300;
-            margin: 0 4px;
-        }
-        .comparison-card .badge-pct {
-            background: #f1f5f9;
-            padding: 2px 10px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .comparison-card .badge-pct.positive {
-            background: #dcfce7;
-            color: #166534;
-        }
-        .comparison-card .badge-pct.negative {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        .comparison-card .badge-pct.neutral {
-            background: #f1f5f9;
-            color: #475569;
-        }
-        .comparison-card .cmp-item .value.deliv-pct {
-            color: #7c3aed;
-        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
@@ -415,40 +348,9 @@
             </div>
         </div>
 
-        <!-- ─── Comparison Card (updated) ─── -->
-        <div class="comparison-card mb-5 no-print" id="comparisonCard">
-            <div class="flex flex-wrap items-center gap-2 md:gap-4">
-                <span class="text-sm font-semibold text-slate-700"><i class="fa-regular fa-scale-balanced text-amber-600 mr-1"></i>Manual vs Actual</span>
-                <span class="cmp-divider">|</span>
-                <span class="cmp-item">
-                    <span class="label"><i class="fa-regular fa-pen-to-square text-amber-500"></i> Manual Total</span>
-                    <span class="value" id="manualTotalDisplay">0</span>
-                </span>
-                <span class="cmp-item">
-                    <span class="label"><i class="fa-regular fa-chart-bar text-blue-500"></i> Actual Total</span>
-                    <span class="value" id="actualTotalDisplay">0</span>
-                </span>
-                <span class="cmp-divider">|</span>
-                <span class="cmp-item">
-                    <span class="label"><i class="fa-regular fa-circle-minus"></i> Difference</span>
-                    <span class="value" id="diffDisplay">0</span>
-                </span>
-                <span class="cmp-item">
-                    <span class="label"><i class="fa-regular fa-percent"></i> % Variance</span>
-                    <span class="badge-pct" id="pctDisplay">0%</span>
-                </span>
-                <span class="cmp-divider">|</span>
-                <span class="cmp-item">
-                    <span class="label"><i class="fa-regular fa-divide"></i> Deliver/Part %</span>
-                    <span class="value deliv-pct" id="delivPartPct">0%</span>
-                </span>
-                <span class="cmp-divider">|</span>
-                <span class="text-xs text-gray-400" id="manualCountDisplay">0 titles overridden</span>
-            </div>
-        </div>
-
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 no-print summary-cards">
+        <!-- ─── Summary Cards (Delivered, Accepted, Conditional) ─── -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 no-print summary-cards">
+            <!-- Delivered -->
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div><i class="fa-solid fa-boxes-stacked text-2xl text-blue-500"></i></div>
@@ -457,6 +359,7 @@
                 <p class="text-2xl font-bold text-slate-800 mt-2" id="totalDeliveredSum">0</p>
                 <p class="text-xs text-gray-500">Delivered (Acc + Cond)</p>
             </div>
+            <!-- Accepted -->
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div><i class="fa-solid fa-check-circle text-2xl text-emerald-500"></i></div>
@@ -464,20 +367,13 @@
                 <p class="text-2xl font-bold text-slate-800 mt-2" id="totalAcceptedSum">0</p>
                 <p class="text-xs text-gray-500">Accepted</p>
             </div>
+            <!-- Conditional -->
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div><i class="fa-solid fa-flag-checkered text-2xl text-purple-500"></i></div>
                 </div>
                 <p class="text-2xl font-bold text-slate-800 mt-2" id="totalConditionalSum">0</p>
                 <p class="text-xs text-gray-500">Conditional</p>
-            </div>
-            <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between">
-                    <div><i class="fa-solid fa-cubes text-2xl text-indigo-500"></i></div>
-                    <span class="text-xs text-gray-400">Unique</span>
-                </div>
-                <p class="text-2xl font-bold text-slate-800 mt-2" id="totalPartsSum">0</p>
-                <p class="text-xs text-gray-500">Total Parts</p>
             </div>
         </div>
 
@@ -700,6 +596,7 @@
                     });
                 }
 
+                // ─── Update summary cards ───
                 document.getElementById('totalDeliveredSum').innerText = sumDelivered.toLocaleString();
                 document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
                 document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
@@ -747,65 +644,16 @@
             if (searchTerm) filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
 
             renderAggregatedTable(filtered);
-            updateComparisonCard(filtered);
         }
 
-        // ---------- Update Comparison Card (with Deliver/Part %) ----------
-        function updateComparisonCard(rows) {
-            const overrides = getManualOverrides();
-            let manualTotal = 0;
-            let manualParts = 0;
-            let overrideCount = 0;
-
-            const titlesInData = new Set(rows.map(r => r.projectName));
-            for (const [title, val] of Object.entries(overrides)) {
-                if (titlesInData.has(title)) {
-                    manualTotal += val.delivered || 0;
-                    manualParts += val.parts || 0;
-                    overrideCount++;
-                }
-            }
-
-            let actualTotal = 0;
-            for (const row of rows) {
-                actualTotal += row.deliveredRaw;
-            }
-
-            const diff = manualTotal - actualTotal;
-            const pct = manualTotal !== 0 ? (diff / manualTotal) * 100 : 0;
-
-            // Deliver/Part % based on manual totals
-            let delivPartPct = 0;
-            if (manualParts > 0) {
-                delivPartPct = (manualTotal / manualParts) * 100;
-            }
-
-            document.getElementById('manualTotalDisplay').textContent = formatQty(manualTotal);
-            document.getElementById('actualTotalDisplay').textContent = formatQty(actualTotal);
-
-            const diffEl = document.getElementById('diffDisplay');
-            diffEl.textContent = (diff >= 0 ? '+' : '') + formatQty(diff);
-            diffEl.className = 'value ' + (diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'neutral');
-
-            const pctEl = document.getElementById('pctDisplay');
-            const pctFormatted = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
-            pctEl.textContent = pctFormatted;
-            pctEl.className = 'badge-pct ' + (pct > 0 ? 'positive' : pct < 0 ? 'negative' : 'neutral');
-
-            document.getElementById('delivPartPct').textContent = delivPartPct.toFixed(1) + '%';
-            document.getElementById('manualCountDisplay').textContent = `${overrideCount} titles overridden`;
-        }
-
-        // ---------- Aggregated Render (with Deliver/Part % per title) ----------
+        // ---------- Aggregated Render ----------
         function renderAggregatedTable(rows) {
             const tbody = document.getElementById('reportTableBody');
-            const totalPartsCard = document.getElementById('totalPartsSum');
 
             if (!rows.length) {
                 tbody.innerHTML =
                     `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
                 document.getElementById('recordCount').innerText = '0 parts';
-                totalPartsCard.innerText = '0';
                 return;
             }
 
@@ -932,7 +780,6 @@
                         isManual = true;
                     }
 
-                    // Deliver/Part %
                     let delivPct = 0;
                     if (partsCount > 0) {
                         delivPct = (totalDeliv / partsCount) * 100;
@@ -1017,14 +864,6 @@
                     }
                 }
             }
-
-            let calcTotalParts = 0;
-            for (const clientEntry of clientMap.values()) {
-                for (const titleEntry of clientEntry.titleMap.values()) {
-                    calcTotalParts += titleEntry.partsSet.size;
-                }
-            }
-            totalPartsCard.innerText = calcTotalParts.toLocaleString();
 
             if (totalParts === 0) {
                 tbody.innerHTML =
