@@ -11,17 +11,49 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
         @media print {
-            body * { visibility: hidden; }
-            .report-container, .report-container * { visibility: visible; }
-            .report-container { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
-            .no-print { display: none !important; }
-            .summary-cards { display: none !important; }
-            .filter-bar, .action-buttons { display: none !important; }
-            table th, table td { padding: 4px 6px !important; font-size: 0.75rem !important; }
-            .table-wrapper { border-radius: 0 !important; }
+            body * {
+                visibility: hidden;
+            }
+            .report-container,
+            .report-container * {
+                visibility: visible;
+            }
+            .report-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .summary-cards {
+                display: none !important;
+            }
+            .filter-bar,
+            .action-buttons {
+                display: none !important;
+            }
+            table th,
+            table td {
+                padding: 4px 6px !important;
+                font-size: 0.7rem !important;
+            }
+            .table-wrapper {
+                border-radius: 0 !important;
+            }
         }
-        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
         th {
             background-color: #f1f5f9;
             position: sticky;
@@ -33,14 +65,27 @@
             border-bottom: 2px solid #e2e8f0;
             white-space: nowrap;
         }
-        td { padding: 8px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
-        tr:hover td { background-color: #f8fafc; }
+        td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        tr:hover td {
+            background-color: #f8fafc;
+        }
         .summary-card {
             transition: all 0.2s;
             border-radius: 1rem;
         }
-        .summary-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        .filter-input:focus { outline: none; ring: 2px solid #3b82f6; border-color: transparent; }
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        .filter-input:focus {
+            outline: none;
+            ring: 2px solid #3b82f6;
+            border-color: transparent;
+        }
         .loader {
             border: 3px solid #e2e8f0;
             border-top: 3px solid #3b82f6;
@@ -50,7 +95,14 @@
             animation: spin 0.8s linear infinite;
             margin: 20px auto;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
         .badge {
             display: inline-block;
             padding: 0.15rem 0.6rem;
@@ -58,11 +110,25 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
-        .badge-accepted { background: #dcfce7; color: #166534; }
-        .badge-conditional { background: #f3e8ff; color: #6b21a8; }
-        .col-delivered { background: #eff6ff; font-weight: 600; color: #1e40af; }
-        .col-accepted { color: #166534; }
-        .col-conditional { color: #6b21a8; }
+        .badge-accepted {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-conditional {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+        .col-delivered {
+            background: #eff6ff;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        .col-accepted {
+            color: #166534;
+        }
+        .col-conditional {
+            color: #6b21a8;
+        }
         .sub-assembly-tag {
             font-size: 0.7rem;
             background: #eef2ff;
@@ -78,6 +144,15 @@
             display: inline-block;
             word-break: break-word;
         }
+        /* Title column now repeats on every row — subtle styling */
+        .title-col {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .client-col {
+            font-weight: 600;
+            color: #0f172a;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
@@ -91,7 +166,7 @@
                     <i class="fa-solid fa-clipboard-list text-blue-600"></i>
                     Inspection Report
                 </h1>
-                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Only parts with delivered > 0 shown</p>
+                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Title shown on every row</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -109,7 +184,7 @@
             </div>
         </div>
 
-        <!-- Summary Cards (unchanged – overall totals) -->
+        <!-- Summary Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 no-print summary-cards">
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
@@ -178,7 +253,7 @@
                             <th class="text-left">📎 Sub Sub Assembly</th>
                             <th class="text-left">🔧 Part Name</th>
                             <th class="text-left">📄 Drawing No.</th>
-                            <th class="text-right bg-blue-50">📦 Delivered<br><span class="text-[0.6rem] font-normal text-gray-500">(Acc + Cond)</span></th>
+                            <th class="text-right bg-blue-50">📦 Delivered<br /><span class="text-[0.6rem] font-normal text-gray-500">(Acc + Cond)</span></th>
                             <th class="text-right">✅ Accepted</th>
                             <th class="text-right">⚠️ Conditional</th>
                         </tr>
@@ -202,6 +277,7 @@
             <span class="text-gray-400">(Rework &amp; Reject are handled separately)</span>
             <span><i class="fa-solid fa-list"></i> Drawing numbers are listed per part</span>
             <span><i class="fa-solid fa-eye-slash"></i> Parts with zero delivered are hidden</span>
+            <span><i class="fa-solid fa-repeat"></i> <strong>Title</strong> now appears on <em>every</em> row</span>
         </div>
     </div>
 
@@ -372,11 +448,9 @@
             if (searchTerm) filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
 
             renderAggregatedTable(filtered);
-            // update record count to show number of parts (excluding zero delivered)
-            // We'll compute after rendering.
         }
 
-        // ---------- Aggregated Render with filtering zero delivered ----------
+        // ---------- Aggregated Render – Title repeats on EVERY row ----------
         function renderAggregatedTable(rows) {
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
@@ -428,7 +502,7 @@
                 }
             }
 
-            // Helper to count parts with delivered > 0 in an assembly
+            // Count parts with delivered > 0 (for rowspans of Client, Subtitle, Assembly)
             function countParts(assemblyEntry) {
                 let cnt = 0;
                 for (const partEntry of assemblyEntry.partMap.values()) {
@@ -436,9 +510,9 @@
                 }
                 return cnt;
             }
-            function totalRowsForAssembly(assemblyEntry) {
-                return countParts(assemblyEntry);
-            }
+
+            function totalRowsForAssembly(assemblyEntry) { return countParts(assemblyEntry); }
+
             function totalRowsForSubtitle(subtitleEntry) {
                 let sum = 0;
                 for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
@@ -446,6 +520,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForTitle(titleEntry) {
                 let sum = 0;
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -453,6 +528,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForClient(clientEntry) {
                 let sum = 0;
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -470,7 +546,8 @@
 
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     const titleTotal = totalRowsForTitle(titleEntry);
-                    let titlePrinted = false;
+                    // We still compute titleTotal for client rowspan, but Title column itself repeats on every row.
+                    let titlePrinted = false; // unused for title column now, but kept for consistency
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitleTotal = totalRowsForSubtitle(subtitleEntry);
@@ -481,27 +558,32 @@
                             let assemblyPrinted = false;
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
-                                // Skip parts with zero delivered
                                 if (partEntry.deliveredRaw === 0) continue;
                                 totalParts++;
 
                                 html += `<tr class="hover:bg-gray-50 transition">`;
 
+                                // Client – rowspan (first row only)
                                 if (!clientPrinted) {
                                     html +=
-                                        `<td rowspan="${clientTotal}" class="font-medium align-top">${escapeHtml(clientEntry.clientName)}</td>`;
+                                        `<td rowspan="${clientTotal}" class="client-col align-top">${escapeHtml(clientEntry.clientName)}</td>`;
                                     clientPrinted = true;
                                 }
-                                if (!titlePrinted) {
-                                    html +=
-                                        `<td rowspan="${titleTotal}" class="font-medium align-top">${escapeHtml(titleEntry.titleName)}</td>`;
-                                    titlePrinted = true;
-                                }
+
+                                // █████████████████████████████████████████████
+                                // TITLE – now appears on EVERY row (no rowspan)
+                                // █████████████████████████████████████████████
+                                html +=
+                                    `<td class="title-col align-top">${escapeHtml(titleEntry.titleName)}</td>`;
+
+                                // Subtitle – rowspan (first row only)
                                 if (!subtitlePrinted) {
                                     html +=
                                         `<td rowspan="${subtitleTotal}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
                                     subtitlePrinted = true;
                                 }
+
+                                // Sub Sub Assembly – rowspan (first row only)
                                 if (!assemblyPrinted) {
                                     html +=
                                         `<td rowspan="${assemblyTotal}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span></td>`;
@@ -511,17 +593,17 @@
                                 // Part Name
                                 html += `<td class="font-medium align-top">${escapeHtml(partEntry.partName)}</td>`;
 
-                                // Drawing Numbers: join with comma
+                                // Drawing Numbers
                                 const drawingList = [...partEntry.drawings].sort().join(', ');
                                 html +=
                                     `<td class="font-mono text-sm drawing-list">${escapeHtml(drawingList) || '—'}</td>`;
 
                                 // Quantities
                                 html += `
-                                    <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${formatQty(partEntry.deliveredRaw)}</td>
-                                    <td class="text-right tabular-nums col-accepted">${formatQty(partEntry.acceptedRaw)}</td>
-                                    <td class="text-right tabular-nums col-conditional">${formatQty(partEntry.conditionalRaw)}</td>
-                                `;
+                                        <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${formatQty(partEntry.deliveredRaw)}</td>
+                                        <td class="text-right tabular-nums col-accepted">${formatQty(partEntry.acceptedRaw)}</td>
+                                        <td class="text-right tabular-nums col-conditional">${formatQty(partEntry.conditionalRaw)}</td>
+                                    `;
                                 html += `</tr>`;
                             }
                         }
@@ -536,11 +618,11 @@
             } else {
                 tbody.innerHTML = html;
                 document.getElementById('recordCount').innerText =
-                    `Showing ${totalParts} parts (from ${rows.length} inspection records)`;
+                    `Showing ${totalParts} parts (from ${rows.length} inspection records) – Title repeats on every row`;
             }
         }
 
-        // ---------- XLSX Export (filter zero delivered) ----------
+        // ---------- XLSX Export (flat, no rowspan for Title) ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -595,7 +677,7 @@
                 }
             }
 
-            // Count parts with delivered > 0 for rowspan calculations
+            // Count parts with delivered > 0
             function countParts(assemblyEntry) {
                 let cnt = 0;
                 for (const partEntry of assemblyEntry.partMap.values()) {
@@ -603,7 +685,9 @@
                 }
                 return cnt;
             }
+
             function totalRowsForAssembly(assemblyEntry) { return countParts(assemblyEntry); }
+
             function totalRowsForSubtitle(subtitleEntry) {
                 let sum = 0;
                 for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
@@ -611,6 +695,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForTitle(titleEntry) {
                 let sum = 0;
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -618,6 +703,7 @@
                 }
                 return sum;
             }
+
             function totalRowsForClient(clientEntry) {
                 let sum = 0;
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -642,7 +728,7 @@
                 for (const titleEntry of clientEntry.titleMap.values()) {
                     const titleRows = totalRowsForTitle(titleEntry);
                     if (titleRows === 0) continue;
-                    const titleStartRow = currentRow;
+                    // Title repeats on every row — no rowspan for Title
                     let firstTitle = true;
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -661,9 +747,13 @@
                                 if (partEntry.deliveredRaw === 0) continue;
                                 const drawingList = [...partEntry.drawings].sort().join(', ');
                                 const rowData = [];
+                                // Client – only on first row of client group (rowspan)
                                 rowData.push(firstClient ? clientEntry.clientName : '');
-                                rowData.push(firstTitle ? titleEntry.titleName : '');
+                                // Title – repeats on EVERY row (no rowspan)
+                                rowData.push(titleEntry.titleName);
+                                // Subtitle – rowspan
                                 rowData.push(firstSubtitle ? subtitleEntry.subtitleName : '');
+                                // Assembly – rowspan
                                 rowData.push(firstAssembly ? assemblyEntry.assemblyName : '');
                                 rowData.push(partEntry.partName);
                                 rowData.push(drawingList || '—');
@@ -688,16 +778,14 @@
                                     c: 2 } });
                         }
                     }
-                    if (titleRows > 1) {
-                        merges.push({ s: { r: titleStartRow, c: 1 }, e: { r: titleStartRow + titleRows - 1, c: 1 } });
-                    }
+                    // Title column (index 1) has NO rowspan – repeats every row, so no merge
                 }
                 if (clientRows > 1) {
                     merges.push({ s: { r: clientStartRow, c: 0 }, e: { r: clientStartRow + clientRows - 1, c: 0 } });
                 }
             }
 
-            if (data.length === 1) { // only headers
+            if (data.length === 1) {
                 alert('No parts with delivered quantity to export.');
                 return;
             }
@@ -711,10 +799,10 @@
 
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Inspection Report');
-            XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
+            XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard (filter zero delivered) ----------
+        // ---------- Copy to clipboard (flat, Title repeats) ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -727,7 +815,6 @@
             if (selectedEngineer) dataToCopy = dataToCopy.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
 
-            // Aggregate by part with drawing list, skip zero delivered
             const partMap = new Map();
             for (const row of dataToCopy) {
                 const key = `${row.clientName}|${row.projectName}|${row.subtitle}|${row.subSubAssembly}|${row.partName}`;
@@ -753,7 +840,6 @@
                 }
             }
 
-            // Filter out zero delivered parts
             const filteredEntries = [];
             for (const entry of partMap.values()) {
                 if (entry.deliveredRaw > 0) {
@@ -775,7 +861,7 @@
             }
             try {
                 await navigator.clipboard.writeText(tsv);
-                alert(`✅ Aggregated table (${filteredEntries.length} parts) copied to clipboard`);
+                alert(`✅ Aggregated table (${filteredEntries.length} parts) copied to clipboard — Title repeats on every row`);
             } catch (err) {
                 alert('❌ Copy failed: ' + err);
             }
