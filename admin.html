@@ -114,30 +114,6 @@
             </button>
         </div>
 
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6" id="summaryCards">
-            <div class="bg-white rounded-lg shadow p-4 card-hover border-l-4 border-blue-500">
-                <div class="text-gray-500 text-sm flex items-center gap-1"><i class="fas fa-clipboard-list"></i> Total Inspections</div>
-                <div class="text-3xl font-bold text-blue-600" id="totalCount">-</div>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4 card-hover border-l-4 border-green-500">
-                <div class="text-gray-500 text-sm flex items-center gap-1"><i class="fas fa-clock"></i> Total Time</div>
-                <div class="text-2xl font-bold text-green-600" id="totalTime">-</div>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4 card-hover border-l-4 border-emerald-500">
-                <div class="text-gray-500 text-sm flex items-center gap-1"><i class="fas fa-check-circle"></i> Pass Rate</div>
-                <div class="text-3xl font-bold text-green-600" id="passRate">-</div>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4 card-hover border-l-4 border-red-500">
-                <div class="text-gray-500 text-sm flex items-center gap-1"><i class="fas fa-times-circle"></i> Reject + Rework</div>
-                <div class="text-3xl font-bold text-red-600" id="failCount">-</div>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4 card-hover border-l-4 border-rose-600">
-                <div class="text-gray-500 text-sm flex items-center gap-1"><i class="fas fa-coins"></i> Failure Cost</div>
-                <div class="text-3xl font-bold text-red-700" id="totalFailureCost">-</div>
-            </div>
-        </div>
-
         <!-- Quantity Summary Table -->
         <div class="bg-white rounded-lg shadow p-4 mb-6">
             <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-cubes text-blue-600"></i> Total Quantities (Sum of all inspections)</h2>
@@ -424,7 +400,6 @@
                 filtered = filtered.filter(i => new Date(i.submitted_at) <= to); }
 
             currentFilteredData = filtered;
-            updateSummary(filtered);
             updateQuantitySummary(filtered);
             updateResultsByQuantity(filtered);
             updateFailureCostByProcess(filtered);
@@ -441,26 +416,6 @@
             document.getElementById('filterDateFrom').value = '';
             document.getElementById('filterDateTo').value = '';
             applyFilters();
-        }
-
-        // ──────────────────────────────────────────────
-        //  SUMMARY CARDS
-        // ──────────────────────────────────────────────
-        function updateSummary(data) {
-            const total = data.length;
-            const totalMinutes = data.reduce((s, i) => s + (i.total_minutes || 0), 0);
-            const acceptedCount = data.filter(i => i.result === 'Accepted').length;
-            const passRate = total === 0 ? 0 : ((acceptedCount / total) * 100);
-            const failCount = data.filter(i => i.result === 'Reject' || i.result === 'Rework').length;
-            const totalCost = data.reduce((s, i) => s + safeNum(i.total_internal_failure_cost), 0);
-
-            document.getElementById('totalCount').innerText = total;
-            document.getElementById('totalTime').innerText = totalMinutes ?
-                `${totalMinutes} min (${Math.floor(totalMinutes/60)}h ${totalMinutes%60}m)` :
-                '0 min';
-            document.getElementById('passRate').innerText = `${passRate.toFixed(1)}%`;
-            document.getElementById('failCount').innerText = failCount;
-            document.getElementById('totalFailureCost').innerText = totalCost.toFixed(2);
         }
 
         // ──────────────────────────────────────────────
