@@ -158,6 +158,8 @@
             display: block;
             line-height: 1.3;
         }
+
+        /* Meta badge styles */
         .title-meta {
             display: flex;
             flex-wrap: wrap;
@@ -166,7 +168,6 @@
             margin-top: 3px;
             font-size: 0.7rem;
             color: #475569;
-            background: #f8fafc;
             padding: 2px 8px 2px 6px;
             border-radius: 999px;
             border: 1px solid #e9edf2;
@@ -314,6 +315,20 @@
             position: relative;
             display: inline-block;
         }
+
+        /* Specific meta backgrounds */
+        .meta-title {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+        .meta-subtitle {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+        }
+        .meta-assembly {
+            background: #f5f3ff;
+            border-color: #ddd6fe;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
@@ -327,7 +342,7 @@
                     <i class="fa-solid fa-clipboard-list text-blue-600"></i>
                     Inspection Report
                 </h1>
-                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Manual override per title (click ✏️)</p>
+                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Manual override for Title, Subtitle & Sub Sub Assembly</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -348,9 +363,8 @@
             </div>
         </div>
 
-        <!-- ─── Summary Cards (Delivered, Accepted, Conditional) ─── -->
+        <!-- Summary Cards (Delivered, Accepted, Conditional) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 no-print summary-cards">
-            <!-- Delivered -->
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div><i class="fa-solid fa-boxes-stacked text-2xl text-blue-500"></i></div>
@@ -359,7 +373,6 @@
                 <p class="text-2xl font-bold text-slate-800 mt-2" id="totalDeliveredSum">0</p>
                 <p class="text-xs text-gray-500">Delivered (Acc + Cond)</p>
             </div>
-            <!-- Accepted -->
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div><i class="fa-solid fa-check-circle text-2xl text-emerald-500"></i></div>
@@ -367,7 +380,6 @@
                 <p class="text-2xl font-bold text-slate-800 mt-2" id="totalAcceptedSum">0</p>
                 <p class="text-xs text-gray-500">Accepted</p>
             </div>
-            <!-- Conditional -->
             <div class="summary-card bg-white p-4 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div><i class="fa-solid fa-flag-checkered text-2xl text-purple-500"></i></div>
@@ -444,36 +456,46 @@
             <span class="text-gray-400">(Rework &amp; Reject are handled separately)</span>
             <span><i class="fa-solid fa-list"></i> Drawing numbers are listed per part</span>
             <span><i class="fa-solid fa-eye-slash"></i> Parts with zero delivered are hidden</span>
-            <span><i class="fa-solid fa-pen text-amber-600"></i> <strong>Manual override</strong> – click ✏️ to edit parts &amp; delivered per title</span>
+            <span><i class="fa-solid fa-pen text-amber-600"></i> <strong>Manual override</strong> – click ✏️ to edit parts &amp; delivered per Title, Subtitle, or Sub Sub Assembly</span>
             <span><i class="fa-solid fa-divide text-purple-600"></i> <strong>Deliver/Part %</strong> = (Delivered ÷ Parts) × 100</span>
         </div>
     </div>
 
     <script>
         // ---------- Manual override helpers ----------
-        const MANUAL_KEY = 'manualTitleOverrides';
+        const TITLE_KEY = 'manualTitleOverrides';
+        const SUBTITLE_KEY = 'manualSubtitleOverrides';
+        const ASSEMBLY_KEY = 'manualSubAssemblyOverrides';
 
-        function getManualOverrides() {
+        function getManualOverrides(key) {
             try {
-                const raw = localStorage.getItem(MANUAL_KEY);
+                const raw = localStorage.getItem(key);
                 return raw ? JSON.parse(raw) : {};
             } catch { return {}; }
         }
 
-        function saveManualOverride(title, parts, delivered) {
-            const overrides = getManualOverrides();
+        function saveManualOverride(level, id, parts, delivered) {
+            let key;
+            if (level === 'title') key = TITLE_KEY;
+            else if (level === 'subtitle') key = SUBTITLE_KEY;
+            else if (level === 'assembly') key = ASSEMBLY_KEY;
+            else return;
+
+            const overrides = getManualOverrides(key);
             if (parts === undefined || delivered === undefined) {
-                delete overrides[title];
+                delete overrides[id];
             } else {
-                overrides[title] = { parts: Number(parts), delivered: Number(delivered) };
+                overrides[id] = { parts: Number(parts), delivered: Number(delivered) };
             }
-            localStorage.setItem(MANUAL_KEY, JSON.stringify(overrides));
+            localStorage.setItem(key, JSON.stringify(overrides));
             applyFilters();
         }
 
         function clearAllManualOverrides() {
-            if (confirm('Clear all manual overrides for all titles?')) {
-                localStorage.removeItem(MANUAL_KEY);
+            if (confirm('Clear all manual overrides for Title, Subtitle, and Sub Sub Assembly?')) {
+                localStorage.removeItem(TITLE_KEY);
+                localStorage.removeItem(SUBTITLE_KEY);
+                localStorage.removeItem(ASSEMBLY_KEY);
                 applyFilters();
             }
         }
@@ -596,7 +618,7 @@
                     });
                 }
 
-                // ─── Update summary cards ───
+                // Update summary cards
                 document.getElementById('totalDeliveredSum').innerText = sumDelivered.toLocaleString();
                 document.getElementById('totalAcceptedSum').innerText = sumAccepted.toLocaleString();
                 document.getElementById('totalConditionalSum').innerText = sumConditional.toLocaleString();
@@ -644,6 +666,42 @@
             if (searchTerm) filtered = filtered.filter(row => row.rawSearch.includes(searchTerm));
 
             renderAggregatedTable(filtered);
+        }
+
+        // ---------- Render Meta Badge ----------
+        function renderMetaBadge(level, id, partsCount, totalDeliv, isManual) {
+            let delivPct = 0;
+            if (partsCount > 0) delivPct = (totalDeliv / partsCount) * 100;
+
+            let metaClass = 'meta-title';
+            let levelLabel = 'Title';
+            if (level === 'subtitle') {
+                metaClass = 'meta-subtitle';
+                levelLabel = 'Subtitle';
+            } else if (level === 'assembly') {
+                metaClass = 'meta-assembly';
+                levelLabel = 'Sub Sub Assembly';
+            }
+
+            return `
+                <span class="title-meta-wrap">
+                    <span class="title-meta ${metaClass}">
+                        <span class="meta-badge"><i class="fa-regular fa-cube"></i> <span class="parts-count">${partsCount}</span> parts</span>
+                        <span class="meta-divider">|</span>
+                        <span class="meta-badge"><i class="fa-regular fa-box"></i> <span class="deliv-count">${formatQty(totalDeliv)}</span> deliv</span>
+                        <span class="meta-divider">|</span>
+                        <span class="meta-badge"><i class="fa-regular fa-percent"></i> <span class="deliv-pct">${delivPct.toFixed(1)}%</span></span>
+                        <span class="cmp-bar-wrap">
+                            <span class="cmp-bar-bg"><span class="cmp-bar-fill" style="width:${Math.min(100, delivPct)}%"></span></span>
+                            <span class="cmp-bar-label">${delivPct.toFixed(0)}%</span>
+                        </span>
+                        ${isManual ? '<span class="manual-indicator">✏️ manual</span>' : ''}
+                        <button class="manual-edit-btn no-print" onclick="openManualEdit('${level}', '${escapeHtml(id)}', ${partsCount}, ${totalDeliv})" title="Manual override for ${levelLabel}">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                        </button>
+                    </span>
+                </span>
+            `;
         }
 
         // ---------- Aggregated Render ----------
@@ -703,25 +761,39 @@
                 }
             }
 
+            // Second pass: compute parts/deliv for Title, Subtitle, Assembly
             for (const clientEntry of clientMap.values()) {
                 for (const titleEntry of clientEntry.titleMap.values()) {
-                    let totalDeliv = 0;
-                    const partsSet = new Set();
+                    let titleParts = new Set();
+                    let titleDeliv = 0;
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        let subtitleParts = new Set();
+                        let subtitleDeliv = 0;
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            let assemblyParts = new Set();
+                            let assemblyDeliv = 0;
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw > 0) {
-                                    partsSet.add(partEntry.partName);
-                                    totalDeliv += partEntry.deliveredRaw;
+                                    assemblyParts.add(partEntry.partName);
+                                    assemblyDeliv += partEntry.deliveredRaw;
                                 }
                             }
+                            assemblyEntry.partsSet = assemblyParts;
+                            assemblyEntry.totalDelivered = assemblyDeliv;
+                            subtitleParts = new Set([...subtitleParts, ...assemblyParts]);
+                            subtitleDeliv += assemblyDeliv;
                         }
+                        subtitleEntry.partsSet = subtitleParts;
+                        subtitleEntry.totalDelivered = subtitleDeliv;
+                        titleParts = new Set([...titleParts, ...subtitleParts]);
+                        titleDeliv += subtitleDeliv;
                     }
-                    titleEntry.partsSet = partsSet;
-                    titleEntry.totalDelivered = totalDeliv;
+                    titleEntry.partsSet = titleParts;
+                    titleEntry.totalDelivered = titleDeliv;
                 }
             }
 
+            // Helpers for rowspan
             function countParts(assemblyEntry) {
                 let cnt = 0;
                 for (const partEntry of assemblyEntry.partMap.values()) {
@@ -758,7 +830,9 @@
 
             let html = '';
             let totalParts = 0;
-            const overrides = getManualOverrides();
+            const overridesTitle = getManualOverrides(TITLE_KEY);
+            const overridesSubtitle = getManualOverrides(SUBTITLE_KEY);
+            const overridesAssembly = getManualOverrides(ASSEMBLY_KEY);
 
             for (const clientEntry of clientMap.values()) {
                 const clientTotal = totalRowsForClient(clientEntry);
@@ -769,49 +843,48 @@
                     let titlePrinted = false;
 
                     const titleName = titleEntry.titleName;
-                    const manual = overrides[titleName];
-                    let partsCount = titleEntry.partsSet.size;
-                    let totalDeliv = titleEntry.totalDelivered;
-                    let isManual = false;
-
-                    if (manual) {
-                        partsCount = manual.parts;
-                        totalDeliv = manual.delivered;
-                        isManual = true;
+                    const titleManual = overridesTitle[titleName];
+                    let titleParts = titleEntry.partsSet.size;
+                    let titleDeliv = titleEntry.totalDelivered;
+                    let isTitleManual = false;
+                    if (titleManual) {
+                        titleParts = titleManual.parts;
+                        titleDeliv = titleManual.delivered;
+                        isTitleManual = true;
                     }
-
-                    let delivPct = 0;
-                    if (partsCount > 0) {
-                        delivPct = (totalDeliv / partsCount) * 100;
-                    }
-
-                    const metaHtml = `
-                            <span class="title-meta-wrap">
-                                <span class="title-meta">
-                                    <span class="meta-badge"><i class="fa-regular fa-cube"></i> <span class="parts-count">${partsCount}</span> parts</span>
-                                    <span class="meta-divider">|</span>
-                                    <span class="meta-badge"><i class="fa-regular fa-box"></i> <span class="deliv-count">${formatQty(totalDeliv)}</span> deliv</span>
-                                    <span class="meta-divider">|</span>
-                                    <span class="meta-badge"><i class="fa-regular fa-percent"></i> <span class="deliv-pct">${delivPct.toFixed(1)}%</span></span>
-                                    <span class="cmp-bar-wrap">
-                                        <span class="cmp-bar-bg"><span class="cmp-bar-fill" style="width:${Math.min(100, delivPct)}%"></span></span>
-                                        <span class="cmp-bar-label">${delivPct.toFixed(0)}%</span>
-                                    </span>
-                                    ${isManual ? '<span class="manual-indicator">✏️ manual</span>' : ''}
-                                    <button class="manual-edit-btn no-print" onclick="openManualEdit('${escapeHtml(titleName)}', ${partsCount}, ${totalDeliv})" title="Manual override">
-                                        <i class="fa-regular fa-pen-to-square"></i>
-                                    </button>
-                                </span>
-                            </span>
-                        `;
+                    const titleMeta = renderMetaBadge('title', titleName, titleParts, titleDeliv, isTitleManual);
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitleTotal = totalRowsForSubtitle(subtitleEntry);
                         let subtitlePrinted = false;
 
+                        const subtitleId = `${clientEntry.clientName}|${titleName}|${subtitleEntry.subtitleName}`;
+                        const subtitleManual = overridesSubtitle[subtitleId];
+                        let subtitleParts = subtitleEntry.partsSet.size;
+                        let subtitleDeliv = subtitleEntry.totalDelivered;
+                        let isSubtitleManual = false;
+                        if (subtitleManual) {
+                            subtitleParts = subtitleManual.parts;
+                            subtitleDeliv = subtitleManual.delivered;
+                            isSubtitleManual = true;
+                        }
+                        const subtitleMeta = renderMetaBadge('subtitle', subtitleId, subtitleParts, subtitleDeliv, isSubtitleManual);
+
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
                             const assemblyTotal = totalRowsForAssembly(assemblyEntry);
                             let assemblyPrinted = false;
+
+                            const assemblyId = `${clientEntry.clientName}|${titleName}|${subtitleEntry.subtitleName}|${assemblyEntry.assemblyName}`;
+                            const assemblyManual = overridesAssembly[assemblyId];
+                            let assemblyParts = assemblyEntry.partsSet.size;
+                            let assemblyDeliv = assemblyEntry.totalDelivered;
+                            let isAssemblyManual = false;
+                            if (assemblyManual) {
+                                assemblyParts = assemblyManual.parts;
+                                assemblyDeliv = assemblyManual.delivered;
+                                isAssemblyManual = true;
+                            }
+                            const assemblyMeta = renderMetaBadge('assembly', assemblyId, assemblyParts, assemblyDeliv, isAssemblyManual);
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
@@ -826,26 +899,20 @@
                                 }
 
                                 if (!titlePrinted) {
-                                    const titleDisplay = `
-                                            <div class="title-cell">
-                                                <span class="title-name">${escapeHtml(titleEntry.titleName)}</span>
-                                                ${metaHtml}
-                                            </div>
-                                        `;
                                     html +=
-                                    `<td rowspan="${titleTotal}" class="align-top">${titleDisplay}</td>`;
+                                        `<td rowspan="${titleTotal}" class="align-top"><div class="title-cell"><span class="title-name">${escapeHtml(titleEntry.titleName)}</span>${titleMeta}</div></td>`;
                                     titlePrinted = true;
                                 }
 
                                 if (!subtitlePrinted) {
                                     html +=
-                                        `<td rowspan="${subtitleTotal}" class="text-sm align-top">${escapeHtml(subtitleEntry.subtitleName)}</td>`;
+                                        `<td rowspan="${subtitleTotal}" class="align-top">${escapeHtml(subtitleEntry.subtitleName)}${subtitleMeta}</td>`;
                                     subtitlePrinted = true;
                                 }
 
                                 if (!assemblyPrinted) {
                                     html +=
-                                        `<td rowspan="${assemblyTotal}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span></td>`;
+                                        `<td rowspan="${assemblyTotal}" class="align-top"><span class="sub-assembly-tag">${escapeHtml(assemblyEntry.assemblyName) || '—'}</span>${assemblyMeta}</td>`;
                                     assemblyPrinted = true;
                                 }
 
@@ -877,24 +944,29 @@
         }
 
         // ---------- Manual edit popup ----------
-        function openManualEdit(title, currentParts, currentDeliv) {
+        function openManualEdit(level, id, currentParts, currentDeliv) {
             document.querySelectorAll('.manual-edit-popup').forEach(el => el.remove());
+
+            let levelLabel = 'Title';
+            if (level === 'subtitle') levelLabel = 'Subtitle';
+            else if (level === 'assembly') levelLabel = 'Sub Sub Assembly';
 
             const popup = document.createElement('div');
             popup.className = 'manual-edit-popup active';
             popup.innerHTML = `
-                    <div style="font-weight:600; margin-bottom:8px; font-size:0.9rem;">Manual override for <span style="color:#2563eb;">${escapeHtml(title)}</span></div>
+                    <div style="font-weight:600; margin-bottom:8px; font-size:0.9rem;">Manual override for <span style="color:#2563eb;">${levelLabel}</span></div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-bottom:12px; word-break:break-all;">${escapeHtml(id)}</div>
                     <label>Parts (unique parts)</label>
                     <input type="number" id="manualPartsInput" value="${currentParts}" min="0" step="1" />
                     <label style="margin-top:10px;">Delivered (total)</label>
                     <input type="number" id="manualDelivInput" value="${currentDeliv}" min="0" step="1" />
                     <div class="popup-actions">
                         <button onclick="this.closest('.manual-edit-popup').remove()">Cancel</button>
-                        <button class="danger" onclick="saveManualOverride('${escapeHtml(title)}', undefined, undefined); this.closest('.manual-edit-popup').remove();">Reset</button>
+                        <button class="danger" onclick="saveManualOverride('${level}', '${escapeHtml(id)}', undefined, undefined); this.closest('.manual-edit-popup').remove();">Reset</button>
                         <button class="primary" onclick="
                             const parts = parseInt(document.getElementById('manualPartsInput').value) || 0;
                             const deliv = parseInt(document.getElementById('manualDelivInput').value) || 0;
-                            saveManualOverride('${escapeHtml(title)}', parts, deliv);
+                            saveManualOverride('${level}', '${escapeHtml(id)}', parts, deliv);
                             this.closest('.manual-edit-popup').remove();
                         ">Save</button>
                     </div>
@@ -908,7 +980,7 @@
             setTimeout(() => document.getElementById('manualPartsInput')?.focus(), 50);
         }
 
-        // ---------- XLSX Export ----------
+        // ---------- XLSX Export (with all manual levels) ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -921,6 +993,7 @@
             if (selectedEngineer) filteredRows = filteredRows.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) filteredRows = filteredRows.filter(row => row.rawSearch.includes(searchTerm));
 
+            // Build tree with manual overrides
             const clientMap = new Map();
             for (const row of filteredRows) {
                 const client = row.clientName;
@@ -967,32 +1040,69 @@
                 }
             }
 
-            const overrides = getManualOverrides();
+            // Apply overrides and compute parts/deliv
+            const overridesTitle = getManualOverrides(TITLE_KEY);
+            const overridesSubtitle = getManualOverrides(SUBTITLE_KEY);
+            const overridesAssembly = getManualOverrides(ASSEMBLY_KEY);
+
             for (const clientEntry of clientMap.values()) {
                 for (const titleEntry of clientEntry.titleMap.values()) {
-                    let totalDeliv = 0;
-                    const partsSet = new Set();
+                    let titleParts = new Set();
+                    let titleDeliv = 0;
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        let subtitleParts = new Set();
+                        let subtitleDeliv = 0;
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            let assemblyParts = new Set();
+                            let assemblyDeliv = 0;
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw > 0) {
-                                    partsSet.add(partEntry.partName);
-                                    totalDeliv += partEntry.deliveredRaw;
+                                    assemblyParts.add(partEntry.partName);
+                                    assemblyDeliv += partEntry.deliveredRaw;
                                 }
                             }
+                            assemblyEntry.partsSet = assemblyParts;
+                            assemblyEntry.totalDelivered = assemblyDeliv;
+                            subtitleParts = new Set([...subtitleParts, ...assemblyParts]);
+                            subtitleDeliv += assemblyDeliv;
                         }
+                        subtitleEntry.partsSet = subtitleParts;
+                        subtitleEntry.totalDelivered = subtitleDeliv;
+                        titleParts = new Set([...titleParts, ...subtitleParts]);
+                        titleDeliv += subtitleDeliv;
                     }
-                    const manual = overrides[titleEntry.titleName];
-                    if (manual) {
-                        titleEntry.partsSet = new Set(Array(manual.parts).fill('manual'));
-                        titleEntry.totalDelivered = manual.delivered;
-                    } else {
-                        titleEntry.partsSet = partsSet;
-                        titleEntry.totalDelivered = totalDeliv;
+                    titleEntry.partsSet = titleParts;
+                    titleEntry.totalDelivered = titleDeliv;
+
+                    // Apply manual overrides for Title
+                    const titleManual = overridesTitle[titleEntry.titleName];
+                    if (titleManual) {
+                        titleEntry.partsSet = new Set(Array(titleManual.parts).fill('manual'));
+                        titleEntry.totalDelivered = titleManual.delivered;
+                    }
+
+                    // Apply manual overrides for Subtitle & Assembly
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        const subtitleId = `${clientEntry.clientName}|${titleEntry.titleName}|${subtitleEntry.subtitleName}`;
+                        const subtitleManual = overridesSubtitle[subtitleId];
+                        if (subtitleManual) {
+                            subtitleEntry.partsSet = new Set(Array(subtitleManual.parts).fill('manual'));
+                            subtitleEntry.totalDelivered = subtitleManual.delivered;
+                        }
+
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            const assemblyId = `${clientEntry.clientName}|${titleEntry.titleName}|${subtitleEntry.subtitleName}|${assemblyEntry.assemblyName}`;
+                            const assemblyManual = overridesAssembly[assemblyId];
+                            if (assemblyManual) {
+                                assemblyEntry.partsSet = new Set(Array(assemblyManual.parts).fill('manual'));
+                                assemblyEntry.totalDelivered = assemblyManual.delivered;
+                            }
+                        }
                     }
                 }
             }
 
+            // Rowspan helpers for export
             function countParts(assemblyEntry) {
                 let cnt = 0;
                 for (const partEntry of assemblyEntry.partMap.values()) {
@@ -1000,9 +1110,7 @@
                 }
                 return cnt;
             }
-
             function totalRowsForAssembly(assemblyEntry) { return countParts(assemblyEntry); }
-
             function totalRowsForSubtitle(subtitleEntry) {
                 let sum = 0;
                 for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
@@ -1010,7 +1118,6 @@
                 }
                 return sum;
             }
-
             function totalRowsForTitle(titleEntry) {
                 let sum = 0;
                 for (const subtitleEntry of titleEntry.subtitleMap.values()) {
@@ -1018,7 +1125,6 @@
                 }
                 return sum;
             }
-
             function totalRowsForClient(clientEntry) {
                 let sum = 0;
                 for (const titleEntry of clientEntry.titleMap.values()) {
@@ -1027,8 +1133,12 @@
                 return sum;
             }
 
-            const headers = ['Client', 'Title', '#Parts (manual)', 'Total Deliv (manual)', 'Deliver/Part %',
-                'Subtitle', 'Sub Sub Assembly', 'Part Name', 'Drawing No.', 'Delivered', 'Accepted', 'Conditional'
+            const headers = [
+                'Client',
+                'Title', 'Title #Parts', 'Title Total Deliv', 'Title Deliv/Part %',
+                'Subtitle', 'Subtitle #Parts', 'Subtitle Total Deliv', 'Subtitle Deliv/Part %',
+                'Sub Sub Assembly', 'Sub Sub Assembly #Parts', 'Sub Sub Assembly Total Deliv', 'Sub Sub Assembly Deliv/Part %',
+                'Part Name', 'Drawing No.', 'Delivered', 'Accepted', 'Conditional'
             ];
             const data = [headers];
             const merges = [];
@@ -1045,21 +1155,27 @@
                     if (titleRows === 0) continue;
                     const titleStartRow = currentRow;
                     let firstTitle = true;
-                    const partsCount = titleEntry.partsSet.size;
-                    const totalDeliv = titleEntry.totalDelivered;
-                    const delivPct = partsCount > 0 ? (totalDeliv / partsCount) * 100 : 0;
+                    const titleParts = titleEntry.partsSet.size;
+                    const titleDeliv = titleEntry.totalDelivered;
+                    const titlePct = titleParts > 0 ? (titleDeliv / titleParts) * 100 : 0;
 
                     for (const subtitleEntry of titleEntry.subtitleMap.values()) {
                         const subtitleRows = totalRowsForSubtitle(subtitleEntry);
                         if (subtitleRows === 0) continue;
                         const subtitleStartRow = currentRow;
                         let firstSubtitle = true;
+                        const subtitleParts = subtitleEntry.partsSet.size;
+                        const subtitleDeliv = subtitleEntry.totalDelivered;
+                        const subtitlePct = subtitleParts > 0 ? (subtitleDeliv / subtitleParts) * 100 : 0;
 
                         for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
                             const assemblyRows = totalRowsForAssembly(assemblyEntry);
                             if (assemblyRows === 0) continue;
                             const assemblyStartRow = currentRow;
                             let firstAssembly = true;
+                            const assemblyParts = assemblyEntry.partsSet.size;
+                            const assemblyDeliv = assemblyEntry.totalDelivered;
+                            const assemblyPct = assemblyParts > 0 ? (assemblyDeliv / assemblyParts) * 100 : 0;
 
                             for (const partEntry of assemblyEntry.partMap.values()) {
                                 if (partEntry.deliveredRaw === 0) continue;
@@ -1067,11 +1183,17 @@
                                 const rowData = [];
                                 rowData.push(firstClient ? clientEntry.clientName : '');
                                 rowData.push(firstTitle ? titleEntry.titleName : '');
-                                rowData.push(firstTitle ? partsCount : '');
-                                rowData.push(firstTitle ? formatQty(totalDeliv) : '');
-                                rowData.push(firstTitle ? delivPct.toFixed(1) + '%' : '');
+                                rowData.push(firstTitle ? titleParts : '');
+                                rowData.push(firstTitle ? formatQty(titleDeliv) : '');
+                                rowData.push(firstTitle ? titlePct.toFixed(1) + '%' : '');
                                 rowData.push(firstSubtitle ? subtitleEntry.subtitleName : '');
+                                rowData.push(firstSubtitle ? subtitleParts : '');
+                                rowData.push(firstSubtitle ? formatQty(subtitleDeliv) : '');
+                                rowData.push(firstSubtitle ? subtitlePct.toFixed(1) + '%' : '');
                                 rowData.push(firstAssembly ? assemblyEntry.assemblyName : '');
+                                rowData.push(firstAssembly ? assemblyParts : '');
+                                rowData.push(firstAssembly ? formatQty(assemblyDeliv) : '');
+                                rowData.push(firstAssembly ? assemblyPct.toFixed(1) + '%' : '');
                                 rowData.push(partEntry.partName);
                                 rowData.push(drawingList || '—');
                                 rowData.push(formatQty(partEntry.deliveredRaw));
@@ -1086,13 +1208,25 @@
                                 firstAssembly = false;
                             }
                             if (assemblyRows > 1) {
-                                merges.push({ s: { r: assemblyStartRow, c: 6 }, e: { r: assemblyStartRow + assemblyRows -
-                                        1, c: 6 } });
+                                merges.push({ s: { r: assemblyStartRow, c: 9 }, e: { r: assemblyStartRow + assemblyRows -
+                                        1, c: 9 } });
+                                merges.push({ s: { r: assemblyStartRow, c: 10 }, e: { r: assemblyStartRow + assemblyRows -
+                                        1, c: 10 } });
+                                merges.push({ s: { r: assemblyStartRow, c: 11 }, e: { r: assemblyStartRow + assemblyRows -
+                                        1, c: 11 } });
+                                merges.push({ s: { r: assemblyStartRow, c: 12 }, e: { r: assemblyStartRow + assemblyRows -
+                                        1, c: 12 } });
                             }
                         }
                         if (subtitleRows > 1) {
                             merges.push({ s: { r: subtitleStartRow, c: 5 }, e: { r: subtitleStartRow + subtitleRows - 1,
                                     c: 5 } });
+                            merges.push({ s: { r: subtitleStartRow, c: 6 }, e: { r: subtitleStartRow + subtitleRows - 1,
+                                    c: 6 } });
+                            merges.push({ s: { r: subtitleStartRow, c: 7 }, e: { r: subtitleStartRow + subtitleRows - 1,
+                                    c: 7 } });
+                            merges.push({ s: { r: subtitleStartRow, c: 8 }, e: { r: subtitleStartRow + subtitleRows - 1,
+                                    c: 8 } });
                         }
                     }
                     if (titleRows > 1) {
@@ -1116,8 +1250,9 @@
             ws['!merges'] = merges;
             ws['!cols'] = [
                 { wch: 18 }, { wch: 22 }, { wch: 14 }, { wch: 16 }, { wch: 14 },
-                { wch: 18 }, { wch: 18 }, { wch: 20 }, { wch: 25 },
-                { wch: 14 }, { wch: 12 }, { wch: 14 }
+                { wch: 20 }, { wch: 14 }, { wch: 16 }, { wch: 14 },
+                { wch: 20 }, { wch: 14 }, { wch: 16 }, { wch: 14 },
+                { wch: 20 }, { wch: 25 }, { wch: 14 }, { wch: 12 }, { wch: 14 }
             ];
 
             const wb = XLSX.utils.book_new();
@@ -1125,7 +1260,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard ----------
+        // ---------- Copy to clipboard (with all manual levels) ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -1138,78 +1273,147 @@
             if (selectedEngineer) dataToCopy = dataToCopy.filter(row => row.engineer === selectedEngineer);
             if (searchTerm) dataToCopy = dataToCopy.filter(row => row.rawSearch.includes(searchTerm.toLowerCase()));
 
-            const partMap = new Map();
-            const titleMeta = new Map();
-
+            // Build aggregate tree
+            const clientMap = new Map();
             for (const row of dataToCopy) {
-                const key = `${row.clientName}|${row.projectName}|${row.subtitle}|${row.subSubAssembly}|${row.partName}`;
-                if (!partMap.has(key)) {
-                    partMap.set(key, {
-                        clientName: row.clientName,
-                        projectName: row.projectName,
-                        subtitle: row.subtitle,
-                        subSubAssembly: row.subSubAssembly,
-                        partName: row.partName,
+                const client = row.clientName;
+                if (!clientMap.has(client)) {
+                    clientMap.set(client, { clientName: client, titleMap: new Map() });
+                }
+                const clientEntry = clientMap.get(client);
+                const title = row.projectName;
+                if (!clientEntry.titleMap.has(title)) {
+                    clientEntry.titleMap.set(title, {
+                        titleName: title,
+                        subtitleMap: new Map(),
+                        partsSet: new Set(),
+                        totalDelivered: 0
+                    });
+                }
+                const titleEntry = clientEntry.titleMap.get(title);
+                const subtitle = row.subtitle || '';
+                if (!titleEntry.subtitleMap.has(subtitle)) {
+                    titleEntry.subtitleMap.set(subtitle, { subtitleName: subtitle, assemblyMap: new Map() });
+                }
+                const subtitleEntry = titleEntry.subtitleMap.get(subtitle);
+                const assembly = row.subSubAssembly || '';
+                if (!subtitleEntry.assemblyMap.has(assembly)) {
+                    subtitleEntry.assemblyMap.set(assembly, { assemblyName: assembly, partMap: new Map() });
+                }
+                const assemblyEntry = subtitleEntry.assemblyMap.get(assembly);
+                const partName = row.partName;
+                if (!assemblyEntry.partMap.has(partName)) {
+                    assemblyEntry.partMap.set(partName, {
+                        partName: partName,
                         deliveredRaw: 0,
                         acceptedRaw: 0,
                         conditionalRaw: 0,
                         drawings: new Set()
                     });
                 }
-                const entry = partMap.get(key);
-                entry.deliveredRaw += row.deliveredRaw;
-                entry.acceptedRaw += row.acceptedRaw;
-                entry.conditionalRaw += row.conditionalRaw;
+                const partEntry = assemblyEntry.partMap.get(partName);
+                partEntry.deliveredRaw += row.deliveredRaw;
+                partEntry.acceptedRaw += row.acceptedRaw;
+                partEntry.conditionalRaw += row.conditionalRaw;
                 if (row.drawingNo && row.drawingNo !== '-') {
-                    entry.drawings.add(row.drawingNo);
-                }
-
-                const titleKey = row.projectName;
-                if (!titleMeta.has(titleKey)) {
-                    titleMeta.set(titleKey, { partsSet: new Set(), totalDeliv: 0 });
-                }
-                const tMeta = titleMeta.get(titleKey);
-                if (row.deliveredRaw > 0) {
-                    tMeta.partsSet.add(row.partName);
-                    tMeta.totalDeliv += row.deliveredRaw;
+                    partEntry.drawings.add(row.drawingNo);
                 }
             }
 
-            const overrides = getManualOverrides();
-            for (const [title, meta] of titleMeta) {
-                if (overrides[title]) {
-                    meta.partsSet = new Set(Array(overrides[title].parts).fill('manual'));
-                    meta.totalDeliv = overrides[title].delivered;
+            // Apply overrides and compute parts/deliv
+            const overridesTitle = getManualOverrides(TITLE_KEY);
+            const overridesSubtitle = getManualOverrides(SUBTITLE_KEY);
+            const overridesAssembly = getManualOverrides(ASSEMBLY_KEY);
+
+            for (const clientEntry of clientMap.values()) {
+                for (const titleEntry of clientEntry.titleMap.values()) {
+                    let titleParts = new Set();
+                    let titleDeliv = 0;
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        let subtitleParts = new Set();
+                        let subtitleDeliv = 0;
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            let assemblyParts = new Set();
+                            let assemblyDeliv = 0;
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                if (partEntry.deliveredRaw > 0) {
+                                    assemblyParts.add(partEntry.partName);
+                                    assemblyDeliv += partEntry.deliveredRaw;
+                                }
+                            }
+                            assemblyEntry.partsSet = assemblyParts;
+                            assemblyEntry.totalDelivered = assemblyDeliv;
+                            subtitleParts = new Set([...subtitleParts, ...assemblyParts]);
+                            subtitleDeliv += assemblyDeliv;
+                        }
+                        subtitleEntry.partsSet = subtitleParts;
+                        subtitleEntry.totalDelivered = subtitleDeliv;
+                        titleParts = new Set([...titleParts, ...subtitleParts]);
+                        titleDeliv += subtitleDeliv;
+                    }
+                    titleEntry.partsSet = titleParts;
+                    titleEntry.totalDelivered = titleDeliv;
+
+                    const titleManual = overridesTitle[titleEntry.titleName];
+                    if (titleManual) {
+                        titleEntry.partsSet = new Set(Array(titleManual.parts).fill('manual'));
+                        titleEntry.totalDelivered = titleManual.delivered;
+                    }
+
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        const subtitleId = `${clientEntry.clientName}|${titleEntry.titleName}|${subtitleEntry.subtitleName}`;
+                        const subtitleManual = overridesSubtitle[subtitleId];
+                        if (subtitleManual) {
+                            subtitleEntry.partsSet = new Set(Array(subtitleManual.parts).fill('manual'));
+                            subtitleEntry.totalDelivered = subtitleManual.delivered;
+                        }
+
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            const assemblyId = `${clientEntry.clientName}|${titleEntry.titleName}|${subtitleEntry.subtitleName}|${assemblyEntry.assemblyName}`;
+                            const assemblyManual = overridesAssembly[assemblyId];
+                            if (assemblyManual) {
+                                assemblyEntry.partsSet = new Set(Array(assemblyManual.parts).fill('manual'));
+                                assemblyEntry.totalDelivered = assemblyManual.delivered;
+                            }
+                        }
+                    }
                 }
             }
 
-            const filteredEntries = [];
-            for (const entry of partMap.values()) {
-                if (entry.deliveredRaw > 0) {
-                    filteredEntries.push(entry);
-                }
-            }
-
-            if (filteredEntries.length === 0) {
-                alert('No parts with delivered quantity to copy.');
-                return;
-            }
-
+            // Flatten for TSV
             let tsv =
-                "Client\tTitle\t#Parts (manual)\tTotal Deliv (manual)\tDeliver/Part %\tSubtitle\tSub Sub Assembly\tPart Name\tDrawing No.\tDelivered\tAccepted\tConditional\n";
-            for (const entry of filteredEntries) {
-                const drawingList = [...entry.drawings].sort().join(', ');
-                const meta = titleMeta.get(entry.projectName) || { partsSet: new Set(), totalDeliv: 0 };
-                const parts = meta.partsSet.size;
-                const deliv = meta.totalDeliv;
-                const pct = parts > 0 ? (deliv / parts) * 100 : 0;
-                tsv +=
-                    `${entry.clientName}\t${entry.projectName}\t${parts}\t${formatQty(deliv)}\t${pct.toFixed(1)}%\t${entry.subtitle}\t${entry.subSubAssembly}\t${entry.partName}\t${drawingList || '—'}\t${formatQty(entry.deliveredRaw)}\t${formatQty(entry.acceptedRaw)}\t${formatQty(entry.conditionalRaw)}\n`;
+                "Client\tTitle\tTitle #Parts\tTitle Total Deliv\tTitle Deliv/Part %\tSubtitle\tSubtitle #Parts\tSubtitle Total Deliv\tSubtitle Deliv/Part %\tSub Sub Assembly\tSub Sub Assembly #Parts\tSub Sub Assembly Total Deliv\tSub Sub Assembly Deliv/Part %\tPart Name\tDrawing No.\tDelivered\tAccepted\tConditional\n";
+
+            for (const clientEntry of clientMap.values()) {
+                for (const titleEntry of clientEntry.titleMap.values()) {
+                    const titleParts = titleEntry.partsSet.size;
+                    const titleDeliv = titleEntry.totalDelivered;
+                    const titlePct = titleParts > 0 ? (titleDeliv / titleParts) * 100 : 0;
+
+                    for (const subtitleEntry of titleEntry.subtitleMap.values()) {
+                        const subtitleParts = subtitleEntry.partsSet.size;
+                        const subtitleDeliv = subtitleEntry.totalDelivered;
+                        const subtitlePct = subtitleParts > 0 ? (subtitleDeliv / subtitleParts) * 100 : 0;
+
+                        for (const assemblyEntry of subtitleEntry.assemblyMap.values()) {
+                            const assemblyParts = assemblyEntry.partsSet.size;
+                            const assemblyDeliv = assemblyEntry.totalDelivered;
+                            const assemblyPct = assemblyParts > 0 ? (assemblyDeliv / assemblyParts) * 100 : 0;
+
+                            for (const partEntry of assemblyEntry.partMap.values()) {
+                                if (partEntry.deliveredRaw === 0) continue;
+                                const drawingList = [...partEntry.drawings].sort().join(', ');
+                                tsv +=
+                                    `${clientEntry.clientName}\t${titleEntry.titleName}\t${titleParts}\t${formatQty(titleDeliv)}\t${titlePct.toFixed(1)}%\t${subtitleEntry.subtitleName}\t${subtitleParts}\t${formatQty(subtitleDeliv)}\t${subtitlePct.toFixed(1)}%\t${assemblyEntry.assemblyName}\t${assemblyParts}\t${formatQty(assemblyDeliv)}\t${assemblyPct.toFixed(1)}%\t${partEntry.partName}\t${drawingList || '—'}\t${formatQty(partEntry.deliveredRaw)}\t${formatQty(partEntry.acceptedRaw)}\t${formatQty(partEntry.conditionalRaw)}\n`;
+                            }
+                        }
+                    }
+                }
             }
 
             try {
                 await navigator.clipboard.writeText(tsv);
-                alert(`✅ Aggregated table (${filteredEntries.length} parts) copied to clipboard`);
+                alert(`✅ Aggregated table copied to clipboard`);
             } catch (err) {
                 alert('❌ Copy failed: ' + err);
             }
