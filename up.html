@@ -277,6 +277,27 @@
             align-items: center;
             gap: 4px;
         }
+        /* Excluded badge */
+        .excluded-badge {
+            display: inline-block;
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 0.1rem 0.5rem;
+            border-radius: 9999px;
+            border: 1px solid #fca5a5;
+            margin-left: 6px;
+        }
+        .excluded-note {
+            font-size: 0.7rem;
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            border: 1px solid #fecaca;
+            display: inline-block;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -291,8 +312,8 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-flag-checkered text-indigo-600"></i>
                     Project Follow‑Up
+                    <span class="excluded-note no-print"><i class="fa-regular fa-circle-minus mr-1"></i>Excl: Assembling (welding) · Assembling (fastener)</span>
                 </h1>
-               
             </div>
             <div class="flex gap-3 flex-wrap">
                 <button onclick="exportGlobalToExcel()" class="btn-excel btn-excel-sm"><i class="fa-solid fa-file-excel"></i> Export Excel (Projects)</button>
@@ -386,6 +407,18 @@
 
     <script>
         // ============================================================
+        // EXCLUDED PROCESS TYPES (case‑insensitive, spaced & unspaced)
+        // ============================================================
+        const EXCLUDED_PROCESS_TYPES = ['Assembling (welding)', 'Assembling (fastener)'];
+
+        function isExcludedProcess(processType) {
+            if (!processType) return false;
+            const lower = processType.trim().toLowerCase();
+            return lower.includes('assembling (welding)') || lower.includes('assembling (fastener)') ||
+                   lower.includes('assembling(welding)') || lower.includes('assembling(fastener)');
+        }
+
+        // ============================================================
         // NO FALLBACK – only use the stored suggested_next_operation
         // ============================================================
 
@@ -449,8 +482,10 @@
         }
 
         function aggregateProjects(inspections) {
+            // Filter out excluded process types early
+            const filtered = inspections.filter(insp => !isExcludedProcess(insp.process_type));
             const projectMap = new Map();
-            for (const insp of inspections) {
+            for (const insp of filtered) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
                 const title = getExtraField(insp, 'Project Name') || 'Untitled';
                 const key = `${client}||${title}`;
@@ -546,7 +581,6 @@
                         tagSet: new Set(),
                         operationsSet: new Set(),
                         subSub: subSub,
-                        // Status counters per part (aggregated across all inspections)
                         rejectCount: 0,
                         reworkCount: 0,
                         conditionalCount: 0,
@@ -558,7 +592,6 @@
                 if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
                 if (tagNo !== '—') partData.tagSet.add(tagNo);
                 partData.operationsSet.add(opDesc);
-                // Accumulate status counts
                 partData.rejectCount += (insp.reject_qty || 0);
                 partData.reworkCount += (insp.rework_qty || 0);
                 partData.conditionalCount += (insp.conditional_accept_qty || 0);
@@ -587,7 +620,6 @@
                         operations: Array.from(data.operationsSet).join(', '),
                         suggestedNext: suggested || '—',
                         subSub: data.subSub || '—',
-                        // Status counts for color coding
                         rejectCount: data.rejectCount,
                         reworkCount: data.reworkCount,
                         conditionalCount: data.conditionalCount,
@@ -639,7 +671,6 @@
             const rej = part.rejectCount || 0;
             const rework = part.reworkCount || 0;
             const cond = part.conditionalCount || 0;
-            // Priority: reject > rework > conditional > accept
             if (rej > 0) return 'part-status-reject';
             if (rework > 0) return 'part-status-rework';
             if (cond > 0) return 'part-status-conditional';
@@ -948,7 +979,6 @@
             function renderFilterableSubAssemblies(aggregated) {
                 let html = '';
                 if (aggregated.subtitlesArray.length) {
-                    // Build a legend for the status colors
                     const legendHtml = `
                         <div class="flex flex-wrap gap-3 text-xs mb-3 p-2 bg-slate-50 rounded-lg border">
                             <span class="font-medium text-slate-600 mr-1">Status legend:</span>
@@ -1115,6 +1145,7 @@
         }
 
         function populateFilters(projects, rawInspections) {
+            // Only use filtered inspections (already excluded)
             const clients = [...new Set(projects.map(p => p.client))].sort();
             const titles = [...new Set(projects.map(p => p.title))].sort();
             const subs = getAllSubtitles(rawInspections);
@@ -1159,13 +1190,15 @@
 
         async function refreshData() {
             const inspections = await fetchInspections();
-            allInspectionsRaw = inspections;
-            const projects = aggregateProjects(inspections);
+            // Filter out excluded process types BEFORE any aggregation
+            const filteredInspections = inspections.filter(insp => !isExcludedProcess(insp.process_type));
+            allInspectionsRaw = filteredInspections; // store filtered only
+            const projects = aggregateProjects(filteredInspections);
             originalProjects = projects;
             allProjects = projects;
-            populateFilters(projects, inspections);
+            populateFilters(projects, filteredInspections);
             applyFilters();
-            showToast('Data refreshed', 'info');
+            showToast(`Data refreshed (excluded: ${EXCLUDED_PROCESS_TYPES.join(', ')})`, 'info');
         }
 
         function escapeHtml(str) {
