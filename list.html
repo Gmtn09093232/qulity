@@ -78,7 +78,9 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-clipboard-list text-blue-600"></i>
                     Inspection Report
+                    <span class="excluded-note no-print"><i class="fa-regular fa-circle-minus mr-1"></i>Excl: Assembling (welding) · Assembling (fastener)</span>
                 </h1>
+                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Manual override for Title, Subtitle &amp; Sub Sub Assembly</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -138,7 +140,7 @@
                 <select id="processFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
                     <option value="">All Processes</option>
                 </select>
-                <div class="filter-excluded-hint mt-1 inline-block"><i class="fa-regular fa-circle-minus mr-1"></div>
+                <div class="filter-excluded-hint mt-1 inline-block"><i class="fa-regular fa-circle-minus mr-1"></i>Assembling (welding) &amp; Assembling (fastener) excluded</div>
             </div>
             <div class="flex-1 min-w-[150px]">
                 <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-solid fa-user mr-1"></i> QC Engineer</label>
