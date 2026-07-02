@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
     <style>
-        /* (all styles unchanged) */
+        /* (same as before – kept for brevity) */
         @media print {
             body * { visibility: hidden; }
             #inspectionForm, #inspectionForm * { visibility: visible; }
@@ -469,7 +469,6 @@
             return { client, title, subtitle, subSub };
         }
 
-        // ─── UPDATED: For assembly processes, ignore subtitle and subSub ───
         function findMatchingParts(filters) {
             const { client, title, subtitle, subSub } = filters;
             const partsSet = new Set();
@@ -478,18 +477,15 @@
                 const extra = insp.extra_fields || {};
                 const inspClient = (extra['Customer Name'] || '').trim();
                 const inspTitle = (extra['Project Name'] || '').trim();
+                const inspSubtitle = (extra['Subtitle'] || '').trim();
+                const inspSubSub = (extra['Sub Sub Assembly'] || '').trim();
                 const inspPart = (extra['Part Name'] || '').trim();
                 if (!inspPart) continue;
                 let match = true;
                 if (client && inspClient !== client) match = false;
                 if (match && title && inspTitle !== title) match = false;
-                // For assembly processes, ignore subtitle and subSub filtering
-                if (!isAssemblyProcess()) {
-                    const inspSubtitle = (extra['Subtitle'] || '').trim();
-                    const inspSubSub = (extra['Sub Sub Assembly'] || '').trim();
-                    if (match && subtitle && inspSubtitle !== subtitle) match = false;
-                    if (match && subSub && inspSubSub !== subSub) match = false;
-                }
+                if (match && subtitle && inspSubtitle !== subtitle) match = false;
+                if (match && subSub && inspSubSub !== subSub) match = false;
                 if (match) partsSet.add(inspPart);
             }
             return Array.from(partsSet);
@@ -2023,7 +2019,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('🔐 QC Inspection ready – assembly part list now ignores subtitle and subSubAssembly filters.');
+        console.log('🔐 QC Inspection ready – manual quantity entry for assembly parts (fixed partsObj error).');
     </script>
 </body>
 </html>
