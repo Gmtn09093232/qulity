@@ -113,7 +113,7 @@
         .part-qty-table td { padding: 4px 6px; border-bottom: 1px solid #e5e7eb; }
         .part-qty-table input[type="number"] {
             width: 70px; padding: 2px 4px; border: 1px solid #d1d5db; border-radius: 4px;
-            background: #ffffff; color: #1f2937; /* editable now */
+            background: #ffffff; color: #1f2937;
         }
         .remove-part-btn { color: #ef4444; cursor: pointer; font-size: 0.9rem; padding: 0 4px; }
         .remove-part-btn:hover { color: #dc2626; }
@@ -128,7 +128,7 @@
         .assembly-progress .progress-detail { color: #4b5563; font-size: 0.9rem; }
         .assembly-progress input[type="number"] {
             width: 120px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px;
-            background: #f3f4f6; color: #1f2937; cursor: not-allowed; /* read‑only */
+            background: #f3f4f6; color: #1f2937; cursor: not-allowed;
         }
         .assembly-progress .delivered-input { width: 140px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; background: #f3f4f6; cursor: not-allowed; }
     </style>
@@ -614,10 +614,8 @@
             }
         }
 
-        // Handle total delivered change: now manual, so we just recompute
-        function onTotalDeliveredChange() {
-            // This is now read-only, but we keep for compatibility
-        }
+        // Handle total delivered change: now read-only, but kept for compatibility
+        function onTotalDeliveredChange() {}
 
         // Handle multi-select change: update selectedParts (preserve quantities for existing parts)
         function onPartListSelectChange() {
@@ -923,7 +921,7 @@
             return result;
         }
 
-        // ─── machinery master (unchanged) ───
+        // ─── machinery master ───
         const machineryMaster = [
             { desc: "Power hack saw", rate: (1693.44 + 24876.46) / 1767 },
             { desc: "Medium duty lathe machine, Conventional", rate: (13539.12 + 52982.93) / 1767 },
@@ -1398,6 +1396,7 @@
             }
         }
 
+        // ─── FIXED: getExtraFields ───
         function getExtraFields() {
             if (currentProcess === "Incoming") {
                 return {
@@ -1419,20 +1418,22 @@
             }
             const def = getCurrentDef();
             const extra = {};
+            let partsObj = null;  // declared here to be accessible later
+
             if (isAssemblyProcess()) {
-                // Store parts with quantities as an object
-                const partsObj = {};
+                partsObj = {};
                 selectedParts.forEach(p => { partsObj[p.name] = p.qty || 0; });
                 extra['selectedParts'] = partsObj;
                 extra['totalDeliveredQty'] = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
                 extra['selectedPartNames'] = selectedParts.map(p => p.name);
             }
+
             if (def.extraFields) {
                 def.extraFields.forEach(field => {
                     const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                     const el = document.getElementById(id);
                     if (el) {
-                        if (field === "Tag No." && isAssemblyProcess()) {
+                        if (field === "Tag No." && isAssemblyProcess() && partsObj) {
                             extra[field] = JSON.stringify(partsObj);
                         } else {
                             extra[field] = el.value;
@@ -1443,6 +1444,7 @@
             return extra;
         }
 
+        // ─── FIXED: setExtraFields ───
         function setExtraFields(extra) {
             if (currentProcess === "Incoming") {
                 if (extra && extra.incoming_items) setIncomingItemsData(extra.incoming_items);
@@ -1701,7 +1703,7 @@
                     selected_parts_count = selectedParts.length;
                     assembly_progress_pct = parseInt(document.getElementById('assemblyProgressDisplay').textContent) || 0;
                     delivered_qty = total_delivered_qty;
-                    accepted_qty = total_delivered_qty; // we treat all delivered as accepted for assembly
+                    accepted_qty = total_delivered_qty;
                     rework_qty = 0;
                     reject_qty = 0;
                     conditional_accept_qty = 0;
@@ -2017,7 +2019,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('🔐 QC Inspection ready – manual quantity entry for assembly parts.');
+        console.log('🔐 QC Inspection ready – manual quantity entry for assembly parts (fixed partsObj error).');
     </script>
 </body>
 </html>
