@@ -111,7 +111,10 @@
         .part-list-multi { min-height: 60px; }
         .part-qty-table { width: 100%; border-collapse: collapse; }
         .part-qty-table td { padding: 4px 6px; border-bottom: 1px solid #e5e7eb; }
-        .part-qty-table input[type="number"] { width: 70px; padding: 2px 4px; border: 1px solid #d1d5db; border-radius: 4px; background: #f3f4f6; color: #1f2937; cursor: not-allowed; }
+        .part-qty-table input[type="number"] {
+            width: 70px; padding: 2px 4px; border: 1px solid #d1d5db; border-radius: 4px;
+            background: #ffffff; color: #1f2937; /* editable now */
+        }
         .remove-part-btn { color: #ef4444; cursor: pointer; font-size: 0.9rem; padding: 0 4px; }
         .remove-part-btn:hover { color: #dc2626; }
         .part-list-container { display: flex; flex-direction: column; gap: 8px; }
@@ -123,8 +126,11 @@
         .assembly-progress .progress-label { font-weight: 600; color: #166534; }
         .assembly-progress .progress-value { font-size: 1.8rem; font-weight: 700; color: #15803d; }
         .assembly-progress .progress-detail { color: #4b5563; font-size: 0.9rem; }
-        .assembly-progress input[type="number"] { width: 120px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; }
-        .assembly-progress .delivered-input { width: 140px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; }
+        .assembly-progress input[type="number"] {
+            width: 120px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px;
+            background: #f3f4f6; color: #1f2937; cursor: not-allowed; /* read‑only */
+        }
+        .assembly-progress .delivered-input { width: 140px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; background: #f3f4f6; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -292,8 +298,8 @@
                 <div id="assemblyProgressContainer" class="mt-2 hidden">
                     <div class="assembly-progress">
                         <div class="flex-1">
-                            <span class="progress-label"><i class="fa-solid fa-boxes"></i> Total Delivered (Acc+Cond)</span>
-                            <input type="number" id="totalDeliveredQty" min="0" step="1" value="0" class="delivered-input" oninput="onTotalDeliveredChange()" />
+                            <span class="progress-label"><i class="fa-solid fa-boxes"></i> Total Delivered (sum)</span>
+                            <input type="number" id="totalDeliveredQty" min="0" step="1" value="0" class="delivered-input" readonly />
                         </div>
                         <div class="flex-1 text-center">
                             <span class="progress-label">Assembly Completion</span>
@@ -437,8 +443,8 @@
         let currentEngineer = '';
         let g_allInspections = [];
 
-        // For assembly: store selected part names (strings), quantities are auto-calculated
-        let selectedPartNames = []; // array of part name strings
+        // For assembly: selected part names and their manually entered quantities
+        let selectedParts = []; // array of objects { name: string, qty: number }
 
         const engineerFromUrl = new URLSearchParams(window.location.search).get('engineer');
         if (engineerFromUrl) {
@@ -479,7 +485,7 @@
                 if (client && inspClient !== client) match = false;
                 if (match && title && inspTitle !== title) match = false;
                 if (match && subtitle && inspSubtitle !== subtitle) match = false;
-                if (match && subSub && subtitle && inspSubSub !== subSub) match = false;
+                if (match && subSub && inspSubSub !== subSub) match = false;
                 if (match) partsSet.add(inspPart);
             }
             return Array.from(partsSet);
@@ -509,8 +515,9 @@
                 });
             }
             // Restore previously selected values
+            const selectedNames = selectedParts.map(p => p.name);
             Array.from(selectEl.options).forEach(opt => {
-                if (opt.value && selectedPartNames.includes(opt.value)) {
+                if (opt.value && selectedNames.includes(opt.value)) {
                     opt.selected = true;
                 }
             });
@@ -518,7 +525,7 @@
             updateAssemblyProgress();
         }
 
-        // Render the table of selected parts with auto-calculated quantities
+        // Render the table of selected parts with editable quantities
         function renderSelectedPartsTable() {
             const container = document.getElementById('selectedPartsContainer');
             if (!container) return;
@@ -526,44 +533,44 @@
                 container.innerHTML = '';
                 return;
             }
-            const totalDelivered = parseInt(document.getElementById('totalDeliveredQty').value) || 0;
-            const count = selectedPartNames.length;
-            let quantities = [];
-            if (count > 0 && totalDelivered > 0) {
-                const base = Math.floor(totalDelivered / count);
-                const remainder = totalDelivered % count;
-                for (let i = 0; i < count; i++) {
-                    quantities.push(base + (i < remainder ? 1 : 0));
-                }
-            } else {
-                quantities = new Array(count).fill(0);
-            }
 
-            if (selectedPartNames.length === 0) {
+            if (selectedParts.length === 0) {
                 container.innerHTML = `<div class="empty-msg">No parts selected</div>`;
                 return;
             }
+
             let html = `<table class="part-qty-table"><tbody>`;
-            selectedPartNames.forEach((part, index) => {
-                const qty = quantities[index] || 0;
+            selectedParts.forEach((part, index) => {
                 html += `<tr>
-                            <td><span class="font-medium">${escapeHtml(part)}</span></td>
-                            <td><input type="number" value="${qty}" readonly class="w-20 bg-gray-100 border border-gray-300 rounded px-2 py-1 text-sm" /></td>
+                            <td><span class="font-medium">${escapeHtml(part.name)}</span></td>
+                            <td><input type="number" min="0" step="1" value="${part.qty || 0}" class="part-qty-input" data-index="${index}" /></td>
                             <td><span class="remove-part-btn" data-index="${index}"><i class="fa-regular fa-trash-can"></i></span></td>
                         </tr>`;
             });
             html += `</tbody></table>`;
             container.innerHTML = html;
+
+            // Attach events to quantity inputs
+            container.querySelectorAll('.part-qty-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const idx = parseInt(this.dataset.index);
+                    const val = parseInt(this.value) || 0;
+                    selectedParts[idx].qty = val;
+                    updateAssemblyProgress();
+                });
+            });
+
             // Attach remove events
             container.querySelectorAll('.remove-part-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const idx = parseInt(this.dataset.index);
-                    selectedPartNames.splice(idx, 1);
+                    selectedParts.splice(idx, 1);
                     // Also unselect in multi-select
                     const selectEl = document.getElementById('extra_Tag_No_');
                     if (selectEl) {
+                        const names = selectedParts.map(p => p.name);
                         Array.from(selectEl.options).forEach(opt => {
-                            if (opt.value && selectedPartNames.includes(opt.value)) {
+                            if (opt.value && names.includes(opt.value)) {
                                 opt.selected = true;
                             } else {
                                 opt.selected = false;
@@ -574,37 +581,28 @@
                     updateAssemblyProgress();
                 });
             });
-            // Update total display
+
             updateAssemblyProgress();
         }
 
         // Update assembly progress percentage and total quantity display
         function updateAssemblyProgress() {
-            const totalDelivered = parseInt(document.getElementById('totalDeliveredQty').value) || 0;
             const selectEl = document.getElementById('extra_Tag_No_');
+            const totalDelivered = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
+            document.getElementById('totalDeliveredQty').value = totalDelivered;
+            document.getElementById('totalAcceptedConditionalDisplay').textContent = totalDelivered;
+
             if (!selectEl || !isAssemblyProcess()) {
                 document.getElementById('assemblyProgressDisplay').textContent = '0%';
                 document.getElementById('assemblyProgressDetail').textContent = '0 / 0 parts selected';
-                document.getElementById('totalAcceptedConditionalDisplay').textContent = '0';
                 return;
             }
             const totalOptions = Array.from(selectEl.options).filter(o => o.value !== '').length;
-            const selectedCount = selectedPartNames.length;
+            const selectedCount = selectedParts.length;
             const pct = totalOptions > 0 ? Math.round((selectedCount / totalOptions) * 100) : 0;
             document.getElementById('assemblyProgressDisplay').textContent = pct + '%';
             document.getElementById('assemblyProgressDetail').textContent =
                 `${selectedCount} / ${totalOptions} parts selected`;
-            // Total quantity is sum of distributed quantities (should equal totalDelivered if >0)
-            const count = selectedPartNames.length;
-            let sumQty = 0;
-            if (count > 0 && totalDelivered > 0) {
-                const base = Math.floor(totalDelivered / count);
-                const remainder = totalDelivered % count;
-                for (let i = 0; i < count; i++) {
-                    sumQty += base + (i < remainder ? 1 : 0);
-                }
-            }
-            document.getElementById('totalAcceptedConditionalDisplay').textContent = sumQty;
             // Color coding
             const displayEl = document.getElementById('assemblyProgressDisplay');
             if (pct >= 100) {
@@ -616,19 +614,31 @@
             }
         }
 
-        // Handle total delivered change
+        // Handle total delivered change: now manual, so we just recompute
         function onTotalDeliveredChange() {
-            renderSelectedPartsTable();
-            updateAssemblyProgress();
+            // This is now read-only, but we keep for compatibility
         }
 
-        // Handle multi-select change: update selectedPartNames
+        // Handle multi-select change: update selectedParts (preserve quantities for existing parts)
         function onPartListSelectChange() {
             const selectEl = document.getElementById('extra_Tag_No_');
             if (!selectEl || !isAssemblyProcess()) return;
             const selectedOptions = Array.from(selectEl.selectedOptions);
             const selectedValues = selectedOptions.map(opt => opt.value).filter(v => v !== '');
-            selectedPartNames = selectedValues; // just names, quantities auto-calc
+
+            // Keep existing quantities for parts that are still selected
+            const newParts = [];
+            const existingMap = {};
+            selectedParts.forEach(p => { existingMap[p.name] = p.qty; });
+
+            selectedValues.forEach(name => {
+                newParts.push({
+                    name: name,
+                    qty: existingMap[name] !== undefined ? existingMap[name] : 0
+                });
+            });
+
+            selectedParts = newParts;
             renderSelectedPartsTable();
             updateAssemblyProgress();
         }
@@ -662,7 +672,6 @@
                 }
             });
             attachPartListListeners();
-            // Set initial visibility for quantity summary and assembly progress
             updateVisibility();
             if (isAssemblyProcess()) {
                 document.getElementById('assemblyProgressContainer').classList.remove('hidden');
@@ -914,7 +923,7 @@
             return result;
         }
 
-        // ─── machinery master ───
+        // ─── machinery master (unchanged) ───
         const machineryMaster = [
             { desc: "Power hack saw", rate: (1693.44 + 24876.46) / 1767 },
             { desc: "Medium duty lathe machine, Conventional", rate: (13539.12 + 52982.93) / 1767 },
@@ -1268,7 +1277,6 @@
                 if (document.getElementById("incomingItemsBody") && document.getElementById("incomingItemsBody").children
                     .length === 0)
                     addIncomingItemRow();
-                // Hide quantity summary for incoming
                 document.getElementById("quantitySummary").style.display = "none";
                 document.getElementById("assemblyProgressContainer").classList.add('hidden');
                 return;
@@ -1304,11 +1312,10 @@
                             html +=
                                 `<div><label class="font-bold text-sm">Part Name</label><input type="text" id="${safeId}" list="partNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
                         } else if (field === "Tag No.") {
-                            // ─── PART LIST MULTI-SELECT ───
                             if (isAssemblyProcess()) {
                                 html += `
                                         <div class="part-list-container">
-                                          <label class="font-bold text-sm">Part List <span class="text-xs text-gray-500">(select parts, qty auto-distributed)</span></label>
+                                          <label class="font-bold text-sm">Part List <span class="text-xs text-gray-500">(select parts, then enter quantity per part)</span></label>
                                           <select id="${safeId}" multiple size="4" class="w-full border p-1 rounded text-sm part-list-multi">
                                             <option value="">-- Select Parts --</option>
                                           </select>
@@ -1352,12 +1359,11 @@
 
                 attachPartListListeners();
 
-                // ─── Set visibility based on process ───
                 if (isAssemblyProcess()) {
                     document.getElementById('quantitySummary').style.display = 'none';
                     document.getElementById('assemblyProgressContainer').classList.remove('hidden');
                     if (!isEditMode) {
-                        selectedPartNames = [];
+                        selectedParts = [];
                         document.getElementById('totalDeliveredQty').value = 0;
                     }
                     setTimeout(() => {
@@ -1369,7 +1375,6 @@
                     document.getElementById('quantitySummary').style.display = 'grid';
                     document.getElementById('assemblyProgressContainer').classList.add('hidden');
                 }
-                // Ensure listeners for quantity fields to auto-calc delivered
                 attachQuantityListeners();
                 updateDeliveredQty();
             }
@@ -1380,7 +1385,6 @@
             renderDynamicFields();
             populateMachineDropdown();
             populateSuggestedNextOps();
-            // Also update visibility after render
             updateVisibility();
             if (isAssemblyProcess()) {
                 document.getElementById('assemblyProgressContainer').classList.remove('hidden');
@@ -1416,8 +1420,12 @@
             const def = getCurrentDef();
             const extra = {};
             if (isAssemblyProcess()) {
-                extra['totalDeliveredQty'] = parseInt(document.getElementById('totalDeliveredQty').value) || 0;
-                extra['selectedPartNames'] = selectedPartNames;
+                // Store parts with quantities as an object
+                const partsObj = {};
+                selectedParts.forEach(p => { partsObj[p.name] = p.qty || 0; });
+                extra['selectedParts'] = partsObj;
+                extra['totalDeliveredQty'] = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
+                extra['selectedPartNames'] = selectedParts.map(p => p.name);
             }
             if (def.extraFields) {
                 def.extraFields.forEach(field => {
@@ -1425,8 +1433,7 @@
                     const el = document.getElementById(id);
                     if (el) {
                         if (field === "Tag No." && isAssemblyProcess()) {
-                            // We already store selectedPartNames separately, but we can also store the list in Tag No.
-                            extra[field] = JSON.stringify(selectedPartNames);
+                            extra[field] = JSON.stringify(partsObj);
                         } else {
                             extra[field] = el.value;
                         }
@@ -1461,18 +1468,24 @@
             const def = getCurrentDef();
             // Restore assembly-specific fields
             if (isAssemblyProcess()) {
-                if (extra['totalDeliveredQty'] !== undefined) {
-                    document.getElementById('totalDeliveredQty').value = extra['totalDeliveredQty'];
-                }
-                if (extra['selectedPartNames'] && Array.isArray(extra['selectedPartNames'])) {
-                    selectedPartNames = extra['selectedPartNames'];
+                let partsObj = {};
+                if (extra['selectedParts']) {
+                    partsObj = extra['selectedParts'];
                 } else if (extra['Tag No.']) {
                     try {
                         const parsed = JSON.parse(extra['Tag No.']);
-                        if (Array.isArray(parsed)) {
-                            selectedPartNames = parsed;
+                        if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+                            partsObj = parsed;
                         }
                     } catch (e) {}
+                }
+                // Convert to array
+                selectedParts = Object.keys(partsObj).map(name => ({
+                    name: name,
+                    qty: partsObj[name] || 0
+                }));
+                if (extra['totalDeliveredQty'] !== undefined) {
+                    document.getElementById('totalDeliveredQty').value = extra['totalDeliveredQty'];
                 }
             }
             if (def.extraFields) {
@@ -1481,7 +1494,7 @@
                     const el = document.getElementById(id);
                     if (el && extra[field] !== undefined) {
                         if (field === "Tag No." && isAssemblyProcess()) {
-                            // handled above, skip
+                            // handled above
                         } else {
                             el.value = extra[field];
                         }
@@ -1534,7 +1547,6 @@
             const sal = +document.getElementById("salaryPerHour").value || 0;
             const machH = +document.getElementById("machiningHours").value || 0;
             const machR = +document.getElementById("machiningCostPerHr").value || 0;
-            // Rework and Reject are no longer in the UI, but we keep them for backward compatibility
             const rework = 0;
             const reject = 0;
             const mult = (rework + reject) || 1;
@@ -1619,7 +1631,7 @@
 
         function resetForm() {
             document.getElementById("inspectionForm").reset();
-            selectedPartNames = [];
+            selectedParts = [];
             document.getElementById('totalDeliveredQty').value = 0;
             renderDynamicFields();
             computeFailureCost();
@@ -1681,29 +1693,24 @@
                 const acceptanceData = getAcceptanceData();
                 const extraFields = getExtraFields();
 
-                // Determine which quantity fields to send based on process type
                 let delivered_qty, accepted_qty, rework_qty, reject_qty, conditional_accept_qty;
                 let total_delivered_qty, selected_parts_count, assembly_progress_pct;
 
                 if (isAssemblyProcess()) {
-                    // Use assembly progress data
-                    total_delivered_qty = parseInt(document.getElementById('totalDeliveredQty').value) || 0;
-                    selected_parts_count = selectedPartNames.length;
+                    total_delivered_qty = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
+                    selected_parts_count = selectedParts.length;
                     assembly_progress_pct = parseInt(document.getElementById('assemblyProgressDisplay').textContent) || 0;
-                    // Legacy quantity fields set to 0 for assembly
                     delivered_qty = total_delivered_qty;
-                    accepted_qty = 0;
+                    accepted_qty = total_delivered_qty; // we treat all delivered as accepted for assembly
                     rework_qty = 0;
                     reject_qty = 0;
                     conditional_accept_qty = 0;
                 } else {
-                    // Read from quantity summary inputs
                     delivered_qty = parseInt(document.getElementById('deliveredQty').value) || 0;
                     accepted_qty = parseInt(document.getElementById('acceptedQty').value) || 0;
                     rework_qty = parseInt(document.getElementById('reworkQty').value) || 0;
                     reject_qty = parseInt(document.getElementById('rejectQty').value) || 0;
                     conditional_accept_qty = parseInt(document.getElementById('conditionalAcceptQty').value) || 0;
-                    // assembly fields not sent
                     total_delivered_qty = null;
                     selected_parts_count = null;
                     assembly_progress_pct = null;
@@ -1739,7 +1746,6 @@
                     suggested_next_operation: document.getElementById("suggestedNextOp").value || null
                 };
 
-                // Only include assembly fields if assembly process
                 if (isAssemblyProcess()) {
                     payload.total_delivered_qty = total_delivered_qty;
                     payload.selected_parts_count = selected_parts_count;
@@ -1823,21 +1829,17 @@
             document.getElementById("endTime").value = inspection.end_time || "";
             updateTotalTime();
 
-            // Quantities: for assembly, we'll restore from extra fields
             if (isAssemblyProcess()) {
-                // The extra fields will be restored in setExtraFields
-                // We also need to restore totalDeliveredQty
+                // Will be restored via setExtraFields
                 if (inspection.total_delivered_qty !== undefined) {
                     document.getElementById('totalDeliveredQty').value = inspection.total_delivered_qty;
                 }
-                // Set legacy quantity inputs to 0 for display (they are hidden anyway)
                 document.getElementById('acceptedQty').value = 0;
                 document.getElementById('reworkQty').value = 0;
                 document.getElementById('rejectQty').value = 0;
                 document.getElementById('conditionalAcceptQty').value = 0;
                 document.getElementById('deliveredQty').value = inspection.delivered_qty || 0;
             } else {
-                // Restore from inspection fields
                 document.getElementById('acceptedQty').value = inspection.accepted_qty || 0;
                 document.getElementById('reworkQty').value = inspection.rework_qty || 0;
                 document.getElementById('rejectQty').value = inspection.reject_qty || 0;
@@ -1941,12 +1943,6 @@
                     el.addEventListener('input', onFilterChangeDebounced);
                 }
             });
-            // Also listen to total delivered input
-            const totalInput = document.getElementById('totalDeliveredQty');
-            if (totalInput) {
-                totalInput.removeEventListener('input', onTotalDeliveredChange);
-                totalInput.addEventListener('input', onTotalDeliveredChange);
-            }
         }
 
         let _filterTimer = null;
@@ -1959,14 +1955,14 @@
         function onFilterChange() {
             if (isAssemblyProcess()) {
                 populatePartListMultiSelect();
-                // Keep selected part names that are still in the new options
+                // Keep selected parts that are still in the new options
                 const selectEl = document.getElementById('extra_Tag_No_');
                 if (selectEl) {
                     const availableOptions = Array.from(selectEl.options).map(o => o.value).filter(v => v !== '');
-                    selectedPartNames = selectedPartNames.filter(name => availableOptions.includes(name));
+                    selectedParts = selectedParts.filter(p => availableOptions.includes(p.name));
                     // Update selected attributes
                     Array.from(selectEl.options).forEach(opt => {
-                        if (opt.value && selectedPartNames.includes(opt.value)) {
+                        if (opt.value && selectedParts.some(p => p.name === opt.value)) {
                             opt.selected = true;
                         } else {
                             opt.selected = false;
@@ -2021,7 +2017,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('🔐 QC Inspection ready – Quantity fields shown for non‑assembly processes, Assembly Progress for assembly.');
+        console.log('🔐 QC Inspection ready – manual quantity entry for assembly parts.');
     </script>
 </body>
 </html>
