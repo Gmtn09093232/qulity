@@ -138,7 +138,6 @@
             display: inline-block;
         }
 
-        /* ─── Force Part Name & Drawing No. on one line ─── */
         .cell-nowrap {
             white-space: nowrap !important;
             max-width: none !important;
@@ -242,7 +241,6 @@
             background: #dc2626;
         }
 
-        /* Card badge styles */
         .badge-card {
             background: white;
             border-radius: 0.5rem;
@@ -304,6 +302,36 @@
             font-size: 0.6rem;
             color: #6b7280;
         }
+
+        /* ── Excluded process type badge ── */
+        .excluded-badge {
+            display: inline-block;
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 0.1rem 0.5rem;
+            border-radius: 9999px;
+            border: 1px solid #fca5a5;
+            margin-left: 6px;
+        }
+        .excluded-note {
+            font-size: 0.7rem;
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            border: 1px solid #fecaca;
+            display: inline-block;
+        }
+        .filter-excluded-hint {
+            font-size: 0.65rem;
+            color: #6b7280;
+            background: #f3f4f6;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            border: 1px dashed #d1d5db;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
@@ -316,8 +344,9 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-clipboard-list text-blue-600"></i>
                     Inspection Report
+                    <span class="excluded-note no-print"><i class="fa-regular fa-circle-minus mr-1"></i>Excl: assembling(welding) · assembling(fastener)</span>
                 </h1>
-                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Manual override for Title, Subtitle & Sub Sub Assembly</p>
+                <p class="text-gray-500 text-sm mt-1">Aggregated by Part – Manual override for Title, Subtitle &amp; Sub Sub Assembly</p>
             </div>
             <div class="flex flex-wrap gap-2 mt-3 md:mt-0 no-print">
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm shadow-sm transition flex items-center gap-2">
@@ -377,6 +406,7 @@
                 <select id="processFilterSelect" class="filter-input w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:bg-white transition">
                     <option value="">All Processes</option>
                 </select>
+                <div class="filter-excluded-hint mt-1 inline-block"><i class="fa-regular fa-circle-minus mr-1"></i>assembling(welding) &amp; assembling(fastener) excluded</div>
             </div>
             <div class="flex-1 min-w-[150px]">
                 <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fa-solid fa-user mr-1"></i> QC Engineer</label>
@@ -433,6 +463,7 @@
             <span><i class="fa-solid fa-eye-slash"></i> Parts with zero delivered are hidden</span>
             <span><i class="fa-solid fa-pen text-amber-600"></i> <strong>Manual override</strong> – click ✏️ to edit parts &amp; delivered per Title, Subtitle, or Sub Sub Assembly</span>
             <span><i class="fa-solid fa-divide text-purple-600"></i> <strong>Deliver/Part %</strong> = (Delivered ÷ Parts) × 100</span>
+            <span class="excluded-badge"><i class="fa-regular fa-circle-minus mr-1"></i> Excluded: assembling(welding) · assembling(fastener)</span>
         </div>
     </div>
 
@@ -441,6 +472,15 @@
         const TITLE_KEY = 'manualTitleOverrides';
         const SUBTITLE_KEY = 'manualSubtitleOverrides';
         const ASSEMBLY_KEY = 'manualSubAssemblyOverrides';
+
+        // ---------- Excluded process types ----------
+        const EXCLUDED_PROCESS_TYPES = ['assembling(welding)', 'assembling(fastener)'];
+
+        function isExcludedProcess(processType) {
+            if (!processType) return false;
+            const lower = processType.trim().toLowerCase();
+            return EXCLUDED_PROCESS_TYPES.some(ex => lower === ex.toLowerCase());
+        }
 
         function getManualOverrides(key) {
             try {
@@ -551,11 +591,17 @@
                     sumConditional = 0;
 
                 for (const insp of inspections) {
+                    const processType = insp.process_type || '';
+
+                    // ─── EXCLUDE: assembling(welding) and assembling(fastener) ───
+                    if (isExcludedProcess(processType)) {
+                        continue;
+                    }
+
                     const clientName = getClientName(insp);
                     const projectName = getProjectName(insp);
                     const subtitle = getSubtitle(insp);
                     const subSubAssembly = getSubSubAssembly(insp);
-                    const processType = insp.process_type || '';
                     const engineer = insp.username || '';
 
                     if (projectName) uniqueProjectNames.add(projectName);
@@ -618,7 +664,7 @@
 
                 allReportRows = rows;
                 applyFilters();
-                statusSpan.innerText = `✅ Loaded ${rows.length} records`;
+                statusSpan.innerText = `✅ Loaded ${rows.length} records (excluded ${EXCLUDED_PROCESS_TYPES.join(', ')})`;
             } catch (err) {
                 console.error(err);
                 tbody.innerHTML =
@@ -665,28 +711,28 @@
             }
 
             return `
-                <div class="badge-card">
-                    <div class="stat-row">
-                        <span class="stat-label">Parts</span>
-                        <span class="stat-value">${partsCount}</span>
+                    <div class="badge-card">
+                        <div class="stat-row">
+                            <span class="stat-label">Parts</span>
+                            <span class="stat-value">${partsCount}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Deliv</span>
+                            <span class="stat-value">${formattedDeliv}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">%</span>
+                            <span class="stat-value">${displayPctStr}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${barColor}" style="width: ${Math.min(100, displayPct)}%"></div>
+                        </div>
+                        <div class="footer-row">
+                            ${manualTagHtml}
+                            ${actualPctHtml}
+                        </div>
                     </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Deliv</span>
-                        <span class="stat-value">${formattedDeliv}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">%</span>
-                        <span class="stat-value">${displayPctStr}%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill ${barColor}" style="width: ${Math.min(100, displayPct)}%"></div>
-                    </div>
-                    <div class="footer-row">
-                        ${manualTagHtml}
-                        ${actualPctHtml}
-                    </div>
-                </div>
-            `;
+                `;
         }
 
         // ---------- Aggregated Render ----------
@@ -695,7 +741,7 @@
 
             if (!rows.length) {
                 tbody.innerHTML =
-                    `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records</p></td></tr>`;
+                    `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No matching records (excluded: ${EXCLUDED_PROCESS_TYPES.join(', ')})</p></td></tr>`;
                 document.getElementById('recordCount').innerText = '0 parts';
                 return;
             }
@@ -951,12 +997,12 @@
 
             if (totalParts === 0) {
                 tbody.innerHTML =
-                    `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No parts with delivered quantity</p></td></tr>`;
+                    `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-frown text-2xl"></i><p class="mt-2">No parts with delivered quantity (excluded: ${EXCLUDED_PROCESS_TYPES.join(', ')})</p></td></tr>`;
                 document.getElementById('recordCount').innerText = '0 parts';
             } else {
                 tbody.innerHTML = html;
                 document.getElementById('recordCount').innerText =
-                    `Showing ${totalParts} parts (from ${rows.length} inspection records)`;
+                    `Showing ${totalParts} parts (from ${rows.length} inspection records) — excluded: ${EXCLUDED_PROCESS_TYPES.join(', ')}`;
             }
         }
 
@@ -997,7 +1043,7 @@
             setTimeout(() => document.getElementById('manualPartsInput')?.focus(), 50);
         }
 
-        // ---------- XLSX Export ----------
+        // ---------- XLSX Export (with exclusion applied) ----------
         function exportToExcelXLSX() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -1280,7 +1326,7 @@
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`);
         }
 
-        // ---------- Copy to clipboard ----------
+        // ---------- Copy to clipboard (with exclusion applied) ----------
         async function copyTableToClipboard() {
             const searchTerm = document.getElementById('searchInput').value;
             const selectedProject = document.getElementById('projectFilterSelect').value;
@@ -1433,7 +1479,7 @@
 
             try {
                 await navigator.clipboard.writeText(tsv);
-                alert(`✅ Aggregated table copied to clipboard`);
+                alert(`✅ Aggregated table copied to clipboard (excluded: ${EXCLUDED_PROCESS_TYPES.join(', ')})`);
             } catch (err) {
                 alert('❌ Copy failed: ' + err);
             }
