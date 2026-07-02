@@ -35,6 +35,7 @@ app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html'))
 app.get('/list', (req, res) => res.sendFile(path.join(__dirname, 'list.html')));
 app.get('/up', (req, res) => res.sendFile(path.join(__dirname, 'up.html')));
 app.get('/tools', (req, res) => res.sendFile(path.join(__dirname, 'tools.html')));
+app.get('/dash', (req, res) => res.sendFile(path.join(__dirname, 'dash.html')));
 
 app.get('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
