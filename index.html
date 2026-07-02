@@ -11,132 +11,660 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js">
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />
 
     <style>
-        /* (same as before – kept for brevity) */
-        @media print {
-            body * { visibility: hidden; }
-            #inspectionForm, #inspectionForm * { visibility: visible; }
-            #inspectionForm { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
-            .no-print { display: none; }
+        /* ── reset & base ── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .rating-select { min-width: 100px; }
-        .cause-checkbox-group label { margin-right: 12px; font-size: 0.8rem; }
-        table th, table td { vertical-align: top; padding: 8px 6px; }
-        datalist option { font-size: 0.9rem; }
-        .camera-btn { cursor: pointer; margin-left: 8px; color: #3b82f6; }
-        .single-scan-btn {
-            background-color: #3b82f6; color: white; padding: 4px 12px; border-radius: 8px;
-            font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;
-            margin-bottom: 8px; transition: transform 0.15s, box-shadow 0.2s;
-            border: none; cursor: pointer;
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            background: radial-gradient(ellipse at 20% 50%, #0b1120, #030712);
+            color: #e8edf5;
+            overflow-x: hidden;
         }
-        .single-scan-btn:hover { transform: scale(1.02); box-shadow: 0 2px 12px rgba(59,130,246,0.3); }
-        .single-scan-btn:active { transform: scale(0.96); }
-        .incoming-table th, .incoming-table td { border: 1px solid #ddd; padding: 6px; font-size: 0.75rem; vertical-align: top; }
-        .incoming-table input, .incoming-table select { width: 100%; min-width: 80px; border: none; background: transparent; font-size: 0.75rem; }
 
+        /* ── background glow orbs ── */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-orbs .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.25;
+            animation: orbFloat 18s ease-in-out infinite alternate;
+        }
+        .bg-orbs .orb:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: #4f46e5;
+            top: -10%;
+            left: -8%;
+            animation-delay: 0s;
+        }
+        .bg-orbs .orb:nth-child(2) {
+            width: 600px;
+            height: 600px;
+            background: #0ea5e9;
+            bottom: -15%;
+            right: -10%;
+            animation-delay: -6s;
+        }
+        .bg-orbs .orb:nth-child(3) {
+            width: 400px;
+            height: 400px;
+            background: #7c3aed;
+            top: 40%;
+            right: 20%;
+            animation-delay: -12s;
+            opacity: 0.15;
+        }
+        @keyframes orbFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                transform: translate(40px, -30px) scale(1.1);
+            }
+        }
+
+        /* ── glassmorphism core ── */
+        .glass {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px) saturate(1.4);
+            -webkit-backdrop-filter: blur(24px) saturate(1.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 8px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(32px) saturate(1.6);
+            -webkit-backdrop-filter: blur(32px) saturate(1.6);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: 0 12px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #e8edf5;
+            transition: all 0.25s ease;
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1), inset 0 0 20px rgba(56, 189, 248, 0.02);
+            outline: none;
+        }
+        .glass-input::placeholder {
+            color: rgba(255, 255, 255, 0.25);
+        }
+        .glass-select {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #e8edf5;
+            transition: all 0.25s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a9bb5' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        .glass-select:focus {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+            outline: none;
+        }
+        .glass-select option {
+            background: #111827;
+            color: #e8edf5;
+        }
+
+        /* ── buttons ── */
+        .btn-primary {
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            padding: 10px 28px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 24px rgba(56, 189, 248, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 40px rgba(56, 189, 248, 0.35);
+        }
+        .btn-primary:active {
+            transform: scale(0.96);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #d1d9e8;
+            padding: 10px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            backdrop-filter: blur(8px);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.10);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+        .btn-secondary:active {
+            transform: scale(0.96);
+        }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        /* ── cards ── */
+        .card-glow {
+            position: relative;
+            overflow: hidden;
+        }
+        .card-glow::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.05));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* ── tables ── */
+        .table-glass {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .table-glass th {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            padding: 12px 10px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+        .table-glass td {
+            padding: 10px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: top;
+        }
+        .table-glass tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* ── rating pills ── */
+        .rating-pill {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .rating-pill.accepted {
+            background: rgba(52, 211, 153, 0.15);
+            color: #6ee7b7;
+        }
+        .rating-pill.conditional {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fcd34d;
+        }
+        .rating-pill.rework {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+        }
+        .rating-pill.reject {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+
+        /* ── secret overlay ── */
         #secretOverlay {
-            position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50;
-            background: linear-gradient(135deg, #0a0a1a, #1a1a3a);
-            transition: opacity 0.8s ease, visibility 0.8s ease, transform 0.3s ease;
-            pointer-events: auto;
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            background: radial-gradient(ellipse at 50% 40%, #0f172a, #020617);
+            transition: opacity 0.8s ease, visibility 0.8s ease;
         }
-        #secretOverlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; transform: scale(0.96); }
+        #secretOverlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
         #secretOverlay .card {
-            background: rgba(10,10,30,0.9); backdrop-filter: blur(24px);
-            border: 1px solid rgba(255,255,255,0.08); border-radius: 32px;
-            padding: 44px 48px; max-width: 440px; width: 90%; text-align: center;
-            box-shadow: 0 32px 80px rgba(0,0,0,0.8), 0 0 80px rgba(74,222,128,0.03);
-            transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s;
-            position: relative; overflow: hidden;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 32px;
+            padding: 48px 40px;
+            max-width: 400px;
+            width: 92%;
+            text-align: center;
+            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 120px rgba(56, 189, 248, 0.03);
+            position: relative;
+            overflow: hidden;
         }
-        #secretOverlay .card::before { content: ''; position: absolute; inset: 0; border-radius: 32px; background: radial-gradient(circle at 50% 0%, rgba(74,222,128,0.06), transparent 70%); pointer-events: none; }
-        #secretOverlay .card .gear-icon { font-size: 3.6rem; display: block; color: #4ade80; opacity: 0.5; animation: spin-slow 12s linear infinite; margin-bottom: 8px; }
-        #secretOverlay .card h2 { font-size: 1.8rem; font-weight: 700; color: #eef3ff; margin-bottom: 4px; letter-spacing: -0.3px; }
-        #secretOverlay .card .sub { color: #7a86a8; font-size: 0.9rem; margin-bottom: 28px; }
-        #secretOverlay .card .input-group { position: relative; margin-bottom: 16px; }
-        #secretOverlay .card input {
-            width: 100%; padding: 16px 20px; border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04);
-            color: #eef3ff; font-size: 1.2rem; text-align: center; letter-spacing: 6px;
-            outline: none; transition: border-color 0.3s, box-shadow 0.3s, transform 0.15s;
+        #secretOverlay .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 32px;
+            background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.06), transparent 70%);
+            pointer-events: none;
+        }
+        #secretOverlay .gear-icon {
+            font-size: 3.2rem;
+            display: block;
+            color: #38bdf8;
+            opacity: 0.4;
+            animation: spin-slow 16s linear infinite;
+            margin-bottom: 12px;
+        }
+        #secretOverlay h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+        #secretOverlay .sub {
+            color: #7a8aa8;
+            font-size: 0.9rem;
+            margin-bottom: 28px;
+        }
+        #secretOverlay input {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #f1f5f9;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 8px;
+            outline: none;
+            transition: all 0.3s ease;
             font-family: inherit;
         }
-        #secretOverlay .card input:focus { border-color: #4ade80; box-shadow: 0 0 40px rgba(74,222,128,0.08), inset 0 0 20px rgba(74,222,128,0.03); }
-        #secretOverlay .card input::placeholder { color: #4a5580; letter-spacing: 2px; font-size: 0.9rem; }
-        #secretOverlay .card .btn-submit {
-            width: 100%; padding: 16px; border: none; border-radius: 16px;
-            background: linear-gradient(135deg, #4ade80, #22d3ee);
-            color: #0b0b1a; font-weight: 700; font-size: 1.1rem; cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.3s, background 0.3s;
-            box-shadow: 0 4px 32px rgba(74,222,128,0.15);
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+        #secretOverlay input:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.06);
         }
-        #secretOverlay .card .btn-submit:hover { transform: scale(1.02); box-shadow: 0 6px 48px rgba(74,222,128,0.25); background: linear-gradient(135deg, #3dca75, #1fc9e8); }
-        #secretOverlay .card .btn-submit:active { transform: scale(0.96); }
-        #secretOverlay .card .error { color: #f87171; font-size: 0.85rem; min-height: 28px; margin-top: 6px; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .shake { animation: shake 0.5s ease; }
-        @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-12px); } 40% { transform: translateX(12px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
-        @keyframes spin-slow { to { transform: rotate(360deg); } }
-        @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 40px rgba(74,222,128,0.0); } 50% { box-shadow: 0 0 80px rgba(74,222,128,0.08); } }
-
-        #mainContent { position: relative; z-index: 1; display: none; min-height: 100vh; background: #f1f5f9; padding: 0 0 20px 0; }
-        #mainContent.visible { display: block; }
-
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { background: rgba(10,10,30,0.92); backdrop-filter: blur(12px); border-radius: 12px; padding: 12px 20px; color: #eef3ff; font-size: 0.9rem; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border-left: 4px solid #4ade80; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); pointer-events: auto; max-width: 400px; }
-        .toast.show { transform: translateX(0); }
-        .toast.error { border-left-color: #f87171; }
-        .toast.info { border-left-color: #60a5fa; }
-        .toast .toast-content { display: flex; align-items: center; gap: 10px; }
-        .toast .toast-icon { font-size: 1.2rem; }
-
-        .btn-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .btn-loading { opacity: 0.7; pointer-events: none; }
-
-        #inspectionHistory .border-b { transition: background 0.15s; }
-        #inspectionHistory .border-b:hover { background: rgba(59,130,246,0.04); }
-
-        .btn-action { transition: transform 0.15s, box-shadow 0.2s; cursor: pointer; }
-        .btn-action:hover { transform: scale(1.02); }
-        .btn-action:active { transform: scale(0.96); }
-
-        @media (max-width: 700px) {
-            #secretOverlay .card { padding: 28px 20px; }
-            #secretOverlay .card h2 { font-size: 1.4rem; }
+        #secretOverlay input::placeholder {
+            color: rgba(255, 255, 255, 0.15);
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+        }
+        #secretOverlay .btn-submit {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 32px rgba(56, 189, 248, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        #secretOverlay .btn-submit:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 48px rgba(56, 189, 248, 0.25);
+        }
+        #secretOverlay .error {
+            color: #f87171;
+            font-size: 0.85rem;
+            min-height: 28px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .part-list-multi { min-height: 60px; }
-        .part-qty-table { width: 100%; border-collapse: collapse; }
-        .part-qty-table td { padding: 4px 6px; border-bottom: 1px solid #e5e7eb; }
+        @keyframes spin-slow {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .shake {
+            animation: shake 0.5s ease;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            20% {
+                transform: translateX(-12px);
+            }
+            40% {
+                transform: translateX(12px);
+            }
+            60% {
+                transform: translateX(-6px);
+            }
+            80% {
+                transform: translateX(6px);
+            }
+        }
+
+        /* ── toasts ── */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+            max-width: 400px;
+            width: 90%;
+        }
+        .toast {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 14px 20px;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+            border-left: 4px solid #38bdf8;
+            transform: translateX(120%);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: auto;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.error {
+            border-left-color: #f87171;
+        }
+        .toast.info {
+            border-left-color: #818cf8;
+        }
+        .toast .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .toast .toast-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* ── misc ── */
+        #mainContent {
+            position: relative;
+            z-index: 1;
+            display: none;
+            padding: 20px 16px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        #mainContent.visible {
+            display: block;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+        }
+
+        .btn-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .btn-loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .part-list-multi {
+            min-height: 60px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+        }
+        .part-list-multi option {
+            background: #111827;
+            color: #e8edf5;
+            padding: 4px 8px;
+        }
+        .part-qty-table td {
+            padding: 4px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
         .part-qty-table input[type="number"] {
-            width: 70px; padding: 2px 4px; border: 1px solid #d1d5db; border-radius: 4px;
-            background: #ffffff; color: #1f2937;
+            width: 70px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #e8edf5;
+            font-size: 0.85rem;
         }
-        .remove-part-btn { color: #ef4444; cursor: pointer; font-size: 0.9rem; padding: 0 4px; }
-        .remove-part-btn:hover { color: #dc2626; }
-        .part-list-container { display: flex; flex-direction: column; gap: 8px; }
-        .part-list-container select { width: 100%; }
-        .selected-parts-container { margin-top: 6px; background: #f9fafb; border-radius: 6px; padding: 8px; max-height: 200px; overflow-y: auto; }
-        .selected-parts-container .empty-msg { color: #9ca3af; font-style: italic; padding: 4px 0; }
+        .part-qty-table input[type="number"]:focus {
+            border-color: rgba(56, 189, 248, 0.3);
+            outline: none;
+        }
+        .remove-part-btn {
+            color: #f87171;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0 4px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .remove-part-btn:hover {
+            opacity: 1;
+        }
 
-        .assembly-progress { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
-        .assembly-progress .progress-label { font-weight: 600; color: #166534; }
-        .assembly-progress .progress-value { font-size: 1.8rem; font-weight: 700; color: #15803d; }
-        .assembly-progress .progress-detail { color: #4b5563; font-size: 0.9rem; }
-        .assembly-progress input[type="number"] {
-            width: 120px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px;
-            background: #f3f4f6; color: #1f2937; cursor: not-allowed;
+        .assembly-progress {
+            background: rgba(16, 185, 129, 0.04);
+            border: 1px solid rgba(16, 185, 129, 0.08);
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
         }
-        .assembly-progress .delivered-input { width: 140px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; background: #f3f4f6; cursor: not-allowed; }
+        .assembly-progress .progress-label {
+            font-weight: 600;
+            color: #6ee7b7;
+            font-size: 0.85rem;
+        }
+        .assembly-progress .progress-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #6ee7b7;
+            line-height: 1.2;
+        }
+        .assembly-progress .progress-detail {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        .assembly-progress .delivered-input {
+            width: 140px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            color: #e8edf5;
+            cursor: not-allowed;
+        }
+
+        /* ── responsive ── */
+        @media (max-width: 700px) {
+            #secretOverlay .card {
+                padding: 32px 20px;
+            }
+            #secretOverlay h2 {
+                font-size: 1.3rem;
+            }
+            #mainContent {
+                padding: 12px 8px 32px;
+            }
+            .glass {
+                backdrop-filter: blur(16px);
+            }
+            .btn-primary {
+                padding: 8px 20px;
+                font-size: 0.85rem;
+            }
+            .assembly-progress {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .assembly-progress .flex-1 {
+                text-align: center !important;
+            }
+            .toast-container {
+                top: 12px;
+                right: 12px;
+                width: calc(100% - 24px);
+            }
+        }
+
+        /* ── print ── */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #inspectionForm,
+            #inspectionForm * {
+                visibility: visible;
+            }
+            #inspectionForm {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+                background: #fff;
+                color: #000;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .glass,
+            .glass-strong {
+                background: #fff !important;
+                backdrop-filter: none !important;
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+            }
+            .glass-input,
+            .glass-select {
+                background: #f5f5f5 !important;
+                border: 1px solid #ccc !important;
+                color: #000 !important;
+            }
+            .btn-primary,
+            .btn-secondary {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
 
+    <!-- ─── BG ORBS ─── -->
+    <div class="bg-orbs">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <!-- ─── TOASTS ─── -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- ─── SECURITY OVERLAY ─── -->
     <div id="secretOverlay">
         <div class="card" id="secretCard">
             <span class="gear-icon">⚙️</span>
@@ -152,209 +680,234 @@
         </div>
     </div>
 
+    <!-- ─── MAIN CONTENT ─── -->
     <div id="mainContent">
-        <div class="max-w-7xl mx-auto p-4 md:p-6">
 
-            <div class="bg-white rounded-t-xl shadow p-4 mb-2 flex justify-between items-center">
+        <!-- Header -->
+        <div class="glass-strong rounded-2xl p-5 md:p-7 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 card-glow">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
+                    Amhara Metal Industry &amp; Machine Technology Development Enterprise
+                </h1>
+                <p class="text-sm text-slate-400 font-medium mt-0.5">
+                    <i class="fa-regular fa-clipboard mr-2"></i>Quality Assurance Directorate – Inspection Checklist
+                </p>
+            </div>
+            <div class="flex items-center gap-3 text-sm text-slate-400">
+                <span class="hidden sm:inline"><i class="fa-regular fa-clock mr-1"></i><span id="liveClock">--:--</span></span>
+                <span class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-medium">
+                    <i class="fa-solid fa-cloud-upload-alt mr-1"></i> Live
+                </span>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form id="inspectionForm" class="glass-strong rounded-2xl p-5 md:p-7 space-y-6 card-glow">
+
+            <input type="hidden" id="editId" value="" />
+            <input type="hidden" id="isEditMode" value="false" />
+
+            <!-- Row: Process + Engineer -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <h1 class="text-xl font-bold text-blue-900">Amhara Metal Industry & Machine Technology Development Enterprise</h1>
-                    <p class="text-sm font-semibold">Quality Assurance Directorate – Inspection Checklist</p>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Process Type <span class="text-rose-400">*</span></label>
+                    <select id="processType" class="glass-select w-full rounded-xl px-4 py-3 text-sm" onchange="switchProcess()">
+                        <option value="Incoming">Incoming inspection (revised format)</option>
+                        <option value="Punching">Punching Process</option>
+                        <option value="Rolling">Rolling Process</option>
+                        <option value="Bending">Bending Process</option>
+                        <option value="Welding">Welding Process</option>
+                        <option value="Pressing">Pressing Process</option>
+                        <option value="Milling">Milling Process</option>
+                        <option value="Casting">Casting Process</option>
+                        <option value="PatternCore">Pattern &amp; Core Making</option>
+                        <option value="Assembling">Assembling (welding)</option>
+                        <option value="Testing">Testing Process</option>
+                        <option value="Painting">Painting Process</option>
+                        <option value="Packaging">Packaging Process</option>
+                        <option value="Shearing">Shearing Operation</option>
+                        <option value="Lathe">Lathe Operation</option>
+                        <option value="Drilling">Drilling Process</option>
+                        <option value="BoringHoning">Boring &amp; Honing</option>
+                        <option value="Grinding">Grinding Process</option>
+                        <option value="Forging">Forging Process</option>
+                        <option value="Molding">Molding Process</option>
+                        <option value="Polishing">Polishing &amp; Finishing</option>
+                        <option value="GasCutting">Gas Cutting Process</option>
+                        <option value="FastenersAssembly">Assembling (Fasteners)</option>
+                        <option value="Hardening">Hardening Process</option>
+                        <option value="Tempering">Tempering Process</option>
+                        <option value="Coating">Coating Process</option>
+                    </select>
                 </div>
-                <div class="text-right text-sm text-gray-600"><i class="fas fa-cloud-upload-alt"></i></div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">QC Engineer Name <span class="text-rose-400">*</span></label>
+                    <input type="text" id="qcEngineerName" class="glass-input w-full rounded-xl px-4 py-3 text-sm" placeholder="e.g. Abebech Alemu" required />
+                </div>
             </div>
 
-            <form id="inspectionForm" class="bg-white shadow-lg rounded-b-xl p-6 space-y-6">
-                <input type="hidden" id="editId" value="" />
-                <input type="hidden" id="isEditMode" value="false" />
-
-                <!-- Process Type -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
-                    <div>
-                        <label class="font-bold" for="processType">Process Type *</label>
-                        <select id="processType" class="w-full border p-2 rounded" onchange="switchProcess()">
-                            <option value="Incoming">Incoming inspection (revised format)</option>
-                            <option value="Punching">Punching Process</option>
-                            <option value="Rolling">Rolling Process</option>
-                            <option value="Bending">Bending Process</option>
-                            <option value="Welding">Welding Process</option>
-                            <option value="Pressing">Pressing Process</option>
-                            <option value="Milling">Milling Process</option>
-                            <option value="Casting">Casting Process</option>
-                            <option value="PatternCore">Pattern & Core Making</option>
-                            <option value="Assembling">Assembling (welding)</option>
-                            <option value="Testing">Testing Process</option>
-                            <option value="Painting">Painting Process</option>
-                            <option value="Packaging">Packaging Process</option>
-                            <option value="Shearing">Shearing Operation</option>
-                            <option value="Lathe">Lathe Operation</option>
-                            <option value="Drilling">Drilling Process</option>
-                            <option value="BoringHoning">Boring & Honing</option>
-                            <option value="Grinding">Grinding Process</option>
-                            <option value="Forging">Forging Process</option>
-                            <option value="Molding">Molding Process</option>
-                            <option value="Polishing">Polishing & Finishing</option>
-                            <option value="GasCutting">Gas Cutting Process</option>
-                            <option value="FastenersAssembly">Assembling (Fasteners)</option>
-                            <option value="Hardening">Hardening Process</option>
-                            <option value="Tempering">Tempering Process</option>
-                            <option value="Coating">Coating Process</option>
-                        </select>
+            <!-- Row: Source + Document -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Source of Process Inspection</label>
+                    <div class="flex flex-wrap gap-5 mt-1">
+                        <label class="flex items-center gap-2 text-sm text-slate-300"><input type="radio" name="sourceType" value="Outsource" required class="accent-sky-400" /> Outsource</label>
+                        <label class="flex items-center gap-2 text-sm text-slate-300"><input type="radio" name="sourceType" value="Insource" class="accent-sky-400" /> Insource</label>
                     </div>
-                    <div>
-                        <label class="font-bold" for="qcEngineerName">QC Engineer Name *</label>
-                        <input type="text" id="qcEngineerName" class="w-full border p-2 rounded" placeholder="e.g. Abebech Alemu" required />
-                    </div>
+                    <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm mt-2" />
                 </div>
-
-                <!-- Source, Document -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
-                    <div>
-                        <label class="font-bold">Source of Process Inspection</label>
-                        <div class="flex gap-4 mt-1">
-                            <label class="flex items-center gap-1"><input type="radio" name="sourceType" value="Outsource" required /> Outsource</label>
-                            <label class="flex items-center gap-1"><input type="radio" name="sourceType" value="Insource" /> Insource</label>
-                        </div>
-                        <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="w-full border rounded p-1 mt-2 text-sm" />
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Document Availability</label>
+                    <div class="flex gap-6">
+                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" id="designAvail" class="accent-sky-400" /> Design</label>
+                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" id="mppAvail" class="accent-sky-400" /> MPP</label>
                     </div>
-                    <div>
-                        <label class="font-bold">Document Availability</label>
-                        <div class="flex gap-6">
-                            <label><input type="checkbox" id="designAvail" /> Design</label>
-                            <label><input type="checkbox" id="mppAvail" /> MPP</label>
-                        </div>
-                        <label class="font-bold mt-2 block">Operation Condition</label>
-                        <select id="operationStatus" class="w-full border p-1 rounded">
-                            <option value="Holdup">Holdup</option>
-                            <option value="Continue">Continue</option>
-                            <option value="Ending">Ending</option>
-                        </select>
-                    </div>
+                    <label class="block text-sm font-medium text-slate-300 mt-3 mb-1.5">Operation Condition</label>
+                    <select id="operationStatus" class="glass-select w-full rounded-xl px-4 py-2.5 text-sm">
+                        <option value="Holdup">Holdup</option>
+                        <option value="Continue">Continue</option>
+                        <option value="Ending">Ending</option>
+                    </select>
                 </div>
-
-                <!-- Shift, Operator, Hours, Time -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 border-b pb-4">
-                    <div>
-                        <label class="font-bold">Shift Number</label>
-                        <div class="flex gap-4">
-                            <label><input type="radio" name="shift" value="1" /> Shift 1</label>
-                            <label><input type="radio" name="shift" value="2" /> Shift 2</label>
-                            <label><input type="radio" name="shift" value="3" /> Shift 3</label>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="font-bold" for="operatorName">Operator Name</label>
-                        <input type="text" id="operatorName" class="w-full border p-1 rounded" placeholder="Operator's name" />
-                    </div>
-                    <div>
-                        <label class="font-bold" for="laborHours">Labor Hours</label>
-                        <input type="number" step="0.5" id="laborHours" class="w-full border p-1 rounded" placeholder="e.g. 2.5" />
-                    </div>
-                    <div>
-                        <label class="font-bold" for="machiningHours">Machining Hours</label>
-                        <input type="number" step="0.5" id="machiningHours" class="w-full border p-1 rounded" placeholder="e.g. 1.5" />
-                    </div>
-                    <div>
-                        <label class="font-bold">Inspection Time</label>
-                        <div class="flex gap-2 text-sm">
-                            <input type="time" id="startTime" class="border p-1 rounded w-1/2" title="Start time" />
-                            <input type="time" id="endTime" class="border p-1 rounded w-1/2" title="End time" />
-                        </div>
-                        <span id="totalTimeDisplay" class="text-xs text-gray-600">Total: -- min</span>
-                    </div>
-                </div>
-
-                <!-- Dynamic fields (Client, Title, Subtitle, etc.) -->
-                <div id="dynamicFieldsContainer">
-                    <div class="text-gray-500 text-center py-4">Loading inspection table...</div>
-                </div>
-
-                <!-- ─── LAST OPERATION CONTAINER ─── -->
-                <div id="lastOperationContainer" class="mt-4 hidden">
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h4 class="font-bold text-blue-800 text-sm">🔄 Last Operation for this Part</h4>
-                        <div id="lastOpData" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2 text-sm">
-                            <div><span class="text-gray-600">Process:</span> <span id="lastOpProcess" class="font-medium">—</span></div>
-                            <div><span class="text-gray-600">Condition:</span> <span id="lastOpCondition" class="font-medium">—</span></div>
-                            <div><span class="text-gray-600">Date:</span> <span id="lastOpDate" class="font-medium">—</span></div>
-                            <div><span class="text-gray-600">Rating:</span> <span id="lastOpRating" class="font-medium">—</span></div>
-                        </div>
-                        <div class="mt-2 text-sm">
-                            <span class="text-gray-600">Suggested Next:</span> <span id="lastOpSuggested" class="font-medium text-green-700">—</span>
-                        </div>
-                        <div id="lastOpNoData" class="text-gray-500 text-sm italic mt-2 hidden">No previous operation found for this part.</div>
-                    </div>
-                </div>
-
-                <!-- ─── QUANTITY SUMMARY (visible for non‑assembly processes) ─── -->
-                <div id="quantitySummary" class="grid grid-cols-2 md:grid-cols-5 gap-2 bg-gray-50 p-3 rounded mt-4">
-                    <div><label class="font-bold">Delivered Qty</label><input type="number" id="deliveredQty" class="border p-1 rounded w-full bg-gray-100" readonly /></div>
-                    <div><label class="font-bold">Accepted Qty</label><input type="number" id="acceptedQty" class="border p-1 rounded w-full" /></div>
-                    <div><label class="font-bold">Rework Qty</label><input type="number" id="reworkQty" class="border p-1 rounded w-full" /></div>
-                    <div><label class="font-bold">Reject Qty</label><input type="number" id="rejectQty" class="border p-1 rounded w-full" /></div>
-                    <div><label class="font-bold">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="border p-1 rounded w-full" /></div>
-                </div>
-
-                <!-- ─── ASSEMBLY PROGRESS (visible only for assembly processes) ─── -->
-                <div id="assemblyProgressContainer" class="mt-2 hidden">
-                    <div class="assembly-progress">
-                        <div class="flex-1">
-                            <span class="progress-label"><i class="fa-solid fa-boxes"></i> Total Delivered (sum)</span>
-                            <input type="number" id="totalDeliveredQty" min="0" step="1" value="0" class="delivered-input" readonly />
-                        </div>
-                        <div class="flex-1 text-center">
-                            <span class="progress-label">Assembly Completion</span>
-                            <div class="progress-value" id="assemblyProgressDisplay">0%</div>
-                            <div class="progress-detail" id="assemblyProgressDetail">0 / 0 parts selected</div>
-                        </div>
-                        <div class="flex-1 text-right">
-                            <span class="progress-label">Total Qty (Accepted + Conditional)</span>
-                            <div class="text-xl font-bold text-green-700" id="totalAcceptedConditionalDisplay">0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Internal Failure Costs -->
-                <div class="border p-4 rounded-md">
-                    <h3 class="font-bold text-lg">Internal Failure Costs</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
-                        <div><label>Defected Material Cost (ETB)</label> <input type="number" step="0.01" id="defectedMaterialCost" class="border p-1 rounded w-full" /></div>
-                        <div><label class="block">Level</label><select id="levelSelect" class="border p-1 rounded w-full"><option value="">-- Select --</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="custom">Custom</option></select></div>
-                        <div><label>Salary per Hour (ETB)</label><input type="number" step="0.001" id="salaryPerHour" class="border p-1 rounded w-full" /></div>
-                        <div><label class="font-bold">Machine Description (Master Data)</label><select id="machineDescriptionSelect" class="border p-1 rounded w-full"><option value="">-- Select Machine --</option></select><p class="text-xs text-gray-500 mt-1">Select machine to auto-fill Machining Cost/Hr</p></div>
-                        <div><label>Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="border p-1 rounded w-full" /></div>
-                    </div>
-                    <div class="mt-3 p-2 bg-gray-100 rounded">
-                        <span class="font-bold">Total Internal Failure Cost (ETB):</span>
-                        <span id="totalFailureCostDisplay">0.00</span>
-                        <input type="hidden" id="totalInternalFailureCost" />
-                    </div>
-                </div>
-
-                <!-- Suggested Next Operation -->
-                <div class="mt-4 border-t pt-4">
-                    <label class="font-bold">Suggested Next Operation</label>
-                    <input type="text" id="suggestedNextOp" list="suggestedNextList" class="border p-1 w-full rounded" placeholder="Type or select a suggestion..." />
-                    <datalist id="suggestedNextList"></datalist>
-                </div>
-
-                <div class="flex justify-end gap-4 no-print">
-                    <button type="button" onclick="resetForm()" class="btn-action bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded">Reset</button>
-                    <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="btn-action bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded hidden">Cancel Edit</button>
-                    <button type="button" id="saveBtn" onclick="saveToBackend()" class="btn-action bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded font-bold flex items-center gap-2">
-                        <i class="fa-solid fa-cloud-upload-alt"></i> <span id="saveBtnText">Save to Cloud</span>
-                    </button>
-                </div>
-                <div id="formMessage" class="text-center text-sm mt-2"></div>
-            </form>
-
-            <!-- Previous Inspections -->
-            <div class="mt-8 bg-white shadow rounded p-4 no-print">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-lg">📋 Previous Inspections</h3>
-                    <button onclick="loadHistory()" class="btn-action text-blue-600 text-sm underline hover:text-blue-800">Refresh <i class="fa-solid fa-rotate-right"></i></button>
-                </div>
-                <div id="inspectionHistory" class="max-h-60 overflow-y-auto text-sm mt-2"></div>
             </div>
+
+            <!-- Row: Shift, Operator, Hours, Time -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Shift Number</label>
+                    <div class="flex gap-4">
+                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="shift" value="1" class="accent-sky-400" /> Shift 1</label>
+                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="shift" value="2" class="accent-sky-400" /> Shift 2</label>
+                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="shift" value="3" class="accent-sky-400" /> Shift 3</label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="operatorName">Operator Name</label>
+                    <input type="text" id="operatorName" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="Operator's name" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="laborHours">Labor Hours</label>
+                    <input type="number" step="0.5" id="laborHours" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="e.g. 2.5" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="machiningHours">Machining Hours</label>
+                    <input type="number" step="0.5" id="machiningHours" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="e.g. 1.5" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Inspection Time</label>
+                    <div class="flex gap-2">
+                        <input type="time" id="startTime" class="glass-input rounded-xl px-3 py-2.5 text-sm w-1/2" title="Start" />
+                        <input type="time" id="endTime" class="glass-input rounded-xl px-3 py-2.5 text-sm w-1/2" title="End" />
+                    </div>
+                    <span id="totalTimeDisplay" class="text-xs text-slate-400 mt-1 block">Total: -- min</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Fields -->
+            <div id="dynamicFieldsContainer">
+                <div class="text-slate-500 text-center py-6 text-sm">Loading inspection table…</div>
+            </div>
+
+            <!-- Last Operation -->
+            <div id="lastOperationContainer" class="mt-2 hidden">
+                <div class="bg-sky-500/5 border border-sky-500/10 rounded-xl p-4">
+                    <h4 class="font-bold text-sky-300 text-sm flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Last Operation for this Part</h4>
+                    <div id="lastOpData" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
+                        <div><span class="text-slate-400">Process:</span> <span id="lastOpProcess" class="font-medium text-slate-200">—</span></div>
+                        <div><span class="text-slate-400">Condition:</span> <span id="lastOpCondition" class="font-medium text-slate-200">—</span></div>
+                        <div><span class="text-slate-400">Date:</span> <span id="lastOpDate" class="font-medium text-slate-200">—</span></div>
+                        <div><span class="text-slate-400">Rating:</span> <span id="lastOpRating" class="font-medium text-slate-200">—</span></div>
+                    </div>
+                    <div class="mt-2 text-sm">
+                        <span class="text-slate-400">Suggested Next:</span>
+                        <span id="lastOpSuggested" class="font-medium text-emerald-400">—</span>
+                    </div>
+                    <div id="lastOpNoData" class="text-slate-500 text-sm italic mt-2 hidden">No previous operation found for this part.</div>
+                </div>
+            </div>
+
+            <!-- Quantity Summary (non-assembly) -->
+            <div id="quantitySummary" class="grid grid-cols-2 md:grid-cols-5 gap-3 bg-white/5 rounded-xl p-4">
+                <div><label class="block text-xs font-medium text-slate-400 mb-1">Delivered Qty</label><input type="number" id="deliveredQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm bg-white/5 cursor-not-allowed" readonly /></div>
+                <div><label class="block text-xs font-medium text-slate-400 mb-1">Accepted Qty</label><input type="number" id="acceptedQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-medium text-slate-400 mb-1">Rework Qty</label><input type="number" id="reworkQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-medium text-slate-400 mb-1">Reject Qty</label><input type="number" id="rejectQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-medium text-slate-400 mb-1">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+            </div>
+
+            <!-- Assembly Progress -->
+            <div id="assemblyProgressContainer" class="mt-2 hidden">
+                <div class="assembly-progress">
+                    <div class="flex-1">
+                        <span class="progress-label"><i class="fa-solid fa-boxes mr-2"></i>Total Delivered (sum)</span>
+                        <input type="number" id="totalDeliveredQty" min="0" step="1" value="0" class="delivered-input w-full" readonly />
+                    </div>
+                    <div class="flex-1 text-center">
+                        <span class="progress-label">Assembly Completion</span>
+                        <div class="progress-value" id="assemblyProgressDisplay">0%</div>
+                        <div class="progress-detail" id="assemblyProgressDetail">0 / 0 parts selected</div>
+                    </div>
+                    <div class="flex-1 text-right">
+                        <span class="progress-label">Total Qty (Accepted + Conditional)</span>
+                        <div class="text-2xl font-bold text-emerald-400" id="totalAcceptedConditionalDisplay">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Internal Failure Costs -->
+            <div class="glass rounded-xl p-5">
+                <h3 class="font-bold text-lg text-slate-200 flex items-center gap-2"><i class="fa-solid fa-coins text-amber-400/70"></i> Internal Failure Costs</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Defected Material Cost (ETB)</label><input type="number" step="0.01" id="defectedMaterialCost" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Level</label><select id="levelSelect" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select --</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="custom">Custom</option></select></div>
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Salary per Hour (ETB)</label><input type="number" step="0.001" id="salaryPerHour" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Machine Description</label><select id="machineDescriptionSelect" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select Machine --</option></select></div>
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                </div>
+                <div class="mt-4 p-3 rounded-xl bg-white/5 border border-white/5 flex flex-wrap items-center justify-between gap-3">
+                    <span class="font-medium text-slate-300">Total Internal Failure Cost (ETB):</span>
+                    <span id="totalFailureCostDisplay" class="text-xl font-bold text-emerald-400">0.00</span>
+                    <input type="hidden" id="totalInternalFailureCost" />
+                </div>
+            </div>
+
+            <!-- Suggested Next Operation -->
+            <div class="border-t border-white/5 pt-4">
+                <label class="block text-sm font-medium text-slate-300 mb-1.5">Suggested Next Operation</label>
+                <input type="text" id="suggestedNextOp" list="suggestedNextList" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="Type or select a suggestion…" />
+                <datalist id="suggestedNextList"></datalist>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-wrap justify-end gap-3 no-print pt-2 border-t border-white/5">
+                <button type="button" onclick="resetForm()" class="btn-secondary text-sm">
+                    <i class="fa-regular fa-arrow-rotate-left"></i> Reset
+                </button>
+                <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="btn-secondary text-sm hidden">
+                    <i class="fa-regular fa-pen-to-square"></i> Cancel Edit
+                </button>
+                <button type="button" id="saveBtn" onclick="saveToBackend()" class="btn-primary text-sm">
+                    <i class="fa-solid fa-cloud-upload-alt"></i>
+                    <span id="saveBtnText">Save to Cloud</span>
+                </button>
+            </div>
+            <div id="formMessage" class="text-center text-sm mt-2 text-slate-400"></div>
+        </form>
+
+        <!-- History -->
+        <div class="glass-strong rounded-2xl p-5 md:p-6 mt-6 card-glow no-print">
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <h3 class="font-bold text-lg text-slate-200 flex items-center gap-2"><i class="fa-regular fa-clock text-sky-400"></i> Previous Inspections</h3>
+                <button onclick="loadHistory()" class="text-sky-400 text-sm hover:text-sky-300 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+            <div id="inspectionHistory" class="max-h-72 overflow-y-auto scrollbar-thin text-sm mt-3 space-y-1"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-xs text-slate-500/60 mt-6 no-print">
+            AMIMTDE · Quality Assurance Directorate v2.0
         </div>
     </div>
 
@@ -397,18 +950,28 @@
             if (e.key === 'Enter') checkSecret();
         });
 
+        // ─── LIVE CLOCK ───
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('liveClock').textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit',
+                minute: '2-digit' });
+        }
+        updateClock();
+        setInterval(updateClock, 10000);
+
         // ─── TOAST ───
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+            const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            const icon = iconMap[type] || 'fa-info-circle';
             toast.innerHTML = `
-                  <div class="toast-content">
-                    <span class="toast-icon"><i class="fa-solid ${icon}"></i></span>
-                    <span>${message}</span>
-                  </div>
-                `;
+                <div class="toast-content">
+                  <span class="toast-icon"><i class="fa-solid ${icon}"></i></span>
+                  <span>${message}</span>
+                </div>
+              `;
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.add('show'));
             setTimeout(() => {
@@ -423,28 +986,17 @@
         let allSubtitles = new Set();
         let allSubSubAssemblies = new Set();
         let allPartNames = new Set();
-
         let clientTitleMap = new Map();
         let clientSubtitleMap = new Map();
         let clientSubSubMap = new Map();
         let clientPartMap = new Map();
-
-        let lastUsedMap = {
-            client: new Map(),
-            title: new Map(),
-            subtitle: new Map(),
-            subSub: new Map(),
-            part: new Map()
-        };
-
+        let lastUsedMap = { client: new Map(), title: new Map(), subtitle: new Map(), subSub: new Map(), part: new Map() };
         let currentProcess = document.getElementById("processType").value;
         let isEditMode = false,
             editId = null;
         let currentEngineer = '';
         let g_allInspections = [];
-
-        // For assembly: selected part names and their manually entered quantities
-        let selectedParts = []; // array of objects { name: string, qty: number }
+        let selectedParts = [];
 
         const engineerFromUrl = new URLSearchParams(window.location.search).get('engineer');
         if (engineerFromUrl) {
@@ -452,11 +1004,10 @@
             const f = document.getElementById('qcEngineerName');
             f.value = currentEngineer;
             f.readOnly = true;
-            f.classList.add('bg-gray-100');
+            f.classList.add('bg-white/5', 'cursor-not-allowed');
         }
 
-        // ─── PART LIST MULTI-SELECT HELPERS ───
-
+        // ─── HELPERS ───
         function isAssemblyProcess() {
             return currentProcess === 'Assembling' || currentProcess === 'FastenersAssembly';
         }
@@ -491,13 +1042,11 @@
             return Array.from(partsSet);
         }
 
-        // Populate the multi-select with options
         function populatePartListMultiSelect() {
             const selectEl = document.getElementById('extra_Tag_No_');
             if (!selectEl || !isAssemblyProcess()) return;
             const filters = getPartListFilters();
             const parts = findMatchingParts(filters);
-            // Clear options (keep first default)
             selectEl.innerHTML = '<option value="">-- Select Parts --</option>';
             if (parts.length === 0) {
                 const opt = document.createElement('option');
@@ -514,43 +1063,33 @@
                     selectEl.appendChild(opt);
                 });
             }
-            // Restore previously selected values
             const selectedNames = selectedParts.map(p => p.name);
             Array.from(selectEl.options).forEach(opt => {
                 if (opt.value && selectedNames.includes(opt.value)) {
                     opt.selected = true;
                 }
             });
-            // Update progress after populating
             updateAssemblyProgress();
         }
 
-        // Render the table of selected parts with editable quantities
         function renderSelectedPartsTable() {
             const container = document.getElementById('selectedPartsContainer');
             if (!container) return;
-            if (!isAssemblyProcess()) {
-                container.innerHTML = '';
-                return;
-            }
-
+            if (!isAssemblyProcess()) { container.innerHTML = ''; return; }
             if (selectedParts.length === 0) {
-                container.innerHTML = `<div class="empty-msg">No parts selected</div>`;
+                container.innerHTML = `<div class="text-slate-500 text-sm italic py-2">No parts selected</div>`;
                 return;
             }
-
-            let html = `<table class="part-qty-table"><tbody>`;
+            let html = `<table class="part-qty-table w-full"><tbody>`;
             selectedParts.forEach((part, index) => {
                 html += `<tr>
-                            <td><span class="font-medium">${escapeHtml(part.name)}</span></td>
-                            <td><input type="number" min="0" step="1" value="${part.qty || 0}" class="part-qty-input" data-index="${index}" /></td>
-                            <td><span class="remove-part-btn" data-index="${index}"><i class="fa-regular fa-trash-can"></i></span></td>
-                        </tr>`;
+                    <td class="text-slate-200 font-medium text-sm">${escapeHtml(part.name)}</td>
+                    <td><input type="number" min="0" step="1" value="${part.qty || 0}" class="part-qty-input" data-index="${index}" /></td>
+                    <td><span class="remove-part-btn" data-index="${index}"><i class="fa-regular fa-trash-can"></i></span></td>
+                </tr>`;
             });
             html += `</tbody></table>`;
             container.innerHTML = html;
-
-            // Attach events to quantity inputs
             container.querySelectorAll('.part-qty-input').forEach(input => {
                 input.addEventListener('input', function() {
                     const idx = parseInt(this.dataset.index);
@@ -559,39 +1098,29 @@
                     updateAssemblyProgress();
                 });
             });
-
-            // Attach remove events
             container.querySelectorAll('.remove-part-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const idx = parseInt(this.dataset.index);
                     selectedParts.splice(idx, 1);
-                    // Also unselect in multi-select
                     const selectEl = document.getElementById('extra_Tag_No_');
                     if (selectEl) {
                         const names = selectedParts.map(p => p.name);
                         Array.from(selectEl.options).forEach(opt => {
-                            if (opt.value && names.includes(opt.value)) {
-                                opt.selected = true;
-                            } else {
-                                opt.selected = false;
-                            }
+                            opt.selected = opt.value && names.includes(opt.value);
                         });
                     }
                     renderSelectedPartsTable();
                     updateAssemblyProgress();
                 });
             });
-
             updateAssemblyProgress();
         }
 
-        // Update assembly progress percentage and total quantity display
         function updateAssemblyProgress() {
             const selectEl = document.getElementById('extra_Tag_No_');
             const totalDelivered = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
             document.getElementById('totalDeliveredQty').value = totalDelivered;
             document.getElementById('totalAcceptedConditionalDisplay').textContent = totalDelivered;
-
             if (!selectEl || !isAssemblyProcess()) {
                 document.getElementById('assemblyProgressDisplay').textContent = '0%';
                 document.getElementById('assemblyProgressDetail').textContent = '0 / 0 parts selected';
@@ -601,47 +1130,25 @@
             const selectedCount = selectedParts.length;
             const pct = totalOptions > 0 ? Math.round((selectedCount / totalOptions) * 100) : 0;
             document.getElementById('assemblyProgressDisplay').textContent = pct + '%';
-            document.getElementById('assemblyProgressDetail').textContent =
-                `${selectedCount} / ${totalOptions} parts selected`;
-            // Color coding
+            document.getElementById('assemblyProgressDetail').textContent = `${selectedCount} / ${totalOptions} parts selected`;
             const displayEl = document.getElementById('assemblyProgressDisplay');
-            if (pct >= 100) {
-                displayEl.style.color = '#15803d';
-            } else if (pct >= 50) {
-                displayEl.style.color = '#ca8a04';
-            } else {
-                displayEl.style.color = '#dc2626';
-            }
+            if (pct >= 100) displayEl.style.color = '#6ee7b7';
+            else if (pct >= 50) displayEl.style.color = '#fcd34d';
+            else displayEl.style.color = '#f87171';
         }
 
-        // Handle total delivered change: now read-only, but kept for compatibility
-        function onTotalDeliveredChange() {}
-
-        // Handle multi-select change: update selectedParts (preserve quantities for existing parts)
         function onPartListSelectChange() {
             const selectEl = document.getElementById('extra_Tag_No_');
             if (!selectEl || !isAssemblyProcess()) return;
-            const selectedOptions = Array.from(selectEl.selectedOptions);
-            const selectedValues = selectedOptions.map(opt => opt.value).filter(v => v !== '');
-
-            // Keep existing quantities for parts that are still selected
-            const newParts = [];
+            const selectedValues = Array.from(selectEl.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             const existingMap = {};
             selectedParts.forEach(p => { existingMap[p.name] = p.qty; });
-
-            selectedValues.forEach(name => {
-                newParts.push({
-                    name: name,
-                    qty: existingMap[name] !== undefined ? existingMap[name] : 0
-                });
-            });
-
+            const newParts = selectedValues.map(name => ({ name, qty: existingMap[name] !== undefined ? existingMap[name] :
+                    0 }));
             selectedParts = newParts;
             renderSelectedPartsTable();
             updateAssemblyProgress();
         }
-
-        // ─── END PART LIST HELPERS ───
 
         // ─── APP INIT ───
         function initApp() {
@@ -654,12 +1161,9 @@
                 clientInput.removeEventListener('input', filterSuggestionsByCurrentClient);
                 clientInput.addEventListener('input', filterSuggestionsByCurrentClient);
             }
-            const firstInput = document.querySelector('#inspectionForm input:not([readonly])');
-            if (firstInput) firstInput.focus();
             ['extra_Part_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly', 'extra_Drawing_No_',
                 'extra_Tag_No_'
-            ]
-            .forEach(id => {
+            ].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.addEventListener('change', () => fetchLastOperation());
@@ -683,7 +1187,6 @@
             }
         }
 
-        // ─── VISIBILITY CONTROL ───
         function updateVisibility() {
             const qtySummary = document.getElementById('quantitySummary');
             const assemblyProgress = document.getElementById('assemblyProgressContainer');
@@ -699,8 +1202,7 @@
             }
         }
 
-        // ─── SUGGESTION DATA (datalists) ───
-
+        // ─── SUGGESTIONS ───
         function updateSuggestionsFromInspections(inspections) {
             allClientNames.clear();
             allProjectTitles.clear();
@@ -716,7 +1218,6 @@
             lastUsedMap.subtitle.clear();
             lastUsedMap.subSub.clear();
             lastUsedMap.part.clear();
-
             for (const insp of inspections) {
                 const extra = insp.extra_fields || {};
                 const client = extra["Customer Name"]?.trim();
@@ -725,41 +1226,35 @@
                 const subSub = extra["Sub Sub Assembly"]?.trim();
                 const part = extra["Part Name"]?.trim();
                 const ts = new Date(insp.submitted_at || insp.created_at || Date.now()).getTime();
-
                 if (client) {
                     allClientNames.add(client);
-                    if (!lastUsedMap.client.has(client) || ts > lastUsedMap.client.get(client)) {
-                        lastUsedMap.client.set(client, ts);
-                    }
+                    if (!lastUsedMap.client.has(client) || ts > lastUsedMap.client.get(client)) lastUsedMap.client.set(
+                        client, ts);
                     if (title) {
                         allProjectTitles.add(title);
-                        if (!lastUsedMap.title.has(title) || ts > lastUsedMap.title.get(title)) {
-                            lastUsedMap.title.set(title, ts);
-                        }
+                        if (!lastUsedMap.title.has(title) || ts > lastUsedMap.title.get(title)) lastUsedMap.title.set(
+                            title, ts);
                         if (!clientTitleMap.has(client)) clientTitleMap.set(client, new Set());
                         clientTitleMap.get(client).add(title);
                     }
                     if (subtitle) {
                         allSubtitles.add(subtitle);
-                        if (!lastUsedMap.subtitle.has(subtitle) || ts > lastUsedMap.subtitle.get(subtitle)) {
-                            lastUsedMap.subtitle.set(subtitle, ts);
-                        }
+                        if (!lastUsedMap.subtitle.has(subtitle) || ts > lastUsedMap.subtitle.get(subtitle)) lastUsedMap
+                            .subtitle.set(subtitle, ts);
                         if (!clientSubtitleMap.has(client)) clientSubtitleMap.set(client, new Set());
                         clientSubtitleMap.get(client).add(subtitle);
                     }
                     if (subSub) {
                         allSubSubAssemblies.add(subSub);
-                        if (!lastUsedMap.subSub.has(subSub) || ts > lastUsedMap.subSub.get(subSub)) {
-                            lastUsedMap.subSub.set(subSub, ts);
-                        }
+                        if (!lastUsedMap.subSub.has(subSub) || ts > lastUsedMap.subSub.get(subSub)) lastUsedMap.subSub
+                            .set(subSub, ts);
                         if (!clientSubSubMap.has(client)) clientSubSubMap.set(client, new Set());
                         clientSubSubMap.get(client).add(subSub);
                     }
                     if (part) {
                         allPartNames.add(part);
-                        if (!lastUsedMap.part.has(part) || ts > lastUsedMap.part.get(part)) {
-                            lastUsedMap.part.set(part, ts);
-                        }
+                        if (!lastUsedMap.part.has(part) || ts > lastUsedMap.part.get(part)) lastUsedMap.part.set(part,
+                            ts);
                         if (!clientPartMap.has(client)) clientPartMap.set(client, new Set());
                         clientPartMap.get(client).add(part);
                     }
@@ -770,17 +1265,12 @@
 
         function getSortedValues(set, map) {
             const arr = Array.from(set);
-            arr.sort((a, b) => {
-                const ta = map.get(a) || 0;
-                const tb = map.get(b) || 0;
-                return tb - ta;
-            });
+            arr.sort((a, b) => (map.get(b) || 0) - (map.get(a) || 0));
             return arr;
         }
 
         function refreshDatalistOptions(clientFilter) {
             const filter = (clientFilter && clientFilter.trim() !== '') ? clientFilter.trim() : null;
-
             const clientDL = document.getElementById("customerNameDatalist");
             if (clientDL) {
                 clientDL.innerHTML = "";
@@ -790,7 +1280,6 @@
                     clientDL.appendChild(o);
                 });
             }
-
             const titleDL = document.getElementById("projectNameDatalist");
             if (titleDL) {
                 titleDL.innerHTML = "";
@@ -803,7 +1292,6 @@
                     titleDL.appendChild(o);
                 });
             }
-
             const subtitleDL = document.getElementById("subtitleDatalist");
             if (subtitleDL) {
                 subtitleDL.innerHTML = "";
@@ -816,7 +1304,6 @@
                     subtitleDL.appendChild(o);
                 });
             }
-
             const subSubDL = document.getElementById("subSubDatalist");
             if (subSubDL) {
                 subSubDL.innerHTML = "";
@@ -829,7 +1316,6 @@
                     subSubDL.appendChild(o);
                 });
             }
-
             const partDL = document.getElementById("partNameDatalist");
             if (partDL) {
                 partDL.innerHTML = "";
@@ -846,14 +1332,10 @@
 
         function filterSuggestionsByCurrentClient() {
             const clientInput = document.getElementById('extra_Customer_Name');
-            if (clientInput) {
-                const val = clientInput.value.trim();
-                refreshDatalistOptions(val || null);
-            }
+            if (clientInput) refreshDatalistOptions(clientInput.value.trim() || null);
         }
 
-        // ─── END SUGGESTION SYSTEM ───
-
+        // ─── SCAN ───
         async function scanDocumentAndFill() {
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -864,7 +1346,7 @@
             fileInput.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (!file) { document.body.removeChild(fileInput); return; }
-                showToast('📸 Scanning document with OCR...', 'info');
+                showToast('📸 Scanning document with OCR…', 'info');
                 try {
                     const { data: { text } } = await Tesseract.recognize(file, 'eng', { logger: m => console.log(m) });
                     const extracted = parseFieldsFromText(text);
@@ -872,20 +1354,16 @@
                     const titleInput = document.getElementById("extra_Project_Name");
                     const drawingInput = document.getElementById("extra_Drawing_No_");
                     const partInput = document.getElementById("extra_Part_Name");
-                    if (clientInput && extracted.clientName) {
-                        clientInput.value = extracted.clientName;
-                        refreshDatalistOptions(extracted.clientName.trim());
-                    }
+                    if (clientInput && extracted.clientName) { clientInput.value = extracted.clientName;
+                        refreshDatalistOptions(extracted.clientName.trim()); }
                     if (titleInput && extracted.projectTitle) titleInput.value = extracted.projectTitle;
                     if (drawingInput && extracted.drawingNo) drawingInput.value = extracted.drawingNo;
                     if (partInput && extracted.partName) partInput.value = extracted.partName;
                     showToast('✅ Document scanned and fields auto-filled!', 'success');
                     if (isAssemblyProcess()) {
-                        setTimeout(() => {
-                            populatePartListMultiSelect();
+                        setTimeout(() => { populatePartListMultiSelect();
                             renderSelectedPartsTable();
-                            updateAssemblyProgress();
-                        }, 300);
+                            updateAssemblyProgress(); }, 300);
                     }
                 } catch (err) {
                     console.error(err);
@@ -921,7 +1399,7 @@
             return result;
         }
 
-        // ─── machinery master ───
+        // ─── MACHINERY ───
         const machineryMaster = [
             { desc: "Power hack saw", rate: (1693.44 + 24876.46) / 1767 },
             { desc: "Medium duty lathe machine, Conventional", rate: (13539.12 + 52982.93) / 1767 },
@@ -1083,7 +1561,7 @@
             const opts = getWorkStationOptionsForProcess(currentProcess);
             const all = [...opts, "other"];
             let html =
-                `<div><label class="font-bold text-sm">Work Station</label><select id="extra_Work_Station" class="w-full border p-1 rounded text-sm">`;
+                `<div><label class="block text-xs font-medium text-slate-400 mb-1">Work Station</label><select id="extra_Work_Station" class="glass-select w-full rounded-lg px-3 py-2 text-sm">`;
             all.forEach(opt => {
                 const sel = (savedValue === opt) ? 'selected' : '';
                 html += `<option value="${opt}" ${sel}>${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`;
@@ -1185,39 +1663,40 @@
 
         function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
+        // ─── INCOMING FORM ───
         function renderIncomingForm() {
             return `
-                  <div class="border rounded-md p-5 bg-white shadow-sm space-y-5">
-                    <div class="text-center font-bold text-xl">INCOMING MATERIAL INSPECTION REPORT</div>
-                    <div class="text-right text-sm">Document No. QAD/001</div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div><label class="font-bold">1. Source of Item</label><div class="flex gap-4"><label><input type="radio" name="sourceItem" value="Local"> Local</label><label><input type="radio" name="sourceItem" value="Foreign"> Foreign</label></div><div><label class="text-sm">Address:</label><input type="text" id="sourceAddress" class="w-full border p-1 rounded"></div></div>
-                      <div><label class="font-bold">2. Procurement type</label><div class="flex flex-wrap gap-3"><label><input type="radio" name="procType" value="Direct"> Direct</label><label><input type="radio" name="procType" value="Proforma"> Proforma</label><label><input type="radio" name="procType" value="Bid"> Bid</label><label><input type="radio" name="procType" value="Other"> Other</label><input type="text" id="procTypeOther" placeholder="Specify" class="border p-1 rounded w-32"></div><label class="text-sm">Method of Inspection:</label><input type="text" id="methodInspection" class="w-full border p-1 rounded" placeholder="visual inspection etc."></div>
-                      <div><label class="font-bold">3. The PR is Requested by</label><div class="flex gap-3"><label><input type="radio" name="prRequestedBy" value="PR Form"> PR Form</label><label><input type="radio" name="prRequestedBy" value="Letter"> Letter</label><label><input type="radio" name="prRequestedBy" value="System"> System</label><label><input type="radio" name="prRequestedBy" value="Other"> Other</label><input type="text" id="prRequestOther" placeholder="Specify" class="border p-1 rounded w-32"></div></div>
-                      <div><label class="font-bold">4. Final Reference Document for Specification</label><div class="grid grid-cols-2 gap-2"><label><input type="checkbox" value="PR"> PR</label><label><input type="checkbox" value="Proforma Invoice"> Proforma Invoice</label><label><input type="checkbox" value="Agreement"> Agreement</label><label><input type="checkbox" value="Other"> Other</label><input type="text" id="refDocOther" placeholder="Specify" class="border p-1 rounded"></div><div class="grid grid-cols-3 gap-2 mt-1"><span>No. of Page (PR):</span><input type="number" id="refPagePR" class="border p-1 w-16"><span>No. of Page (Proforma):</span><input type="number" id="refPageProforma" class="border p-1 w-16"><span>No. of Page (Agreement):</span><input type="number" id="refPageAgreement" class="border p-1 w-16"></div></div>
-                    </div>
-                    <div class="mt-4"><label class="font-bold text-lg">5. List of Items</label><div class="overflow-x-auto"><table class="min-w-full text-xs border incoming-table" id="incomingItemsTable"><thead class="bg-gray-100"><tr><th>Specification as per requester</th><th>Supplied Material Description</th><th>Actual Supplied Specification</th><th>Model</th><th>Brand</th><th>Origin</th><th>Colour</th><th>Serial No.</th><th>Unit</th><th>Delivered Qty</th><th>Accepted Qty</th><th>Rejected Qty</th><th>Conditional Accepted Qty</th><th>Supplier</th><th>Remark</th><th class="w-8"></th></tr></thead><tbody id="incomingItemsBody"></tbody></table></div><button type="button" onclick="addIncomingItemRow()" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm">+ Add Item</button></div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"><div><label class="font-bold">Reason For Reject</label><textarea id="reasonReject" rows="2" class="w-full border p-1 rounded"></textarea></div><div><label class="font-bold">Reason for Conditional Accepted</label><textarea id="reasonConditional" rows="2" class="w-full border p-1 rounded"></textarea></div></div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 border-t pt-3"><div><label class="font-bold">Inspected By</label><input type="text" id="inspectedBy" class="w-full border p-1 rounded"><label>SIGNATURE</label><input type="text" id="inspectedSign" class="w-full border p-1 rounded"><label>DATE</label><input type="date" id="inspectedDate" class="w-full border p-1 rounded"></div><div><label class="font-bold">Collaborated By</label><input type="text" id="collabBy" class="w-full border p-1 rounded"><label>Signature</label><input type="text" id="collabSign" class="w-full border p-1 rounded"><label>Date</label><input type="date" id="collabDate" class="w-full border p-1 rounded"></div><div><label class="font-bold">Approved By</label><input type="text" id="approvedBy" class="w-full border p-1 rounded"><label>Signature</label><input type="text" id="approvedSign" class="w-full border p-1 rounded"><label>DATE</label><input type="date" id="approvedDate" class="w-full border p-1 rounded"></div></div>
-                    <div><label class="font-bold">REMARK</label><textarea id="generalRemark" rows="2" class="w-full border p-1 rounded"></textarea></div>
-                    <div class="text-xs text-gray-500 italic">Note: Please attach the final reference Document for specification. Form Modification Is not Allowed.</div>
-                  </div>`;
+                <div class="glass rounded-xl p-5 space-y-5">
+                  <div class="text-center font-bold text-xl text-slate-200">INCOMING MATERIAL INSPECTION REPORT</div>
+                  <div class="text-right text-sm text-slate-400">Document No. QAD/001</div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">1. Source of Item</label><div class="flex gap-4"><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="sourceItem" value="Local" class="accent-sky-400" /> Local</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="sourceItem" value="Foreign" class="accent-sky-400" /> Foreign</label></div><div><label class="text-xs text-slate-400">Address:</label><input type="text" id="sourceAddress" class="glass-input w-full rounded-lg px-3 py-2 text-sm mt-1" /></div></div>
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">2. Procurement type</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="procType" value="Direct" class="accent-sky-400" /> Direct</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="procType" value="Proforma" class="accent-sky-400" /> Proforma</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="procType" value="Bid" class="accent-sky-400" /> Bid</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="procType" value="Other" class="accent-sky-400" /> Other</label><input type="text" id="procTypeOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><label class="text-xs text-slate-400 mt-1 block">Method of Inspection:</label><input type="text" id="methodInspection" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="visual inspection etc." /></div>
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">3. The PR is Requested by</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="PR Form" class="accent-sky-400" /> PR Form</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Letter" class="accent-sky-400" /> Letter</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="System" class="accent-sky-400" /> System</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Other" class="accent-sky-400" /> Other</label><input type="text" id="prRequestOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div></div>
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">4. Final Reference Document for Specification</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" value="PR" class="accent-sky-400" /> PR</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" value="Proforma Invoice" class="accent-sky-400" /> Proforma Invoice</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" value="Agreement" class="accent-sky-400" /> Agreement</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" value="Other" class="accent-sky-400" /> Other</label><input type="text" id="refDocOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><div class="flex flex-wrap gap-3 mt-1"><span class="text-xs text-slate-400">No. of Page (PR):</span><input type="number" id="refPagePR" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-400">Proforma:</span><input type="number" id="refPageProforma" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-400">Agreement:</span><input type="number" id="refPageAgreement" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /></div></div>
+                  </div>
+                  <div><label class="block text-sm font-medium text-slate-300 mb-2">5. List of Items</label><div class="overflow-x-auto"><table class="table-glass text-xs" id="incomingItemsTable"><thead><tr><th>Specification as per requester</th><th>Supplied Material Description</th><th>Actual Supplied Specification</th><th>Model</th><th>Brand</th><th>Origin</th><th>Colour</th><th>Serial No.</th><th>Unit</th><th>Delivered Qty</th><th>Accepted Qty</th><th>Rejected Qty</th><th>Conditional Accepted Qty</th><th>Supplier</th><th>Remark</th><th class="w-8"></th></tr></thead><tbody id="incomingItemsBody"></tbody></table></div><button type="button" onclick="addIncomingItemRow()" class="btn-secondary text-xs mt-2"><i class="fa-regular fa-plus mr-1"></i> Add Item</button></div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-xs font-medium text-slate-400 mb-1">Reason For Reject</label><textarea id="reasonReject" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div><div><label class="block text-xs font-medium text-slate-400 mb-1">Reason for Conditional Accepted</label><textarea id="reasonConditional" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div></div>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-white/5 pt-4"><div><label class="block text-xs font-medium text-slate-400 mb-1">Inspected By</label><input type="text" id="inspectedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">SIGNATURE</label><input type="text" id="inspectedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">DATE</label><input type="date" id="inspectedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-400 mb-1">Collaborated By</label><input type="text" id="collabBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">Signature</label><input type="text" id="collabSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">Date</label><input type="date" id="collabDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-400 mb-1">Approved By</label><input type="text" id="approvedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">Signature</label><input type="text" id="approvedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">DATE</label><input type="date" id="approvedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div></div>
+                  <div><label class="block text-xs font-medium text-slate-400 mb-1">REMARK</label><textarea id="generalRemark" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div>
+                  <div class="text-xs text-slate-500 italic">Note: Please attach the final reference Document for specification. Form Modification Is not Allowed.</div>
+                </div>`;
         }
 
         function addIncomingItemRow(data) {
             const tbody = document.getElementById("incomingItemsBody");
             if (!tbody) return;
             const row = document.createElement("tr");
-            row.className = "border-b";
+            row.className = "border-b border-white/5";
             const fields = ["specReq", "suppliedDesc", "actualSpec", "model", "brand", "origin", "colour", "serialNo", "unit",
                 "deliveredQty", "acceptedQty", "rejectedQty", "condAcceptedQty", "supplier", "remark"
             ];
             fields.forEach(f => {
                 const td = document.createElement("td");
-                td.className = "border p-1";
+                td.className = "p-1";
                 const input = document.createElement("input");
                 input.type = f.includes("Qty") ? "number" : "text";
-                input.className = "w-full border-none p-0 text-xs";
+                input.className = "glass-input w-full rounded px-2 py-1 text-xs";
                 input.placeholder = f;
                 if (data && data[f] !== undefined) input.value = data[f];
                 td.appendChild(input);
@@ -1227,7 +1706,7 @@
             delTd.className = "text-center";
             const delBtn = document.createElement("button");
             delBtn.innerHTML = "❌";
-            delBtn.className = "text-red-500 text-xs";
+            delBtn.className = "text-rose-400/60 hover:text-rose-300 text-xs transition";
             delBtn.onclick = () => row.remove();
             delTd.appendChild(delBtn);
             row.appendChild(delTd);
@@ -1267,6 +1746,7 @@
             else addIncomingItemRow();
         }
 
+        // ─── DYNAMIC FIELDS ───
         function renderDynamicFields() {
             const container = document.getElementById("dynamicFieldsContainer");
             if (!container) return;
@@ -1278,104 +1758,97 @@
                 document.getElementById("quantitySummary").style.display = "none";
                 document.getElementById("assemblyProgressContainer").classList.add('hidden');
                 return;
-            } else {
-                const def = getCurrentDef();
-                let html =
-                    `<div class="mb-3"><button type="button" class="single-scan-btn" onclick="scanDocumentAndFill()" title="Scan document with OCR to auto-fill client, title, DWG and part"><i class="fas fa-camera"></i> Scan Document</button></div>`;
-                if (def.extraFields && def.extraFields.length) {
-                    html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-3 border-b pb-4 mb-4">`;
-                    def.extraFields.forEach(field => {
-                        const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
-                        if (field === "Work Station") {
-                            html += getWorkStationHtml(currentProcess, "");
-                        } else if (field === "Location") {
-                            html +=
-                                `<div><label class="font-bold text-sm">Location</label><select id="${safeId}" class="w-full border p-1 rounded text-sm"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
-                        } else if (field === "Customer Name") {
-                            html +=
-                                `<div><label class="font-bold text-sm">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
-                        } else if (field === "Project Name") {
-                            html +=
-                                `<div><label class="font-bold text-sm">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
-                        } else if (field === "Subtitle") {
-                            html +=
-                                `<div><label class="font-bold text-sm">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="w-full border p-1 rounded text-sm" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
-                        } else if (field === "Sub Sub Assembly") {
-                            html +=
-                                `<div><label class="font-bold text-sm">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="w-full border p-1 rounded text-sm" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
-                        } else if (field === "Drawing No.") {
-                            html +=
-                                `<div><label class="font-bold text-sm">DWG No.</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan"></div>`;
-                        } else if (field === "Part Name") {
-                            html +=
-                                `<div><label class="font-bold text-sm">Part Name</label><input type="text" id="${safeId}" list="partNameDatalist" class="w-full border p-1 rounded text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
-                        } else if (field === "Tag No.") {
-                            if (isAssemblyProcess()) {
-                                html += `
-                                        <div class="part-list-container">
-                                          <label class="font-bold text-sm">Part List <span class="text-xs text-gray-500">(select parts, then enter quantity per part)</span></label>
-                                          <select id="${safeId}" multiple size="4" class="w-full border p-1 rounded text-sm part-list-multi">
-                                            <option value="">-- Select Parts --</option>
-                                          </select>
-                                          <div id="selectedPartsContainer" class="selected-parts-container">
-                                            <div class="empty-msg">No parts selected</div>
-                                          </div>
-                                        </div>
-                                      `;
-                            } else {
-                                html +=
-                                    `<div><label class="font-bold text-sm">Tag No.</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm" placeholder="Tag number"></div>`;
-                            }
-                        } else if (field !== "Work Station") {
-                            html +=
-                                `<div><label class="font-bold text-sm">${field}</label><input type="text" id="${safeId}" class="w-full border p-1 rounded text-sm"></div>`;
-                        }
-                    });
-                    html += `</div>`;
-                }
-                html +=
-                    `<div class="overflow-x-auto border rounded-md"><table class="min-w-full text-sm"><thead class="bg-gray-200"><tr><th class="p-2 border">Inspection Parameters</th><th class="p-2 border">Acceptance Conditions</th><th class="p-2 border">Cause of Defects</th></tr></thead><tbody>`;
-                def.parameters.forEach((param, idx) => {
-                    const paramId = `p_${idx}`;
-                    html +=
-                        `<tr><td class="border p-2 font-medium">${param}</td><td class="border"><select id="rating_${paramId}" class="w-full p-1 border rounded">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="border"><div class="flex flex-wrap gap-2">${causeFields.map(cause => `<label><input type="checkbox" class="cause-check" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
-                });
-                html += `</tbody></table></div>`;
-                container.innerHTML = html;
-
-                refreshDatalistOptions();
-                const clientInput = document.getElementById('extra_Customer_Name');
-                if (clientInput) {
-                    clientInput.removeEventListener('input', filterSuggestionsByCurrentClient);
-                    clientInput.addEventListener('input', filterSuggestionsByCurrentClient);
-                    if (clientInput.value.trim()) {
-                        refreshDatalistOptions(clientInput.value.trim());
-                    }
-                }
-                const partName = document.getElementById('extra_Part_Name')?.value?.trim();
-                if (partName) fetchLastOperation();
-
-                attachPartListListeners();
-
-                if (isAssemblyProcess()) {
-                    document.getElementById('quantitySummary').style.display = 'none';
-                    document.getElementById('assemblyProgressContainer').classList.remove('hidden');
-                    if (!isEditMode) {
-                        selectedParts = [];
-                        document.getElementById('totalDeliveredQty').value = 0;
-                    }
-                    setTimeout(() => {
-                        populatePartListMultiSelect();
-                        renderSelectedPartsTable();
-                        updateAssemblyProgress();
-                    }, 200);
-                } else {
-                    document.getElementById('quantitySummary').style.display = 'grid';
-                    document.getElementById('assemblyProgressContainer').classList.add('hidden');
-                }
-                attachQuantityListeners();
-                updateDeliveredQty();
             }
+            const def = getCurrentDef();
+            let html =
+                `<div class="mb-3"><button type="button" class="btn-secondary text-sm" onclick="scanDocumentAndFill()" title="Scan document with OCR to auto-fill client, title, DWG and part"><i class="fa-solid fa-camera mr-2"></i> Scan Document</button></div>`;
+            if (def.extraFields && def.extraFields.length) {
+                html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-white/5 pb-5 mb-5">`;
+                def.extraFields.forEach(field => {
+                    const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                    if (field === "Work Station") {
+                        html += getWorkStationHtml(currentProcess, "");
+                    } else if (field === "Location") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Location</label><select id="${safeId}" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
+                    } else if (field === "Customer Name") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
+                    } else if (field === "Project Name") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
+                    } else if (field === "Subtitle") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
+                    } else if (field === "Sub Sub Assembly") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
+                    } else if (field === "Drawing No.") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">DWG No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan"></div>`;
+                    } else if (field === "Part Name") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Part Name</label><input type="text" id="${safeId}" list="partNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
+                    } else if (field === "Tag No.") {
+                        if (isAssemblyProcess()) {
+                            html += `
+                                <div class="part-list-container">
+                                  <label class="block text-xs font-medium text-slate-400 mb-1">Part List <span class="text-slate-500 text-xs">(select parts, then enter qty)</span></label>
+                                  <select id="${safeId}" multiple size="4" class="glass-select w-full rounded-lg px-3 py-2 text-sm part-list-multi">
+                                    <option value="">-- Select Parts --</option>
+                                  </select>
+                                  <div id="selectedPartsContainer" class="selected-parts-container mt-2 bg-white/5 rounded-lg p-2 max-h-48 overflow-y-auto scrollbar-thin">
+                                    <div class="text-slate-500 text-sm italic py-1">No parts selected</div>
+                                  </div>
+                                </div>
+                              `;
+                        } else {
+                            html +=
+                                `<div><label class="block text-xs font-medium text-slate-400 mb-1">Tag No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Tag number"></div>`;
+                        }
+                    } else if (field !== "Work Station") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">${field}</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></div>`;
+                    }
+                });
+                html += `</div>`;
+            }
+            html +=
+                `<div class="overflow-x-auto rounded-xl border border-white/5"><table class="table-glass text-sm"><thead><tr><th class="p-3">Inspection Parameters</th><th class="p-3">Acceptance Conditions</th><th class="p-3">Cause of Defects</th></tr></thead><tbody>`;
+            def.parameters.forEach((param, idx) => {
+                const paramId = `p_${idx}`;
+                html +=
+                    `<tr><td class="p-3 font-medium text-slate-200">${param}</td><td class="p-3"><select id="rating_${paramId}" class="glass-select w-full rounded-lg px-3 py-1.5 text-sm">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="p-3"><div class="flex flex-wrap gap-3">${causeFields.map(cause => `<label class="text-sm text-slate-300 flex items-center gap-1.5"><input type="checkbox" class="cause-check accent-sky-400" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
+            });
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+
+            refreshDatalistOptions();
+            const clientInput = document.getElementById('extra_Customer_Name');
+            if (clientInput) {
+                clientInput.removeEventListener('input', filterSuggestionsByCurrentClient);
+                clientInput.addEventListener('input', filterSuggestionsByCurrentClient);
+                if (clientInput.value.trim()) refreshDatalistOptions(clientInput.value.trim());
+            }
+            const partName = document.getElementById('extra_Part_Name')?.value?.trim();
+            if (partName) fetchLastOperation();
+
+            attachPartListListeners();
+
+            if (isAssemblyProcess()) {
+                document.getElementById('quantitySummary').style.display = 'none';
+                document.getElementById('assemblyProgressContainer').classList.remove('hidden');
+                if (!isEditMode) { selectedParts = [];
+                    document.getElementById('totalDeliveredQty').value = 0; }
+                setTimeout(() => { populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                    updateAssemblyProgress(); }, 200);
+            } else {
+                document.getElementById('quantitySummary').style.display = 'grid';
+                document.getElementById('assemblyProgressContainer').classList.add('hidden');
+            }
+            attachQuantityListeners();
+            updateDeliveredQty();
         }
 
         function switchProcess() {
@@ -1386,17 +1859,15 @@
             updateVisibility();
             if (isAssemblyProcess()) {
                 document.getElementById('assemblyProgressContainer').classList.remove('hidden');
-                setTimeout(() => {
-                    populatePartListMultiSelect();
+                setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                }, 300);
+                    updateAssemblyProgress(); }, 300);
             } else {
                 document.getElementById('assemblyProgressContainer').classList.add('hidden');
             }
         }
 
-        // ─── FIXED: getExtraFields ───
+        // ─── GET / SET EXTRA FIELDS ───
         function getExtraFields() {
             if (currentProcess === "Incoming") {
                 return {
@@ -1418,8 +1889,7 @@
             }
             const def = getCurrentDef();
             const extra = {};
-            let partsObj = null;  // declared here to be accessible later
-
+            let partsObj = null;
             if (isAssemblyProcess()) {
                 partsObj = {};
                 selectedParts.forEach(p => { partsObj[p.name] = p.qty || 0; });
@@ -1427,7 +1897,6 @@
                 extra['totalDeliveredQty'] = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
                 extra['selectedPartNames'] = selectedParts.map(p => p.name);
             }
-
             if (def.extraFields) {
                 def.extraFields.forEach(field => {
                     const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
@@ -1444,7 +1913,6 @@
             return extra;
         }
 
-        // ─── FIXED: setExtraFields ───
         function setExtraFields(extra) {
             if (currentProcess === "Incoming") {
                 if (extra && extra.incoming_items) setIncomingItemsData(extra.incoming_items);
@@ -1468,47 +1936,30 @@
                 return;
             }
             const def = getCurrentDef();
-            // Restore assembly-specific fields
             if (isAssemblyProcess()) {
                 let partsObj = {};
-                if (extra['selectedParts']) {
-                    partsObj = extra['selectedParts'];
-                } else if (extra['Tag No.']) {
-                    try {
-                        const parsed = JSON.parse(extra['Tag No.']);
-                        if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-                            partsObj = parsed;
-                        }
-                    } catch (e) {}
+                if (extra['selectedParts']) partsObj = extra['selectedParts'];
+                else if (extra['Tag No.']) {
+                    try { const parsed = JSON.parse(extra['Tag No.']); if (typeof parsed === 'object' && !Array.isArray(
+                            parsed)) partsObj = parsed; } catch (e) {}
                 }
-                // Convert to array
-                selectedParts = Object.keys(partsObj).map(name => ({
-                    name: name,
-                    qty: partsObj[name] || 0
-                }));
-                if (extra['totalDeliveredQty'] !== undefined) {
-                    document.getElementById('totalDeliveredQty').value = extra['totalDeliveredQty'];
-                }
+                selectedParts = Object.keys(partsObj).map(name => ({ name, qty: partsObj[name] || 0 }));
+                if (extra['totalDeliveredQty'] !== undefined) document.getElementById('totalDeliveredQty').value = extra[
+                    'totalDeliveredQty'];
             }
             if (def.extraFields) {
                 def.extraFields.forEach(field => {
                     const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                     const el = document.getElementById(id);
                     if (el && extra[field] !== undefined) {
-                        if (field === "Tag No." && isAssemblyProcess()) {
-                            // handled above
-                        } else {
-                            el.value = extra[field];
-                        }
+                        if (field === "Tag No." && isAssemblyProcess()) {} else el.value = extra[field];
                     }
                 });
             }
             if (isAssemblyProcess()) {
-                setTimeout(() => {
-                    populatePartListMultiSelect();
+                setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                }, 200);
+                    updateAssemblyProgress(); }, 200);
             }
         }
 
@@ -1520,8 +1971,7 @@
                 const paramId = `p_${i}`;
                 const rating = document.getElementById(`rating_${paramId}`)?.value || '';
                 const causes = Array.from(document.querySelectorAll(`.cause-check[data-param="${paramId}"]:checked`))
-                    .map(cb => cb
-                        .value);
+                    .map(cb => cb.value);
                 data[paramId] = { parameter: def.parameters[i], rating, causes };
             }
             return data;
@@ -1543,64 +1993,49 @@
             }
         }
 
+        // ─── COMPUTE FAILURE COST ───
         function computeFailureCost() {
             const mat = +document.getElementById("defectedMaterialCost").value || 0;
             const lab = +document.getElementById("laborHours").value || 0;
             const sal = +document.getElementById("salaryPerHour").value || 0;
             const machH = +document.getElementById("machiningHours").value || 0;
             const machR = +document.getElementById("machiningCostPerHr").value || 0;
-            const rework = 0;
-            const reject = 0;
-            const mult = (rework + reject) || 1;
+            const mult = 1;
             const total = (mat + lab * sal + machH * machR) * mult;
             document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
             document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
             return total;
         }
 
+        // ─── LAST OPERATION ───
         async function fetchLastOperation() {
             const partName = document.getElementById('extra_Part_Name')?.value?.trim();
             const container = document.getElementById('lastOperationContainer');
             const dataDiv = document.getElementById('lastOpData');
             const noDataDiv = document.getElementById('lastOpNoData');
-
-            if (!partName) {
-                container.classList.add('hidden');
-                return;
-            }
+            if (!partName) { container.classList.add('hidden'); return; }
             container.classList.remove('hidden');
-
             const projectName = document.getElementById('extra_Project_Name')?.value?.trim() || '';
             const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
             const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
             const drawingNo = document.getElementById('extra_Drawing_No_')?.value?.trim() || '';
             const tagNo = document.getElementById('extra_Tag_No_')?.value?.trim() || '';
             const excludeId = document.getElementById('editId').value || null;
-
             try {
                 const resp = await fetch('/api/inspections/last-operation', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        part_name: partName,
-                        project_name: projectName,
-                        subtitle: subtitle,
-                        sub_sub_assembly: subSub,
-                        drawing_no: drawingNo,
-                        tag_no: tagNo,
-                        exclude_id: excludeId
-                    })
+                    body: JSON.stringify({ part_name: partName, project_name: projectName, subtitle: subtitle,
+                        sub_sub_assembly: subSub, drawing_no: drawingNo, tag_no: tagNo, exclude_id: excludeId })
                 });
                 if (!resp.ok) throw new Error();
                 const data = await resp.json();
-
                 if (data.last_operation) {
                     const op = data.last_operation;
                     document.getElementById('lastOpProcess').textContent = op.process_type || '—';
                     document.getElementById('lastOpCondition').textContent = op.operation_status || '—';
                     document.getElementById('lastOpDate').textContent = op.submitted_at ? new Date(op.submitted_at)
-                        .toLocaleDateString() :
-                        '—';
+                        .toLocaleDateString() : '—';
                     document.getElementById('lastOpRating').textContent = op.acceptance_rating || '—';
                     document.getElementById('lastOpSuggested').textContent = op.suggested_next || '—';
                     dataDiv.classList.remove('hidden');
@@ -1610,7 +2045,7 @@
                     noDataDiv.classList.remove('hidden');
                 }
             } catch (err) {
-                console.error('Failed to fetch last operation:', err);
+                console.error(err);
                 dataDiv.classList.add('hidden');
                 noDataDiv.classList.remove('hidden');
                 noDataDiv.textContent = '❌ Could not load data.';
@@ -1631,6 +2066,7 @@
             return 0;
         }
 
+        // ─── RESET / CANCEL ───
         function resetForm() {
             document.getElementById("inspectionForm").reset();
             selectedParts = [];
@@ -1652,11 +2088,9 @@
             updateVisibility();
             if (isAssemblyProcess()) {
                 document.getElementById('assemblyProgressContainer').classList.remove('hidden');
-                setTimeout(() => {
-                    populatePartListMultiSelect();
+                setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                }, 300);
+                    updateAssemblyProgress(); }, 300);
             } else {
                 document.getElementById('assemblyProgressContainer').classList.add('hidden');
             }
@@ -1666,6 +2100,7 @@
         function cancelEdit() { resetForm();
             loadHistory(); }
 
+        // ─── DELETE ───
         async function deleteInspection(id) {
             if (!confirm('⚠️ Are you sure you want to delete this inspection record? This action cannot be undone.'))
                 return;
@@ -1679,19 +2114,19 @@
             }
         }
 
+        // ─── SAVE ───
         async function saveToBackend() {
             const saveBtn = document.getElementById('saveBtn');
             const saveText = document.getElementById('saveBtnText');
             saveBtn.classList.add('btn-loading');
-            saveText.innerHTML = '<span class="btn-spinner"></span> Saving...';
+            saveText.innerHTML = '<span class="btn-spinner"></span> Saving…';
             try {
                 let engineerName = document.getElementById("qcEngineerName").value.trim();
                 if (!engineerName) { showToast('Please enter QC Engineer Name', 'error'); return; }
                 const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
                 if (!sourceType) { showToast('Please select Source', 'error'); return; }
                 const processTypeText = document.getElementById("processType").options[document.getElementById(
-                    "processType")
-                    .selectedIndex].text;
+                    "processType").selectedIndex].text;
                 const acceptanceData = getAcceptanceData();
                 const extraFields = getExtraFields();
 
@@ -1772,6 +2207,7 @@
             }
         }
 
+        // ─── HISTORY ───
         async function loadHistory() {
             try {
                 const resp = await fetch('/api/inspections');
@@ -1782,31 +2218,30 @@
                 let displayData = allData;
                 if (engineerFromUrl) displayData = displayData.filter(row => row.username === currentEngineer);
                 const histDiv = document.getElementById("inspectionHistory");
-                if (!displayData.length) histDiv.innerHTML = "<p class='text-gray-500'>No inspections found.</p>";
+                if (!displayData.length) histDiv.innerHTML =
+                    "<p class='text-slate-500 text-sm italic py-2'>No inspections found.</p>";
                 else histDiv.innerHTML = displayData.map(row =>
-                        `<div class="border-b py-2 hover:bg-gray-50 transition">
-                              <div class="flex justify-between items-center">
-                                <div>
-                                  <span class="font-semibold">${new Date(row.submitted_at).toLocaleString()}</span><br>
-                                  <span class="text-sm">Process: ${row.process_type||'Rolling'}</span>
-                                </div>
-                                <div class="flex gap-2">
-                                  <button onclick="editInspection(${row.id})" class="text-blue-600 hover:text-blue-800 text-sm underline">Edit</button>
-                                  <button onclick="deleteInspection(${row.id})" class="text-red-600 hover:text-red-800 text-sm underline" title="Delete">🗑️</button>
-                                </div>
-                              </div>
-                            </div>`
-                    ).join("");
+                    `<div class="flex flex-wrap justify-between items-center py-2 px-2 rounded-lg hover:bg-white/5 transition border-b border-white/5">
+                        <div class="text-sm">
+                          <span class="text-slate-300 font-medium">${new Date(row.submitted_at).toLocaleString()}</span>
+                          <span class="text-slate-400 ml-3">${row.process_type||'Rolling'}</span>
+                          ${row.acceptance_rating ? `<span class="ml-2 rating-pill ${row.acceptance_rating.toLowerCase().replace(' ','-')}">${row.acceptance_rating}</span>` : ''}
+                        </div>
+                        <div class="flex gap-2">
+                          <button onclick="editInspection(${row.id})" class="text-sky-400 hover:text-sky-300 text-sm transition"><i class="fa-regular fa-pen-to-square"></i></button>
+                          <button onclick="deleteInspection(${row.id})" class="text-rose-400/70 hover:text-rose-300 text-sm transition"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                      </div>`
+                ).join("");
                 if (isAssemblyProcess()) {
-                    setTimeout(() => {
-                        populatePartListMultiSelect();
+                    setTimeout(() => { populatePartListMultiSelect();
                         renderSelectedPartsTable();
-                        updateAssemblyProgress();
-                    }, 300);
+                        updateAssemblyProgress(); }, 300);
                 }
             } catch (err) { showToast('Error loading history', 'error'); }
         }
 
+        // ─── EDIT ───
         async function editInspection(id) {
             try {
                 const resp = await fetch(`/api/inspections/${id}`);
@@ -1832,10 +2267,8 @@
             updateTotalTime();
 
             if (isAssemblyProcess()) {
-                // Will be restored via setExtraFields
-                if (inspection.total_delivered_qty !== undefined) {
-                    document.getElementById('totalDeliveredQty').value = inspection.total_delivered_qty;
-                }
+                if (inspection.total_delivered_qty !== undefined) document.getElementById('totalDeliveredQty').value =
+                    inspection.total_delivered_qty;
                 document.getElementById('acceptedQty').value = 0;
                 document.getElementById('reworkQty').value = 0;
                 document.getElementById('rejectQty').value = 0;
@@ -1873,16 +2306,11 @@
             const rateToRestore = inspection.machining_cost_per_hr ? (inspection.machining_cost_per_hr).toFixed(4) : "";
             populateMachineDropdown(rateToRestore);
             const savedWorkStation = inspection.extra_fields?.["Work Station"];
-            if (savedWorkStation) {
-                const wsSelect = document.getElementById("extra_Work_Station");
-                if (wsSelect) wsSelect.value = savedWorkStation;
-            }
+            if (savedWorkStation) { const wsSelect = document.getElementById("extra_Work_Station"); if (wsSelect) wsSelect
+                    .value = savedWorkStation; }
             const clientInput = document.getElementById('extra_Customer_Name');
-            if (clientInput && clientInput.value.trim()) {
-                refreshDatalistOptions(clientInput.value.trim());
-            } else {
-                refreshDatalistOptions();
-            }
+            if (clientInput && clientInput.value.trim()) refreshDatalistOptions(clientInput.value.trim());
+            else refreshDatalistOptions();
             const suggestedInput = document.getElementById('suggestedNextOp');
             if (inspection.suggested_next_operation) suggestedInput.value = inspection.suggested_next_operation;
             else populateSuggestedNextOps();
@@ -1890,15 +2318,14 @@
             if (partName) fetchLastOperation();
 
             if (isAssemblyProcess()) {
-                setTimeout(() => {
-                    populatePartListMultiSelect();
+                setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                }, 300);
+                    updateAssemblyProgress(); }, 300);
             }
             updateVisibility();
         }
 
+        // ─── SUGGESTED NEXT OPS ───
         const PROCESS_ORDER = [
             "Incoming", "Punching", "Rolling", "Bending", "Welding", "Pressing",
             "Milling", "Casting", "PatternCore", "Assembling", "Testing",
@@ -1922,13 +2349,10 @@
                 datalist.appendChild(opt);
                 if (i === idx + 1) firstSuggestion = PROCESS_ORDER[i];
             }
-            if (!input.value.trim() && firstSuggestion) {
-                input.value = firstSuggestion;
-            }
+            if (!input.value.trim() && firstSuggestion) input.value = firstSuggestion;
         }
 
-        // ─── EVENT BINDING FOR PART LIST ───
-
+        // ─── PART LIST LISTENERS ───
         function attachPartListListeners() {
             const selectEl = document.getElementById('extra_Tag_No_');
             if (selectEl && isAssemblyProcess()) {
@@ -1949,26 +2373,18 @@
 
         let _filterTimer = null;
 
-        function onFilterChangeDebounced() {
-            clearTimeout(_filterTimer);
-            _filterTimer = setTimeout(onFilterChange, 300);
-        }
+        function onFilterChangeDebounced() { clearTimeout(_filterTimer);
+            _filterTimer = setTimeout(onFilterChange, 300); }
 
         function onFilterChange() {
             if (isAssemblyProcess()) {
                 populatePartListMultiSelect();
-                // Keep selected parts that are still in the new options
                 const selectEl = document.getElementById('extra_Tag_No_');
                 if (selectEl) {
                     const availableOptions = Array.from(selectEl.options).map(o => o.value).filter(v => v !== '');
                     selectedParts = selectedParts.filter(p => availableOptions.includes(p.name));
-                    // Update selected attributes
                     Array.from(selectEl.options).forEach(opt => {
-                        if (opt.value && selectedParts.some(p => p.name === opt.value)) {
-                            opt.selected = true;
-                        } else {
-                            opt.selected = false;
-                        }
+                        opt.selected = opt.value && selectedParts.some(p => p.name === opt.value);
                     });
                     renderSelectedPartsTable();
                     updateAssemblyProgress();
@@ -1977,7 +2393,6 @@
         }
 
         // ─── QUANTITY LISTENERS ───
-
         function updateDeliveredQty() {
             const accepted = parseFloat(document.getElementById('acceptedQty').value) || 0;
             const rework = parseFloat(document.getElementById('reworkQty').value) || 0;
@@ -1998,6 +2413,7 @@
             });
         }
 
+        // ─── EVENT BINDINGS ───
         document.getElementById("levelSelect").addEventListener("change", function(e) {
             const lvl = e.target.value;
             const salField = document.getElementById("salaryPerHour");
@@ -2009,8 +2425,7 @@
             computeFailureCost();
         });
 
-        ["defectedMaterialCost", "laborHours", "salaryPerHour", "machiningHours", "machiningCostPerHr"]
-        .forEach(id =>
+        ["defectedMaterialCost", "laborHours", "salaryPerHour", "machiningHours", "machiningCostPerHr"].forEach(id =>
             document.getElementById(id)?.addEventListener("input", computeFailureCost)
         );
         document.getElementById("startTime")?.addEventListener("change", updateTotalTime);
@@ -2019,7 +2434,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('🔐 QC Inspection ready – manual quantity entry for assembly parts (fixed partsObj error).');
+        console.log('🔐 QC Inspection ready – glass UI v2.0');
     </script>
 </body>
 </html>
