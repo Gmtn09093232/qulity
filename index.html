@@ -849,7 +849,7 @@
                     <div class="flex-1 text-center">
                         <span class="progress-label">Assembly Completion</span>
                         <div class="progress-value" id="assemblyProgressDisplay">0%</div>
-                        <div class="progress-detail" id="assemblyProgressDetail">0 / 0 parts selected</div>
+                        <div class="progress-detail" id="assemblyProgressDetail">0 / 0 delivered</div>
                     </div>
                     <div class="flex-1 text-right">
                         <span class="progress-label">Total Qty (Accepted + Conditional)</span>
@@ -1122,20 +1122,38 @@
 
         function updateAssemblyProgress() {
             const selectEl = document.getElementById('extra_Tag_No_');
+            // total delivered = sum of quantities of selected parts
             const totalDelivered = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
             document.getElementById('totalDeliveredQty').value = totalDelivered;
             document.getElementById('totalAcceptedConditionalDisplay').textContent = totalDelivered;
+
             if (!selectEl || !isAssemblyProcess()) {
                 document.getElementById('assemblyProgressDisplay').textContent = '0%';
-                document.getElementById('assemblyProgressDetail').textContent = '0 / 0 parts selected';
+                document.getElementById('assemblyProgressDetail').textContent = '0 / 0 delivered';
                 return;
             }
-            const totalOptions = Array.from(selectEl.options).filter(o => o.value !== '').length;
-            const selectedCount = selectedParts.length;
-            const pct = totalOptions > 0 ? Math.round((selectedCount / totalOptions) * 100) : 0;
-            document.getElementById('assemblyProgressDisplay').textContent = pct + '%';
-            document.getElementById('assemblyProgressDetail').textContent = `${selectedCount} / ${totalOptions} parts selected`;
+
+            // Count total parts available in the dropdown (excluding the placeholder)
+            const allOptions = Array.from(selectEl.options).filter(o => o.value !== '');
+            const totalPartsCount = allOptions.length;
+
+            // For unselected parts, we use a default quantity of 1 per part
+            const selectedNames = new Set(selectedParts.map(p => p.name));
+            const unselectedCount = allOptions.filter(o => !selectedNames.has(o.value)).length;
+
+            // Total quantity of all parts in the system = totalDelivered + (unselectedCount * 1)
+            const totalSystemQty = totalDelivered + unselectedCount;
+
+            // Assembly completion percentage = (totalDelivered / totalSystemQty) * 100
+            const pct = totalSystemQty > 0 ? Math.round((totalDelivered / totalSystemQty) * 100) : 0;
+
             const displayEl = document.getElementById('assemblyProgressDisplay');
+            displayEl.textContent = pct + '%';
+
+            // Show: "X / Y delivered" where X = totalDelivered, Y = totalSystemQty
+            document.getElementById('assemblyProgressDetail').textContent =
+                `${totalDelivered} / ${totalSystemQty} delivered`;
+
             if (pct >= 100) displayEl.style.color = '#15803d';
             else if (pct >= 50) displayEl.style.color = '#a16207';
             else displayEl.style.color = '#b91c1c';
@@ -2140,7 +2158,14 @@
                 if (isAssemblyProcess()) {
                     total_delivered_qty = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
                     selected_parts_count = selectedParts.length;
-                    assembly_progress_pct = parseInt(document.getElementById('assemblyProgressDisplay').textContent) || 0;
+                    const selectEl = document.getElementById('extra_Tag_No_');
+                    const allOptions = selectEl ? Array.from(selectEl.options).filter(o => o.value !== '') : [];
+                    const totalPartsCount = allOptions.length;
+                    const selectedNames = new Set(selectedParts.map(p => p.name));
+                    const unselectedCount = allOptions.filter(o => !selectedNames.has(o.value)).length;
+                    const totalSystemQty = total_delivered_qty + unselectedCount;
+                    assembly_progress_pct = totalSystemQty > 0 ? Math.round((total_delivered_qty / totalSystemQty) *
+                        100) : 0;
                     delivered_qty = total_delivered_qty;
                     accepted_qty = total_delivered_qty;
                     rework_qty = 0;
