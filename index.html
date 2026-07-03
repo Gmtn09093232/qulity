@@ -1112,7 +1112,7 @@
             selectedParts.forEach((part, index) => {
                 html += `<tr>
                     <td class="text-slate-700 font-medium text-sm">${escapeHtml(part.name)}</td>
-                    <td><input type="number" min="0" step="1" value="${part.qty || 0}" class="part-qty-input" data-index="${index}" /></td>
+                    <td><input type="number" min="0" step="1" value="${part.qty || 1}" class="part-qty-input" data-index="${index}" /></td>
                     <td><span class="remove-part-btn" data-index="${index}"><i class="fa-regular fa-trash-can"></i></span></td>
                 </tr>`;
             });
@@ -1183,8 +1183,11 @@
             const selectedValues = Array.from(selectEl.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             const existingMap = {};
             selectedParts.forEach(p => { existingMap[p.name] = p.qty; });
-            const newParts = selectedValues.map(name => ({ name, qty: existingMap[name] !== undefined ? existingMap[name] :
-                    0 }));
+            // For new parts, set default quantity = 1; keep existing quantities for parts already in the list
+            const newParts = selectedValues.map(name => ({
+                name,
+                qty: existingMap[name] !== undefined ? existingMap[name] : 1
+            }));
             selectedParts = newParts;
             renderSelectedPartsTable();
             updateAssemblyProgress();
