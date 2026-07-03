@@ -23,12 +23,12 @@
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
-            background: radial-gradient(ellipse at 20% 50%, #0b1120, #030712);
-            color: #e8edf5;
+            background: linear-gradient(145deg, #eef2f7 0%, #f8fafc 100%);
+            color: #1e293b;
             overflow-x: hidden;
         }
 
-        /* ── background glow orbs ── */
+        /* ── background orbs (soft blue-white) ── */
         .bg-orbs {
             position: fixed;
             inset: 0;
@@ -40,13 +40,13 @@
             position: absolute;
             border-radius: 50%;
             filter: blur(100px);
-            opacity: 0.25;
+            opacity: 0.20;
             animation: orbFloat 18s ease-in-out infinite alternate;
         }
         .bg-orbs .orb:nth-child(1) {
             width: 500px;
             height: 500px;
-            background: #4f46e5;
+            background: #b9d0f0;
             top: -10%;
             left: -8%;
             animation-delay: 0s;
@@ -54,7 +54,7 @@
         .bg-orbs .orb:nth-child(2) {
             width: 600px;
             height: 600px;
-            background: #0ea5e9;
+            background: #c7dbf5;
             bottom: -15%;
             right: -10%;
             animation-delay: -6s;
@@ -62,11 +62,11 @@
         .bg-orbs .orb:nth-child(3) {
             width: 400px;
             height: 400px;
-            background: #7c3aed;
+            background: #d4e2f7;
             top: 40%;
             right: 20%;
             animation-delay: -12s;
-            opacity: 0.15;
+            opacity: 0.12;
         }
         @keyframes orbFloat {
             0% {
@@ -77,65 +77,65 @@
             }
         }
 
-        /* ── glassmorphism core ── */
+        /* ── glassmorphism (light, blue-white) ── */
         .glass {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(24px) saturate(1.4);
-            -webkit-backdrop-filter: blur(24px) saturate(1.4);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 8px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.60);
+            backdrop-filter: blur(20px) saturate(1.4);
+            -webkit-backdrop-filter: blur(20px) saturate(1.4);
+            border: 1px solid rgba(255, 255, 255, 0.50);
+            box-shadow: 0 8px 32px rgba(0, 20, 40, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
         }
         .glass-strong {
-            background: rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(32px) saturate(1.6);
-            -webkit-backdrop-filter: blur(32px) saturate(1.6);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            box-shadow: 0 12px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(28px) saturate(1.6);
+            -webkit-backdrop-filter: blur(28px) saturate(1.6);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            box-shadow: 0 12px 48px rgba(0, 20, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
         }
         .glass-input {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.70);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #e8edf5;
+            border: 1px solid rgba(200, 215, 235, 0.40);
+            color: #1e293b;
             transition: all 0.25s ease;
         }
         .glass-input:focus {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(56, 189, 248, 0.5);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1), inset 0 0 20px rgba(56, 189, 248, 0.02);
+            background: rgba(255, 255, 255, 0.85);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08), inset 0 0 20px rgba(59, 130, 246, 0.02);
             outline: none;
         }
         .glass-input::placeholder {
-            color: rgba(255, 255, 255, 0.25);
+            color: #94a3b8;
         }
         .glass-select {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.70);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #e8edf5;
+            border: 1px solid rgba(200, 215, 235, 0.40);
+            color: #1e293b;
             transition: all 0.25s ease;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a9bb5' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234b5a7a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 12px center;
             padding-right: 36px;
         }
         .glass-select:focus {
-            background-color: rgba(255, 255, 255, 0.08);
-            border-color: rgba(56, 189, 248, 0.5);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+            background-color: rgba(255, 255, 255, 0.85);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
             outline: none;
         }
         .glass-select option {
-            background: #111827;
-            color: #e8edf5;
+            background: #ffffff;
+            color: #1e293b;
         }
 
         /* ── buttons ── */
         .btn-primary {
-            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
             border: none;
             color: #fff;
             font-weight: 600;
@@ -143,7 +143,7 @@
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 4px 24px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -152,15 +152,15 @@
         }
         .btn-primary:hover {
             transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 40px rgba(56, 189, 248, 0.35);
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.25);
         }
         .btn-primary:active {
             transform: scale(0.96);
         }
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #d1d9e8;
+            background: rgba(255, 255, 255, 0.50);
+            border: 1px solid rgba(200, 215, 235, 0.40);
+            color: #1e293b;
             padding: 10px 24px;
             border-radius: 12px;
             cursor: pointer;
@@ -172,17 +172,17 @@
             backdrop-filter: blur(8px);
         }
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.10);
-            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.75);
+            border-color: #94a3b8;
             transform: translateY(-1px);
         }
         .btn-secondary:active {
             transform: scale(0.96);
         }
         .btn-danger {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            color: #b91c1c;
             padding: 6px 14px;
             border-radius: 8px;
             cursor: pointer;
@@ -190,8 +190,8 @@
             font-size: 0.8rem;
         }
         .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.25);
-            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.25);
         }
 
         /* ── cards ── */
@@ -205,7 +205,7 @@
             inset: 0;
             border-radius: inherit;
             padding: 1px;
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.05));
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 235, 0.03));
             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: xor;
             mask-composite: exclude;
@@ -219,26 +219,28 @@
             width: 100%;
             border-radius: 12px;
             overflow: hidden;
+            background: rgba(255, 255, 255, 0.30);
         }
         .table-glass th {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.50);
             backdrop-filter: blur(8px);
             padding: 12px 10px;
             font-weight: 600;
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: #94a3b8;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #475569;
+            border-bottom: 1px solid rgba(200, 215, 235, 0.30);
             text-align: left;
         }
         .table-glass td {
             padding: 10px 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(200, 215, 235, 0.15);
             vertical-align: top;
+            background: rgba(255, 255, 255, 0.20);
         }
         .table-glass tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.40);
         }
 
         /* ── rating pills ── */
@@ -252,20 +254,20 @@
             letter-spacing: 0.3px;
         }
         .rating-pill.accepted {
-            background: rgba(52, 211, 153, 0.15);
-            color: #6ee7b7;
+            background: rgba(34, 197, 94, 0.10);
+            color: #15803d;
         }
         .rating-pill.conditional {
-            background: rgba(251, 191, 36, 0.15);
-            color: #fcd34d;
+            background: rgba(234, 179, 8, 0.10);
+            color: #a16207;
         }
         .rating-pill.rework {
-            background: rgba(251, 146, 60, 0.15);
-            color: #fb923c;
+            background: rgba(251, 146, 60, 0.10);
+            color: #c2410c;
         }
         .rating-pill.reject {
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
+            background: rgba(239, 68, 68, 0.10);
+            color: #b91c1c;
         }
 
         /* ── secret overlay ── */
@@ -276,7 +278,9 @@
             align-items: center;
             justify-content: center;
             z-index: 999;
-            background: radial-gradient(ellipse at 50% 40%, #0f172a, #020617);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
             transition: opacity 0.8s ease, visibility 0.8s ease;
         }
         #secretOverlay.hidden {
@@ -285,16 +289,16 @@
             pointer-events: none;
         }
         #secretOverlay .card {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.80);
             backdrop-filter: blur(40px);
             -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.60);
             border-radius: 32px;
             padding: 48px 40px;
             max-width: 400px;
             width: 92%;
             text-align: center;
-            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 120px rgba(56, 189, 248, 0.03);
+            box-shadow: 0 32px 80px rgba(0, 20, 40, 0.10), 0 0 120px rgba(59, 130, 246, 0.03);
             position: relative;
             overflow: hidden;
         }
@@ -303,26 +307,26 @@
             position: absolute;
             inset: 0;
             border-radius: 32px;
-            background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.06), transparent 70%);
+            background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.04), transparent 70%);
             pointer-events: none;
         }
         #secretOverlay .gear-icon {
             font-size: 3.2rem;
             display: block;
-            color: #38bdf8;
-            opacity: 0.4;
+            color: #2563eb;
+            opacity: 0.30;
             animation: spin-slow 16s linear infinite;
             margin-bottom: 12px;
         }
         #secretOverlay h2 {
             font-size: 1.6rem;
             font-weight: 700;
-            color: #f1f5f9;
+            color: #0f172a;
             margin-bottom: 4px;
             letter-spacing: -0.3px;
         }
         #secretOverlay .sub {
-            color: #7a8aa8;
+            color: #64748b;
             font-size: 0.9rem;
             margin-bottom: 28px;
         }
@@ -330,9 +334,9 @@
             width: 100%;
             padding: 16px 20px;
             border-radius: 16px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #f1f5f9;
+            background: rgba(255, 255, 255, 0.70);
+            border: 1px solid rgba(200, 215, 235, 0.40);
+            color: #0f172a;
             font-size: 1.2rem;
             text-align: center;
             letter-spacing: 8px;
@@ -341,11 +345,11 @@
             font-family: inherit;
         }
         #secretOverlay input:focus {
-            border-color: #38bdf8;
-            box-shadow: 0 0 40px rgba(56, 189, 248, 0.06);
+            border-color: #3b82f6;
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.06);
         }
         #secretOverlay input::placeholder {
-            color: rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
             letter-spacing: 2px;
             font-size: 0.9rem;
         }
@@ -354,13 +358,13 @@
             padding: 16px;
             border: none;
             border-radius: 16px;
-            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
             color: #fff;
             font-weight: 700;
             font-size: 1.05rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 32px rgba(56, 189, 248, 0.15);
+            box-shadow: 0 4px 24px rgba(37, 99, 235, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -369,10 +373,10 @@
         }
         #secretOverlay .btn-submit:hover {
             transform: scale(1.02);
-            box-shadow: 0 8px 48px rgba(56, 189, 248, 0.25);
+            box-shadow: 0 8px 40px rgba(37, 99, 235, 0.25);
         }
         #secretOverlay .error {
-            color: #f87171;
+            color: #b91c1c;
             font-size: 0.85rem;
             min-height: 28px;
             margin-top: 10px;
@@ -423,16 +427,16 @@
             width: 90%;
         }
         .toast {
-            background: rgba(15, 23, 42, 0.92);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(200, 215, 235, 0.40);
             border-radius: 14px;
             padding: 14px 20px;
-            color: #f1f5f9;
+            color: #0f172a;
             font-size: 0.9rem;
-            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
-            border-left: 4px solid #38bdf8;
+            box-shadow: 0 12px 48px rgba(0, 20, 40, 0.08);
+            border-left: 4px solid #2563eb;
             transform: translateX(120%);
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             pointer-events: auto;
@@ -441,10 +445,10 @@
             transform: translateX(0);
         }
         .toast.error {
-            border-left-color: #f87171;
+            border-left-color: #b91c1c;
         }
         .toast.info {
-            border-left-color: #818cf8;
+            border-left-color: #2563eb;
         }
         .toast .toast-content {
             display: flex;
@@ -474,11 +478,11 @@
             height: 4px;
         }
         .scrollbar-thin::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(200, 215, 235, 0.20);
             border-radius: 8px;
         }
         .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(37, 99, 235, 0.20);
             border-radius: 8px;
         }
 
@@ -505,33 +509,33 @@
 
         .part-list-multi {
             min-height: 60px;
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.40);
             border-radius: 8px;
         }
         .part-list-multi option {
-            background: #111827;
-            color: #e8edf5;
+            background: #ffffff;
+            color: #1e293b;
             padding: 4px 8px;
         }
         .part-qty-table td {
             padding: 4px 6px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(200, 215, 235, 0.20);
         }
         .part-qty-table input[type="number"] {
             width: 70px;
             padding: 4px 6px;
             border-radius: 6px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            color: #e8edf5;
+            background: rgba(255, 255, 255, 0.60);
+            border: 1px solid rgba(200, 215, 235, 0.30);
+            color: #1e293b;
             font-size: 0.85rem;
         }
         .part-qty-table input[type="number"]:focus {
-            border-color: rgba(56, 189, 248, 0.3);
+            border-color: #3b82f6;
             outline: none;
         }
         .remove-part-btn {
-            color: #f87171;
+            color: #b91c1c;
             cursor: pointer;
             font-size: 0.9rem;
             padding: 0 4px;
@@ -543,8 +547,8 @@
         }
 
         .assembly-progress {
-            background: rgba(16, 185, 129, 0.04);
-            border: 1px solid rgba(16, 185, 129, 0.08);
+            background: rgba(37, 99, 235, 0.04);
+            border: 1px solid rgba(37, 99, 235, 0.10);
             border-radius: 12px;
             padding: 14px 20px;
             display: flex;
@@ -554,26 +558,26 @@
         }
         .assembly-progress .progress-label {
             font-weight: 600;
-            color: #6ee7b7;
+            color: #1e40af;
             font-size: 0.85rem;
         }
         .assembly-progress .progress-value {
             font-size: 2rem;
             font-weight: 700;
-            color: #6ee7b7;
+            color: #1e40af;
             line-height: 1.2;
         }
         .assembly-progress .progress-detail {
-            color: #94a3b8;
+            color: #475569;
             font-size: 0.85rem;
         }
         .assembly-progress .delivered-input {
             width: 140px;
             padding: 6px 10px;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            color: #e8edf5;
+            background: rgba(255, 255, 255, 0.40);
+            border: 1px solid rgba(200, 215, 235, 0.30);
+            color: #1e293b;
             cursor: not-allowed;
         }
 
@@ -626,7 +630,7 @@
                 width: 100%;
                 margin: 0;
                 padding: 20px;
-                background: #fff;
+                background: #ffffff;
                 color: #000;
             }
             .no-print {
@@ -634,14 +638,14 @@
             }
             .glass,
             .glass-strong {
-                background: #fff !important;
+                background: #ffffff !important;
                 backdrop-filter: none !important;
                 border: 1px solid #ddd !important;
                 box-shadow: none !important;
             }
             .glass-input,
             .glass-select {
-                background: #f5f5f5 !important;
+                background: #f5f7fa !important;
                 border: 1px solid #ccc !important;
                 color: #000 !important;
             }
@@ -686,16 +690,16 @@
         <!-- Header -->
         <div class="glass-strong rounded-2xl p-5 md:p-7 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 card-glow">
             <div>
-                <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
+                <h1 class="text-xl md:text-2xl font-bold text-slate-800">
                     Amhara Metal Industry &amp; Machine Technology Development Enterprise
                 </h1>
-                <p class="text-sm text-slate-400 font-medium mt-0.5">
+                <p class="text-sm text-slate-500 font-medium mt-0.5">
                     <i class="fa-regular fa-clipboard mr-2"></i>Quality Assurance Directorate – Inspection Checklist
                 </p>
             </div>
-            <div class="flex items-center gap-3 text-sm text-slate-400">
+            <div class="flex items-center gap-3 text-sm text-slate-500">
                 <span class="hidden sm:inline"><i class="fa-regular fa-clock mr-1"></i><span id="liveClock">--:--</span></span>
-                <span class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-medium">
+                <span class="px-3 py-1 rounded-full bg-blue-50/80 border border-blue-200/60 text-blue-700 text-xs font-medium">
                     <i class="fa-solid fa-cloud-upload-alt mr-1"></i> Live
                 </span>
             </div>
@@ -710,7 +714,7 @@
             <!-- Row: Process + Engineer -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Process Type <span class="text-rose-400">*</span></label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Process Type <span class="text-rose-600">*</span></label>
                     <select id="processType" class="glass-select w-full rounded-xl px-4 py-3 text-sm" onchange="switchProcess()">
                         <option value="Incoming">Incoming inspection (revised format)</option>
                         <option value="Punching">Punching Process</option>
@@ -741,7 +745,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1.5">QC Engineer Name <span class="text-rose-400">*</span></label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5">QC Engineer Name <span class="text-rose-600">*</span></label>
                     <input type="text" id="qcEngineerName" class="glass-input w-full rounded-xl px-4 py-3 text-sm" placeholder="e.g. Abebech Alemu" required />
                 </div>
             </div>
@@ -749,20 +753,20 @@
             <!-- Row: Source + Document -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Source of Process Inspection</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Source of Process Inspection</label>
                     <div class="flex flex-wrap gap-5 mt-1">
-                        <label class="flex items-center gap-2 text-sm text-slate-300"><input type="radio" name="sourceType" value="Outsource" required class="accent-sky-400" /> Outsource</label>
-                        <label class="flex items-center gap-2 text-sm text-slate-300"><input type="radio" name="sourceType" value="Insource" class="accent-sky-400" /> Insource</label>
+                        <label class="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="sourceType" value="Outsource" required class="accent-blue-600" /> Outsource</label>
+                        <label class="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="sourceType" value="Insource" class="accent-blue-600" /> Insource</label>
                     </div>
                     <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm mt-2" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Document Availability</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Document Availability</label>
                     <div class="flex gap-6">
-                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" id="designAvail" class="accent-sky-400" /> Design</label>
-                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" id="mppAvail" class="accent-sky-400" /> MPP</label>
+                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" id="designAvail" class="accent-blue-600" /> Design</label>
+                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" id="mppAvail" class="accent-blue-600" /> MPP</label>
                     </div>
-                    <label class="block text-sm font-medium text-slate-300 mt-3 mb-1.5">Operation Condition</label>
+                    <label class="block text-sm font-medium text-slate-600 mt-3 mb-1.5">Operation Condition</label>
                     <select id="operationStatus" class="glass-select w-full rounded-xl px-4 py-2.5 text-sm">
                         <option value="Holdup">Holdup</option>
                         <option value="Continue">Continue</option>
@@ -774,32 +778,32 @@
             <!-- Row: Shift, Operator, Hours, Time -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Shift Number</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Shift Number</label>
                     <div class="flex gap-4">
-                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="shift" value="1" class="accent-sky-400" /> Shift 1</label>
-                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="shift" value="2" class="accent-sky-400" /> Shift 2</label>
-                        <label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="shift" value="3" class="accent-sky-400" /> Shift 3</label>
+                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="shift" value="1" class="accent-blue-600" /> Shift 1</label>
+                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="shift" value="2" class="accent-blue-600" /> Shift 2</label>
+                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="shift" value="3" class="accent-blue-600" /> Shift 3</label>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="operatorName">Operator Name</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5" for="operatorName">Operator Name</label>
                     <input type="text" id="operatorName" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="Operator's name" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="laborHours">Labor Hours</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5" for="laborHours">Labor Hours</label>
                     <input type="number" step="0.5" id="laborHours" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="e.g. 2.5" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="machiningHours">Machining Hours</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5" for="machiningHours">Machining Hours</label>
                     <input type="number" step="0.5" id="machiningHours" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="e.g. 1.5" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Inspection Time</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Inspection Time</label>
                     <div class="flex gap-2">
                         <input type="time" id="startTime" class="glass-input rounded-xl px-3 py-2.5 text-sm w-1/2" title="Start" />
                         <input type="time" id="endTime" class="glass-input rounded-xl px-3 py-2.5 text-sm w-1/2" title="End" />
                     </div>
-                    <span id="totalTimeDisplay" class="text-xs text-slate-400 mt-1 block">Total: -- min</span>
+                    <span id="totalTimeDisplay" class="text-xs text-slate-500 mt-1 block">Total: -- min</span>
                 </div>
             </div>
 
@@ -810,29 +814,29 @@
 
             <!-- Last Operation -->
             <div id="lastOperationContainer" class="mt-2 hidden">
-                <div class="bg-sky-500/5 border border-sky-500/10 rounded-xl p-4">
-                    <h4 class="font-bold text-sky-300 text-sm flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Last Operation for this Part</h4>
+                <div class="bg-blue-50/60 border border-blue-200/60 rounded-xl p-4">
+                    <h4 class="font-bold text-blue-800 text-sm flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Last Operation for this Part</h4>
                     <div id="lastOpData" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
-                        <div><span class="text-slate-400">Process:</span> <span id="lastOpProcess" class="font-medium text-slate-200">—</span></div>
-                        <div><span class="text-slate-400">Condition:</span> <span id="lastOpCondition" class="font-medium text-slate-200">—</span></div>
-                        <div><span class="text-slate-400">Date:</span> <span id="lastOpDate" class="font-medium text-slate-200">—</span></div>
-                        <div><span class="text-slate-400">Rating:</span> <span id="lastOpRating" class="font-medium text-slate-200">—</span></div>
+                        <div><span class="text-slate-500">Process:</span> <span id="lastOpProcess" class="font-medium text-slate-800">—</span></div>
+                        <div><span class="text-slate-500">Condition:</span> <span id="lastOpCondition" class="font-medium text-slate-800">—</span></div>
+                        <div><span class="text-slate-500">Date:</span> <span id="lastOpDate" class="font-medium text-slate-800">—</span></div>
+                        <div><span class="text-slate-500">Rating:</span> <span id="lastOpRating" class="font-medium text-slate-800">—</span></div>
                     </div>
                     <div class="mt-2 text-sm">
-                        <span class="text-slate-400">Suggested Next:</span>
-                        <span id="lastOpSuggested" class="font-medium text-emerald-400">—</span>
+                        <span class="text-slate-500">Suggested Next:</span>
+                        <span id="lastOpSuggested" class="font-medium text-blue-700">—</span>
                     </div>
                     <div id="lastOpNoData" class="text-slate-500 text-sm italic mt-2 hidden">No previous operation found for this part.</div>
                 </div>
             </div>
 
             <!-- Quantity Summary (non-assembly) -->
-            <div id="quantitySummary" class="grid grid-cols-2 md:grid-cols-5 gap-3 bg-white/5 rounded-xl p-4">
-                <div><label class="block text-xs font-medium text-slate-400 mb-1">Delivered Qty</label><input type="number" id="deliveredQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm bg-white/5 cursor-not-allowed" readonly /></div>
-                <div><label class="block text-xs font-medium text-slate-400 mb-1">Accepted Qty</label><input type="number" id="acceptedQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                <div><label class="block text-xs font-medium text-slate-400 mb-1">Rework Qty</label><input type="number" id="reworkQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                <div><label class="block text-xs font-medium text-slate-400 mb-1">Reject Qty</label><input type="number" id="rejectQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                <div><label class="block text-xs font-medium text-slate-400 mb-1">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+            <div id="quantitySummary" class="grid grid-cols-2 md:grid-cols-5 gap-3 bg-white/40 rounded-xl p-4">
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Delivered Qty</label><input type="number" id="deliveredQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm bg-white/40 cursor-not-allowed" readonly /></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Accepted Qty</label><input type="number" id="acceptedQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Rework Qty</label><input type="number" id="reworkQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Reject Qty</label><input type="number" id="rejectQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
             </div>
 
             <!-- Assembly Progress -->
@@ -849,37 +853,37 @@
                     </div>
                     <div class="flex-1 text-right">
                         <span class="progress-label">Total Qty (Accepted + Conditional)</span>
-                        <div class="text-2xl font-bold text-emerald-400" id="totalAcceptedConditionalDisplay">0</div>
+                        <div class="text-2xl font-bold text-blue-700" id="totalAcceptedConditionalDisplay">0</div>
                     </div>
                 </div>
             </div>
 
             <!-- Internal Failure Costs -->
             <div class="glass rounded-xl p-5">
-                <h3 class="font-bold text-lg text-slate-200 flex items-center gap-2"><i class="fa-solid fa-coins text-amber-400/70"></i> Internal Failure Costs</h3>
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><i class="fa-solid fa-coins text-amber-600/70"></i> Internal Failure Costs</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Defected Material Cost (ETB)</label><input type="number" step="0.01" id="defectedMaterialCost" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Level</label><select id="levelSelect" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select --</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="custom">Custom</option></select></div>
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Salary per Hour (ETB)</label><input type="number" step="0.001" id="salaryPerHour" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Machine Description</label><select id="machineDescriptionSelect" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select Machine --</option></select></div>
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Defected Material Cost (ETB)</label><input type="number" step="0.01" id="defectedMaterialCost" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Level</label><select id="levelSelect" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select --</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="custom">Custom</option></select></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Salary per Hour (ETB)</label><input type="number" step="0.001" id="salaryPerHour" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Machine Description</label><select id="machineDescriptionSelect" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select Machine --</option></select></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
                 </div>
-                <div class="mt-4 p-3 rounded-xl bg-white/5 border border-white/5 flex flex-wrap items-center justify-between gap-3">
-                    <span class="font-medium text-slate-300">Total Internal Failure Cost (ETB):</span>
-                    <span id="totalFailureCostDisplay" class="text-xl font-bold text-emerald-400">0.00</span>
+                <div class="mt-4 p-3 rounded-xl bg-white/50 border border-white/60 flex flex-wrap items-center justify-between gap-3">
+                    <span class="font-medium text-slate-700">Total Internal Failure Cost (ETB):</span>
+                    <span id="totalFailureCostDisplay" class="text-xl font-bold text-blue-700">0.00</span>
                     <input type="hidden" id="totalInternalFailureCost" />
                 </div>
             </div>
 
             <!-- Suggested Next Operation -->
-            <div class="border-t border-white/5 pt-4">
-                <label class="block text-sm font-medium text-slate-300 mb-1.5">Suggested Next Operation</label>
+            <div class="border-t border-slate-200/60 pt-4">
+                <label class="block text-sm font-medium text-slate-600 mb-1.5">Suggested Next Operation</label>
                 <input type="text" id="suggestedNextOp" list="suggestedNextList" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="Type or select a suggestion…" />
                 <datalist id="suggestedNextList"></datalist>
             </div>
 
             <!-- Actions -->
-            <div class="flex flex-wrap justify-end gap-3 no-print pt-2 border-t border-white/5">
+            <div class="flex flex-wrap justify-end gap-3 no-print pt-2 border-t border-slate-200/60">
                 <button type="button" onclick="resetForm()" class="btn-secondary text-sm">
                     <i class="fa-regular fa-arrow-rotate-left"></i> Reset
                 </button>
@@ -891,14 +895,14 @@
                     <span id="saveBtnText">Save to Cloud</span>
                 </button>
             </div>
-            <div id="formMessage" class="text-center text-sm mt-2 text-slate-400"></div>
+            <div id="formMessage" class="text-center text-sm mt-2 text-slate-500"></div>
         </form>
 
         <!-- History -->
         <div class="glass-strong rounded-2xl p-5 md:p-6 mt-6 card-glow no-print">
             <div class="flex flex-wrap justify-between items-center gap-3">
-                <h3 class="font-bold text-lg text-slate-200 flex items-center gap-2"><i class="fa-regular fa-clock text-sky-400"></i> Previous Inspections</h3>
-                <button onclick="loadHistory()" class="text-sky-400 text-sm hover:text-sky-300 transition flex items-center gap-1.5">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><i class="fa-regular fa-clock text-blue-600"></i> Previous Inspections</h3>
+                <button onclick="loadHistory()" class="text-blue-600 text-sm hover:text-blue-800 transition flex items-center gap-1.5">
                     <i class="fa-solid fa-rotate-right"></i> Refresh
                 </button>
             </div>
@@ -906,7 +910,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="text-center text-xs text-slate-500/60 mt-6 no-print">
+        <div class="text-center text-xs text-slate-400/80 mt-6 no-print">
             AMIMTDE · Quality Assurance Directorate v2.0
         </div>
     </div>
@@ -937,7 +941,7 @@
             } else {
                 input.classList.add('shake');
                 errorEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Wrong secret number!';
-                input.style.borderColor = '#f87171';
+                input.style.borderColor = '#b91c1c';
                 setTimeout(() => {
                     input.classList.remove('shake');
                     input.style.borderColor = '';
@@ -1004,7 +1008,7 @@
             const f = document.getElementById('qcEngineerName');
             f.value = currentEngineer;
             f.readOnly = true;
-            f.classList.add('bg-white/5', 'cursor-not-allowed');
+            f.classList.add('bg-white/40', 'cursor-not-allowed');
         }
 
         // ─── HELPERS ───
@@ -1083,7 +1087,7 @@
             let html = `<table class="part-qty-table w-full"><tbody>`;
             selectedParts.forEach((part, index) => {
                 html += `<tr>
-                    <td class="text-slate-200 font-medium text-sm">${escapeHtml(part.name)}</td>
+                    <td class="text-slate-700 font-medium text-sm">${escapeHtml(part.name)}</td>
                     <td><input type="number" min="0" step="1" value="${part.qty || 0}" class="part-qty-input" data-index="${index}" /></td>
                     <td><span class="remove-part-btn" data-index="${index}"><i class="fa-regular fa-trash-can"></i></span></td>
                 </tr>`;
@@ -1132,9 +1136,9 @@
             document.getElementById('assemblyProgressDisplay').textContent = pct + '%';
             document.getElementById('assemblyProgressDetail').textContent = `${selectedCount} / ${totalOptions} parts selected`;
             const displayEl = document.getElementById('assemblyProgressDisplay');
-            if (pct >= 100) displayEl.style.color = '#6ee7b7';
-            else if (pct >= 50) displayEl.style.color = '#fcd34d';
-            else displayEl.style.color = '#f87171';
+            if (pct >= 100) displayEl.style.color = '#15803d';
+            else if (pct >= 50) displayEl.style.color = '#a16207';
+            else displayEl.style.color = '#b91c1c';
         }
 
         function onPartListSelectChange() {
@@ -1561,7 +1565,7 @@
             const opts = getWorkStationOptionsForProcess(currentProcess);
             const all = [...opts, "other"];
             let html =
-                `<div><label class="block text-xs font-medium text-slate-400 mb-1">Work Station</label><select id="extra_Work_Station" class="glass-select w-full rounded-lg px-3 py-2 text-sm">`;
+                `<div><label class="block text-xs font-medium text-slate-500 mb-1">Work Station</label><select id="extra_Work_Station" class="glass-select w-full rounded-lg px-3 py-2 text-sm">`;
             all.forEach(opt => {
                 const sel = (savedValue === opt) ? 'selected' : '';
                 html += `<option value="${opt}" ${sel}>${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`;
@@ -1667,18 +1671,18 @@
         function renderIncomingForm() {
             return `
                 <div class="glass rounded-xl p-5 space-y-5">
-                  <div class="text-center font-bold text-xl text-slate-200">INCOMING MATERIAL INSPECTION REPORT</div>
-                  <div class="text-right text-sm text-slate-400">Document No. QAD/001</div>
+                  <div class="text-center font-bold text-xl text-slate-700">INCOMING MATERIAL INSPECTION REPORT</div>
+                  <div class="text-right text-sm text-slate-500">Document No. QAD/001</div>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">1. Source of Item</label><div class="flex gap-4"><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="sourceItem" value="Local" class="accent-sky-400" /> Local</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="sourceItem" value="Foreign" class="accent-sky-400" /> Foreign</label></div><div><label class="text-xs text-slate-400">Address:</label><input type="text" id="sourceAddress" class="glass-input w-full rounded-lg px-3 py-2 text-sm mt-1" /></div></div>
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">2. Procurement type</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="procType" value="Direct" class="accent-sky-400" /> Direct</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="procType" value="Proforma" class="accent-sky-400" /> Proforma</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="procType" value="Bid" class="accent-sky-400" /> Bid</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="procType" value="Other" class="accent-sky-400" /> Other</label><input type="text" id="procTypeOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><label class="text-xs text-slate-400 mt-1 block">Method of Inspection:</label><input type="text" id="methodInspection" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="visual inspection etc." /></div>
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">3. The PR is Requested by</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="PR Form" class="accent-sky-400" /> PR Form</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Letter" class="accent-sky-400" /> Letter</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="System" class="accent-sky-400" /> System</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Other" class="accent-sky-400" /> Other</label><input type="text" id="prRequestOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div></div>
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">4. Final Reference Document for Specification</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" value="PR" class="accent-sky-400" /> PR</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" value="Proforma Invoice" class="accent-sky-400" /> Proforma Invoice</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" value="Agreement" class="accent-sky-400" /> Agreement</label><label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" value="Other" class="accent-sky-400" /> Other</label><input type="text" id="refDocOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><div class="flex flex-wrap gap-3 mt-1"><span class="text-xs text-slate-400">No. of Page (PR):</span><input type="number" id="refPagePR" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-400">Proforma:</span><input type="number" id="refPageProforma" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-400">Agreement:</span><input type="number" id="refPageAgreement" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /></div></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">1. Source of Item</label><div class="flex gap-4"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="sourceItem" value="Local" class="accent-blue-600" /> Local</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="sourceItem" value="Foreign" class="accent-blue-600" /> Foreign</label></div><div><label class="text-xs text-slate-500">Address:</label><input type="text" id="sourceAddress" class="glass-input w-full rounded-lg px-3 py-2 text-sm mt-1" /></div></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">2. Procurement type</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Direct" class="accent-blue-600" /> Direct</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Proforma" class="accent-blue-600" /> Proforma</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Bid" class="accent-blue-600" /> Bid</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="procTypeOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><label class="text-xs text-slate-500 mt-1 block">Method of Inspection:</label><input type="text" id="methodInspection" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="visual inspection etc." /></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">3. The PR is Requested by</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="PR Form" class="accent-blue-600" /> PR Form</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Letter" class="accent-blue-600" /> Letter</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="System" class="accent-blue-600" /> System</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="prRequestOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">4. Final Reference Document for Specification</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="PR" class="accent-blue-600" /> PR</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Proforma Invoice" class="accent-blue-600" /> Proforma Invoice</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Agreement" class="accent-blue-600" /> Agreement</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="refDocOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><div class="flex flex-wrap gap-3 mt-1"><span class="text-xs text-slate-500">No. of Page (PR):</span><input type="number" id="refPagePR" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-500">Proforma:</span><input type="number" id="refPageProforma" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-500">Agreement:</span><input type="number" id="refPageAgreement" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /></div></div>
                   </div>
-                  <div><label class="block text-sm font-medium text-slate-300 mb-2">5. List of Items</label><div class="overflow-x-auto"><table class="table-glass text-xs" id="incomingItemsTable"><thead><tr><th>Specification as per requester</th><th>Supplied Material Description</th><th>Actual Supplied Specification</th><th>Model</th><th>Brand</th><th>Origin</th><th>Colour</th><th>Serial No.</th><th>Unit</th><th>Delivered Qty</th><th>Accepted Qty</th><th>Rejected Qty</th><th>Conditional Accepted Qty</th><th>Supplier</th><th>Remark</th><th class="w-8"></th></tr></thead><tbody id="incomingItemsBody"></tbody></table></div><button type="button" onclick="addIncomingItemRow()" class="btn-secondary text-xs mt-2"><i class="fa-regular fa-plus mr-1"></i> Add Item</button></div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-xs font-medium text-slate-400 mb-1">Reason For Reject</label><textarea id="reasonReject" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div><div><label class="block text-xs font-medium text-slate-400 mb-1">Reason for Conditional Accepted</label><textarea id="reasonConditional" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div></div>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-white/5 pt-4"><div><label class="block text-xs font-medium text-slate-400 mb-1">Inspected By</label><input type="text" id="inspectedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">SIGNATURE</label><input type="text" id="inspectedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">DATE</label><input type="date" id="inspectedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-400 mb-1">Collaborated By</label><input type="text" id="collabBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">Signature</label><input type="text" id="collabSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">Date</label><input type="date" id="collabDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-400 mb-1">Approved By</label><input type="text" id="approvedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">Signature</label><input type="text" id="approvedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-400 mt-2 mb-1">DATE</label><input type="date" id="approvedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div></div>
-                  <div><label class="block text-xs font-medium text-slate-400 mb-1">REMARK</label><textarea id="generalRemark" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div>
+                  <div><label class="block text-sm font-medium text-slate-600 mb-2">5. List of Items</label><div class="overflow-x-auto"><table class="table-glass text-xs" id="incomingItemsTable"><thead><tr><th>Specification as per requester</th><th>Supplied Material Description</th><th>Actual Supplied Specification</th><th>Model</th><th>Brand</th><th>Origin</th><th>Colour</th><th>Serial No.</th><th>Unit</th><th>Delivered Qty</th><th>Accepted Qty</th><th>Rejected Qty</th><th>Conditional Accepted Qty</th><th>Supplier</th><th>Remark</th><th class="w-8"></th></tr></thead><tbody id="incomingItemsBody"></tbody></table></div><button type="button" onclick="addIncomingItemRow()" class="btn-secondary text-xs mt-2"><i class="fa-regular fa-plus mr-1"></i> Add Item</button></div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-xs font-medium text-slate-500 mb-1">Reason For Reject</label><textarea id="reasonReject" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Reason for Conditional Accepted</label><textarea id="reasonConditional" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div></div>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-200/60 pt-4"><div><label class="block text-xs font-medium text-slate-500 mb-1">Inspected By</label><input type="text" id="inspectedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">SIGNATURE</label><input type="text" id="inspectedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">DATE</label><input type="date" id="inspectedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Collaborated By</label><input type="text" id="collabBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Signature</label><input type="text" id="collabSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Date</label><input type="date" id="collabDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Approved By</label><input type="text" id="approvedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Signature</label><input type="text" id="approvedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">DATE</label><input type="date" id="approvedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div></div>
+                  <div><label class="block text-xs font-medium text-slate-500 mb-1">REMARK</label><textarea id="generalRemark" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div>
                   <div class="text-xs text-slate-500 italic">Note: Please attach the final reference Document for specification. Form Modification Is not Allowed.</div>
                 </div>`;
         }
@@ -1687,7 +1691,7 @@
             const tbody = document.getElementById("incomingItemsBody");
             if (!tbody) return;
             const row = document.createElement("tr");
-            row.className = "border-b border-white/5";
+            row.className = "border-b border-slate-200/50";
             const fields = ["specReq", "suppliedDesc", "actualSpec", "model", "brand", "origin", "colour", "serialNo", "unit",
                 "deliveredQty", "acceptedQty", "rejectedQty", "condAcceptedQty", "supplier", "remark"
             ];
@@ -1706,7 +1710,7 @@
             delTd.className = "text-center";
             const delBtn = document.createElement("button");
             delBtn.innerHTML = "❌";
-            delBtn.className = "text-rose-400/60 hover:text-rose-300 text-xs transition";
+            delBtn.className = "text-rose-600/60 hover:text-rose-500 text-xs transition";
             delBtn.onclick = () => row.remove();
             delTd.appendChild(delBtn);
             row.appendChild(delTd);
@@ -1763,62 +1767,62 @@
             let html =
                 `<div class="mb-3"><button type="button" class="btn-secondary text-sm" onclick="scanDocumentAndFill()" title="Scan document with OCR to auto-fill client, title, DWG and part"><i class="fa-solid fa-camera mr-2"></i> Scan Document</button></div>`;
             if (def.extraFields && def.extraFields.length) {
-                html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-white/5 pb-5 mb-5">`;
+                html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-200/60 pb-5 mb-5">`;
                 def.extraFields.forEach(field => {
                     const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                     if (field === "Work Station") {
                         html += getWorkStationHtml(currentProcess, "");
                     } else if (field === "Location") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Location</label><select id="${safeId}" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Location</label><select id="${safeId}" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
                     } else if (field === "Customer Name") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
                     } else if (field === "Project Name") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
                     } else if (field === "Subtitle") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
                     } else if (field === "Sub Sub Assembly") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
                     } else if (field === "Drawing No.") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">DWG No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan"></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan"></div>`;
                     } else if (field === "Part Name") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">Part Name</label><input type="text" id="${safeId}" list="partNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Part Name</label><input type="text" id="${safeId}" list="partNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
                     } else if (field === "Tag No.") {
                         if (isAssemblyProcess()) {
                             html += `
                                 <div class="part-list-container">
-                                  <label class="block text-xs font-medium text-slate-400 mb-1">Part List <span class="text-slate-500 text-xs">(select parts, then enter qty)</span></label>
+                                  <label class="block text-xs font-medium text-slate-500 mb-1">Part List <span class="text-slate-400 text-xs">(select parts, then enter qty)</span></label>
                                   <select id="${safeId}" multiple size="4" class="glass-select w-full rounded-lg px-3 py-2 text-sm part-list-multi">
                                     <option value="">-- Select Parts --</option>
                                   </select>
-                                  <div id="selectedPartsContainer" class="selected-parts-container mt-2 bg-white/5 rounded-lg p-2 max-h-48 overflow-y-auto scrollbar-thin">
+                                  <div id="selectedPartsContainer" class="selected-parts-container mt-2 bg-white/40 rounded-lg p-2 max-h-48 overflow-y-auto scrollbar-thin">
                                     <div class="text-slate-500 text-sm italic py-1">No parts selected</div>
                                   </div>
                                 </div>
                               `;
                         } else {
                             html +=
-                                `<div><label class="block text-xs font-medium text-slate-400 mb-1">Tag No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Tag number"></div>`;
+                                `<div><label class="block text-xs font-medium text-slate-500 mb-1">Tag No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Tag number"></div>`;
                         }
                     } else if (field !== "Work Station") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-400 mb-1">${field}</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">${field}</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></div>`;
                     }
                 });
                 html += `</div>`;
             }
             html +=
-                `<div class="overflow-x-auto rounded-xl border border-white/5"><table class="table-glass text-sm"><thead><tr><th class="p-3">Inspection Parameters</th><th class="p-3">Acceptance Conditions</th><th class="p-3">Cause of Defects</th></tr></thead><tbody>`;
+                `<div class="overflow-x-auto rounded-xl border border-slate-200/40"><table class="table-glass text-sm"><thead><tr><th class="p-3">Inspection Parameters</th><th class="p-3">Acceptance Conditions</th><th class="p-3">Cause of Defects</th></tr></thead><tbody>`;
             def.parameters.forEach((param, idx) => {
                 const paramId = `p_${idx}`;
                 html +=
-                    `<tr><td class="p-3 font-medium text-slate-200">${param}</td><td class="p-3"><select id="rating_${paramId}" class="glass-select w-full rounded-lg px-3 py-1.5 text-sm">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="p-3"><div class="flex flex-wrap gap-3">${causeFields.map(cause => `<label class="text-sm text-slate-300 flex items-center gap-1.5"><input type="checkbox" class="cause-check accent-sky-400" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
+                    `<tr><td class="p-3 font-medium text-slate-700">${param}</td><td class="p-3"><select id="rating_${paramId}" class="glass-select w-full rounded-lg px-3 py-1.5 text-sm">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="p-3"><div class="flex flex-wrap gap-3">${causeFields.map(cause => `<label class="text-sm text-slate-700 flex items-center gap-1.5"><input type="checkbox" class="cause-check accent-blue-600" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
             });
             html += `</tbody></table></div>`;
             container.innerHTML = html;
@@ -2221,15 +2225,15 @@
                 if (!displayData.length) histDiv.innerHTML =
                     "<p class='text-slate-500 text-sm italic py-2'>No inspections found.</p>";
                 else histDiv.innerHTML = displayData.map(row =>
-                    `<div class="flex flex-wrap justify-between items-center py-2 px-2 rounded-lg hover:bg-white/5 transition border-b border-white/5">
+                    `<div class="flex flex-wrap justify-between items-center py-2 px-2 rounded-lg hover:bg-white/60 transition border-b border-slate-200/50">
                         <div class="text-sm">
-                          <span class="text-slate-300 font-medium">${new Date(row.submitted_at).toLocaleString()}</span>
-                          <span class="text-slate-400 ml-3">${row.process_type||'Rolling'}</span>
+                          <span class="text-slate-700 font-medium">${new Date(row.submitted_at).toLocaleString()}</span>
+                          <span class="text-slate-500 ml-3">${row.process_type||'Rolling'}</span>
                           ${row.acceptance_rating ? `<span class="ml-2 rating-pill ${row.acceptance_rating.toLowerCase().replace(' ','-')}">${row.acceptance_rating}</span>` : ''}
                         </div>
                         <div class="flex gap-2">
-                          <button onclick="editInspection(${row.id})" class="text-sky-400 hover:text-sky-300 text-sm transition"><i class="fa-regular fa-pen-to-square"></i></button>
-                          <button onclick="deleteInspection(${row.id})" class="text-rose-400/70 hover:text-rose-300 text-sm transition"><i class="fa-regular fa-trash-can"></i></button>
+                          <button onclick="editInspection(${row.id})" class="text-blue-600 hover:text-blue-800 text-sm transition"><i class="fa-regular fa-pen-to-square"></i></button>
+                          <button onclick="deleteInspection(${row.id})" class="text-rose-600/70 hover:text-rose-500 text-sm transition"><i class="fa-regular fa-trash-can"></i></button>
                         </div>
                       </div>`
                 ).join("");
@@ -2434,7 +2438,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('🔐 QC Inspection ready – glass UI v2.0');
+        console.log('🔐 QC Inspection ready – glass UI (blue-white)');
     </script>
 </body>
 </html>
