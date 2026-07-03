@@ -917,7 +917,7 @@
 
     <script>
         // ─── SECURITY ───
-        const CORRECT_SECRET = "120705";
+        const CORRECT_SECRET = "12345";
         if (sessionStorage.getItem('secretUnlocked') === 'true') {
             document.getElementById('secretOverlay').classList.add('hidden');
             document.getElementById('mainContent').classList.add('visible');
@@ -1016,49 +1016,6 @@
             return currentProcess === 'Assembling' || currentProcess === 'FastenersAssembly';
         }
 
-        // ─── NEW: Determine if part list should be shown ───
-        function shouldShowPartList() {
-            if (!isAssemblyProcess()) return false;
-            const partName = document.getElementById('extra_Part_Name')?.value?.trim() || '';
-            const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
-            const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
-            if (!partName) return true; // if part name is empty, show the list
-            // case-insensitive comparison
-            const lowerPart = partName.toLowerCase();
-            const lowerSubtitle = subtitle.toLowerCase();
-            const lowerSubSub = subSub.toLowerCase();
-            // if part name matches either subtitle or subSub, hide the list
-            if (lowerPart === lowerSubtitle || lowerPart === lowerSubSub) {
-                return false;
-            }
-            return true;
-        }
-
-        // ─── Update part list visibility based on shouldShowPartList ───
-        function updatePartListVisibility() {
-            const wrapper = document.getElementById('partListWrapper');
-            if (!wrapper) return;
-            const show = shouldShowPartList();
-            if (show) {
-                wrapper.style.display = '';
-                // re-populate the list
-                populatePartListMultiSelect();
-                renderSelectedPartsTable();
-                updateAssemblyProgress();
-            } else {
-                wrapper.style.display = 'none';
-                // Clear selected parts and reset progress
-                selectedParts = [];
-                document.getElementById('totalDeliveredQty').value = 0;
-                document.getElementById('assemblyProgressDisplay').textContent = '0%';
-                document.getElementById('assemblyProgressDetail').textContent = '0 / 0 delivered';
-                document.getElementById('totalAcceptedConditionalDisplay').textContent = '0';
-                // Also clear the selected parts container
-                const container = document.getElementById('selectedPartsContainer');
-                if (container) container.innerHTML = '<div class="text-slate-500 text-sm italic py-2">Part list hidden – part matches subtitle or sub‑sub assembly.</div>';
-            }
-        }
-
         function getPartListFilters() {
             const client = document.getElementById('extra_Customer_Name')?.value?.trim() || '';
             const title = document.getElementById('extra_Project_Name')?.value?.trim() || '';
@@ -1092,29 +1049,34 @@
         function populatePartListMultiSelect() {
             const selectEl = document.getElementById('extra_Tag_No_');
             if (!selectEl || !isAssemblyProcess()) return;
-            // If we shouldn't show, clear and hide
-            if (!shouldShowPartList()) {
-                selectEl.innerHTML = '<option value="">-- Part list hidden --</option>';
-                selectEl.disabled = true;
-                // Also clear selectedParts and update progress
-                selectedParts = [];
-                document.getElementById('totalDeliveredQty').value = 0;
-                document.getElementById('assemblyProgressDisplay').textContent = '0%';
-                document.getElementById('assemblyProgressDetail').textContent = '0 / 0 delivered';
-                document.getElementById('totalAcceptedConditionalDisplay').textContent = '0';
-                const container = document.getElementById('selectedPartsContainer');
-                if (container) container.innerHTML = '<div class="text-slate-500 text-sm italic py-2">Part list hidden – part matches subtitle or sub‑sub assembly.</div>';
-                return;
-            }
-            // If showing, populate normally
-            selectEl.disabled = false;
+
+            // Get subtitle and subSub for filtering
+            const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
+            const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
+
             const filters = getPartListFilters();
-            const parts = findMatchingParts(filters);
+            let parts = findMatchingParts(filters);
+
+            // Filter out parts that are contained in subtitle or subSub (case-insensitive)
+            if (subtitle || subSub) {
+                const lowerSubtitle = subtitle.toLowerCase();
+                const lowerSubSub = subSub.toLowerCase();
+                parts = parts.filter(p => {
+                    const lowerP = p.toLowerCase();
+                    // Exclude if part name is contained in subtitle or subSub
+                    return !(lowerSubtitle.includes(lowerP) || lowerSubSub.includes(lowerP));
+                });
+            }
+
+            // Also filter selectedParts to only those still in the list
+            selectedParts = selectedParts.filter(sp => parts.includes(sp.name));
+
+            // Populate select
             selectEl.innerHTML = '<option value="">-- Select Parts --</option>';
             if (parts.length === 0) {
                 const opt = document.createElement('option');
                 opt.value = '';
-                opt.textContent = '⏳ No parts found';
+                opt.textContent = '⏳ No parts available (filtered)';
                 opt.disabled = true;
                 selectEl.appendChild(opt);
             } else {
@@ -1126,12 +1088,15 @@
                     selectEl.appendChild(opt);
                 });
             }
+            // Restore selection
             const selectedNames = selectedParts.map(p => p.name);
             Array.from(selectEl.options).forEach(opt => {
                 if (opt.value && selectedNames.includes(opt.value)) {
                     opt.selected = true;
                 }
             });
+
+            renderSelectedPartsTable();
             updateAssemblyProgress();
         }
 
@@ -1139,11 +1104,6 @@
             const container = document.getElementById('selectedPartsContainer');
             if (!container) return;
             if (!isAssemblyProcess()) { container.innerHTML = ''; return; }
-            // If part list hidden, show message
-            if (!shouldShowPartList()) {
-                container.innerHTML = '<div class="text-slate-500 text-sm italic py-2">Part list hidden – part matches subtitle or sub‑sub assembly.</div>';
-                return;
-            }
             if (selectedParts.length === 0) {
                 container.innerHTML = `<div class="text-slate-500 text-sm italic py-2">No parts selected</div>`;
                 return;
@@ -1186,35 +1146,29 @@
 
         function updateAssemblyProgress() {
             const selectEl = document.getElementById('extra_Tag_No_');
-            // total delivered = sum of quantities of selected parts
             const totalDelivered = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
             document.getElementById('totalDeliveredQty').value = totalDelivered;
             document.getElementById('totalAcceptedConditionalDisplay').textContent = totalDelivered;
 
-            if (!selectEl || !isAssemblyProcess() || !shouldShowPartList()) {
+            if (!selectEl || !isAssemblyProcess()) {
                 document.getElementById('assemblyProgressDisplay').textContent = '0%';
                 document.getElementById('assemblyProgressDetail').textContent = '0 / 0 delivered';
                 return;
             }
 
-            // Count total parts available in the dropdown (excluding the placeholder)
-            const allOptions = Array.from(selectEl.options).filter(o => o.value !== '');
+            // Count total parts available in the dropdown (excluding the placeholder and disabled options)
+            const allOptions = Array.from(selectEl.options).filter(o => o.value !== '' && !o.disabled);
             const totalPartsCount = allOptions.length;
 
             // For unselected parts, we use a default quantity of 1 per part
             const selectedNames = new Set(selectedParts.map(p => p.name));
             const unselectedCount = allOptions.filter(o => !selectedNames.has(o.value)).length;
 
-            // Total quantity of all parts in the system = totalDelivered + (unselectedCount * 1)
             const totalSystemQty = totalDelivered + unselectedCount;
-
-            // Assembly completion percentage = (totalDelivered / totalSystemQty) * 100
             const pct = totalSystemQty > 0 ? Math.round((totalDelivered / totalSystemQty) * 100) : 0;
 
             const displayEl = document.getElementById('assemblyProgressDisplay');
             displayEl.textContent = pct + '%';
-
-            // Show: "X / Y delivered" where X = totalDelivered, Y = totalSystemQty
             document.getElementById('assemblyProgressDetail').textContent =
                 `${totalDelivered} / ${totalSystemQty} delivered`;
 
@@ -1254,17 +1208,25 @@
                 if (el) {
                     el.addEventListener('change', () => {
                         fetchLastOperation();
-                        // When part name, subtitle, or subSub change, update part list visibility
-                        if (id === 'extra_Part_Name' || id === 'extra_Subtitle' || id === 'extra_Sub_Sub_Assembly') {
-                            updatePartListVisibility();
+                        // When subtitle or subSub changes, re-populate part list
+                        if (id === 'extra_Subtitle' || id === 'extra_Sub_Sub_Assembly' || id === 'extra_Customer_Name' || id === 'extra_Project_Name') {
+                            if (isAssemblyProcess()) {
+                                populatePartListMultiSelect();
+                                renderSelectedPartsTable();
+                                updateAssemblyProgress();
+                            }
                         }
                     });
                     el.addEventListener('input', () => {
                         clearTimeout(el._timer);
                         el._timer = setTimeout(() => {
                             fetchLastOperation();
-                            if (id === 'extra_Part_Name' || id === 'extra_Subtitle' || id === 'extra_Sub_Sub_Assembly') {
-                                updatePartListVisibility();
+                            if (id === 'extra_Subtitle' || id === 'extra_Sub_Sub_Assembly' || id === 'extra_Customer_Name' || id === 'extra_Project_Name') {
+                                if (isAssemblyProcess()) {
+                                    populatePartListMultiSelect();
+                                    renderSelectedPartsTable();
+                                    updateAssemblyProgress();
+                                }
                             }
                         }, 400);
                     });
@@ -1278,7 +1240,6 @@
                     populatePartListMultiSelect();
                     renderSelectedPartsTable();
                     updateAssemblyProgress();
-                    updatePartListVisibility(); // ensure visibility based on current fields
                 }, 300);
             } else {
                 document.getElementById('assemblyProgressContainer').classList.add('hidden');
@@ -1461,8 +1422,7 @@
                     if (isAssemblyProcess()) {
                         setTimeout(() => { populatePartListMultiSelect();
                             renderSelectedPartsTable();
-                            updateAssemblyProgress();
-                            updatePartListVisibility(); }, 300);
+                            updateAssemblyProgress(); }, 300);
                     }
                 } catch (err) {
                     console.error(err);
@@ -1891,7 +1851,7 @@
                     } else if (field === "Tag No.") {
                         if (isAssemblyProcess()) {
                             html += `
-                                <div id="partListWrapper" class="part-list-container">
+                                <div class="part-list-container">
                                   <label class="block text-xs font-medium text-slate-500 mb-1">Part List <span class="text-slate-400 text-xs">(select parts, then enter qty)</span></label>
                                   <select id="${safeId}" multiple size="4" class="glass-select w-full rounded-lg px-3 py-2 text-sm part-list-multi">
                                     <option value="">-- Select Parts --</option>
@@ -1939,12 +1899,9 @@
                 document.getElementById('assemblyProgressContainer').classList.remove('hidden');
                 if (!isEditMode) { selectedParts = [];
                     document.getElementById('totalDeliveredQty').value = 0; }
-                setTimeout(() => { 
-                    populatePartListMultiSelect();
+                setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                    updatePartListVisibility(); // initial visibility check
-                }, 200);
+                    updateAssemblyProgress(); }, 200);
             } else {
                 document.getElementById('quantitySummary').style.display = 'grid';
                 document.getElementById('assemblyProgressContainer').classList.add('hidden');
@@ -1963,8 +1920,7 @@
                 document.getElementById('assemblyProgressContainer').classList.remove('hidden');
                 setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                    updatePartListVisibility(); }, 300);
+                    updateAssemblyProgress(); }, 300);
             } else {
                 document.getElementById('assemblyProgressContainer').classList.add('hidden');
             }
@@ -2062,8 +2018,7 @@
             if (isAssemblyProcess()) {
                 setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                    updatePartListVisibility(); }, 200);
+                    updateAssemblyProgress(); }, 200);
             }
         }
 
@@ -2194,8 +2149,7 @@
                 document.getElementById('assemblyProgressContainer').classList.remove('hidden');
                 setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                    updatePartListVisibility(); }, 300);
+                    updateAssemblyProgress(); }, 300);
             } else {
                 document.getElementById('assemblyProgressContainer').classList.add('hidden');
             }
@@ -2242,7 +2196,7 @@
                     total_delivered_qty = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
                     selected_parts_count = selectedParts.length;
                     const selectEl = document.getElementById('extra_Tag_No_');
-                    const allOptions = selectEl ? Array.from(selectEl.options).filter(o => o.value !== '') : [];
+                    const allOptions = selectEl ? Array.from(selectEl.options).filter(o => o.value !== '' && !o.disabled) : [];
                     const totalPartsCount = allOptions.length;
                     const selectedNames = new Set(selectedParts.map(p => p.name));
                     const unselectedCount = allOptions.filter(o => !selectedNames.has(o.value)).length;
@@ -2348,8 +2302,7 @@
                 if (isAssemblyProcess()) {
                     setTimeout(() => { populatePartListMultiSelect();
                         renderSelectedPartsTable();
-                        updateAssemblyProgress();
-                        updatePartListVisibility(); }, 300);
+                        updateAssemblyProgress(); }, 300);
                 }
             } catch (err) { showToast('Error loading history', 'error'); }
         }
@@ -2433,8 +2386,7 @@
             if (isAssemblyProcess()) {
                 setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                    updatePartListVisibility(); }, 300);
+                    updateAssemblyProgress(); }, 300);
             }
             updateVisibility();
         }
@@ -2483,35 +2435,6 @@
                     el.addEventListener('input', onFilterChangeDebounced);
                 }
             });
-            // Also listen on part name changes for visibility
-            const partNameEl = document.getElementById('extra_Part_Name');
-            if (partNameEl) {
-                partNameEl.removeEventListener('change', onPartNameOrSubChange);
-                partNameEl.removeEventListener('input', onPartNameOrSubChangeDebounced);
-                partNameEl.addEventListener('change', onPartNameOrSubChange);
-                partNameEl.addEventListener('input', onPartNameOrSubChangeDebounced);
-            }
-            // Subtitle and SubSub also affect visibility
-            ['extra_Subtitle', 'extra_Sub_Sub_Assembly'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.removeEventListener('change', onPartNameOrSubChange);
-                    el.removeEventListener('input', onPartNameOrSubChangeDebounced);
-                    el.addEventListener('change', onPartNameOrSubChange);
-                    el.addEventListener('input', onPartNameOrSubChangeDebounced);
-                }
-            });
-        }
-
-        let _partNameSubTimer = null;
-
-        function onPartNameOrSubChangeDebounced() {
-            clearTimeout(_partNameSubTimer);
-            _partNameSubTimer = setTimeout(onPartNameOrSubChange, 300);
-        }
-
-        function onPartNameOrSubChange() {
-            updatePartListVisibility();
         }
 
         let _filterTimer = null;
