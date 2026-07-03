@@ -1002,6 +1002,9 @@
         let g_allInspections = [];
         let selectedParts = [];
 
+        // Map to store historical delivered quantity (accepted + conditional) per part
+        let historicalPartQtyMap = new Map();
+
         const engineerFromUrl = new URLSearchParams(window.location.search).get('engineer');
         if (engineerFromUrl) {
             currentEngineer = decodeURIComponent(engineerFromUrl);
@@ -1044,6 +1047,29 @@
                 if (match) partsSet.add(inspPart);
             }
             return Array.from(partsSet);
+        }
+
+        // Compute historical delivered quantity (accepted + conditional) for each part
+        function computeHistoricalQuantities() {
+            historicalPartQtyMap.clear();
+            for (const insp of g_allInspections) {
+                const extra = insp.extra_fields || {};
+                const part = (extra['Part Name'] || '').trim();
+                if (!part) continue;
+                const accepted = insp.accepted_qty || 0;
+                const conditional = insp.conditional_accept_qty || 0;
+                const total = accepted + conditional;
+                if (total > 0) {
+                    const current = historicalPartQtyMap.get(part) || 0;
+                    historicalPartQtyMap.set(part, current + total);
+                }
+            }
+        }
+
+        // Get default quantity for a part: historical sum or 1 if none
+        function getDefaultQtyForPart(partName) {
+            const hist = historicalPartQtyMap.get(partName);
+            return (hist !== undefined && hist > 0) ? hist : 1;
         }
 
         function populatePartListMultiSelect() {
@@ -1183,10 +1209,10 @@
             const selectedValues = Array.from(selectEl.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             const existingMap = {};
             selectedParts.forEach(p => { existingMap[p.name] = p.qty; });
-            // For new parts, set default quantity = 1; keep existing quantities for parts already in the list
+            // For new parts, use historical quantity if available, else 1
             const newParts = selectedValues.map(name => ({
                 name,
-                qty: existingMap[name] !== undefined ? existingMap[name] : 1
+                qty: existingMap[name] !== undefined ? existingMap[name] : getDefaultQtyForPart(name)
             }));
             selectedParts = newParts;
             renderSelectedPartsTable();
@@ -2283,6 +2309,8 @@
                 if (!resp.ok) throw new Error();
                 let allData = await resp.json();
                 g_allInspections = allData;
+                // Compute historical quantities after loading
+                computeHistoricalQuantities();
                 updateSuggestionsFromInspections(allData);
                 let displayData = allData;
                 if (engineerFromUrl) displayData = displayData.filter(row => row.username === currentEngineer);
