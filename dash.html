@@ -366,7 +366,7 @@
                         <i class="fa-regular fa-circle-check"></i> Welding &amp; Fastener
                     </span>
                 </h1>
-                <p class="text-sm text-gray-500 mt-1">Breakdown by Subtitle &amp; Sub‑Sub Assembly – <span class="font-medium text-indigo-600">Assembly Completion = (accepted / delivered) from QC</span></p>
+                <p class="text-sm text-gray-500 mt-1">Breakdown by Subtitle &amp; Sub‑Sub Assembly – <span class="font-medium text-indigo-600">Assembly Completion = assembly_progress_pct from rolling_inspections</span></p>
             </div>
             <div class="flex gap-3 flex-wrap">
                 <button onclick="exportAnalysisToExcel()" class="btn-excel"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
@@ -530,6 +530,25 @@
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
+        function getAssemblyProgressPct(insp) {
+            // Check direct field first
+            if (insp.assembly_progress_pct !== undefined && insp.assembly_progress_pct !== null) {
+                const val = parseFloat(insp.assembly_progress_pct);
+                if (!isNaN(val)) return val;
+            }
+            // Check extra_fields variations
+            if (insp.extra_fields) {
+                const candidates = ['Assembly Progress %', 'assembly_progress_pct', 'Assembly Progress'];
+                for (const key of candidates) {
+                    if (insp.extra_fields[key] !== undefined) {
+                        const val = parseFloat(insp.extra_fields[key]);
+                        if (!isNaN(val)) return val;
+                    }
+                }
+            }
+            return null; // not found
+        }
+
         function getSuggestedNext(insp) {
             if (insp.suggested_next_operation && insp.suggested_next_operation.trim() !== '') {
                 return insp.suggested_next_operation.trim();
@@ -551,14 +570,14 @@
         }
 
         function safePct(val) {
-            if (!val || isNaN(val) || !isFinite(val)) return 0;
+            if (val === null || val === undefined || isNaN(val) || !isFinite(val)) return 0;
             return Math.min(100, Math.max(0, val));
         }
 
         // ─── STATE ───
         let allRows = [];
         let filteredRows = [];
-        let subSubAssemblyMap = new Map(); // key -> { client, title, subtitle, subSub, parts: Map, totalDelivered, totalAccepted }
+        let subSubAssemblyMap = new Map(); // key -> { client, title, subtitle, subSub, parts: Map, totalDelivered, totalAccepted, assemblyProgressPct }
         let partInspectionsMap = new Map();
         let partToSubSubKey = new Map();
 
@@ -581,6 +600,7 @@
                 return { rows: [], subSubMap: new Map(), partInspections: new Map(), partToSubSubKey: new Map() };
             }
 
+            // Build part -> inspections map (for modal)
             const partInspMap = new Map();
             for (const insp of filtered) {
                 const pn = getExtraField(insp, 'Part Name') || 'Unnamed Part';
@@ -588,7 +608,7 @@
                 partInspMap.get(pn).push(insp);
             }
 
-            // Build sub-sub map with per‑part delivered & accepted
+            // Build sub-sub map with per‑part delivered/accepted and assembly progress
             const subSubMap = new Map();
             for (const insp of filtered) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -598,6 +618,8 @@
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 const delivered = insp.delivered_qty || 0;
                 const accepted = insp.accepted_qty || 0;
+                const progress = getAssemblyProgressPct(insp);
+                const submittedAt = new Date(insp.submitted_at);
 
                 const key = `${client}||${title}||${subtitle}||${subSub}`;
                 if (!subSubMap.has(key)) {
@@ -609,6 +631,8 @@
                         parts: new Map(), // partName -> { delivered, accepted }
                         totalDelivered: 0,
                         totalAccepted: 0,
+                        assemblyProgressPct: null, // will be set from latest inspection
+                        latestDate: null,
                     });
                 }
                 const entry = subSubMap.get(key);
@@ -620,14 +644,21 @@
                 // Accumulate assembly totals
                 entry.totalDelivered += delivered;
                 entry.totalAccepted += accepted;
+
+                // Update assembly progress with latest inspection's value
+                if (progress !== null) {
+                    if (!entry.latestDate || submittedAt > entry.latestDate) {
+                        entry.latestDate = submittedAt;
+                        entry.assemblyProgressPct = progress;
+                    }
+                }
             }
 
-            // Build rows with assembly completion (will be recomputed based on selected parts later)
+            // Build rows with assembly progress (same for all parts in assembly)
             const rows = [];
             const p2ss = new Map();
             for (const [key, entry] of subSubMap) {
-                // Overall completion (all parts) – used when no parts filter
-                const overallCompletion = entry.totalDelivered > 0 ? (entry.totalAccepted / entry.totalDelivered) * 100 : 0;
+                const progressPct = entry.assemblyProgressPct; // could be null
                 for (const [partName, partData] of entry.parts) {
                     rows.push({
                         client: entry.client,
@@ -640,7 +671,7 @@
                         accepted: partData.accepted,
                         subSubTotalDelivered: entry.totalDelivered,
                         subSubTotalAccepted: entry.totalAccepted,
-                        overallCompletion: overallCompletion,
+                        assemblyProgressPct: progressPct,
                         subSubPartCount: entry.parts.size,
                     });
                     p2ss.set(partName, key);
@@ -698,8 +729,7 @@
                 return;
             }
 
-            // Recalculate assembly completions based on filtered parts
-            // Group by subSubKey
+            // Group by subSubKey to get assembly progress (same for all parts)
             const assemblyMap = new Map();
             for (const row of filteredRows) {
                 const key = row.subSubKey;
@@ -714,6 +744,7 @@
                         totalAccepted: 0,
                         subSubPartCount: row.subSubPartCount,
                         subtitlePartCount: row.subtitlePartCount,
+                        assemblyProgressPct: row.assemblyProgressPct,
                     });
                 }
                 const entry = assemblyMap.get(key);
@@ -726,16 +757,7 @@
                 entry.totalAccepted += row.accepted;
             }
 
-            // Compute completion for each assembly
-            const assemblyCompletions = new Map();
-            for (const [key, entry] of assemblyMap) {
-                const comp = entry.totalDelivered > 0 ? (entry.totalAccepted / entry.totalDelivered) * 100 : 0;
-                assemblyCompletions.set(key, comp);
-                // Also store total delivered for display
-                entry.assemblyCompletion = comp;
-            }
-
-            // Now build hierarchy for display, using the filtered rows and the new completion
+            // Build hierarchy for display
             const uniqueParts = new Set(filteredRows.map(r => r.partName));
             const totalParts = uniqueParts.size;
             const totalDelivered = filteredRows.reduce((sum, r) => sum + r.delivered, 0);
@@ -758,14 +780,14 @@
                 if (!hierarchy[c][t][s]) hierarchy[c][t][s] = {};
                 const ss = row.subSub;
                 if (!hierarchy[c][t][s][ss]) {
-                    const comp = assemblyCompletions.get(row.subSubKey) || 0;
                     const assemblyEntry = assemblyMap.get(row.subSubKey);
+                    const comp = assemblyEntry ? assemblyEntry.assemblyProgressPct : null;
                     hierarchy[c][t][s][ss] = {
                         parts: [],
                         subSubTotalDelivered: assemblyEntry ? assemblyEntry.totalDelivered : 0,
                         subSubPartCount: assemblyEntry ? assemblyEntry.parts.length : 0,
                         subtitlePartCount: row.subtitlePartCount,
-                        assemblyCompletion: comp,
+                        assemblyProgressPct: comp,
                     };
                 }
                 hierarchy[c][t][s][ss].parts.push({
@@ -816,7 +838,7 @@
                             const totalDeliv = subSubData.subSubTotalDelivered;
                             const subtitlePartCnt = subSubData.subtitlePartCount;
                             const pctSub = totalParts > 0 ? (subtitlePartCnt / totalParts) * 100 : 0;
-                            const completion = subSubData.assemblyCompletion;
+                            const completion = subSubData.assemblyProgressPct;
 
                             let subSubPrinted = false;
                             for (const part of parts) {
@@ -894,7 +916,7 @@
             }
             const totalDeliv = partsList.reduce((sum, [_, data]) => sum + data.delivered, 0);
             const totalAcc = partsList.reduce((sum, [_, data]) => sum + data.accepted, 0);
-            const completion = totalDeliv > 0 ? (totalAcc / totalDeliv) * 100 : 0;
+            const completion = entry.assemblyProgressPct; // from QC, not calculated
             const sortedParts = partsList.sort((a, b) => b[1].delivered - a[1].delivered);
 
             let html = `
@@ -902,7 +924,7 @@
                     <span class="font-medium">${escapeHtml(client)}</span> · 
                     <span class="font-medium">${escapeHtml(title)}</span> · 
                     <span class="font-medium">${escapeHtml(subtitle)}</span>
-                    <span class="block text-xs text-gray-400 mt-1">${sortedParts.length} parts · ${formatQty(totalDeliv)} delivered · ${formatQty(totalAcc)} accepted · Completion ${completion.toFixed(1)}%</span>
+                    <span class="block text-xs text-gray-400 mt-1">${sortedParts.length} parts · ${formatQty(totalDeliv)} delivered · ${formatQty(totalAcc)} accepted · Completion ${completion !== null ? completion.toFixed(1) : '—'}%</span>
                     ${partSet.size > 0 ? `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full mt-1">Filtered by selected parts</span>` : ''}
                 </div>
                 <table class="subsub-parts-table">
@@ -1021,7 +1043,7 @@
             ];
             // Use filtered rows if any, else all
             const rowsToExport = filteredRows.length ? filteredRows : allRows;
-            // Group by assembly to compute completion based on current filter
+            // Apply part filter
             const partSelect = document.getElementById('filterParts');
             const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             const partSet = new Set(selectedParts);
@@ -1029,29 +1051,25 @@
             if (partSet.size > 0) {
                 exportRows = rowsToExport.filter(r => partSet.has(r.partName));
             }
-            // Recalculate assembly completions for export (similar to render)
+
+            // Group by assembly to get progress (same for all parts)
             const assemblyMap = new Map();
             for (const row of exportRows) {
                 const key = row.subSubKey;
                 if (!assemblyMap.has(key)) {
-                    assemblyMap.set(key, { totalDelivered: 0, totalAccepted: 0 });
+                    assemblyMap.set(key, {
+                        progress: row.assemblyProgressPct,
+                    });
                 }
-                const entry = assemblyMap.get(key);
-                entry.totalDelivered += row.delivered;
-                entry.totalAccepted += row.accepted;
-            }
-            const completionMap = new Map();
-            for (const [key, val] of assemblyMap) {
-                const comp = val.totalDelivered > 0 ? (val.totalAccepted / val.totalDelivered) * 100 : 0;
-                completionMap.set(key, comp);
             }
 
             for (const row of exportRows) {
-                const comp = completionMap.get(row.subSubKey) || 0;
+                const comp = assemblyMap.get(row.subSubKey)?.progress;
+                const compVal = comp !== null && comp !== undefined ? comp : 0;
                 data.push([
                     row.client, row.title, row.subtitle, row.subSub,
                     row.partName, row.delivered, row.accepted,
-                    comp.toFixed(1) + '%'
+                    compVal.toFixed(1) + '%'
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -1078,7 +1096,6 @@
             if (subtitle) filtered = filtered.filter(r => r.subtitle === subtitle);
             if (subSub) filtered = filtered.filter(r => r.subSub === subSub);
 
-            // Store filteredRows for export and other uses
             filteredRows = filtered;
             renderAnalysis(filtered, selectedParts);
         }
@@ -1102,7 +1119,6 @@
             const partSelect = document.getElementById('filterParts');
             partSelect.innerHTML = '<option value="">All Parts</option>' + parts.map(p =>
                 `<option>${escapeHtml(p)}</option>`).join('');
-            // Ensure multi-select works
             partSelect.size = Math.min(parts.length + 1, 6);
         }
 
@@ -1126,7 +1142,6 @@
 
             populateFilters(allRows);
             filteredRows = [...allRows];
-            // Apply any current filters
             applyFilters();
             showToast(`Data refreshed – ${allRows.length} part records`, 'info');
         }
