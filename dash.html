@@ -99,6 +99,9 @@
             border-color: #4f46e5;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
+        .filter-select[multiple] {
+            min-height: 60px;
+        }
 
         .table-wrapper {
             overflow-x: auto;
@@ -390,6 +393,12 @@
                 <label class="block text-xs font-medium text-slate-500 mb-1">Sub‑Sub Assembly</label>
                 <select id="filterSubSub" class="filter-select w-full"><option value="">All</option></select>
             </div>
+            <div class="flex-1 min-w-[140px]">
+                <label class="block text-xs font-medium text-slate-500 mb-1">Parts (multi‑select)</label>
+                <select id="filterParts" class="filter-select w-full" multiple size="2">
+                    <option value="">All Parts</option>
+                </select>
+            </div>
             <div>
                 <button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 px-5 py-2.5 rounded-xl text-sm font-medium transition">Clear Filters</button>
             </div>
@@ -579,7 +588,7 @@
                 partInspMap.get(pn).push(insp);
             }
 
-            // Build sub-sub map with totalDelivered and totalAccepted
+            // Build sub-sub map with per‑part delivered & accepted
             const subSubMap = new Map();
             for (const insp of filtered) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -597,26 +606,29 @@
                         title,
                         subtitle,
                         subSub,
-                        parts: new Map(),
+                        parts: new Map(), // partName -> { delivered, accepted }
                         totalDelivered: 0,
                         totalAccepted: 0,
                     });
                 }
                 const entry = subSubMap.get(key);
-                // Accumulate part delivered
-                const currentPart = entry.parts.get(partName) || 0;
-                entry.parts.set(partName, currentPart + delivered);
+                // Accumulate per-part
+                const partData = entry.parts.get(partName) || { delivered: 0, accepted: 0 };
+                partData.delivered += delivered;
+                partData.accepted += accepted;
+                entry.parts.set(partName, partData);
                 // Accumulate assembly totals
                 entry.totalDelivered += delivered;
                 entry.totalAccepted += accepted;
             }
 
-            // Build rows with assembly completion
+            // Build rows with assembly completion (will be recomputed based on selected parts later)
             const rows = [];
             const p2ss = new Map();
             for (const [key, entry] of subSubMap) {
-                const completionPct = entry.totalDelivered > 0 ? (entry.totalAccepted / entry.totalDelivered) * 100 : 0;
-                for (const [partName, delivered] of entry.parts) {
+                // Overall completion (all parts) – used when no parts filter
+                const overallCompletion = entry.totalDelivered > 0 ? (entry.totalAccepted / entry.totalDelivered) * 100 : 0;
+                for (const [partName, partData] of entry.parts) {
                     rows.push({
                         client: entry.client,
                         title: entry.title,
@@ -624,9 +636,11 @@
                         subSub: entry.subSub,
                         subSubKey: key,
                         partName: partName,
-                        delivered: delivered,
+                        delivered: partData.delivered,
+                        accepted: partData.accepted,
                         subSubTotalDelivered: entry.totalDelivered,
-                        assemblyCompletion: completionPct, // same for all parts in assembly
+                        subSubTotalAccepted: entry.totalAccepted,
+                        overallCompletion: overallCompletion,
                         subSubPartCount: entry.parts.size,
                     });
                     p2ss.set(partName, key);
@@ -648,8 +662,8 @@
             return { rows, subSubMap, partInspections: partInspMap, partToSubSubKey: p2ss };
         }
 
-        // ─── RENDER ───
-        function renderAnalysis(rows) {
+        // ─── RENDER (with parts filter) ───
+        function renderAnalysis(rows, selectedParts = []) {
             const tbody = document.getElementById('analysisTableBody');
             if (!rows.length) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">No data for the selected processes.</td></tr>';
@@ -662,11 +676,71 @@
                 return;
             }
 
-            const uniqueParts = new Set(rows.map(r => r.partName));
+            // If selectedParts is empty, use all rows (no part filter)
+            const partFilterSet = new Set(selectedParts);
+            const useFilter = partFilterSet.size > 0;
+
+            // Filter rows by part selection
+            let filteredRows = rows;
+            if (useFilter) {
+                filteredRows = rows.filter(r => partFilterSet.has(r.partName));
+            }
+
+            // If no rows after filtering, show empty state
+            if (!filteredRows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">No parts match the selection.</td></tr>';
+                document.getElementById('recordCount').innerText = '0 records';
+                document.getElementById('recordCountBottom').innerText = '0 parts';
+                document.getElementById('totalParts').innerText = '0';
+                document.getElementById('totalDelivered').innerText = '0';
+                document.getElementById('totalSubtitles').innerText = '0';
+                document.getElementById('totalSubSub').innerText = '0';
+                return;
+            }
+
+            // Recalculate assembly completions based on filtered parts
+            // Group by subSubKey
+            const assemblyMap = new Map();
+            for (const row of filteredRows) {
+                const key = row.subSubKey;
+                if (!assemblyMap.has(key)) {
+                    assemblyMap.set(key, {
+                        client: row.client,
+                        title: row.title,
+                        subtitle: row.subtitle,
+                        subSub: row.subSub,
+                        parts: [],
+                        totalDelivered: 0,
+                        totalAccepted: 0,
+                        subSubPartCount: row.subSubPartCount,
+                        subtitlePartCount: row.subtitlePartCount,
+                    });
+                }
+                const entry = assemblyMap.get(key);
+                entry.parts.push({
+                    partName: row.partName,
+                    delivered: row.delivered,
+                    accepted: row.accepted,
+                });
+                entry.totalDelivered += row.delivered;
+                entry.totalAccepted += row.accepted;
+            }
+
+            // Compute completion for each assembly
+            const assemblyCompletions = new Map();
+            for (const [key, entry] of assemblyMap) {
+                const comp = entry.totalDelivered > 0 ? (entry.totalAccepted / entry.totalDelivered) * 100 : 0;
+                assemblyCompletions.set(key, comp);
+                // Also store total delivered for display
+                entry.assemblyCompletion = comp;
+            }
+
+            // Now build hierarchy for display, using the filtered rows and the new completion
+            const uniqueParts = new Set(filteredRows.map(r => r.partName));
             const totalParts = uniqueParts.size;
-            const totalDelivered = rows.reduce((sum, r) => sum + r.delivered, 0);
-            const subtitles = new Set(rows.map(r => r.subtitle));
-            const subSubs = new Set(rows.map(r => r.subSub));
+            const totalDelivered = filteredRows.reduce((sum, r) => sum + r.delivered, 0);
+            const subtitles = new Set(filteredRows.map(r => r.subtitle));
+            const subSubs = new Set(filteredRows.map(r => r.subSub));
 
             document.getElementById('totalParts').innerText = totalParts;
             document.getElementById('totalDelivered').innerText = formatQty(totalDelivered);
@@ -675,7 +749,7 @@
 
             // Build hierarchy
             const hierarchy = {};
-            for (const row of rows) {
+            for (const row of filteredRows) {
                 const c = row.client;
                 if (!hierarchy[c]) hierarchy[c] = {};
                 const t = row.title;
@@ -684,12 +758,14 @@
                 if (!hierarchy[c][t][s]) hierarchy[c][t][s] = {};
                 const ss = row.subSub;
                 if (!hierarchy[c][t][s][ss]) {
+                    const comp = assemblyCompletions.get(row.subSubKey) || 0;
+                    const assemblyEntry = assemblyMap.get(row.subSubKey);
                     hierarchy[c][t][s][ss] = {
                         parts: [],
-                        subSubTotalDelivered: row.subSubTotalDelivered,
-                        subSubPartCount: row.subSubPartCount,
+                        subSubTotalDelivered: assemblyEntry ? assemblyEntry.totalDelivered : 0,
+                        subSubPartCount: assemblyEntry ? assemblyEntry.parts.length : 0,
                         subtitlePartCount: row.subtitlePartCount,
-                        assemblyCompletion: row.assemblyCompletion,
+                        assemblyCompletion: comp,
                     };
                 }
                 hierarchy[c][t][s][ss].parts.push({
@@ -772,7 +848,6 @@
                                     </td>`;
                                     subSubPrinted = true;
                                 }
-                                // Assembly Completion column (same value for all parts in assembly)
                                 const compVal = safePct(completion);
                                 html += `<td class="text-center">
                                     <div class="flex items-center gap-2 justify-center">
@@ -788,12 +863,12 @@
             }
 
             tbody.innerHTML = html;
-            document.getElementById('recordCount').innerText = `${rows.length} part records`;
+            document.getElementById('recordCount').innerText = `${filteredRows.length} part records`;
             document.getElementById('recordCountBottom').innerText = `${totalParts} unique parts · ${subSubs.size} sub‑sub assemblies`;
-            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${rows.length} records (${TARGET_PROCESSES.join(', ')})`;
+            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')})`;
         }
 
-        // ─── ASSEMBLY MODAL (shows all parts in a sub-sub assembly) ───
+        // ─── ASSEMBLY MODAL ───
         function showAssemblyDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
             const entry = window.subSubAssemblyMap?.get(key);
@@ -802,15 +877,25 @@
                 return;
             }
 
+            // Get current part filter to show only selected parts if any
+            const partSelect = document.getElementById('filterParts');
+            const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
+            const partSet = new Set(selectedParts);
+
             const titleEl = document.getElementById('assemblyModalTitle');
             titleEl.innerText = `📦 ${escapeHtml(subSub)}`;
 
             const body = document.getElementById('assemblyModalBody');
-            const totalDeliv = entry.totalDelivered || 0;
-            const totalAcc = entry.totalAccepted || 0;
+
+            // Build list of parts: if filter active, show only selected, else all
+            let partsList = Array.from(entry.parts.entries());
+            if (partSet.size > 0) {
+                partsList = partsList.filter(([pName]) => partSet.has(pName));
+            }
+            const totalDeliv = partsList.reduce((sum, [_, data]) => sum + data.delivered, 0);
+            const totalAcc = partsList.reduce((sum, [_, data]) => sum + data.accepted, 0);
             const completion = totalDeliv > 0 ? (totalAcc / totalDeliv) * 100 : 0;
-            const sortedParts = Array.from(entry.parts.entries())
-                .sort((a, b) => b[1] - a[1]);
+            const sortedParts = partsList.sort((a, b) => b[1].delivered - a[1].delivered);
 
             let html = `
                 <div class="text-sm text-gray-600 mb-4">
@@ -818,17 +903,19 @@
                     <span class="font-medium">${escapeHtml(title)}</span> · 
                     <span class="font-medium">${escapeHtml(subtitle)}</span>
                     <span class="block text-xs text-gray-400 mt-1">${sortedParts.length} parts · ${formatQty(totalDeliv)} delivered · ${formatQty(totalAcc)} accepted · Completion ${completion.toFixed(1)}%</span>
+                    ${partSet.size > 0 ? `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full mt-1">Filtered by selected parts</span>` : ''}
                 </div>
                 <table class="subsub-parts-table">
                     <thead>
-                        <tr><th>Part Name</th><th class="text-center">Delivered</th><th class="text-center">% of Assembly</th></tr>
+                        <tr><th>Part Name</th><th class="text-center">Delivered</th><th class="text-center">Accepted</th><th class="text-center">% of Assembly</th></tr>
                     </thead>
                     <tbody>`;
-            for (const [pName, qty] of sortedParts) {
-                const pct = totalDeliv > 0 ? (qty / totalDeliv) * 100 : 0;
+            for (const [pName, data] of sortedParts) {
+                const pct = totalDeliv > 0 ? (data.delivered / totalDeliv) * 100 : 0;
                 html += `<tr>
                     <td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
-                    <td class="text-center">${formatQty(qty)}</td>
+                    <td class="text-center">${formatQty(data.delivered)}</td>
+                    <td class="text-center">${formatQty(data.accepted)}</td>
                     <td class="text-center">
                         <div class="pct-bar-wrap">
                             <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${Math.min(100, pct)}%"></div></div>
@@ -928,19 +1015,48 @@
                 return;
             }
             const data = [
-                ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'Delivered Qty',
+                ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'Delivered Qty', 'Accepted Qty',
                     'Assembly Completion (%)'
                 ]
             ];
-            for (const row of allRows) {
+            // Use filtered rows if any, else all
+            const rowsToExport = filteredRows.length ? filteredRows : allRows;
+            // Group by assembly to compute completion based on current filter
+            const partSelect = document.getElementById('filterParts');
+            const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
+            const partSet = new Set(selectedParts);
+            let exportRows = rowsToExport;
+            if (partSet.size > 0) {
+                exportRows = rowsToExport.filter(r => partSet.has(r.partName));
+            }
+            // Recalculate assembly completions for export (similar to render)
+            const assemblyMap = new Map();
+            for (const row of exportRows) {
+                const key = row.subSubKey;
+                if (!assemblyMap.has(key)) {
+                    assemblyMap.set(key, { totalDelivered: 0, totalAccepted: 0 });
+                }
+                const entry = assemblyMap.get(key);
+                entry.totalDelivered += row.delivered;
+                entry.totalAccepted += row.accepted;
+            }
+            const completionMap = new Map();
+            for (const [key, val] of assemblyMap) {
+                const comp = val.totalDelivered > 0 ? (val.totalAccepted / val.totalDelivered) * 100 : 0;
+                completionMap.set(key, comp);
+            }
+
+            for (const row of exportRows) {
+                const comp = completionMap.get(row.subSubKey) || 0;
                 data.push([
                     row.client, row.title, row.subtitle, row.subSub,
-                    row.partName, row.delivered,
-                    (row.assemblyCompletion || 0).toFixed(1) + '%'
+                    row.partName, row.delivered, row.accepted,
+                    comp.toFixed(1) + '%'
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 14 }, { wch: 20 }];
+            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 14 }, { wch: 14 },
+            { wch: 20 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Assembly Analysis');
             XLSX.writeFile(wb, `assembly_analysis_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
@@ -953,13 +1069,18 @@
             const title = document.getElementById('filterTitle').value;
             const subtitle = document.getElementById('filterSubtitle').value;
             const subSub = document.getElementById('filterSubSub').value;
+            const partSelect = document.getElementById('filterParts');
+            const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
+
             let filtered = [...allRows];
             if (client) filtered = filtered.filter(r => r.client === client);
             if (title) filtered = filtered.filter(r => r.title === title);
             if (subtitle) filtered = filtered.filter(r => r.subtitle === subtitle);
             if (subSub) filtered = filtered.filter(r => r.subSub === subSub);
+
+            // Store filteredRows for export and other uses
             filteredRows = filtered;
-            renderAnalysis(filtered);
+            renderAnalysis(filtered, selectedParts);
         }
 
         function populateFilters(rows) {
@@ -967,6 +1088,8 @@
             const titles = [...new Set(rows.map(r => r.title))].sort();
             const subtitles = [...new Set(rows.map(r => r.subtitle))].sort();
             const subSubs = [...new Set(rows.map(r => r.subSub))].sort();
+            const parts = [...new Set(rows.map(r => r.partName))].sort();
+
             document.getElementById('filterClient').innerHTML = '<option value="">All Clients</option>' + clients.map(c =>
                 `<option>${escapeHtml(c)}</option>`).join('');
             document.getElementById('filterTitle').innerHTML = '<option value="">All Titles</option>' + titles.map(t =>
@@ -975,6 +1098,12 @@
                 `<option>${escapeHtml(s)}</option>`).join('');
             document.getElementById('filterSubSub').innerHTML = '<option value="">All</option>' + subSubs.map(s =>
                 `<option>${escapeHtml(s)}</option>`).join('');
+
+            const partSelect = document.getElementById('filterParts');
+            partSelect.innerHTML = '<option value="">All Parts</option>' + parts.map(p =>
+                `<option>${escapeHtml(p)}</option>`).join('');
+            // Ensure multi-select works
+            partSelect.size = Math.min(parts.length + 1, 6);
         }
 
         function clearFilters() {
@@ -982,6 +1111,7 @@
             document.getElementById('filterTitle').value = '';
             document.getElementById('filterSubtitle').value = '';
             document.getElementById('filterSubSub').value = '';
+            document.getElementById('filterParts').value = '';
             applyFilters();
         }
 
@@ -996,7 +1126,8 @@
 
             populateFilters(allRows);
             filteredRows = [...allRows];
-            renderAnalysis(allRows);
+            // Apply any current filters
+            applyFilters();
             showToast(`Data refreshed – ${allRows.length} part records`, 'info');
         }
 
@@ -1005,6 +1136,7 @@
         document.getElementById('filterTitle').addEventListener('change', applyFilters);
         document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
         document.getElementById('filterSubSub').addEventListener('change', applyFilters);
+        document.getElementById('filterParts').addEventListener('change', applyFilters);
         window.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 closePartModal(e);
