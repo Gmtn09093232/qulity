@@ -363,7 +363,7 @@
                         <i class="fa-regular fa-circle-check"></i> Welding &amp; Fastener
                     </span>
                 </h1>
-                <p class="text-sm text-gray-500 mt-1">Breakdown by Subtitle &amp; Sub‑Sub Assembly – <span class="font-medium text-indigo-600">% = part delivered / sub‑sub total delivered</span></p>
+                <p class="text-sm text-gray-500 mt-1">Breakdown by Subtitle &amp; Sub‑Sub Assembly – <span class="font-medium text-indigo-600">Assembly Completion = (accepted / delivered) from QC</span></p>
             </div>
             <div class="flex gap-3 flex-wrap">
                 <button onclick="exportAnalysisToExcel()" class="btn-excel"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
@@ -443,7 +443,7 @@
                             <th class="text-left">Project Title</th>
                             <th class="text-left">Subtitle</th>
                             <th class="text-left">Sub‑Sub Assembly</th>
-                            <th class="text-center">% of Sub‑Sub Total</th>
+                            <th class="text-center">Assembly Completion</th>
                         </tr>
                     </thead>
                     <tbody id="analysisTableBody"></tbody>
@@ -543,13 +543,13 @@
 
         function safePct(val) {
             if (!val || isNaN(val) || !isFinite(val)) return 0;
-            return val;
+            return Math.min(100, Math.max(0, val));
         }
 
         // ─── STATE ───
         let allRows = [];
         let filteredRows = [];
-        let subSubAssemblyMap = new Map(); // key -> { client, title, subtitle, subSub, parts: Map, totalDelivered }
+        let subSubAssemblyMap = new Map(); // key -> { client, title, subtitle, subSub, parts: Map, totalDelivered, totalAccepted }
         let partInspectionsMap = new Map();
         let partToSubSubKey = new Map();
 
@@ -579,6 +579,7 @@
                 partInspMap.get(pn).push(insp);
             }
 
+            // Build sub-sub map with totalDelivered and totalAccepted
             const subSubMap = new Map();
             for (const insp of filtered) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -587,6 +588,7 @@
                 const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 const delivered = insp.delivered_qty || 0;
+                const accepted = insp.accepted_qty || 0;
 
                 const key = `${client}||${title}||${subtitle}||${subSub}`;
                 if (!subSubMap.has(key)) {
@@ -596,20 +598,25 @@
                         subtitle,
                         subSub,
                         parts: new Map(),
-                        totalDelivered: 0
+                        totalDelivered: 0,
+                        totalAccepted: 0,
                     });
                 }
                 const entry = subSubMap.get(key);
-                const current = entry.parts.get(partName) || 0;
-                entry.parts.set(partName, current + delivered);
+                // Accumulate part delivered
+                const currentPart = entry.parts.get(partName) || 0;
+                entry.parts.set(partName, currentPart + delivered);
+                // Accumulate assembly totals
                 entry.totalDelivered += delivered;
+                entry.totalAccepted += accepted;
             }
 
+            // Build rows with assembly completion
             const rows = [];
             const p2ss = new Map();
             for (const [key, entry] of subSubMap) {
+                const completionPct = entry.totalDelivered > 0 ? (entry.totalAccepted / entry.totalDelivered) * 100 : 0;
                 for (const [partName, delivered] of entry.parts) {
-                    const pct = entry.totalDelivered > 0 ? (delivered / entry.totalDelivered) * 100 : 0;
                     rows.push({
                         client: entry.client,
                         title: entry.title,
@@ -619,13 +626,14 @@
                         partName: partName,
                         delivered: delivered,
                         subSubTotalDelivered: entry.totalDelivered,
-                        percentage: pct,
+                        assemblyCompletion: completionPct, // same for all parts in assembly
                         subSubPartCount: entry.parts.size,
                     });
                     p2ss.set(partName, key);
                 }
             }
 
+            // Compute subtitle part counts (for display)
             const subtitlePartCounts = new Map();
             for (const row of rows) {
                 const sk = `${row.client}||${row.title}||${row.subtitle}`;
@@ -681,12 +689,12 @@
                         subSubTotalDelivered: row.subSubTotalDelivered,
                         subSubPartCount: row.subSubPartCount,
                         subtitlePartCount: row.subtitlePartCount,
+                        assemblyCompletion: row.assemblyCompletion,
                     };
                 }
                 hierarchy[c][t][s][ss].parts.push({
                     partName: row.partName,
                     delivered: row.delivered,
-                    percentage: row.percentage
                 });
             }
 
@@ -732,6 +740,7 @@
                             const totalDeliv = subSubData.subSubTotalDelivered;
                             const subtitlePartCnt = subSubData.subtitlePartCount;
                             const pctSub = totalParts > 0 ? (subtitlePartCnt / totalParts) * 100 : 0;
+                            const completion = subSubData.assemblyCompletion;
 
                             let subSubPrinted = false;
                             for (const part of parts) {
@@ -763,12 +772,12 @@
                                     </td>`;
                                     subSubPrinted = true;
                                 }
-                                // % of Sub‑Sub Total column
-                                const pctVal = safePct(part.percentage);
+                                // Assembly Completion column (same value for all parts in assembly)
+                                const compVal = safePct(completion);
                                 html += `<td class="text-center">
                                     <div class="flex items-center gap-2 justify-center">
-                                        <span class="percent-value">${pctVal.toFixed(1)}%</span>
-                                        <div class="progress-bar-bg w-20"><div class="progress-fill" style="width:${Math.min(100, pctVal)}%"></div></div>
+                                        <span class="percent-value">${compVal.toFixed(1)}%</span>
+                                        <div class="progress-bar-bg w-20"><div class="progress-fill" style="width:${compVal}%"></div></div>
                                     </div>
                                 </td>`;
                                 html += `</tr>`;
@@ -786,7 +795,6 @@
 
         // ─── ASSEMBLY MODAL (shows all parts in a sub-sub assembly) ───
         function showAssemblyDetails(subSub, client, title, subtitle) {
-            // Find the assembly data
             const key = `${client}||${title}||${subtitle}||${subSub}`;
             const entry = window.subSubAssemblyMap?.get(key);
             if (!entry) {
@@ -799,6 +807,8 @@
 
             const body = document.getElementById('assemblyModalBody');
             const totalDeliv = entry.totalDelivered || 0;
+            const totalAcc = entry.totalAccepted || 0;
+            const completion = totalDeliv > 0 ? (totalAcc / totalDeliv) * 100 : 0;
             const sortedParts = Array.from(entry.parts.entries())
                 .sort((a, b) => b[1] - a[1]);
 
@@ -807,7 +817,7 @@
                     <span class="font-medium">${escapeHtml(client)}</span> · 
                     <span class="font-medium">${escapeHtml(title)}</span> · 
                     <span class="font-medium">${escapeHtml(subtitle)}</span>
-                    <span class="block text-xs text-gray-400 mt-1">${sortedParts.length} parts · ${formatQty(totalDeliv)} total delivered</span>
+                    <span class="block text-xs text-gray-400 mt-1">${sortedParts.length} parts · ${formatQty(totalDeliv)} delivered · ${formatQty(totalAcc)} accepted · Completion ${completion.toFixed(1)}%</span>
                 </div>
                 <table class="subsub-parts-table">
                     <thead>
@@ -854,7 +864,6 @@
             const body = document.getElementById('partModalBody');
             let html = '';
 
-            // Last inspection summary
             const lastInsp = inspections[inspections.length - 1];
             const nextOp = lastInsp ? getSuggestedNext(lastInsp) : null;
             const lastDate = lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—';
@@ -868,7 +877,6 @@
                 </table>
             `;
 
-            // Inspection history
             const sortedInsp = [...inspections].sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
 
             html += `<div class="modal-section-title mt-4"><i class="fa-regular fa-list"></i> Inspection History</div>`;
@@ -921,20 +929,18 @@
             }
             const data = [
                 ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'Delivered Qty',
-                    'Sub‑Sub Total Delivered', '% of Sub‑Sub Total'
+                    'Assembly Completion (%)'
                 ]
             ];
             for (const row of allRows) {
                 data.push([
                     row.client, row.title, row.subtitle, row.subSub,
                     row.partName, row.delivered,
-                    row.subSubTotalDelivered || 0,
-                    (row.percentage || 0).toFixed(1) + '%'
+                    (row.assemblyCompletion || 0).toFixed(1) + '%'
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 14 }, { wch: 20 },
-            { wch: 16 }];
+            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 14 }, { wch: 20 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Assembly Analysis');
             XLSX.writeFile(wb, `assembly_analysis_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
