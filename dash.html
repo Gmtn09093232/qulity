@@ -351,16 +351,6 @@
             font-weight: 500;
         }
 
-        .toggle-label {
-            cursor: pointer;
-            user-select: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.85rem;
-            color: #1e293b;
-        }
-
         @media (max-width: 640px) {
             .summary-card .value {
                 font-size: 1.25rem;
@@ -899,7 +889,7 @@
             document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')})`;
         }
 
-        // ─── ASSEMBLY MODAL (with welding indicator, part filter, and updated column header) ───
+        // ─── ASSEMBLY MODAL (simplified – no toggle) ───
         function showAssemblyDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
             const entry = window.subSubAssemblyMap?.get(key);
@@ -913,7 +903,7 @@
             const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             const partSet = new Set(selectedParts);
 
-            // Determine which parts have welding
+            // Determine which parts have welding (just for the column)
             const weldingParts = new Set();
             for (const [pName] of entry.parts) {
                 const inspList = window.partInspectionsMap?.get(pName) || [];
@@ -932,12 +922,6 @@
                 partsList = partsList.filter(([pName]) => partSet.has(pName));
             }
 
-            // Apply welded-only toggle if active
-            const toggleState = body.dataset.weldedOnly === 'true';
-            if (toggleState) {
-                partsList = partsList.filter(([pName]) => weldingParts.has(pName));
-            }
-
             const totalDeliv = partsList.reduce((sum, [_, data]) => sum + data.delivered, 0);
             const totalAcc = partsList.reduce((sum, [_, data]) => sum + data.accepted, 0);
             const completion = entry.assemblyProgressPct;
@@ -953,18 +937,7 @@
                     <span class="text-xs text-gray-400">
                         ${sortedParts.length} parts · ${formatQty(totalDeliv)} delivered · ${formatQty(totalAcc)} accepted · Completion ${completion !== null ? completion.toFixed(1) : '—'}%
                     </span>
-                    <span class="text-xs bg-indigo-50 px-2 py-1 rounded-full">
-                        <i class="fa-regular fa-welding"></i> ${weldingParts.size} welded
-                    </span>
                     ${partSet.size > 0 ? `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">Filtered by selected parts</span>` : ''}
-                </div>
-                <div class="flex items-center gap-4 mb-3">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="weldedOnlyToggle" ${toggleState ? 'checked' : ''} 
-                               onchange="toggleWeldedFilter('${escapeHtml(subSub)}', '${escapeHtml(client)}', '${escapeHtml(title)}', '${escapeHtml(subtitle)}')">
-                        <span>Show only welded parts</span>
-                    </label>
-                    <span class="text-xs text-gray-400">${weldingParts.size} of ${entry.parts.size} parts have welding</span>
                 </div>
                 <table class="subsub-parts-table">
                     <thead>
@@ -1001,20 +974,10 @@
             document.getElementById('assemblyModal').classList.remove('hidden');
         }
 
-        // Toggle welded filter
-        function toggleWeldedFilter(subSub, client, title, subtitle) {
-            const body = document.getElementById('assemblyModalBody');
-            const checked = document.getElementById('weldedOnlyToggle').checked;
-            body.dataset.weldedOnly = checked ? 'true' : 'false';
-            showAssemblyDetails(subSub, client, title, subtitle);
-        }
-
         function closeAssemblyModal(e) {
             if (!e || e.target === document.getElementById('assemblyModal') || e.target.closest('.fa-xmark') || e.target.closest(
                     'button')) {
                 document.getElementById('assemblyModal').classList.add('hidden');
-                const body = document.getElementById('assemblyModalBody');
-                body.dataset.weldedOnly = 'false';
             }
         }
 
