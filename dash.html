@@ -314,6 +314,17 @@
         .subsub-parts-table .part-link:hover {
             color: #1e40af;
         }
+        .subsub-parts-table .welded-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
 
         .inspection-history-wrap {
             max-height: 260px;
@@ -338,6 +349,16 @@
             padding: 2px 10px;
             border-radius: 999px;
             font-weight: 500;
+        }
+
+        .toggle-label {
+            cursor: pointer;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #1e293b;
         }
 
         @media (max-width: 640px) {
@@ -466,7 +487,7 @@
 
         <!-- Assembly Detail Modal (shows parts in a sub-sub assembly) -->
         <div id="assemblyModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeAssemblyModal(event)">
-            <div class="bg-white rounded-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
+            <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center z-10">
                     <h3 class="font-bold text-lg" id="assemblyModalTitle">Assembly Details</h3>
                     <button onclick="closeAssemblyModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -496,6 +517,12 @@
             const lower = processType.trim().toLowerCase();
             return lower.includes('assembling (welding)') || lower.includes('assembling (fastener)') ||
                 lower.includes('assembling(welding)') || lower.includes('assembling(fastener)');
+        }
+
+        function isWeldingProcess(processType) {
+            if (!processType) return false;
+            const lower = processType.trim().toLowerCase();
+            return lower.includes('welding');
         }
 
         // ─── TOAST ───
@@ -531,12 +558,10 @@
         }
 
         function getAssemblyProgressPct(insp) {
-            // Check direct field first
             if (insp.assembly_progress_pct !== undefined && insp.assembly_progress_pct !== null) {
                 const val = parseFloat(insp.assembly_progress_pct);
                 if (!isNaN(val)) return val;
             }
-            // Check extra_fields variations
             if (insp.extra_fields) {
                 const candidates = ['Assembly Progress %', 'assembly_progress_pct', 'Assembly Progress'];
                 for (const key of candidates) {
@@ -546,7 +571,7 @@
                     }
                 }
             }
-            return null; // not found
+            return null;
         }
 
         function getSuggestedNext(insp) {
@@ -577,7 +602,7 @@
         // ─── STATE ───
         let allRows = [];
         let filteredRows = [];
-        let subSubAssemblyMap = new Map(); // key -> { client, title, subtitle, subSub, parts: Map, totalDelivered, totalAccepted, assemblyProgressPct }
+        let subSubAssemblyMap = new Map();
         let partInspectionsMap = new Map();
         let partToSubSubKey = new Map();
 
@@ -600,7 +625,6 @@
                 return { rows: [], subSubMap: new Map(), partInspections: new Map(), partToSubSubKey: new Map() };
             }
 
-            // Build part -> inspections map (for modal)
             const partInspMap = new Map();
             for (const insp of filtered) {
                 const pn = getExtraField(insp, 'Part Name') || 'Unnamed Part';
@@ -608,7 +632,6 @@
                 partInspMap.get(pn).push(insp);
             }
 
-            // Build sub-sub map with per‑part delivered/accepted and assembly progress
             const subSubMap = new Map();
             for (const insp of filtered) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -628,24 +651,21 @@
                         title,
                         subtitle,
                         subSub,
-                        parts: new Map(), // partName -> { delivered, accepted }
+                        parts: new Map(),
                         totalDelivered: 0,
                         totalAccepted: 0,
-                        assemblyProgressPct: null, // will be set from latest inspection
+                        assemblyProgressPct: null,
                         latestDate: null,
                     });
                 }
                 const entry = subSubMap.get(key);
-                // Accumulate per-part
                 const partData = entry.parts.get(partName) || { delivered: 0, accepted: 0 };
                 partData.delivered += delivered;
                 partData.accepted += accepted;
                 entry.parts.set(partName, partData);
-                // Accumulate assembly totals
                 entry.totalDelivered += delivered;
                 entry.totalAccepted += accepted;
 
-                // Update assembly progress with latest inspection's value
                 if (progress !== null) {
                     if (!entry.latestDate || submittedAt > entry.latestDate) {
                         entry.latestDate = submittedAt;
@@ -654,11 +674,10 @@
                 }
             }
 
-            // Build rows with assembly progress (same for all parts in assembly)
             const rows = [];
             const p2ss = new Map();
             for (const [key, entry] of subSubMap) {
-                const progressPct = entry.assemblyProgressPct; // could be null
+                const progressPct = entry.assemblyProgressPct;
                 for (const [partName, partData] of entry.parts) {
                     rows.push({
                         client: entry.client,
@@ -678,7 +697,6 @@
                 }
             }
 
-            // Compute subtitle part counts (for display)
             const subtitlePartCounts = new Map();
             for (const row of rows) {
                 const sk = `${row.client}||${row.title}||${row.subtitle}`;
@@ -693,7 +711,7 @@
             return { rows, subSubMap, partInspections: partInspMap, partToSubSubKey: p2ss };
         }
 
-        // ─── RENDER (with parts filter) ───
+        // ─── RENDER ───
         function renderAnalysis(rows, selectedParts = []) {
             const tbody = document.getElementById('analysisTableBody');
             if (!rows.length) {
@@ -707,17 +725,13 @@
                 return;
             }
 
-            // If selectedParts is empty, use all rows (no part filter)
             const partFilterSet = new Set(selectedParts);
             const useFilter = partFilterSet.size > 0;
-
-            // Filter rows by part selection
             let filteredRows = rows;
             if (useFilter) {
                 filteredRows = rows.filter(r => partFilterSet.has(r.partName));
             }
 
-            // If no rows after filtering, show empty state
             if (!filteredRows.length) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">No parts match the selection.</td></tr>';
                 document.getElementById('recordCount').innerText = '0 records';
@@ -729,7 +743,6 @@
                 return;
             }
 
-            // Group by subSubKey to get assembly progress (same for all parts)
             const assemblyMap = new Map();
             for (const row of filteredRows) {
                 const key = row.subSubKey;
@@ -757,7 +770,6 @@
                 entry.totalAccepted += row.accepted;
             }
 
-            // Build hierarchy for display
             const uniqueParts = new Set(filteredRows.map(r => r.partName));
             const totalParts = uniqueParts.size;
             const totalDelivered = filteredRows.reduce((sum, r) => sum + r.delivered, 0);
@@ -769,7 +781,6 @@
             document.getElementById('totalSubtitles').innerText = subtitles.size;
             document.getElementById('totalSubSub').innerText = subSubs.size;
 
-            // Build hierarchy
             const hierarchy = {};
             for (const row of filteredRows) {
                 const c = row.client;
@@ -796,7 +807,6 @@
                 });
             }
 
-            // Rowspan counts
             for (const client in hierarchy) {
                 let totalRows = 0;
                 for (const title in hierarchy[client]) {
@@ -861,7 +871,6 @@
                                     subtitlePrinted = true;
                                 }
                                 if (!subSubPrinted) {
-                                    const pctSubSub = totalParts > 0 ? (partCount / totalParts) * 100 : 0;
                                     html += `<td rowspan="${parts.length}" class="align-top">
                                         <div class="clickable-assembly" onclick="showAssemblyDetails('${escapeHtml(subSub)}', '${escapeHtml(client)}', '${escapeHtml(title)}', '${escapeHtml(subtitle)}')">
                                             ${escapeHtml(subSub)}
@@ -890,7 +899,7 @@
             document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')})`;
         }
 
-        // ─── ASSEMBLY MODAL ───
+        // ─── ASSEMBLY MODAL (with welding indicator and filter) ───
         function showAssemblyDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
             const entry = window.subSubAssemblyMap?.get(key);
@@ -899,41 +908,79 @@
                 return;
             }
 
-            // Get current part filter to show only selected parts if any
             const partSelect = document.getElementById('filterParts');
             const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             const partSet = new Set(selectedParts);
+
+            // Determine which parts have welding
+            const weldingParts = new Set();
+            for (const [pName] of entry.parts) {
+                const inspList = window.partInspectionsMap?.get(pName) || [];
+                const hasWelding = inspList.some(insp => isWeldingProcess(insp.process_type));
+                if (hasWelding) weldingParts.add(pName);
+            }
 
             const titleEl = document.getElementById('assemblyModalTitle');
             titleEl.innerText = `📦 ${escapeHtml(subSub)}`;
 
             const body = document.getElementById('assemblyModalBody');
 
-            // Build list of parts: if filter active, show only selected, else all
+            // Build list of parts (respecting part filter from main page)
             let partsList = Array.from(entry.parts.entries());
             if (partSet.size > 0) {
                 partsList = partsList.filter(([pName]) => partSet.has(pName));
             }
+
+            // Filter by welding toggle
+            let showWeldedOnly = false;
+            // We'll store toggle state in a data attribute on the modal body
+            const toggleState = body.dataset.weldedOnly === 'true';
+            if (toggleState) {
+                partsList = partsList.filter(([pName]) => weldingParts.has(pName));
+            }
+
             const totalDeliv = partsList.reduce((sum, [_, data]) => sum + data.delivered, 0);
             const totalAcc = partsList.reduce((sum, [_, data]) => sum + data.accepted, 0);
-            const completion = entry.assemblyProgressPct; // from QC, not calculated
+            const completion = entry.assemblyProgressPct;
             const sortedParts = partsList.sort((a, b) => b[1].delivered - a[1].delivered);
 
             let html = `
-                <div class="text-sm text-gray-600 mb-4">
-                    <span class="font-medium">${escapeHtml(client)}</span> · 
-                    <span class="font-medium">${escapeHtml(title)}</span> · 
-                    <span class="font-medium">${escapeHtml(subtitle)}</span>
-                    <span class="block text-xs text-gray-400 mt-1">${sortedParts.length} parts · ${formatQty(totalDeliv)} delivered · ${formatQty(totalAcc)} accepted · Completion ${completion !== null ? completion.toFixed(1) : '—'}%</span>
-                    ${partSet.size > 0 ? `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full mt-1">Filtered by selected parts</span>` : ''}
+                <div class="text-sm text-gray-600 mb-4 flex flex-wrap items-center gap-3">
+                    <span>
+                        <span class="font-medium">${escapeHtml(client)}</span> · 
+                        <span class="font-medium">${escapeHtml(title)}</span> · 
+                        <span class="font-medium">${escapeHtml(subtitle)}</span>
+                    </span>
+                    <span class="text-xs text-gray-400">
+                        ${sortedParts.length} parts · ${formatQty(totalDeliv)} delivered · ${formatQty(totalAcc)} accepted · Completion ${completion !== null ? completion.toFixed(1) : '—'}%
+                    </span>
+                    <span class="text-xs bg-indigo-50 px-2 py-1 rounded-full">
+                        <i class="fa-regular fa-welding"></i> ${weldingParts.size} welded
+                    </span>
+                    ${partSet.size > 0 ? `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">Filtered by selected parts</span>` : ''}
+                </div>
+                <div class="flex items-center gap-4 mb-3">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="weldedOnlyToggle" ${toggleState ? 'checked' : ''} 
+                               onchange="toggleWeldedFilter('${escapeHtml(subSub)}', '${escapeHtml(client)}', '${escapeHtml(title)}', '${escapeHtml(subtitle)}')">
+                        <span>Show only welded parts</span>
+                    </label>
+                    <span class="text-xs text-gray-400">${weldingParts.size} of ${entry.parts.size} parts have welding</span>
                 </div>
                 <table class="subsub-parts-table">
                     <thead>
-                        <tr><th>Part Name</th><th class="text-center">Delivered</th><th class="text-center">Accepted</th><th class="text-center">% of Assembly</th></tr>
+                        <tr>
+                            <th>Part Name</th>
+                            <th class="text-center">Delivered</th>
+                            <th class="text-center">Accepted</th>
+                            <th class="text-center">% of Assembly</th>
+                            <th class="text-center">Welded</th>
+                        </tr>
                     </thead>
                     <tbody>`;
             for (const [pName, data] of sortedParts) {
                 const pct = totalDeliv > 0 ? (data.delivered / totalDeliv) * 100 : 0;
+                const isWelded = weldingParts.has(pName);
                 html += `<tr>
                     <td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
                     <td class="text-center">${formatQty(data.delivered)}</td>
@@ -944,6 +991,9 @@
                             <span class="pct-label">${pct.toFixed(1)}%</span>
                         </div>
                     </td>
+                    <td class="text-center">
+                        ${isWelded ? '<span class="welded-badge"><i class="fa-solid fa-welding"></i> Yes</span>' : '<span class="text-gray-400">—</span>'}
+                    </td>
                 </tr>`;
             }
             html += `</tbody></table>`;
@@ -952,10 +1002,22 @@
             document.getElementById('assemblyModal').classList.remove('hidden');
         }
 
+        // Toggle welded filter
+        function toggleWeldedFilter(subSub, client, title, subtitle) {
+            const body = document.getElementById('assemblyModalBody');
+            const checked = document.getElementById('weldedOnlyToggle').checked;
+            body.dataset.weldedOnly = checked ? 'true' : 'false';
+            // Re-render with the same parameters
+            showAssemblyDetails(subSub, client, title, subtitle);
+        }
+
         function closeAssemblyModal(e) {
             if (!e || e.target === document.getElementById('assemblyModal') || e.target.closest('.fa-xmark') || e.target.closest(
                     'button')) {
                 document.getElementById('assemblyModal').classList.add('hidden');
+                // reset toggle state
+                const body = document.getElementById('assemblyModalBody');
+                body.dataset.weldedOnly = 'false';
             }
         }
 
@@ -1038,12 +1100,10 @@
             }
             const data = [
                 ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'Delivered Qty', 'Accepted Qty',
-                    'Assembly Completion (%)'
+                    'Assembly Completion (%)', 'Has Welding?'
                 ]
             ];
-            // Use filtered rows if any, else all
             const rowsToExport = filteredRows.length ? filteredRows : allRows;
-            // Apply part filter
             const partSelect = document.getElementById('filterParts');
             const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             const partSet = new Set(selectedParts);
@@ -1052,7 +1112,6 @@
                 exportRows = rowsToExport.filter(r => partSet.has(r.partName));
             }
 
-            // Group by assembly to get progress (same for all parts)
             const assemblyMap = new Map();
             for (const row of exportRows) {
                 const key = row.subSubKey;
@@ -1066,15 +1125,19 @@
             for (const row of exportRows) {
                 const comp = assemblyMap.get(row.subSubKey)?.progress;
                 const compVal = comp !== null && comp !== undefined ? comp : 0;
+                // Check welding
+                const inspList = window.partInspectionsMap?.get(row.partName) || [];
+                const hasWelding = inspList.some(insp => isWeldingProcess(insp.process_type));
                 data.push([
                     row.client, row.title, row.subtitle, row.subSub,
                     row.partName, row.delivered, row.accepted,
-                    compVal.toFixed(1) + '%'
+                    compVal.toFixed(1) + '%',
+                    hasWelding ? 'Yes' : 'No'
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(data);
             ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 14 }, { wch: 14 },
-            { wch: 20 }];
+            { wch: 20 }, { wch: 12 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Assembly Analysis');
             XLSX.writeFile(wb, `assembly_analysis_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
