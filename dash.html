@@ -117,14 +117,6 @@
         tr:hover td {
             background-color: #fafbfc;
         }
-        .group-header-row td {
-            background-color: #eef2ff;
-            font-weight: 700;
-            color: #1e40af;
-            border-bottom: 2px solid #c7d2fe;
-            padding: 6px 10px;
-            font-size: 0.8rem;
-        }
 
         /* Expandable rows */
         .subtitle-row {
@@ -148,10 +140,6 @@
             transition: transform 0.2s;
             display: inline-block;
         }
-        .subtitle-row .toggle-icon.open,
-        .subsub-row .toggle-icon.open {
-            transform: rotate(90deg);
-        }
         .subsub-row td:first-child {
             padding-left: 2rem;
         }
@@ -162,19 +150,24 @@
             background-color: #fafcff;
             font-size: 0.8rem;
         }
-        .part-row .part-name {
+        .part-name {
             font-weight: 500;
             color: #1e293b;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 2px;
         }
-        .part-row .part-pct {
+        .part-name:hover {
+            color: #4f46e5;
+        }
+        .part-pct {
             font-weight: 600;
             color: #4f46e5;
         }
-        .part-row .part-delivered {
+        .part-delivered {
             font-weight: 500;
         }
 
-        /* Hide/Show */
         .row-hidden {
             display: none;
         }
@@ -361,7 +354,7 @@
             </div>
         </div>
 
-        <!-- Part Detail Modal (unchanged) -->
+        <!-- Part Detail Modal -->
         <div id="partModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closePartModal(event)">
             <div class="bg-white rounded-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center z-10">
@@ -536,7 +529,7 @@
             return { rows, subSubMap, partInspections: partInspMap, partToSubSubKey: partToSub };
         }
 
-        // ─── RENDER (new expandable table) ───
+        // ─── RENDER (expandable table) ───
         function renderAnalysis(rows) {
             const tbody = document.getElementById('analysisTableBody');
             if (!rows.length) {
@@ -592,26 +585,17 @@
                 let totalRows = 0;
                 for (const t in hierarchy[c]) {
                     for (const s in hierarchy[c][t]) {
-                        // Each subtitle will have at least one row (the subtitle header) plus rows for each subSub (including parts)
-                        // We'll count all rows that will be generated: subtitle header + subSub rows + part rows (but part rows are hidden initially)
-                        // We'll count only the visible header rows (subtitle + subSub) for rowspan, but client and title will span all rows.
-                        // Simpler: we'll use rowspan for client and title across all generated rows (including hidden ones).
-                        // We'll generate all rows and use rowspan that spans the whole block.
-                        // We'll compute the total number of rows for this client/title block.
                         let rowsInBlock = 0;
                         for (const ss in hierarchy[c][t][s]) {
-                            // For each subSub, we will have: one subSub row + (parts count) part rows.
                             rowsInBlock += 1 + hierarchy[c][t][s][ss].parts.length;
                         }
-                        // plus one subtitle header row
-                        rowsInBlock += 1;
+                        rowsInBlock += 1; // subtitle header
                         totalRows += rowsInBlock;
                     }
                 }
                 clientRowCounts[c] = totalRows;
             }
 
-            // Build HTML
             let html = '';
             for (const client in hierarchy) {
                 const clientData = hierarchy[client];
@@ -620,7 +604,6 @@
 
                 for (const title in clientData) {
                     const titleData = clientData[title];
-                    // compute title rowspan: sum of all rows under this title
                     let titleRowSpan = 0;
                     for (const s in titleData) {
                         for (const ss in titleData[s]) {
@@ -632,18 +615,13 @@
 
                     for (const subtitle in titleData) {
                         const subtitleData = titleData[subtitle];
-                        // Subtitle header row (clickable to expand/collapse subSubs)
-                        // It will be followed by rows for each subSub and its parts.
-                        // We'll generate the subtitle row now.
                         const subtitleRowId = `subtitle-${client}-${title}-${subtitle}`.replace(/[^a-zA-Z0-9-]/g, '_');
-                        const subSubs = Object.keys(subtitleData);
-                        const totalPartsInSubtitle = subtitleData[subtitle]?.subtitlePartCount || 0; // actually we need total parts across all subSubs
-                        // compute total parts in this subtitle
                         let totalPartsInSub = 0;
                         for (const ss in subtitleData) {
                             totalPartsInSub += subtitleData[ss].parts.length;
                         }
-                        // subtitle row
+
+                        // Subtitle row
                         html += `<tr class="subtitle-row" data-subtitle="${escapeHtml(subtitle)}" data-toggle="subtitle" data-target="${subtitleRowId}">`;
                         if (!clientPrinted) {
                             html += `<td rowspan="${clientRowSpan}" class="font-medium align-top">${escapeHtml(client)}</td>`;
@@ -661,26 +639,16 @@
                         html += `<td class="text-center">${totalPartsInSub} parts</td>`;
                         html += `</tr>`;
 
-                        // Now generate rows for each subSub under this subtitle (they start hidden)
-                        let subSubIndex = 0;
+                        // SubSub rows and their parts
                         for (const subSub in subtitleData) {
                             const subSubData = subtitleData[subSub];
                             const subSubRowId = `subsub-${client}-${title}-${subtitle}-${subSub}`.replace(/[^a-zA-Z0-9-]/g, '_');
                             const partCount = subSubData.parts.length;
                             const totalDeliv = subSubData.totalDelivered;
 
-                            // Sub-Sub row (clickable to expand parts)
+                            // SubSub row
                             html += `<tr class="subsub-row row-hidden" data-subsub="${escapeHtml(subSub)}" data-toggle="subsub" data-target="${subSubRowId}" data-parent="${subtitleRowId}">`;
-                            // client and title are rowspan already set, so we just put empty cells for those columns
-                            // but we need to maintain the columns: Client, Title, Subtitle (already colspan=2), SubSub, Parts
-                            // Since subtitle row used colspan=2 for Subtitle+SubSub? Actually we have 5 columns: Client, Title, Subtitle, SubSub, Parts.
-                            // In subtitle row we used colspan="2" for subtitle and subsub? We set: <td colspan="2"> for subtitle. That means it spans Subtitle and SubSub columns.
-                            // For subSub row, we need to have empty cells for Client and Title (since rowspan handles them), then Subtitle cell (empty), then SubSub cell, then Parts.
-                            // But we need to align with the columns.
-                            // Let's adjust: Subtitle row used colspan="2" for the third and fourth columns (Subtitle and SubSub) and the fifth column for Parts.
-                            // For subSub row, we need to have: Client (empty), Title (empty), Subtitle (empty), SubSub (content), Parts (content).
-                            // So we produce 5 cells: Client (empty), Title (empty), Subtitle (empty), SubSub (content), Parts (content).
-                            html += `<td></td><td></td><td></td>`; // client, title, subtitle cells empty
+                            html += `<td></td><td></td><td></td>`;
                             html += `<td class="cursor-pointer pl-8">
                                 <span class="toggle-icon"><i class="fa-regular fa-caret-right"></i></span>
                                 ${escapeHtml(subSub)}
@@ -689,20 +657,23 @@
                             html += `<td class="text-center">${partCount} parts</td>`;
                             html += `</tr>`;
 
-                            // Part rows (hidden under subSub)
+                            // Part rows (clickable part names)
                             const parts = subSubData.parts;
                             for (const part of parts) {
                                 const pct = safePct(part.percentage);
                                 html += `<tr class="part-row row-hidden" data-parent-subsub="${subSubRowId}">
-                                    <td></td><td></td><td></td> <!-- client, title, subtitle empty -->
-                                    <td class="pl-12"><span class="part-name">${escapeHtml(part.partName)}</span></td>
+                                    <td></td><td></td><td></td>
+                                    <td class="pl-12">
+                                        <span class="part-name" onclick="showPartDetails('${escapeHtml(part.partName)}')">
+                                            ${escapeHtml(part.partName)}
+                                        </span>
+                                    </td>
                                     <td class="text-center">
                                         <span class="part-delivered">${formatQty(part.delivered)}</span>
                                         <span class="part-pct ml-2">(${pct.toFixed(1)}%)</span>
                                     </td>
                                 </tr>`;
                             }
-                            subSubIndex++;
                         }
                     }
                 }
@@ -713,17 +684,14 @@
             document.getElementById('recordCountBottom').innerText = `${totalParts} unique parts · ${subSubs.size} sub‑sub assemblies`;
             document.getElementById('recordStatus').innerHTML = `✅ Loaded ${rows.length} records (${TARGET_PROCESSES.join(', ')})`;
 
-            // ─── Attach click events for expand/collapse ───
-            // Use event delegation on tbody
+            // ─── Click to expand/collapse ───
             tbody.querySelectorAll('.subtitle-row, .subsub-row').forEach(row => {
                 row.addEventListener('click', function(e) {
-                    // Toggle the rows that are children
                     const targetId = this.dataset.target;
                     if (!targetId) return;
                     const children = tbody.querySelectorAll(`[data-parent="${targetId}"], [data-parent-subsub="${targetId}"]`);
                     const icon = this.querySelector('.toggle-icon i');
                     if (children.length) {
-                        const isHidden = children[0].classList.contains('row-hidden');
                         children.forEach(child => {
                             child.classList.toggle('row-hidden');
                         });
@@ -736,7 +704,7 @@
             });
         }
 
-        // ─── PART DETAIL MODAL (unchanged) ───
+        // ─── PART DETAIL MODAL ───
         function showPartDetails(partName) {
             const inspections = window.partInspectionsMap?.get(partName);
             if (!inspections || !inspections.length) {
