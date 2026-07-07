@@ -971,11 +971,11 @@
             const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
             const icon = iconMap[type] || 'fa-info-circle';
             toast.innerHTML = `
-                    <div class="toast-content">
-                      <span class="toast-icon"><i class="fa-solid ${icon}"></i></span>
-                      <span>${message}</span>
-                    </div>
-                  `;
+                        <div class="toast-content">
+                          <span class="toast-icon"><i class="fa-solid ${icon}"></i></span>
+                          <span>${message}</span>
+                        </div>
+                      `;
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.add('show'));
             setTimeout(() => {
@@ -1131,10 +1131,10 @@
             let html = `<table class="part-qty-table w-full"><tbody>`;
             selectedParts.forEach((part, index) => {
                 html += `<tr>
-                        <td class="text-slate-700 font-medium text-sm">${escapeHtml(part.name)}</td>
-                        <td><input type="number" min="0" step="1" value="${part.qty || 1}" class="part-qty-input" data-index="${index}" /></td>
-                        <td><span class="remove-part-btn" data-index="${index}"><i class="fa-regular fa-trash-can"></i></span></td>
-                    </tr>`;
+                            <td class="text-slate-700 font-medium text-sm">${escapeHtml(part.name)}</td>
+                            <td><input type="number" min="0" step="1" value="${part.qty || 1}" class="part-qty-input" data-index="${index}" /></td>
+                            <td><span class="remove-part-btn" data-index="${index}"><i class="fa-regular fa-trash-can"></i></span></td>
+                        </tr>`;
             });
             html += `</tbody></table>`;
             container.innerHTML = html;
@@ -1756,21 +1756,21 @@
         // ─── INCOMING FORM ───
         function renderIncomingForm() {
             return `
-                    <div class="glass rounded-xl p-5 space-y-5">
-                      <div class="text-center font-bold text-xl text-slate-700">INCOMING MATERIAL INSPECTION REPORT</div>
-                      <div class="text-right text-sm text-slate-500">Document No. QAD/001</div>
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="block text-xs font-medium text-slate-500 mb-1">1. Source of Item</label><div class="flex gap-4"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="sourceItem" value="Local" class="accent-blue-600" /> Local</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="sourceItem" value="Foreign" class="accent-blue-600" /> Foreign</label></div><div><label class="text-xs text-slate-500">Address:</label><input type="text" id="sourceAddress" class="glass-input w-full rounded-lg px-3 py-2 text-sm mt-1" /></div></div>
-                        <div><label class="block text-xs font-medium text-slate-500 mb-1">2. Procurement type</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Direct" class="accent-blue-600" /> Direct</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Proforma" class="accent-blue-600" /> Proforma</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Bid" class="accent-blue-600" /> Bid</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="procTypeOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><label class="text-xs text-slate-500 mt-1 block">Method of Inspection:</label><input type="text" id="methodInspection" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="visual inspection etc." /></div>
-                        <div><label class="block text-xs font-medium text-slate-500 mb-1">3. The PR is Requested by</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="PR Form" class="accent-blue-600" /> PR Form</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Letter" class="accent-blue-600" /> Letter</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="System" class="accent-blue-600" /> System</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="prRequestOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div></div>
-                        <div><label class="block text-xs font-medium text-slate-500 mb-1">4. Final Reference Document for Specification</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="PR" class="accent-blue-600" /> PR</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Proforma Invoice" class="accent-blue-600" /> Proforma Invoice</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Agreement" class="accent-blue-600" /> Agreement</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="refDocOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><div class="flex flex-wrap gap-3 mt-1"><span class="text-xs text-slate-500">No. of Page (PR):</span><input type="number" id="refPagePR" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-500">Proforma:</span><input type="number" id="refPageProforma" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-500">Agreement:</span><input type="number" id="refPageAgreement" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /></div></div>
-                      </div>
-                      <div><label class="block text-sm font-medium text-slate-600 mb-2">5. List of Items</label><div class="overflow-x-auto"><table class="table-glass text-xs" id="incomingItemsTable"><thead><tr><th>Specification as per requester</th><th>Supplied Material Description</th><th>Actual Supplied Specification</th><th>Model</th><th>Brand</th><th>Origin</th><th>Colour</th><th>Serial No.</th><th>Unit</th><th>Delivered Qty</th><th>Accepted Qty</th><th>Rejected Qty</th><th>Conditional Accepted Qty</th><th>Supplier</th><th>Remark</th><th class="w-8"></th></tr></thead><tbody id="incomingItemsBody"></tbody></table></div><button type="button" onclick="addIncomingItemRow()" class="btn-secondary text-xs mt-2"><i class="fa-regular fa-plus mr-1"></i> Add Item</button></div>
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-xs font-medium text-slate-500 mb-1">Reason For Reject</label><textarea id="reasonReject" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Reason for Conditional Accepted</label><textarea id="reasonConditional" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div></div>
-                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-200/60 pt-4"><div><label class="block text-xs font-medium text-slate-500 mb-1">Inspected By</label><input type="text" id="inspectedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">SIGNATURE</label><input type="text" id="inspectedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">DATE</label><input type="date" id="inspectedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Collaborated By</label><input type="text" id="collabBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Signature</label><input type="text" id="collabSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Date</label><input type="date" id="collabDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Approved By</label><input type="text" id="approvedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Signature</label><input type="text" id="approvedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">DATE</label><input type="date" id="approvedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div></div>
-                      <div><label class="block text-xs font-medium text-slate-500 mb-1">REMARK</label><textarea id="generalRemark" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div>
-                      <div class="text-xs text-slate-500 italic">Note: Please attach the final reference Document for specification. Form Modification Is not Allowed.</div>
-                    </div>`;
+                        <div class="glass rounded-xl p-5 space-y-5">
+                          <div class="text-center font-bold text-xl text-slate-700">INCOMING MATERIAL INSPECTION REPORT</div>
+                          <div class="text-right text-sm text-slate-500">Document No. QAD/001</div>
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-xs font-medium text-slate-500 mb-1">1. Source of Item</label><div class="flex gap-4"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="sourceItem" value="Local" class="accent-blue-600" /> Local</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="sourceItem" value="Foreign" class="accent-blue-600" /> Foreign</label></div><div><label class="text-xs text-slate-500">Address:</label><input type="text" id="sourceAddress" class="glass-input w-full rounded-lg px-3 py-2 text-sm mt-1" /></div></div>
+                            <div><label class="block text-xs font-medium text-slate-500 mb-1">2. Procurement type</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Direct" class="accent-blue-600" /> Direct</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Proforma" class="accent-blue-600" /> Proforma</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Bid" class="accent-blue-600" /> Bid</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="procTypeOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><label class="text-xs text-slate-500 mt-1 block">Method of Inspection:</label><input type="text" id="methodInspection" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="visual inspection etc." /></div>
+                            <div><label class="block text-xs font-medium text-slate-500 mb-1">3. The PR is Requested by</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="PR Form" class="accent-blue-600" /> PR Form</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Letter" class="accent-blue-600" /> Letter</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="System" class="accent-blue-600" /> System</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="prRequestOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div></div>
+                            <div><label class="block text-xs font-medium text-slate-500 mb-1">4. Final Reference Document for Specification</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="PR" class="accent-blue-600" /> PR</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Proforma Invoice" class="accent-blue-600" /> Proforma Invoice</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Agreement" class="accent-blue-600" /> Agreement</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="refDocOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><div class="flex flex-wrap gap-3 mt-1"><span class="text-xs text-slate-500">No. of Page (PR):</span><input type="number" id="refPagePR" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-500">Proforma:</span><input type="number" id="refPageProforma" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-500">Agreement:</span><input type="number" id="refPageAgreement" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /></div></div>
+                          </div>
+                          <div><label class="block text-sm font-medium text-slate-600 mb-2">5. List of Items</label><div class="overflow-x-auto"><table class="table-glass text-xs" id="incomingItemsTable"><thead><tr><th>Specification as per requester</th><th>Supplied Material Description</th><th>Actual Supplied Specification</th><th>Model</th><th>Brand</th><th>Origin</th><th>Colour</th><th>Serial No.</th><th>Unit</th><th>Delivered Qty</th><th>Accepted Qty</th><th>Rejected Qty</th><th>Conditional Accepted Qty</th><th>Supplier</th><th>Remark</th><th class="w-8"></th></tr></thead><tbody id="incomingItemsBody"></tbody></table></div><button type="button" onclick="addIncomingItemRow()" class="btn-secondary text-xs mt-2"><i class="fa-regular fa-plus mr-1"></i> Add Item</button></div>
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-xs font-medium text-slate-500 mb-1">Reason For Reject</label><textarea id="reasonReject" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Reason for Conditional Accepted</label><textarea id="reasonConditional" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div></div>
+                          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-200/60 pt-4"><div><label class="block text-xs font-medium text-slate-500 mb-1">Inspected By</label><input type="text" id="inspectedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">SIGNATURE</label><input type="text" id="inspectedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">DATE</label><input type="date" id="inspectedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Collaborated By</label><input type="text" id="collabBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Signature</label><input type="text" id="collabSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Date</label><input type="date" id="collabDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Approved By</label><input type="text" id="approvedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Signature</label><input type="text" id="approvedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">DATE</label><input type="date" id="approvedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div></div>
+                          <div><label class="block text-xs font-medium text-slate-500 mb-1">REMARK</label><textarea id="generalRemark" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div>
+                          <div class="text-xs text-slate-500 italic">Note: Please attach the final reference Document for specification. Form Modification Is not Allowed.</div>
+                        </div>`;
         }
 
         function addIncomingItemRow(data) {
@@ -1877,21 +1877,24 @@
                         html +=
                             `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan"></div>`;
                     } else if (field === "Part Name") {
+                        // ─── CHANGED: label dynamically shows "Assembly Name" for assembly processes ───
+                        const labelText = isAssemblyProcess() ? 'Assembly Name' : 'Part Name';
+                        const placeholderText = isAssemblyProcess() ? 'Assembly name' : 'Auto-filled after scan';
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Part Name</label><input type="text" id="${safeId}" list="partNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">${labelText}</label><input type="text" id="${safeId}" list="partNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="${placeholderText}" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
                     } else if (field === "Tag No.") {
                         if (isAssemblyProcess()) {
                             html += `
-                                    <div class="part-list-container">
-                                      <label class="block text-xs font-medium text-slate-500 mb-1">Part List <span class="text-slate-400 text-xs">(select parts, then enter qty)</span></label>
-                                      <select id="${safeId}" multiple size="4" class="glass-select w-full rounded-lg px-3 py-2 text-sm part-list-multi">
-                                        <option value="">-- Select Parts --</option>
-                                      </select>
-                                      <div id="selectedPartsContainer" class="selected-parts-container mt-2 bg-white/40 rounded-lg p-2 max-h-48 overflow-y-auto scrollbar-thin">
-                                        <div class="text-slate-500 text-sm italic py-1">No parts selected</div>
-                                      </div>
-                                    </div>
-                                  `;
+                                        <div class="part-list-container">
+                                          <label class="block text-xs font-medium text-slate-500 mb-1">Part List <span class="text-slate-400 text-xs">(select parts, then enter qty)</span></label>
+                                          <select id="${safeId}" multiple size="4" class="glass-select w-full rounded-lg px-3 py-2 text-sm part-list-multi">
+                                            <option value="">-- Select Parts --</option>
+                                          </select>
+                                          <div id="selectedPartsContainer" class="selected-parts-container mt-2 bg-white/40 rounded-lg p-2 max-h-48 overflow-y-auto scrollbar-thin">
+                                            <div class="text-slate-500 text-sm italic py-1">No parts selected</div>
+                                          </div>
+                                        </div>
+                                      `;
                         } else {
                             html +=
                                 `<div><label class="block text-xs font-medium text-slate-500 mb-1">Tag No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Tag number"></div>`;
@@ -2322,16 +2325,16 @@
                     "<p class='text-slate-500 text-sm italic py-2'>No inspections found.</p>";
                 else histDiv.innerHTML = displayData.map(row =>
                     `<div class="flex flex-wrap justify-between items-center py-2 px-2 rounded-lg hover:bg-white/60 transition border-b border-slate-200/50">
-                            <div class="text-sm">
-                              <span class="text-slate-700 font-medium">${new Date(row.submitted_at).toLocaleString()}</span>
-                              <span class="text-slate-500 ml-3">${row.process_type||'Rolling'}</span>
-                              ${row.acceptance_rating ? `<span class="ml-2 rating-pill ${row.acceptance_rating.toLowerCase().replace(' ','-')}">${row.acceptance_rating}</span>` : ''}
-                            </div>
-                            <div class="flex gap-2">
-                              <button onclick="editInspection(${row.id})" class="text-blue-600 hover:text-blue-800 text-sm transition"><i class="fa-regular fa-pen-to-square"></i></button>
-                              <button onclick="deleteInspection(${row.id})" class="text-rose-600/70 hover:text-rose-500 text-sm transition"><i class="fa-regular fa-trash-can"></i></button>
-                            </div>
-                          </div>`
+                                <div class="text-sm">
+                                  <span class="text-slate-700 font-medium">${new Date(row.submitted_at).toLocaleString()}</span>
+                                  <span class="text-slate-500 ml-3">${row.process_type||'Rolling'}</span>
+                                  ${row.acceptance_rating ? `<span class="ml-2 rating-pill ${row.acceptance_rating.toLowerCase().replace(' ','-')}">${row.acceptance_rating}</span>` : ''}
+                                </div>
+                                <div class="flex gap-2">
+                                  <button onclick="editInspection(${row.id})" class="text-blue-600 hover:text-blue-800 text-sm transition"><i class="fa-regular fa-pen-to-square"></i></button>
+                                  <button onclick="deleteInspection(${row.id})" class="text-rose-600/70 hover:text-rose-500 text-sm transition"><i class="fa-regular fa-trash-can"></i></button>
+                                </div>
+                              </div>`
                 ).join("");
                 if (isAssemblyProcess()) {
                     setTimeout(() => { populatePartListMultiSelect();
