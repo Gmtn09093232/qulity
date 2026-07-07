@@ -38,27 +38,35 @@
             pointer-events: auto;
             max-width: 400px;
         }
-        .toast.show { transform: translateX(0); }
-        .toast.error { border-left-color: #f87171; }
-        .toast.info { border-left-color: #60a5fa; }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.error {
+            border-left-color: #f87171;
+        }
+        .toast.info {
+            border-left-color: #60a5fa;
+        }
         .toast .toast-content {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .toast .toast-icon { font-size: 1.2rem; }
+        .toast .toast-icon {
+            font-size: 1.2rem;
+        }
 
         .summary-card {
             background: white;
             border-radius: 1rem;
             padding: 1.25rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             border: 1px solid #eef2f6;
             transition: all 0.2s;
         }
         .summary-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.07);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
         }
         .summary-card .icon {
             font-size: 1.5rem;
@@ -178,6 +186,10 @@
             display: block;
             margin-top: 2px;
         }
+        .group-meta .highlight {
+            font-weight: 600;
+            color: #0f172a;
+        }
 
         .btn-excel {
             background-color: #10b981;
@@ -195,7 +207,7 @@
         }
 
         .modal-overlay {
-            background: rgba(0,0,0,0.4);
+            background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(4px);
         }
 
@@ -211,9 +223,128 @@
             padding: 4px 8px;
             border-bottom: 1px solid #e5e7eb;
         }
-        .suggestion-table tr:last-child td { border-bottom: none; }
-        .suggestion-label { font-weight: 600; color: #166534; }
-        .suggestion-value { font-weight: 500; color: #1e293b; }
+        .suggestion-table tr:last-child td {
+            border-bottom: none;
+        }
+        .suggestion-label {
+            font-weight: 600;
+            color: #166534;
+        }
+        .suggestion-value {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .modal-section-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.95rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .modal-section-title i {
+            color: #4f46e5;
+        }
+
+        /* sub-sub assembly parts table in modal */
+        .subsub-parts-table {
+            width: 100%;
+            font-size: 0.85rem;
+            border-collapse: collapse;
+            margin-bottom: 1.25rem;
+        }
+        .subsub-parts-table th {
+            background-color: #f1f5f9;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .subsub-parts-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .subsub-parts-table tr.highlight-row td {
+            background-color: #eef2ff;
+            font-weight: 600;
+        }
+        .subsub-parts-table .pct-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .subsub-parts-table .pct-bar-bg {
+            background-color: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+            height: 5px;
+            flex: 1;
+            min-width: 40px;
+        }
+        .subsub-parts-table .pct-bar-fill {
+            height: 5px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #4f46e5, #818cf8);
+            transition: width 0.3s ease;
+        }
+        .subsub-parts-table .pct-label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            min-width: 44px;
+            text-align: right;
+            color: #0f172a;
+        }
+        .subsub-parts-table .part-link {
+            color: #2563eb;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .subsub-parts-table .part-link:hover {
+            color: #1e40af;
+        }
+
+        .inspection-history-wrap {
+            max-height: 260px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+        }
+        .inspection-history-wrap table {
+            font-size: 0.8rem;
+        }
+        .inspection-history-wrap th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8fafc;
+        }
+
+        .badge-subsub {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 640px) {
+            .summary-card .value {
+                font-size: 1.25rem;
+            }
+            .subsub-parts-table .pct-bar-wrap {
+                flex-wrap: wrap;
+            }
+        }
     </style>
 </head>
 <body>
@@ -232,7 +363,7 @@
                         <i class="fa-regular fa-circle-check"></i> Welding &amp; Fastener
                     </span>
                 </h1>
-                <p class="text-sm text-gray-500 mt-1">Breakdown of parts by Subtitle and Sub‑Sub Assembly – percentages relative to all parts in these processes</p>
+                <p class="text-sm text-gray-500 mt-1">Breakdown by Subtitle &amp; Sub‑Sub Assembly – <span class="font-medium text-indigo-600">% = part delivered / sub‑sub total delivered</span></p>
             </div>
             <div class="flex gap-3 flex-wrap">
                 <button onclick="exportAnalysisToExcel()" class="btn-excel"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
@@ -315,7 +446,7 @@
                             <th class="text-left">Part Name</th>
                             <th class="text-center">Delivered</th>
                             <th class="text-center">Parts in Group</th>
-                            <th class="text-center">% of Total Parts</th>
+                            <th class="text-center">% of Sub‑Sub Total</th>
                         </tr>
                     </thead>
                     <tbody id="analysisTableBody"></tbody>
@@ -329,9 +460,9 @@
 
         <!-- Part Detail Modal -->
         <div id="partModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closePartModal(event)">
-            <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
-                <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
-                    <h3 class="font-bold text-lg" id="partModalTitle">Part Operation History</h3>
+            <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
+                <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center z-10">
+                    <h3 class="font-bold text-lg" id="partModalTitle">Part Details</h3>
                     <button onclick="closePartModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
                 <div id="partModalBody" class="p-4"></div>
@@ -347,7 +478,7 @@
             if (!processType) return false;
             const lower = processType.trim().toLowerCase();
             return lower.includes('assembling (welding)') || lower.includes('assembling (fastener)') ||
-                   lower.includes('assembling(welding)') || lower.includes('assembling(fastener)');
+                lower.includes('assembling(welding)') || lower.includes('assembling(fastener)');
         }
 
         // ─── TOAST ───
@@ -402,9 +533,16 @@
             return Number(v).toLocaleString();
         }
 
+        function safePct(val) {
+            if (!val || isNaN(val) || !isFinite(val)) return 0;
+            return val;
+        }
+
         // ─── STATE ───
-        let allAnalysisData = [];
-        let originalData = [];
+        let allRows = [];
+        let filteredRows = [];
+        let subSubAssemblyMap = new Map(); // key -> { client, title, subtitle, subSub, parts: Map, totalDelivered }
+        let partLookup = new Map(); // partName -> subSubKey
         let partInspectionsMap = new Map();
 
         // ─── FETCH & AGGREGATE ───
@@ -423,12 +561,19 @@
             const filtered = inspections.filter(insp => isTargetProcess(insp.process_type));
             if (!filtered.length) {
                 showToast('No inspections found for the specified processes', 'error');
-                return [];
+                return { rows: [], subSubMap: new Map(), partInspections: new Map() };
             }
 
-            const clientMap = new Map();
-            const partInspections = new Map();
+            // Build part -> inspections map
+            const partInspMap = new Map();
+            for (const insp of filtered) {
+                const pn = getExtraField(insp, 'Part Name') || 'Unnamed Part';
+                if (!partInspMap.has(pn)) partInspMap.set(pn, []);
+                partInspMap.get(pn).push(insp);
+            }
 
+            // Build sub-sub assembly map
+            const subSubMap = new Map();
             for (const insp of filtered) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
                 const title = getExtraField(insp, 'Project Name') || 'Untitled';
@@ -437,79 +582,58 @@
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 const delivered = insp.delivered_qty || 0;
 
-                if (!partInspections.has(partName)) partInspections.set(partName, []);
-                partInspections.get(partName).push(insp);
-
-                const clientKey = client;
-                if (!clientMap.has(clientKey)) {
-                    clientMap.set(clientKey, { client, titles: new Map() });
+                const key = `${client}||${title}||${subtitle}||${subSub}`;
+                if (!subSubMap.has(key)) {
+                    subSubMap.set(key, {
+                        client,
+                        title,
+                        subtitle,
+                        subSub,
+                        parts: new Map(),
+                        totalDelivered: 0
+                    });
                 }
-                const clientEntry = clientMap.get(clientKey);
-                if (!clientEntry.titles.has(title)) {
-                    clientEntry.titles.set(title, { title, subtitles: new Map() });
-                }
-                const titleEntry = clientEntry.titles.get(title);
-                if (!titleEntry.subtitles.has(subtitle)) {
-                    titleEntry.subtitles.set(subtitle, { subtitle, subSubs: new Map(), partSet: new Set() });
-                }
-                const subtitleEntry = titleEntry.subtitles.get(subtitle);
-                if (!subtitleEntry.subSubs.has(subSub)) {
-                    subtitleEntry.subSubs.set(subSub, { subSub, partSet: new Set(), totalDelivered: 0 });
-                }
-                const subSubEntry = subtitleEntry.subSubs.get(subSub);
-                subSubEntry.partSet.add(partName);
-                subSubEntry.totalDelivered += delivered;
-                subtitleEntry.partSet.add(partName);
+                const entry = subSubMap.get(key);
+                const current = entry.parts.get(partName) || 0;
+                entry.parts.set(partName, current + delivered);
+                entry.totalDelivered += delivered;
             }
 
-            let totalUniqueParts = 0;
-            const allPartNames = new Set();
-            for (const clientEntry of clientMap.values()) {
-                for (const titleEntry of clientEntry.titles.values()) {
-                    for (const subtitleEntry of titleEntry.subtitles.values()) {
-                        for (const part of subtitleEntry.partSet) {
-                            allPartNames.add(part);
-                        }
-                    }
-                }
-            }
-            totalUniqueParts = allPartNames.size;
-
-            const flatRows = [];
-            for (const clientEntry of clientMap.values()) {
-                for (const titleEntry of clientEntry.titles.values()) {
-                    for (const subtitleEntry of titleEntry.subtitles.values()) {
-                        const partDeliveredMap = new Map();
-                        for (const insp of filtered) {
-                            const pn = getExtraField(insp, 'Part Name') || 'Unnamed Part';
-                            if (subtitleEntry.partSet.has(pn)) {
-                                const current = partDeliveredMap.get(pn) || 0;
-                                partDeliveredMap.set(pn, current + (insp.delivered_qty || 0));
-                            }
-                        }
-                        for (const subSubEntry of subtitleEntry.subSubs.values()) {
-                            const partsInSubSub = Array.from(subSubEntry.partSet);
-                            for (const partName of partsInSubSub) {
-                                const deliveredForPart = partDeliveredMap.get(partName) || 0;
-                                flatRows.push({
-                                    client: clientEntry.client,
-                                    title: titleEntry.title,
-                                    subtitle: subtitleEntry.subtitle,
-                                    subSub: subSubEntry.subSub,
-                                    partName: partName,
-                                    delivered: deliveredForPart,
-                                    subtitlePartCount: subtitleEntry.partSet.size,
-                                    subSubPartCount: subSubEntry.partSet.size,
-                                    totalParts: totalUniqueParts
-                                });
-                            }
-                        }
-                    }
+            // Build rows with percentages
+            const rows = [];
+            const partToSubSubKey = new Map();
+            for (const [key, entry] of subSubMap) {
+                for (const [partName, delivered] of entry.parts) {
+                    const pct = entry.totalDelivered > 0 ? (delivered / entry.totalDelivered) * 100 : 0;
+                    rows.push({
+                        client: entry.client,
+                        title: entry.title,
+                        subtitle: entry.subtitle,
+                        subSub: entry.subSub,
+                        subSubKey: key,
+                        partName: partName,
+                        delivered: delivered,
+                        subSubTotalDelivered: entry.totalDelivered,
+                        percentage: pct,
+                        subSubPartCount: entry.parts.size,
+                    });
+                    partToSubSubKey.set(partName, key);
                 }
             }
 
-            window.partInspectionsMap = partInspections;
-            return flatRows;
+            // Compute subtitle part counts (across all sub-subs in a subtitle)
+            const subtitlePartCounts = new Map();
+            for (const row of rows) {
+                const sk = `${row.client}||${row.title}||${row.subtitle}`;
+                if (!subtitlePartCounts.has(sk)) subtitlePartCounts.set(sk, new Set());
+                subtitlePartCounts.get(sk).add(row.partName);
+            }
+            for (const row of rows) {
+                const sk = `${row.client}||${row.title}||${row.subtitle}`;
+                row.subtitlePartCount = subtitlePartCounts.get(sk)?.size || 0;
+            }
+
+            return { rows, subSubMap, partInspections: partInspMap, partToSubSubKey };
         }
 
         // ─── RENDER ───
@@ -550,12 +674,16 @@
                 if (!hierarchy[c][t][s][ss]) {
                     hierarchy[c][t][s][ss] = {
                         parts: [],
-                        subtitlePartCount: row.subtitlePartCount,
+                        subSubTotalDelivered: row.subSubTotalDelivered,
                         subSubPartCount: row.subSubPartCount,
-                        totalParts: row.totalParts
+                        subtitlePartCount: row.subtitlePartCount,
                     };
                 }
-                hierarchy[c][t][s][ss].parts.push({ partName: row.partName, delivered: row.delivered });
+                hierarchy[c][t][s][ss].parts.push({
+                    partName: row.partName,
+                    delivered: row.delivered,
+                    percentage: row.percentage
+                });
             }
 
             // Compute rowspan counts
@@ -580,7 +708,6 @@
                     if (title === '_rowCount') continue;
                     const titleData = clientData[title];
                     let titlePrinted = false;
-                    // compute title rowspan
                     let titleRowCount = 0;
                     for (const s in titleData) {
                         for (const ss in titleData[s]) {
@@ -597,15 +724,11 @@
                         for (const subSub in subtitleData) {
                             const subSubData = subtitleData[subSub];
                             const parts = subSubData.parts;
-                            const groupPartCount = subSubData.subSubPartCount;
-                            const totalPartsGlobal = subSubData.totalParts;
-                            const pctSubSub = totalPartsGlobal > 0 ? (groupPartCount / totalPartsGlobal) * 100 : 0;
-                            const pctSubtitle = totalPartsGlobal > 0 ? (subtitleData._subtitlePartCount || subSubData
-                                .subtitlePartCount) / totalPartsGlobal * 100 : 0;
-                            // store subtitle part count for rowspan
-                            if (!subtitleData._subtitlePartCount) {
-                                subtitleData._subtitlePartCount = subSubData.subtitlePartCount;
-                            }
+                            const partCount = subSubData.subSubPartCount;
+                            const totalDeliv = subSubData.subSubTotalDelivered;
+                            const subtitlePartCnt = subSubData.subtitlePartCount;
+                            const pctSub = totalDeliv > 0 ? (subtitlePartCnt / totalParts) * 100 : 0;
+
                             let subSubPrinted = false;
                             for (const part of parts) {
                                 html += `<tr>`;
@@ -620,29 +743,30 @@
                                     titlePrinted = true;
                                 }
                                 if (!subtitlePrinted) {
-                                    const pctSub = (totalPartsGlobal > 0) ? (subtitleData._subtitlePartCount / totalPartsGlobal) *
-                                        100 : 0;
                                     html += `<td rowspan="${subtitleRowCount}" class="align-top">
                                         <div class="subtitle-group-name">${escapeHtml(subtitle)}</div>
-                                        <span class="group-meta">${subtitleData._subtitlePartCount} parts · ${pctSub.toFixed(1)}% of total</span>
+                                        <span class="group-meta">${subtitlePartCnt} parts · ${pctSub.toFixed(1)}% of unique parts</span>
                                     </td>`;
                                     subtitlePrinted = true;
                                 }
                                 if (!subSubPrinted) {
+                                    const pctSubSub = totalParts > 0 ? (partCount / totalParts) * 100 : 0;
                                     html += `<td rowspan="${parts.length}" class="align-top">
                                         <div class="subsub-group-name">${escapeHtml(subSub)}</div>
-                                        <span class="group-meta">${groupPartCount} parts · ${pctSubSub.toFixed(1)}% of total</span>
+                                        <span class="group-meta">${partCount} parts · <span class="highlight">${formatQty(totalDeliv)}</span> total delivered</span>
                                     </td>`;
                                     subSubPrinted = true;
                                 }
                                 // Part name
-                                html += `<td><span class="clickable-part" onclick="showPartDetails('${escapeHtml(part.partName)}')">${escapeHtml(part.partName)}</span></td>`;
+                                html +=
+                                    `<td><span class="clickable-part" onclick="showPartDetails('${escapeHtml(part.partName)}')">${escapeHtml(part.partName)}</span></td>`;
                                 html += `<td class="text-center">${formatQty(part.delivered)}</td>`;
-                                html += `<td class="text-center">${groupPartCount}</td>`;
+                                html += `<td class="text-center">${partCount}</td>`;
+                                const pctVal = safePct(part.percentage);
                                 html += `<td class="text-center">
                                     <div class="flex items-center gap-2">
-                                        <span class="percent-value">${pctSubSub.toFixed(1)}%</span>
-                                        <div class="progress-bar-bg w-20"><div class="progress-fill" style="width:${Math.min(100, pctSubSub)}%"></div></div>
+                                        <span class="percent-value">${pctVal.toFixed(1)}%</span>
+                                        <div class="progress-bar-bg w-20"><div class="progress-fill" style="width:${Math.min(100, pctVal)}%"></div></div>
                                     </div>
                                 </td>`;
                                 html += `</tr>`;
@@ -654,41 +778,89 @@
 
             tbody.innerHTML = html;
             document.getElementById('recordCount').innerText = `${rows.length} part records`;
-            document.getElementById('recordCountBottom').innerText = `${totalParts} unique parts`;
+            document.getElementById('recordCountBottom').innerText = `${totalParts} unique parts · ${subSubs.size} sub‑sub assemblies`;
             document.getElementById('recordStatus').innerHTML = `✅ Loaded ${rows.length} records (${TARGET_PROCESSES.join(', ')})`;
         }
 
         // ─── PART DETAIL MODAL ───
         function showPartDetails(partName) {
             const inspections = window.partInspectionsMap?.get(partName);
+            const subSubKey = window.partToSubSubKey?.get(partName);
+            const subSubEntry = subSubKey ? window.subSubAssemblyMap?.get(subSubKey) : null;
+
             if (!inspections || !inspections.length) {
                 showToast('No inspections found for this part', 'error');
                 return;
             }
-            document.getElementById('partModalTitle').innerText = `History for: ${escapeHtml(partName)}`;
+
+            const title = document.getElementById('partModalTitle');
+            title.innerText = `🔧 ${escapeHtml(partName)}`;
+
             const body = document.getElementById('partModalBody');
+            let html = '';
 
-            inspections.sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+            // --- Sub-Sub Assembly Parts List ---
+            if (subSubEntry && subSubEntry.parts.size > 0) {
+                const totalDeliv = subSubEntry.totalDelivered || 0;
+                const sortedParts = Array.from(subSubEntry.parts.entries())
+                    .sort((a, b) => b[1] - a[1]);
+
+                html += `<div class="modal-section-title"><i class="fa-regular fa-layer-group"></i> Sub‑Sub Assembly: ${escapeHtml(subSubEntry.subSub)}</div>`;
+                html += `<div class="text-xs text-gray-500 mb-3">Total delivered in this assembly: <span class="font-semibold text-gray-700">${formatQty(totalDeliv)}</span> · ${sortedParts.length} part${sortedParts.length > 1 ? 's' : ''}</div>`;
+
+                html += `<table class="subsub-parts-table">
+                    <thead>
+                        <tr><th>Part Name</th><th class="text-center">Delivered</th><th class="text-center">% of Assembly</th></tr>
+                    </thead>
+                    <tbody>`;
+                for (const [pName, qty] of sortedParts) {
+                    const pct = totalDeliv > 0 ? (qty / totalDeliv) * 100 : 0;
+                    const isSelected = (pName === partName);
+                    html += `<tr class="${isSelected ? 'highlight-row' : ''}">
+                        <td>${isSelected ? '<i class="fa-regular fa-circle-check text-indigo-600 mr-1"></i>' : ''}
+                            <span class="${isSelected ? 'font-bold text-indigo-700' : 'part-link'}" 
+                                  ${!isSelected ? `onclick="showPartDetails('${escapeHtml(pName)}')"` : ''}>
+                                ${escapeHtml(pName)}
+                            </span>
+                        </td>
+                        <td class="text-center">${formatQty(qty)}</td>
+                        <td class="text-center">
+                            <div class="pct-bar-wrap">
+                                <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${Math.min(100, pct)}%"></div></div>
+                                <span class="pct-label">${pct.toFixed(1)}%</span>
+                            </div>
+                        </td>
+                    </tr>`;
+                }
+                html += `</tbody></table>`;
+            } else {
+                html += `<div class="text-sm text-gray-400 mb-4">No sub‑sub assembly data available for this part.</div>`;
+            }
+
+            // --- Suggested Next Operation ---
             const lastInsp = inspections[inspections.length - 1];
-            const lastProcess = lastInsp?.process_type || '—';
-            const lastDate = lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—';
             const nextOp = lastInsp ? getSuggestedNext(lastInsp) : null;
+            const lastDate = lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—';
+            const lastProcess = lastInsp?.process_type || '—';
 
-            let suggestionHtml = `
+            html += `<div class="modal-section-title mt-4"><i class="fa-regular fa-clock"></i> Inspection History &amp; Next Step</div>`;
+            html += `
                 <table class="suggestion-table">
                     <tr><td class="suggestion-label">Last Operation:</td><td class="suggestion-value">${escapeHtml(lastProcess)} (${lastDate})</td></tr>
                     <tr><td class="suggestion-label">Suggested Next Operation:</td><td class="suggestion-value">${nextOp ? escapeHtml(nextOp) : '—'}</td></tr>
                 </table>
             `;
-            let tableHtml = `
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm border">
-                        <thead class="bg-slate-50">
-                            <tr><th class="p-2 text-left">Date</th><th class="p-2 text-left">Process Type</th><th class="p-2 text-left">Operation Condition</th><th class="p-2 text-center">Delivered</th><th class="p-2 text-center">Accepted</th><th class="p-2 text-center">Rework</th><th class="p-2 text-center">Reject</th><th class="p-2 text-center">Conditional</th><th class="p-2 text-center">Rating</th></tr>
-                        </thead>
-                        <tbody>
-            `;
-            for (const insp of inspections) {
+
+            // --- Inspection History Table ---
+            const sortedInsp = [...inspections].sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+
+            html += `<div class="inspection-history-wrap">
+                <table class="min-w-full text-sm border-0">
+                    <thead>
+                        <tr><th class="p-2 text-left">Date</th><th class="p-2 text-left">Process</th><th class="p-2 text-left">Condition</th><th class="p-2 text-center">Del</th><th class="p-2 text-center">Acc</th><th class="p-2 text-center">Rework</th><th class="p-2 text-center">Reject</th><th class="p-2 text-center">Cond</th><th class="p-2 text-center">Rating</th></tr>
+                    </thead>
+                    <tbody>`;
+            for (const insp of sortedInsp) {
                 const date = new Date(insp.submitted_at).toLocaleDateString();
                 const process = insp.process_type || '—';
                 const opCond = getExtraField(insp, 'Operation Condition') || '—';
@@ -698,66 +870,53 @@
                 const rej = insp.reject_qty || 0;
                 const cond = insp.conditional_accept_qty || 0;
                 const rating = insp.acceptance_data?.p0?.rating || '—';
-                tableHtml += `<tr class="border-b hover:bg-gray-50">
-                    <td class="p-2">${date}</td><td class="p-2">${escapeHtml(process)}</td><td class="p-2">${escapeHtml(opCond)}</td>
-                    <td class="p-2 text-center">${del}</td><td class="p-2 text-center text-emerald-700">${acc}</td>
-                    <td class="p-2 text-center text-amber-600">${rework}</td><td class="p-2 text-center text-red-600">${rej}</td>
-                    <td class="p-2 text-center text-blue-600">${cond}</td><td class="p-2 text-center">${escapeHtml(rating)}</td>
+                html += `<tr class="border-b hover:bg-gray-50">
+                    <td class="p-2">${date}</td>
+                    <td class="p-2">${escapeHtml(process)}</td>
+                    <td class="p-2">${escapeHtml(opCond)}</td>
+                    <td class="p-2 text-center">${del}</td>
+                    <td class="p-2 text-center text-emerald-700">${acc}</td>
+                    <td class="p-2 text-center text-amber-600">${rework}</td>
+                    <td class="p-2 text-center text-red-600">${rej}</td>
+                    <td class="p-2 text-center text-blue-600">${cond}</td>
+                    <td class="p-2 text-center">${escapeHtml(rating)}</td>
                 </tr>`;
             }
-            tableHtml += `</tbody></table></div>`;
-            body.innerHTML = suggestionHtml + tableHtml;
+            html += `</tbody></table></div>`;
+
+            body.innerHTML = html;
             document.getElementById('partModal').classList.remove('hidden');
         }
 
         function closePartModal(e) {
-            if (!e || e.target === document.getElementById('partModal') || e.target.closest('.fa-xmark')) {
+            if (!e || e.target === document.getElementById('partModal') || e.target.closest('.fa-xmark') || e.target.closest(
+                    'button')) {
                 document.getElementById('partModal').classList.add('hidden');
             }
         }
 
         // ─── EXPORT ───
         function exportAnalysisToExcel() {
-            // Use original data
-            if (!originalData.length) {
+            if (!allRows.length) {
                 showToast('No data to export', 'error');
                 return;
             }
-            const grouped = {};
-            for (const row of originalData) {
-                const key = `${row.client}||${row.title}||${row.subtitle}||${row.subSub}`;
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        client: row.client,
-                        title: row.title,
-                        subtitle: row.subtitle,
-                        subSub: row.subSub,
-                        parts: [],
-                        subtitlePartCount: row.subtitlePartCount,
-                        subSubPartCount: row.subSubPartCount,
-                        totalParts: row.totalParts
-                    };
-                }
-                grouped[key].parts.push({ partName: row.partName, delivered: row.delivered });
-            }
-
             const data = [
-                ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'Delivered Qty', 'Parts in SubSub', '% of Total Parts']
+                ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'Delivered Qty',
+                    'Sub‑Sub Total Delivered', '% of Sub‑Sub Total'
+                ]
             ];
-            for (const key in grouped) {
-                const g = grouped[key];
-                const pct = g.totalParts > 0 ? (g.subSubPartCount / g.totalParts) * 100 : 0;
-                for (const part of g.parts) {
-                    data.push([
-                        g.client, g.title, g.subtitle, g.subSub,
-                        part.partName, part.delivered,
-                        g.subSubPartCount, pct.toFixed(1) + '%'
-                    ]);
-                }
+            for (const row of allRows) {
+                data.push([
+                    row.client, row.title, row.subtitle, row.subSub,
+                    row.partName, row.delivered,
+                    row.subSubTotalDelivered || 0,
+                    (row.percentage || 0).toFixed(1) + '%'
+                ]);
             }
-
             const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 14 }, { wch: 20 },
+            { wch: 16 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Assembly Analysis');
             XLSX.writeFile(wb, `assembly_analysis_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
@@ -770,11 +929,12 @@
             const title = document.getElementById('filterTitle').value;
             const subtitle = document.getElementById('filterSubtitle').value;
             const subSub = document.getElementById('filterSubSub').value;
-            let filtered = [...originalData];
+            let filtered = [...allRows];
             if (client) filtered = filtered.filter(r => r.client === client);
             if (title) filtered = filtered.filter(r => r.title === title);
             if (subtitle) filtered = filtered.filter(r => r.subtitle === subtitle);
             if (subSub) filtered = filtered.filter(r => r.subSub === subSub);
+            filteredRows = filtered;
             renderAnalysis(filtered);
         }
 
@@ -783,10 +943,14 @@
             const titles = [...new Set(rows.map(r => r.title))].sort();
             const subtitles = [...new Set(rows.map(r => r.subtitle))].sort();
             const subSubs = [...new Set(rows.map(r => r.subSub))].sort();
-            document.getElementById('filterClient').innerHTML = '<option value="">All Clients</option>' + clients.map(c => `<option>${escapeHtml(c)}</option>`).join('');
-            document.getElementById('filterTitle').innerHTML = '<option value="">All Titles</option>' + titles.map(t => `<option>${escapeHtml(t)}</option>`).join('');
-            document.getElementById('filterSubtitle').innerHTML = '<option value="">All Subtitles</option>' + subtitles.map(s => `<option>${escapeHtml(s)}</option>`).join('');
-            document.getElementById('filterSubSub').innerHTML = '<option value="">All</option>' + subSubs.map(s => `<option>${escapeHtml(s)}</option>`).join('');
+            document.getElementById('filterClient').innerHTML = '<option value="">All Clients</option>' + clients.map(c =>
+                `<option>${escapeHtml(c)}</option>`).join('');
+            document.getElementById('filterTitle').innerHTML = '<option value="">All Titles</option>' + titles.map(t =>
+                `<option>${escapeHtml(t)}</option>`).join('');
+            document.getElementById('filterSubtitle').innerHTML = '<option value="">All Subtitles</option>' + subtitles.map(s =>
+                `<option>${escapeHtml(s)}</option>`).join('');
+            document.getElementById('filterSubSub').innerHTML = '<option value="">All</option>' + subSubs.map(s =>
+                `<option>${escapeHtml(s)}</option>`).join('');
         }
 
         function clearFilters() {
@@ -800,12 +964,16 @@
         // ─── REFRESH ───
         async function refreshData() {
             const inspections = await fetchInspections();
-            const rows = aggregateAssemblyData(inspections);
-            allAnalysisData = rows;
-            originalData = rows;
-            populateFilters(rows);
-            renderAnalysis(rows);
-            showToast(`Data refreshed – ${rows.length} part records`, 'info');
+            const result = aggregateAssemblyData(inspections);
+            allRows = result.rows;
+            window.subSubAssemblyMap = result.subSubMap;
+            window.partInspectionsMap = result.partInspections;
+            window.partToSubSubKey = result.partToSubSubKey;
+
+            populateFilters(allRows);
+            filteredRows = [...allRows];
+            renderAnalysis(allRows);
+            showToast(`Data refreshed – ${allRows.length} part records`, 'info');
         }
 
         // ─── EVENT LISTENERS ───
