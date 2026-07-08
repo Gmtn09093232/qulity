@@ -591,8 +591,8 @@
                 const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 const delivered = insp.delivered_qty || 0;
-                const accepted = insp.accepted_qty || 0;
-                const rework = insp.rework_qty || 0;
+                // We no longer need accepted/rework for this view, but keep them for potential use
+                // We'll just store delivered for the table
 
                 const key = `${client}||${title}||${subtitle}||${subSub}`;
                 if (!nonTargetMap.has(key)) {
@@ -601,14 +601,12 @@
                         title,
                         subtitle,
                         subSub,
-                        parts: new Map(), // partName -> { delivered, accepted, rework }
+                        parts: new Map(), // partName -> { delivered }
                     });
                 }
                 const entry = nonTargetMap.get(key);
-                const partData = entry.parts.get(partName) || { delivered: 0, accepted: 0, rework: 0 };
+                const partData = entry.parts.get(partName) || { delivered: 0 };
                 partData.delivered += delivered;
-                partData.accepted += accepted;
-                partData.rework += rework;
                 entry.parts.set(partName, partData);
 
                 // Capture part number from first occurrence
@@ -618,7 +616,7 @@
                 }
             }
 
-            // --- Target sub-sub map (for main analysis) ---
+            // --- Target sub-sub map (for main analysis and total delivered) ---
             const targetMap = new Map();
             for (const insp of targetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -895,16 +893,22 @@
             document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')})`;
         }
 
-        // ─── ASSEMBLY MODAL (shows parts from non-target processes) ───
+        // ─── ASSEMBLY MODAL ───
         function showAssemblyDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
-            const entry = window.nonTargetSubSubMap?.get(key);
-            if (!entry) {
-                showToast('No part data found for this assembly (other processes).', 'info');
-                // Still show the modal with a message
-                const titleEl = document.getElementById('assemblyModalTitle');
-                titleEl.innerText = `📦 ${escapeHtml(subSub)}`;
-                const body = document.getElementById('assemblyModalBody');
+
+            // Get target entry for total delivered (from assembly inspections)
+            const targetEntry = window.subSubAssemblyMap?.get(key);
+            // Get non-target entry for parts list
+            const nonTargetEntry = window.nonTargetSubSubMap?.get(key);
+
+            const titleEl = document.getElementById('assemblyModalTitle');
+            titleEl.innerText = `📦 ${escapeHtml(subSub)}`;
+
+            const body = document.getElementById('assemblyModalBody');
+
+            // If no non-target parts, show message
+            if (!nonTargetEntry || nonTargetEntry.parts.size === 0) {
                 body.innerHTML = `
                     <div class="text-sm text-gray-500 p-4 text-center">No parts found for this assembly from other processes.</div>
                 `;
@@ -917,20 +921,17 @@
             const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             const partSet = new Set(selectedParts);
 
-            const titleEl = document.getElementById('assemblyModalTitle');
-            titleEl.innerText = `📦 ${escapeHtml(subSub)}`;
-
-            const body = document.getElementById('assemblyModalBody');
-
             // Build list of parts (filtered by main part selection)
-            let partsList = Array.from(entry.parts.entries());
+            let partsList = Array.from(nonTargetEntry.parts.entries());
             if (partSet.size > 0) {
                 partsList = partsList.filter(([pName]) => partSet.has(pName));
             }
 
-            const totalDeliv = partsList.reduce((sum, [_, data]) => sum + data.delivered, 0);
-            const totalAcc = partsList.reduce((sum, [_, data]) => sum + data.accepted, 0);
-            const totalRework = partsList.reduce((sum, [_, data]) => sum + data.rework, 0);
+            // Total delivered from assembly inspections (target)
+            const totalDeliveredAssembly = targetEntry ? targetEntry.totalDelivered : 0;
+            const totalParts = partsList.length;
+
+            // Sort by delivered (descending)
             const sortedParts = partsList.sort((a, b) => b[1].delivered - a[1].delivered);
 
             let html = `
@@ -941,7 +942,7 @@
                         <span class="font-medium">${escapeHtml(subtitle)}</span>
                     </span>
                     <span class="text-xs text-gray-400">
-                        ${sortedParts.length} parts · ${formatQty(totalDeliv)} delivered · ${formatQty(totalAcc)} accepted · ${formatQty(totalRework)} rework
+                        ${totalParts} parts · ${formatQty(totalDeliveredAssembly)} total delivered (from assembly)
                     </span>
                     ${partSet.size > 0 ? `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">Filtered by selected parts</span>` : ''}
                 </div>
@@ -952,8 +953,6 @@
                             <th>Part Name</th>
                             <th>Part Number</th>
                             <th class="text-center">Delivered</th>
-                            <th class="text-center">Accepted</th>
-                            <th class="text-center">Rework</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -963,8 +962,6 @@
                     <td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
                     <td>${escapeHtml(partNum)}</td>
                     <td class="text-center">${formatQty(data.delivered)}</td>
-                    <td class="text-center">${formatQty(data.accepted)}</td>
-                    <td class="text-center">${formatQty(data.rework)}</td>
                 </tr>`;
             }
             html += `</tbody></table>`;
