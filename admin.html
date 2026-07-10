@@ -347,13 +347,11 @@
             'Conditional Accept': '#3b82f6'
         };
 
-        // ─── FLEXIBLE ASSEMBLY DETECTION ───
-        // This will match any process type that contains 'assembly' AND
-        // contains either 'welding' or 'fastener' (case‑insensitive).
+        // ─── EXACT MATCH for the two assembly types ───
         function isAssemblyType(processType) {
             if (!processType) return false;
             const p = processType.trim().toLowerCase();
-            return p.includes('assembly') && (p.includes('welding') || p.includes('fastener'));
+            return p === 'assembly (welding)' || p === 'assembly (fastener)';
         }
 
         // ──────────────────────────────────────────────
@@ -432,7 +430,7 @@
                 engineerSet = new Set(),
                 projectSet = new Set();
             allInspections.forEach(i => {
-                // Exclude assembly types from main dropdown
+                // Exclude the two exact assembly types from the main dropdown
                 if (i.process_type && !isAssemblyType(i.process_type)) processSet.add(i.process_type);
                 if (i.username) engineerSet.add(i.username);
                 const proj = getProjectName(i);
@@ -464,7 +462,7 @@
             const dateFrom = document.getElementById('filterDateFrom').value;
             const dateTo = document.getElementById('filterDateTo').value;
 
-            // Start with all inspections, then exclude assembly types
+            // Start with all inspections, then exclude only the two assembly types
             let filtered = allInspections.filter(i => !isAssemblyType(i.process_type));
 
             if (processFilter) filtered = filtered.filter(i => i.process_type === processFilter);
