@@ -128,6 +128,27 @@
             font-weight: 600;
             margin-left: 6px;
         }
+
+        /* ─── Assembly row highlight ─── */
+        tr.assembly-row td:first-child {
+            border-left: 4px solid #f59e0b;
+        }
+        tr.assembly-row {
+            background-color: #fffbeb;
+        }
+        tr.assembly-row:hover {
+            background-color: #fef3c7 !important;
+        }
+        .assembly-badge {
+            background: #f59e0b;
+            color: white;
+            font-size: 0.6rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            font-weight: 600;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -347,11 +368,13 @@
             'Conditional Accept': '#3b82f6'
         };
 
-        // ─── EXACT MATCH for the two assembly types ───
+        // ─── FIXED: matches both 'assembly' and 'assembling' variants ───
         function isAssemblyType(processType) {
             if (!processType) return false;
             const p = processType.trim().toLowerCase();
-            return p === 'assembly (welding)' || p === 'assembly (fastener)';
+            // Match either spelling: assembly (welding/fastener) OR assembling (welding/fastener)
+            return p === 'assembly (welding)' || p === 'assembly (fastener)' ||
+                p === 'assembling (welding)' || p === 'assembling (fastener)';
         }
 
         // ──────────────────────────────────────────────
@@ -430,7 +453,7 @@
                 engineerSet = new Set(),
                 projectSet = new Set();
             allInspections.forEach(i => {
-                // Exclude the two exact assembly types from the main dropdown
+                // Exclude all assembly variants from main dropdown
                 if (i.process_type && !isAssemblyType(i.process_type)) processSet.add(i.process_type);
                 if (i.username) engineerSet.add(i.username);
                 const proj = getProjectName(i);
@@ -462,7 +485,7 @@
             const dateFrom = document.getElementById('filterDateFrom').value;
             const dateTo = document.getElementById('filterDateTo').value;
 
-            // Start with all inspections, then exclude only the two assembly types
+            // Start with all inspections, then exclude all assembly variants
             let filtered = allInspections.filter(i => !isAssemblyType(i.process_type));
 
             if (processFilter) filtered = filtered.filter(i => i.process_type === processFilter);
@@ -800,7 +823,7 @@
         }
 
         // ──────────────────────────────────────────────
-        //  DATA TABLE (generic)
+        //  DATA TABLE (generic) – with assembly row highlighting
         // ──────────────────────────────────────────────
         function updateTable(data, tbodyId, infoId) {
             const tbody = document.getElementById(tbodyId);
@@ -810,17 +833,23 @@
                 document.getElementById(infoId).innerText = 'Showing 0 records';
                 return;
             }
-            tbody.innerHTML = data.map(i => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3 whitespace-nowrap">${new Date(i.submitted_at).toLocaleString()}</td>
-                    <td class="p-3">${escapeHtml(i.process_type || '-')}</td>
-                    <td class="p-3">${escapeHtml(getProjectName(i)) || '-'}</td>
-                    <td class="p-3">${escapeHtml(i.username) || '-'}</td>
-                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(i.result)}">${getResultDisplay(i.result)}</span></td>
-                    <td class="p-3">${i.cumulative_points ?? '-'}</td>
-                    <td class="p-3">${escapeHtml(i.operator_name) || '-'}</td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = data.map(i => {
+                const isAssembly = isAssemblyType(i.process_type);
+                const rowClass = isAssembly ? 'class="assembly-row"' : '';
+                const processDisplay = escapeHtml(i.process_type || '-');
+                const badge = isAssembly ? `<span class="assembly-badge">🔧</span>` : '';
+                return `
+                    <tr ${rowClass} class="border-b hover:bg-gray-50">
+                        <td class="p-3 whitespace-nowrap">${new Date(i.submitted_at).toLocaleString()}</td>
+                        <td class="p-3">${processDisplay} ${badge}</td>
+                        <td class="p-3">${escapeHtml(getProjectName(i)) || '-'}</td>
+                        <td class="p-3">${escapeHtml(i.username) || '-'}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(i.result)}">${getResultDisplay(i.result)}</span></td>
+                        <td class="p-3">${i.cumulative_points ?? '-'}</td>
+                        <td class="p-3">${escapeHtml(i.operator_name) || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
             document.getElementById(infoId).innerText = `Showing ${data.length} of ${allInspections.length} inspections`;
         }
 
@@ -860,7 +889,7 @@
                 updateResultsByQuantity(assemblyData, 'assemblyResultsTableBody', assemblyChartInstances, 'assemblyChart');
                 updateFailureCostByProcess(assemblyData, 'assemblyFailureCostTableBody', 'assemblyFailureCostGrandTotal');
                 updateFailureCostByTitle(assemblyData, 'assemblyFailureCostTitleTableBody',
-                'assemblyFailureCostTitleGrandTotal');
+                    'assemblyFailureCostTitleGrandTotal');
                 updateTable(assemblyData, 'assemblyTableBody', 'assemblyTableInfo');
             }
         }
