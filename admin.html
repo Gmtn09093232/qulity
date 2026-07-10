@@ -182,7 +182,7 @@
                 <h1 class="text-2xl font-bold text-blue-900 flex items-center gap-2">
                     <i class="fas fa-chart-pie text-blue-600"></i> Quality Control Dashboard
                 </h1>
-                <p class="text-gray-600 text-sm" id="viewSubtitle">All Processes (excluding Assembly types)</p>
+                <p class="text-gray-600 text-sm" id="viewSubtitle">All Processes</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-md transition">
@@ -195,11 +195,10 @@
         <div class="bg-white rounded-t-lg shadow px-2 pt-2 flex flex-wrap gap-1 border-b border-gray-200">
             <button class="tab-btn active" data-view="main" onclick="switchView('main')">
                 <i class="fas fa-th-large mr-1"></i> Main Dashboard
-                <span class="text-xs text-gray-400 font-normal ml-1">(excl. Assembly)</span>
+                <span class="text-xs text-gray-400 font-normal ml-1"></span>
             </button>
             <button class="tab-btn inactive" data-view="assembly" onclick="switchView('assembly')">
                 <i class="fas fa-tools mr-1"></i> Assembly View
-                <span class="badge-assembly">welding + fastener</span>
             </button>
         </div>
 
