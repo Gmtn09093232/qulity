@@ -347,7 +347,13 @@
             'Conditional Accept': '#3b82f6'
         };
 
-        const ASSEMBLY_TYPES = ['assembly (welding)', 'assembly (fastener)'];
+        // ─── FLEXIBLE ASSEMBLY DETECTION ───
+        function isAssemblyType(processType) {
+            if (!processType) return false;
+            const p = processType.trim().toLowerCase();
+            // Match any process that contains 'assembly' and either 'welding' or 'fastener'
+            return p.includes('assembly') && (p.includes('welding') || p.includes('fastener'));
+        }
 
         // ──────────────────────────────────────────────
         //  HELPERS
@@ -397,12 +403,6 @@
             return isNaN(n) ? 0 : n;
         }
 
-        function isAssemblyType(process) {
-            if (!process) return false;
-            const p = process.trim().toLowerCase();
-            return ASSEMBLY_TYPES.some(t => p === t.toLowerCase());
-        }
-
         // ──────────────────────────────────────────────
         //  FETCH
         // ──────────────────────────────────────────────
@@ -431,7 +431,7 @@
                 engineerSet = new Set(),
                 projectSet = new Set();
             allInspections.forEach(i => {
-                // Exclude assembly types from main dropdowns
+                // Exclude assembly types from main dropdown
                 if (i.process_type && !isAssemblyType(i.process_type)) processSet.add(i.process_type);
                 if (i.username) engineerSet.add(i.username);
                 const proj = getProjectName(i);
@@ -854,7 +854,6 @@
 
             // If switching to assembly, refresh its data (in case new data arrived)
             if (view === 'assembly') {
-                // Re-run assembly update to ensure charts render correctly
                 const assemblyData = allInspections.filter(i => isAssemblyType(i.process_type));
                 currentAssemblyData = assemblyData;
                 updateQuantitySummary(assemblyData, 'assemblyQuantityBody');
@@ -869,7 +868,6 @@
         // ──────────────────────────────────────────────
         //  INIT
         // ──────────────────────────────────────────────
-        // Ensure main view is active on load
         document.addEventListener('DOMContentLoaded', function() {
             // Set default tab
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -885,12 +883,6 @@
 
             fetchData();
         });
-
-        // Also handle case where fetchData might be called after DOM ready
-        // We'll call fetchData directly
-        // But we need to make sure the assembly view gets rendered after fetch
-        // The fetchData already calls updateAssemblyView
-        // And the switchView for assembly also re-renders
     </script>
 
 </body>
