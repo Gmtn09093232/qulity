@@ -292,6 +292,15 @@
         .subsub-parts-table .part-link:hover {
             color: #1e40af;
         }
+        .subsub-parts-table .tag-list {
+            display: block;
+            line-height: 1.6;
+            padding: 2px 0;
+        }
+        .subsub-parts-table .tag-list-item {
+            display: block;
+            font-size: 0.8rem;
+        }
 
         .inspection-history-wrap {
             max-height: 260px;
@@ -507,16 +516,80 @@
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
+        function parseTagNo(tagNoValue) {
+            if (!tagNoValue) return null;
+            // If it's a string that looks like JSON, try to parse it
+            if (typeof tagNoValue === 'string') {
+                const trimmed = tagNoValue.trim();
+                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        return parsed;
+                    } catch (e) {
+                        // Not valid JSON, return as string
+                        return trimmed;
+                    }
+                }
+                return trimmed;
+            }
+            return tagNoValue;
+        }
+
+        function formatTagNoList(tagNoValue) {
+            const parsed = parseTagNo(tagNoValue);
+            if (parsed === null || parsed === undefined) return '—';
+
+            // If it's an object (JSON), extract values as a list
+            if (typeof parsed === 'object' && parsed !== null) {
+                const items = [];
+                if (Array.isArray(parsed)) {
+                    // Array - join with line breaks
+                    return parsed.map(item => escapeHtml(String(item))).join('<br>');
+                } else {
+                    // Object - show keys (part names) as list
+                    const keys = Object.keys(parsed);
+                    if (keys.length === 0) return '—';
+                    return keys.map(key => escapeHtml(key)).join('<br>');
+                }
+            }
+
+            // If it's a simple string with commas, split and display as list
+            if (typeof parsed === 'string' && parsed.includes(',')) {
+                const parts = parsed.split(',').map(s => s.trim()).filter(s => s);
+                if (parts.length > 1) {
+                    return parts.map(p => escapeHtml(p)).join('<br>');
+                }
+                return escapeHtml(parsed);
+            }
+
+            return escapeHtml(String(parsed));
+        }
+
         function getPartNumber(insp) {
-            const candidates = ['Part Number', 'Drawing Number', 'Part ID', 'part_number', 'drawing_number', 'tag_no', 'Tag No', 'Tag Number'];
+            // Try multiple fields for tag_no / part number
+            const candidates = ['tag_no', 'Tag No', 'Tag Number', 'Part Number', 'Drawing Number', 'Part ID', 'part_number', 'drawing_number'];
             for (const key of candidates) {
-                const val = insp.extra_fields?.[key] || insp[key];
-                if (val && val.trim()) return val.trim();
+                let val = insp.extra_fields?.[key] || insp[key];
+                if (val && val.trim()) {
+                    // If it's a JSON object string, return as-is for later parsing
+                    const trimmed = val.trim();
+                    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                        return trimmed; // Return raw JSON string
+                    }
+                    return trimmed;
+                }
             }
             if (insp.extra_fields) {
                 for (const [k, v] of Object.entries(insp.extra_fields)) {
-                    if (k.toLowerCase().includes('number') || k.toLowerCase().includes('id') || k.toLowerCase().includes('drawing') || k.toLowerCase().includes('tag')) {
-                        if (v && v.trim()) return v.trim();
+                    if (v && v.trim()) {
+                        const lowerK = k.toLowerCase();
+                        if (lowerK.includes('tag') || lowerK.includes('number') || lowerK.includes('id') || lowerK.includes('drawing')) {
+                            const trimmed = v.trim();
+                            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                return trimmed;
+                            }
+                            return trimmed;
+                        }
                     }
                 }
             }
@@ -568,11 +641,11 @@
         // ─── STATE ───
         let allRows = [];
         let filteredRows = [];
-        let subSubAssemblyMap = new Map();          // for target processes (assembly)
-        let nonTargetSubSubMap = new Map();         // for other processes (parts list)
+        let subSubAssemblyMap = new Map();
+        let nonTargetSubSubMap = new Map();
         let partInspectionsMap = new Map();
         let partToSubSubKey = new Map();
-        let partNumberMap = new Map();              // for all parts (tag_no)
+        let partNumberMap = new Map(); // partName -> raw tag_no value
 
         // ─── FETCH & AGGREGATE ───
         async function fetchInspections() {
@@ -587,11 +660,10 @@
         }
 
         function aggregateAssemblyData(inspections) {
-            // Split into target (assembly) and non-target (other processes)
             const targetInsp = inspections.filter(insp => isTargetProcess(insp.process_type));
             const nonTargetInsp = inspections.filter(insp => !isTargetProcess(insp.process_type));
 
-            // --- Part inspections map (for part detail modal) - from ALL inspections ---
+            // Part inspections map (for part detail modal)
             const partInspMap = new Map();
             for (const insp of inspections) {
                 const pn = getExtraField(insp, 'Part Name') || 'Unnamed Part';
@@ -599,9 +671,8 @@
                 partInspMap.get(pn).push(insp);
             }
 
-            // --- Non-target sub-sub map (for parts list in modal) ---
-            const nonTargetMap = new Map();
-            const pnMap = new Map(); // part number lookup from ALL inspections (tag_no)
+            // Part number map (tag_no) from ALL inspections
+            const pnMap = new Map();
             for (const insp of inspections) {
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 if (!pnMap.has(partName)) {
@@ -610,6 +681,8 @@
                 }
             }
 
+            // Non-target map
+            const nonTargetMap = new Map();
             for (const insp of nonTargetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
                 const title = getExtraField(insp, 'Project Name') || 'Untitled';
@@ -634,7 +707,7 @@
                 entry.parts.set(partName, partData);
             }
 
-            // --- Target sub-sub map (for main analysis and completion modal) ---
+            // Target map
             const targetMap = new Map();
             for (const insp of targetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -681,7 +754,7 @@
                 }
             }
 
-            // Build rows for main table (from targetMap)
+            // Build rows
             const rows = [];
             const p2ss = new Map();
             for (const [key, entry] of targetMap) {
@@ -704,7 +777,6 @@
                 }
             }
 
-            // Compute subtitle part counts (for display in main table)
             const subtitlePartCounts = new Map();
             for (const row of rows) {
                 const sk = `${row.client}||${row.title}||${row.subtitle}`;
@@ -722,7 +794,7 @@
                 nonTargetMap,
                 partInspections: partInspMap,
                 partToSubSubKey: p2ss,
-                partNumberMap: pnMap, // tag_no for all parts
+                partNumberMap: pnMap,
             };
         }
 
@@ -873,15 +945,6 @@
                             const pctSub = totalParts > 0 ? (subtitlePartCnt / totalParts) * 100 : 0;
                             const completion = subSubData.assemblyProgressPct;
 
-                            // Store assembly context for click handler
-                            const assemContext = {
-                                client: subSubData.client,
-                                title: subSubData.title,
-                                subtitle: subSubData.subtitle,
-                                subSub: subSubData.subSub,
-                                subSubKey: subSubData.subSubKey
-                            };
-
                             let subSubPrinted = false;
                             for (const part of parts) {
                                 html += `<tr>`;
@@ -912,10 +975,8 @@
                                     subSubPrinted = true;
                                 }
                                 const compVal = safePct(completion);
-                                // Make the Assembly Completion clickable
-                                const ctx = `'${escapeHtml(subSubData.subSub)}'|'${escapeHtml(subSubData.client)}'|'${escapeHtml(subSubData.title)}'|'${escapeHtml(subSubData.subtitle)}'`;
                                 html += `<td class="text-center">
-                                    <div class="flex items-center gap-2 justify-center clickable-completion" onclick="showCompletionDetails('${escapeHtml(subSubData.subSub)}', '${escapeHtml(subSubData.client)}', '${escapeHtml(subSubData.title)}', '${escapeHtml(subSubData.subtitle)}')">
+                                    <div class="flex items-center gap-2 justify-center clickable-completion" onclick="showCompletionDetails('${escapeHtml(subSub)}', '${escapeHtml(client)}', '${escapeHtml(title)}', '${escapeHtml(subtitle)}')">
                                         <span class="percent-value">${compVal.toFixed(1)}%</span>
                                         <div class="progress-bar-bg w-20"><div class="progress-fill" style="width:${compVal}%"></div></div>
                                     </div>
@@ -933,7 +994,7 @@
             document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')})`;
         }
 
-        // ─── COMPLETION MODAL (shows parts from assembly processes with tag_no) ───
+        // ─── COMPLETION MODAL ───
         function showCompletionDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
             const targetEntry = window.subSubAssemblyMap?.get(key);
@@ -987,10 +1048,11 @@
                     </thead>
                     <tbody>`;
             for (const [pName, data] of sortedParts) {
-                const tagNo = window.partNumberMap?.get(pName) || '—';
+                const rawTagNo = window.partNumberMap?.get(pName) || null;
+                const formattedTagNo = formatTagNoList(rawTagNo);
                 html += `<tr>
                     <td><span class="part-link" onclick="closeCompletionModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
-                    <td>${escapeHtml(tagNo)}</td>
+                    <td>${formattedTagNo}</td>
                     <td class="text-center">${formatQty(data.delivered)}</td>
                     <td class="text-center text-emerald-700">${formatQty(data.accepted)}</td>
                     <td class="text-center text-blue-600">${formatQty(data.conditional)}</td>
@@ -1008,7 +1070,7 @@
             }
         }
 
-        // ─── ASSEMBLY MODAL (shows parts from other processes) ───
+        // ─── ASSEMBLY MODAL ───
         function showAssemblyDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
             const nonTargetEntry = window.nonTargetSubSubMap?.get(key);
@@ -1038,7 +1100,6 @@
             const totalParts = partsList.length;
             const sortedParts = partsList.sort((a, b) => b[1].delivered - a[1].delivered);
 
-            // Get target total for display
             const targetKey = `${client}||${title}||${subtitle}||${subSub}`;
             const targetEntry = window.subSubAssemblyMap?.get(targetKey);
             const totalDeliveredAssembly = targetEntry ? targetEntry.totalDelivered : 0;
@@ -1066,10 +1127,11 @@
                     </thead>
                     <tbody>`;
             for (const [pName, data] of sortedParts) {
-                const partNum = window.partNumberMap?.get(pName) || '—';
+                const rawTagNo = window.partNumberMap?.get(pName) || null;
+                const formattedTagNo = formatTagNoList(rawTagNo);
                 html += `<tr>
                     <td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
-                    <td>${escapeHtml(partNum)}</td>
+                    <td>${formattedTagNo}</td>
                     <td class="text-center">${formatQty(data.delivered)}</td>
                 </tr>`;
             }
@@ -1186,15 +1248,31 @@
             for (const row of exportRows) {
                 const comp = assemblyMap.get(row.subSubKey)?.progress;
                 const compVal = comp !== null && comp !== undefined ? comp : 0;
-                const tagNo = window.partNumberMap?.get(row.partName) || '—';
+                const rawTagNo = window.partNumberMap?.get(row.partName) || '—';
+                // For export, extract keys from JSON object if present
+                let tagNoDisplay = rawTagNo;
+                if (typeof rawTagNo === 'string' && rawTagNo.startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(rawTagNo);
+                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                            tagNoDisplay = Object.keys(parsed).join(', ');
+                        } else if (Array.isArray(parsed)) {
+                            tagNoDisplay = parsed.join(', ');
+                        } else {
+                            tagNoDisplay = String(parsed);
+                        }
+                    } catch (e) {
+                        tagNoDisplay = rawTagNo;
+                    }
+                }
                 data.push([
                     row.client, row.title, row.subtitle, row.subSub,
-                    row.partName, tagNo, row.delivered, row.accepted, row.conditional || 0,
+                    row.partName, tagNoDisplay, row.delivered, row.accepted, row.conditional || 0,
                     compVal.toFixed(1) + '%'
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 14 },
+            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 30 }, { wch: 14 },
             { wch: 14 }, { wch: 14 }, { wch: 20 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Assembly Analysis');
