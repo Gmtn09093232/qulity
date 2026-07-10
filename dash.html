@@ -72,9 +72,15 @@
             transform: translateY(-3px);
             box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
         }
-        .stat-card .stat-icon {
-            font-size: 1.6rem;
-            opacity: 0.7;
+        .stat-card .stat-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.4rem;
+            flex-shrink: 0;
         }
         .stat-card .stat-value {
             font-size: 2rem;
@@ -91,8 +97,8 @@
         }
         .stat-card .stat-badge {
             font-size: 0.6rem;
-            background: #eef2ff;
-            color: #4f46e5;
+            background: #f1f5f9;
+            color: #475569;
             padding: 2px 10px;
             border-radius: 999px;
             font-weight: 600;
@@ -434,6 +440,22 @@
             color: #94a3b8;
         }
 
+        .inspection-history-wrap {
+            max-height: 260px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+        }
+        .inspection-history-wrap table {
+            font-size: 0.8rem;
+        }
+        .inspection-history-wrap th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8fafc;
+        }
+
         @media (max-width: 640px) {
             .hero-banner {
                 padding: 1.25rem 1.25rem;
@@ -463,6 +485,11 @@
             .subsub-parts-table th,
             .subsub-parts-table td {
                 padding: 5px 6px;
+            }
+            .stat-card .stat-icon-wrapper {
+                width: 36px;
+                height: 36px;
+                font-size: 1.1rem;
             }
         }
     </style>
@@ -500,11 +527,10 @@
             <div>
                 <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-chart-simple text-indigo-500"></i>
-                    Breakdown by Subtitle &amp; Sub‑Sub Assembly
+            
                 </h1>
                 <p class="text-sm text-gray-500">
-                    <i class="fa-regular fa-circle-info text-indigo-400 mr-1"></i>
-                    Click <span class="font-medium text-indigo-600">Assembly Completion</span> to see parts with <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">tag_no</code> &amp; quantities
+                   
                 </p>
             </div>
             <div class="flex gap-2 flex-wrap">
@@ -555,32 +581,44 @@
 
         <!-- ─── STAT CARDS ─── -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+            <!-- Card 1: Unique Parts -->
             <div class="stat-card">
-                <div class="flex items-center justify-between">
-                    <span class="stat-icon"><i class="fa-regular fa-cube text-indigo-400"></i></span>
+                <div class="flex items-center justify-between mb-1">
+                    <div class="stat-icon-wrapper bg-indigo-50 text-indigo-600">
+                        <i class="fa-solid fa-cube"></i>
+                    </div>
                     <span class="stat-badge">unique</span>
                 </div>
                 <div class="stat-value" id="totalParts">—</div>
                 <div class="stat-label">Unique Parts</div>
             </div>
+            <!-- Card 2: Total Delivered -->
             <div class="stat-card">
-                <div class="flex items-center justify-between">
-                    <span class="stat-icon"><i class="fa-regular fa-box text-blue-400"></i></span>
+                <div class="flex items-center justify-between mb-1">
+                    <div class="stat-icon-wrapper bg-blue-50 text-blue-600">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
                     <span class="stat-badge">total</span>
                 </div>
                 <div class="stat-value text-blue-700" id="totalDelivered">—</div>
                 <div class="stat-label">Total Delivered Qty</div>
             </div>
+            <!-- Card 3: Subtitles -->
             <div class="stat-card">
-                <div class="flex items-center justify-between">
-                    <span class="stat-icon"><i class="fa-regular fa-rectangle-list text-emerald-400"></i></span>
+                <div class="flex items-center justify-between mb-1">
+                    <div class="stat-icon-wrapper bg-emerald-50 text-emerald-600">
+                        <i class="fa-solid fa-rectangle-list"></i>
+                    </div>
                 </div>
                 <div class="stat-value" id="totalSubtitles">—</div>
                 <div class="stat-label">Subtitles</div>
             </div>
+            <!-- Card 4: Sub‑Sub Assemblies -->
             <div class="stat-card">
-                <div class="flex items-center justify-between">
-                    <span class="stat-icon"><i class="fa-regular fa-folder-open text-amber-400"></i></span>
+                <div class="flex items-center justify-between mb-1">
+                    <div class="stat-icon-wrapper bg-amber-50 text-amber-600">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
                 </div>
                 <div class="stat-value" id="totalSubSub">—</div>
                 <div class="stat-label">Sub‑Sub Assemblies</div>
