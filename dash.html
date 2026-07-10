@@ -60,76 +60,73 @@
         /* ── Cards ── */
         .stat-card {
             background: white;
-            border-radius: 1.25rem;
-            padding: 1.25rem 1.5rem;
+            border-radius: 1rem;
+            padding: 0.75rem 1rem;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             border: 1px solid #e9edf2;
-            transition: all 0.25s;
+            transition: all 0.2s;
             position: relative;
             overflow: hidden;
         }
         .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
         }
         .stat-card .stat-icon-wrapper {
-            width: 44px;
-            height: 44px;
+            width: 34px;
+            height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12px;
-            font-size: 1.4rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
             flex-shrink: 0;
         }
         .stat-card .stat-value {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: #0a1a2f;
             line-height: 1.2;
         }
         .stat-card .stat-label {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             color: #64748b;
-            font-weight: 500;
-            letter-spacing: 0.02em;
+            font-weight: 600;
+            letter-spacing: 0.03em;
             text-transform: uppercase;
         }
         .stat-card .stat-badge {
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             background: #f1f5f9;
             color: #475569;
-            padding: 2px 10px;
+            padding: 1px 8px;
             border-radius: 999px;
             font-weight: 600;
         }
 
         /* ── Filters ── */
         .filter-select {
-            border-radius: 0.75rem;
+            border-radius: 0.6rem;
             border: 1.5px solid #e2e8f0;
-            padding: 0.5rem 1rem;
+            padding: 0.3rem 0.75rem;
             background: white;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             transition: all 0.2s;
             width: 100%;
         }
         .filter-select:focus {
             outline: none;
             border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-        }
-        .filter-select[multiple] {
-            min-height: 56px;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
         .filter-label {
             display: block;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             font-weight: 600;
             color: #475569;
             text-transform: uppercase;
             letter-spacing: 0.04em;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         /* ── Table ── */
@@ -192,12 +189,12 @@
             background: #e2e8f0;
             border-radius: 999px;
             overflow: hidden;
-            height: 7px;
+            height: 6px;
             width: 100%;
-            max-width: 120px;
+            max-width: 100px;
         }
         .progress-fill {
-            height: 7px;
+            height: 6px;
             border-radius: 999px;
             background: linear-gradient(90deg, #6366f1, #818cf8);
             transition: width 0.5s ease;
@@ -205,8 +202,8 @@
         .percent-value {
             font-weight: 700;
             color: #0f172a;
-            font-size: 0.9rem;
-            min-width: 52px;
+            font-size: 0.85rem;
+            min-width: 48px;
             display: inline-block;
         }
 
@@ -214,15 +211,15 @@
         .subtitle-group-name {
             font-weight: 700;
             color: #4f46e5;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .subsub-group-name {
             font-weight: 700;
             color: #0f172a;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
         .group-meta {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: #94a3b8;
             display: block;
             margin-top: 2px;
@@ -238,12 +235,12 @@
             background: #0b9e6e;
             color: white;
             border-radius: 0.6rem;
-            padding: 0.4rem 1rem;
-            font-size: 0.8rem;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
-            gap: 0.6rem;
+            gap: 0.5rem;
             transition: background 0.2s, transform 0.15s;
             border: none;
             cursor: pointer;
@@ -256,8 +253,8 @@
             background: white;
             border: 1.5px solid #e2e8f0;
             border-radius: 0.6rem;
-            padding: 0.4rem 1rem;
-            font-size: 0.8rem;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: #4f46e5;
             transition: all 0.2s;
@@ -284,7 +281,7 @@
         }
         .modal-card .modal-header {
             background: white;
-            padding: 1rem 1.5rem;
+            padding: 0.75rem 1.25rem;
             border-bottom: 1px solid #eef2f6;
             position: sticky;
             top: 0;
@@ -295,37 +292,37 @@
             border-radius: 1.5rem 1.5rem 0 0;
         }
         .modal-card .modal-title {
-            font-size: 1.15rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #0a1a2f;
         }
         .modal-card .modal-close {
             background: none;
             border: none;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             color: #94a3b8;
             cursor: pointer;
             transition: color 0.2s;
-            padding: 0 6px;
+            padding: 0 4px;
         }
         .modal-card .modal-close:hover {
             color: #0f172a;
         }
         .modal-card .modal-body {
-            padding: 1.25rem 1.5rem;
+            padding: 1rem 1.25rem;
         }
 
         /* ── Sub-sub parts table inside modal ── */
         .subsub-parts-table {
             width: 100%;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             border-collapse: collapse;
         }
         .subsub-parts-table th {
             background: #f1f5f9;
-            padding: 8px 10px;
+            padding: 6px 8px;
             font-weight: 600;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             text-transform: uppercase;
             letter-spacing: 0.04em;
             color: #475569;
@@ -333,7 +330,7 @@
             text-align: left;
         }
         .subsub-parts-table td {
-            padding: 7px 10px;
+            padding: 5px 8px;
             border-bottom: 1px solid #f1f5f9;
             vertical-align: top;
             color: #0f172a;
@@ -351,19 +348,13 @@
             color: #1e40af;
         }
 
-        .tag-list,
-        .qty-list {
-            display: block;
-            line-height: 1.6;
-        }
-
         .modal-summary-badge {
             display: inline-block;
             background: #eef2ff;
             color: #4f46e5;
-            padding: 2px 12px;
+            padding: 1px 10px;
             border-radius: 999px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
         }
 
@@ -371,13 +362,13 @@
         .hero-banner {
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4f46e5 100%);
             border-radius: 1.5rem;
-            padding: 1.75rem 2.5rem;
+            padding: 1.25rem 2rem;
             color: white;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 1.5rem;
+            gap: 1rem;
             box-shadow: 0 8px 30px rgba(79, 70, 229, 0.25);
             position: relative;
             overflow: hidden;
@@ -394,50 +385,41 @@
             pointer-events: none;
         }
         .hero-banner .hero-icon {
-            font-size: 2.5rem;
+            font-size: 2rem;
             opacity: 0.9;
         }
         .hero-banner .hero-title {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 700;
             letter-spacing: -0.02em;
         }
         .hero-banner .hero-sub {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             opacity: 0.8;
             font-weight: 400;
         }
         .hero-banner .hero-badge {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(4px);
-            padding: 4px 16px;
+            padding: 3px 12px;
             border-radius: 999px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .hero-banner .hero-image-placeholder {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
             background: rgba(255, 255, 255, 0.08);
-            padding: 0.5rem 1.25rem 0.5rem 1rem;
+            padding: 0.3rem 1rem 0.3rem 0.8rem;
             border-radius: 999px;
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         .hero-banner .hero-image-placeholder i {
-            font-size: 1.4rem;
-        }
-
-        /* ── Misc ── */
-        .tooltip-trigger {
-            cursor: help;
-            border-bottom: 1px dashed #cbd5e1;
-        }
-        .text-muted {
-            color: #94a3b8;
+            font-size: 1.2rem;
         }
 
         .inspection-history-wrap {
@@ -447,7 +429,7 @@
             border-radius: 0.75rem;
         }
         .inspection-history-wrap table {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
         .inspection-history-wrap th {
             position: sticky;
@@ -458,15 +440,15 @@
 
         @media (max-width: 640px) {
             .hero-banner {
-                padding: 1.25rem 1.25rem;
+                padding: 1rem 1rem;
                 flex-direction: column;
                 align-items: flex-start;
             }
             .hero-banner .hero-title {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
             }
             .stat-card .stat-value {
-                font-size: 1.5rem;
+                font-size: 1.2rem;
             }
             .modal-card {
                 max-width: 100%;
@@ -474,22 +456,25 @@
                 border-radius: 1rem;
             }
             .modal-card .modal-header {
-                padding: 0.75rem 1rem;
+                padding: 0.5rem 0.75rem;
             }
             .modal-card .modal-body {
-                padding: 0.75rem 1rem;
+                padding: 0.5rem 0.75rem;
             }
             .subsub-parts-table {
-                font-size: 0.75rem;
+                font-size: 0.7rem;
             }
             .subsub-parts-table th,
             .subsub-parts-table td {
-                padding: 5px 6px;
+                padding: 4px 5px;
             }
             .stat-card .stat-icon-wrapper {
-                width: 36px;
-                height: 36px;
-                font-size: 1.1rem;
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            .filter-grid {
+                grid-template-columns: 1fr 1fr !important;
             }
         }
     </style>
@@ -499,17 +484,17 @@
     <!-- Toast container -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <div class="max-w-7xl mx-auto px-4 py-5 md:px-6">
+    <div class="max-w-7xl mx-auto px-4 py-4 md:px-6">
 
         <!-- ─── HERO BANNER ─── -->
-        <div class="hero-banner mb-6">
-            <div class="flex items-center gap-4 flex-wrap">
+        <div class="hero-banner mb-5">
+            <div class="flex items-center gap-3 flex-wrap">
                 <div class="hero-icon">
                     <i class="fa-solid fa-industry"></i>
                 </div>
                 <div>
                     <div class="hero-title">Assembly Process Analysis</div>
-                    <div class="hero-sub">Welding &amp; Fastener — QC insights at a glance</div>
+                    <div class="hero-sub">Welding &amp; Fastener — QC insights</div>
                 </div>
                 <span class="hero-badge">
                     <i class="fa-regular fa-circle-check mr-1"></i> Live Data
@@ -523,32 +508,31 @@
         </div>
 
         <!-- ─── HEADER ─── -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5 gap-3">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
             <div>
-                <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-chart-simple text-indigo-500"></i>
-            
                 </h1>
-                <p class="text-sm text-gray-500">
-                   
+                <p class="text-xs text-gray-500">
+                    <i class="fa-regular fa-circle-info text-indigo-400 mr-1"></i>
                 </p>
             </div>
             <div class="flex gap-2 flex-wrap">
                 <button onclick="exportAnalysisToExcel()" class="btn-excel">
-                    <i class="fa-solid fa-file-excel"></i> Export Excel
+                    <i class="fa-solid fa-file-excel"></i> Export
                 </button>
                 <button onclick="refreshData()" class="btn-outline">
                     <i class="fa-solid fa-rotate-right"></i> Refresh
                 </button>
-                <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 transition border border-transparent">
+                <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 transition border border-transparent">
                     <i class="fa-solid fa-arrow-left mr-1"></i> Back
                 </button>
             </div>
         </div>
 
-        <!-- ─── FILTERS ─── -->
-        <div class="bg-white rounded-2xl shadow-sm p-4 md:p-5 mb-6 border border-gray-100/80">
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 items-end">
+        <!-- ─── FILTERS (compact) ─── -->
+        <div class="bg-white rounded-xl shadow-sm p-3 md:p-4 mb-4 border border-gray-100/80">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 items-end filter-grid">
                 <div>
                     <label class="filter-label"><i class="fa-regular fa-building mr-1"></i> Client</label>
                     <select id="filterClient" class="filter-select"><option value="">All Clients</option></select>
@@ -565,25 +549,18 @@
                     <label class="filter-label"><i class="fa-regular fa-layer-group mr-1"></i> Sub‑Sub</label>
                     <select id="filterSubSub" class="filter-select"><option value="">All</option></select>
                 </div>
-                <div>
-                    <label class="filter-label"><i class="fa-regular fa-list mr-1"></i> Parts <span class="text-xs font-normal text-gray-400">(multi‑select)</span></label>
-                    <select id="filterParts" class="filter-select" multiple size="2">
-                        <option value="">All Parts</option>
-                    </select>
-                </div>
             </div>
-            <div class="flex justify-end mt-3">
-                <button onclick="clearFilters()" class="bg-gray-100 hover:bg-gray-200 px-5 py-2 rounded-xl text-sm font-medium text-slate-700 transition">
+            <div class="flex justify-end mt-2">
+                <button onclick="clearFilters()" class="bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium text-slate-700 transition">
                     <i class="fa-regular fa-eraser mr-1"></i> Clear Filters
                 </button>
             </div>
         </div>
 
-        <!-- ─── STAT CARDS ─── -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-            <!-- Card 1: Unique Parts -->
+        <!-- ─── STAT CARDS (compact) ─── -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4">
             <div class="stat-card">
-                <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center justify-between mb-0.5">
                     <div class="stat-icon-wrapper bg-indigo-50 text-indigo-600">
                         <i class="fa-solid fa-cube"></i>
                     </div>
@@ -592,9 +569,8 @@
                 <div class="stat-value" id="totalParts">—</div>
                 <div class="stat-label">Unique Parts</div>
             </div>
-            <!-- Card 2: Total Delivered -->
             <div class="stat-card">
-                <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center justify-between mb-0.5">
                     <div class="stat-icon-wrapper bg-blue-50 text-blue-600">
                         <i class="fa-solid fa-boxes-stacked"></i>
                     </div>
@@ -603,9 +579,8 @@
                 <div class="stat-value text-blue-700" id="totalDelivered">—</div>
                 <div class="stat-label">Total Delivered Qty</div>
             </div>
-            <!-- Card 3: Subtitles -->
             <div class="stat-card">
-                <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center justify-between mb-0.5">
                     <div class="stat-icon-wrapper bg-emerald-50 text-emerald-600">
                         <i class="fa-solid fa-rectangle-list"></i>
                     </div>
@@ -613,9 +588,8 @@
                 <div class="stat-value" id="totalSubtitles">—</div>
                 <div class="stat-label">Subtitles</div>
             </div>
-            <!-- Card 4: Sub‑Sub Assemblies -->
             <div class="stat-card">
-                <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center justify-between mb-0.5">
                     <div class="stat-icon-wrapper bg-amber-50 text-amber-600">
                         <i class="fa-solid fa-folder-open"></i>
                     </div>
@@ -626,8 +600,8 @@
         </div>
 
         <!-- ─── MAIN TABLE ─── -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100/80 overflow-hidden">
-            <div class="px-5 py-3 border-b bg-slate-50/60 flex flex-wrap justify-between items-center gap-2">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100/80 overflow-hidden">
+            <div class="px-4 py-2.5 border-b bg-slate-50/60 flex flex-wrap justify-between items-center gap-2">
                 <h2 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
                     <i class="fa-regular fa-table text-indigo-500"></i>
                     Parts Distribution
@@ -649,7 +623,7 @@
                     <tbody id="analysisTableBody"></tbody>
                 </table>
             </div>
-            <div class="p-3 text-sm text-gray-500 border-t border-gray-100 flex justify-between items-center bg-gray-50/60">
+            <div class="p-2.5 text-xs text-gray-500 border-t border-gray-100 flex justify-between items-center bg-gray-50/60">
                 <span><i class="fa-regular fa-circle-check text-emerald-500 mr-1"></i> <span id="recordStatus">Ready</span></span>
                 <span id="recordCountBottom" class="font-medium text-slate-600"></span>
             </div>
@@ -1000,11 +974,11 @@
         }
 
         // ─── RENDER ───
-        function renderAnalysis(rows, selectedParts = []) {
+        function renderAnalysis(rows) {
             const tbody = document.getElementById('analysisTableBody');
             if (!rows.length) {
                 tbody.innerHTML =
-                    `<tr><td colspan="5" class="text-center py-12 text-gray-400"><i class="fa-regular fa-inbox text-2xl block mb-2"></i>No data for the selected processes.</td></tr>`;
+                    `<tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fa-regular fa-inbox text-2xl block mb-2"></i>No data for the selected processes.</td></tr>`;
                 document.getElementById('recordCount').innerText = '0 records';
                 document.getElementById('recordCountBottom').innerText = '0 parts';
                 document.getElementById('totalParts').innerText = '0';
@@ -1014,14 +988,11 @@
                 return;
             }
 
-            const partFilterSet = new Set(selectedParts);
-            const useFilter = partFilterSet.size > 0;
-            let filteredRows = rows;
-            if (useFilter) filteredRows = rows.filter(r => partFilterSet.has(r.partName));
+            const filteredRows = rows;
 
             if (!filteredRows.length) {
                 tbody.innerHTML =
-                    `<tr><td colspan="5" class="text-center py-12 text-gray-400"><i class="fa-regular fa-filter text-2xl block mb-2"></i>No parts match the selection.</td></tr>`;
+                    `<tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fa-regular fa-filter text-2xl block mb-2"></i>No parts match the selection.</td></tr>`;
                 document.getElementById('recordCount').innerText = '0 records';
                 document.getElementById('recordCountBottom').innerText = '0 parts';
                 document.getElementById('totalParts').innerText = '0';
@@ -1195,7 +1166,7 @@
 
             if (!targetEntry || targetEntry.parts.size === 0) {
                 body.innerHTML =
-                    `<div class="text-sm text-gray-500 p-6 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No assembly parts found.</div>`;
+                    `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No assembly parts found.</div>`;
                 document.getElementById('completionModal').classList.remove('hidden');
                 return;
             }
@@ -1209,13 +1180,13 @@
             .conditional));
 
             let html = `
-                <div class="flex flex-wrap items-center gap-3 mb-4 text-sm text-gray-600">
+                <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
                     <span><span class="font-medium">${escapeHtml(client)}</span> · <span class="font-medium">${escapeHtml(title)}</span> · <span class="font-medium">${escapeHtml(subtitle)}</span></span>
                     <span class="modal-summary-badge">${sortedParts.length} parts</span>
                     <span class="modal-summary-badge bg-emerald-50 text-emerald-700">${formatQty(totalDelivered)} delivered</span>
                     <span class="modal-summary-badge bg-blue-50 text-blue-700">${formatQty(totalAcceptedCond)} accepted + conditional</span>
                 </div>
-                <div class="text-xs text-gray-400 mb-3"><i class="fa-regular fa-tag mr-1"></i> Parts from <strong>Assembling (welding)</strong> and <strong>Assembling (fastener)</strong> — tag_no from database</div>
+                <div class="text-xs text-gray-400 mb-2"><i class="fa-regular fa-tag mr-1"></i> Parts from <strong>Assembling (welding)</strong> and <strong>Assembling (fastener)</strong> — tag_no from database</div>
                 <div class="overflow-x-auto">
                     <table class="subsub-parts-table">
                         <thead><tr><th>Part Name</th><th>tag_no (Part Number)</th><th class="text-center">Qty</th><th class="text-center">Delivered</th><th class="text-center">Accepted</th><th class="text-center">Conditional</th></tr></thead>
@@ -1257,17 +1228,12 @@
 
             if (!nonTargetEntry || nonTargetEntry.parts.size === 0) {
                 body.innerHTML =
-                    `<div class="text-sm text-gray-500 p-6 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No parts from other processes.</div>`;
+                    `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No parts from other processes.</div>`;
                 document.getElementById('assemblyModal').classList.remove('hidden');
                 return;
             }
 
-            const partSelect = document.getElementById('filterParts');
-            const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
-            const partSet = new Set(selectedParts);
             let partsList = Array.from(nonTargetEntry.parts.entries());
-            if (partSet.size > 0) partsList = partsList.filter(([pName]) => partSet.has(pName));
-
             const totalParts = partsList.length;
             const sortedParts = partsList.sort((a, b) => b[1].delivered - a[1].delivered);
             const targetKey = `${client}||${title}||${subtitle}||${subSub}`;
@@ -1275,13 +1241,12 @@
             const totalDeliveredAssembly = targetEntry ? targetEntry.totalDelivered : 0;
 
             let html = `
-                <div class="flex flex-wrap items-center gap-3 mb-4 text-sm text-gray-600">
+                <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
                     <span><span class="font-medium">${escapeHtml(client)}</span> · <span class="font-medium">${escapeHtml(title)}</span> · <span class="font-medium">${escapeHtml(subtitle)}</span></span>
                     <span class="modal-summary-badge">${totalParts} parts</span>
                     <span class="modal-summary-badge bg-indigo-50 text-indigo-700">${formatQty(totalDeliveredAssembly)} total delivered (assembly)</span>
-                    ${partSet.size > 0 ? `<span class="modal-summary-badge bg-amber-50 text-amber-700"><i class="fa-regular fa-filter mr-1"></i>Filtered</span>` : ''}
                 </div>
-                <div class="text-xs text-gray-400 mb-3"><i class="fa-regular fa-gear mr-1"></i> Parts from processes other than Assembling (welding) and Assembling (fastener)</div>
+                <div class="text-xs text-gray-400 mb-2"><i class="fa-regular fa-gear mr-1"></i> Parts from processes other than Assembling (welding) and Assembling (fastener)</div>
                 <div class="overflow-x-auto">
                     <table class="subsub-parts-table">
                         <thead><tr><th>Part Name</th><th>Part Number</th><th class="text-center">Qty</th><th class="text-center">Delivered</th></tr></thead>
@@ -1329,21 +1294,21 @@
             const lastProcess = lastInsp?.process_type || '—';
 
             let html = `
-                <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-                    <div class="bg-slate-50 rounded-lg p-3">
+                <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
+                    <div class="bg-slate-50 rounded-lg p-2.5">
                         <div class="text-xs text-gray-400">Last Operation</div>
                         <div class="font-medium">${escapeHtml(lastProcess)}</div>
                         <div class="text-xs text-gray-400">${lastDate}</div>
                     </div>
-                    <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="bg-slate-50 rounded-lg p-2.5">
                         <div class="text-xs text-gray-400">Suggested Next</div>
                         <div class="font-medium">${nextOp ? escapeHtml(nextOp) : '—'}</div>
                     </div>
                 </div>
-                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"><i class="fa-regular fa-clock mr-1"></i>Inspection History</div>
-                <div class="inspection-history-wrap border rounded-xl overflow-hidden">
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5"><i class="fa-regular fa-clock mr-1"></i>Inspection History</div>
+                <div class="inspection-history-wrap border rounded-lg overflow-hidden">
                     <table class="min-w-full text-sm border-0">
-                        <thead><tr><th class="p-2 text-left">Date</th><th class="p-2 text-left">Process</th><th class="p-2 text-left">Condition</th><th class="p-2 text-center">Del</th><th class="p-2 text-center">Acc</th><th class="p-2 text-center">Rework</th><th class="p-2 text-center">Reject</th><th class="p-2 text-center">Cond</th><th class="p-2 text-center">Rating</th></tr></thead>
+                        <thead><tr><th class="p-1.5 text-left">Date</th><th class="p-1.5 text-left">Process</th><th class="p-1.5 text-left">Condition</th><th class="p-1.5 text-center">Del</th><th class="p-1.5 text-center">Acc</th><th class="p-1.5 text-center">Rework</th><th class="p-1.5 text-center">Reject</th><th class="p-1.5 text-center">Cond</th><th class="p-1.5 text-center">Rating</th></tr></thead>
                         <tbody>`;
             const sorted = [...inspections].sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
             for (const insp of sorted) {
@@ -1357,15 +1322,15 @@
                 const cond = insp.conditional_accept_qty || 0;
                 const rating = insp.acceptance_data?.p0?.rating || '—';
                 html += `<tr class="border-b hover:bg-gray-50">
-                    <td class="p-2">${date}</td>
-                    <td class="p-2">${escapeHtml(process)}</td>
-                    <td class="p-2">${escapeHtml(opCond)}</td>
-                    <td class="p-2 text-center">${del}</td>
-                    <td class="p-2 text-center text-emerald-700">${acc}</td>
-                    <td class="p-2 text-center text-amber-600">${rework}</td>
-                    <td class="p-2 text-center text-red-600">${rej}</td>
-                    <td class="p-2 text-center text-blue-600">${cond}</td>
-                    <td class="p-2 text-center">${escapeHtml(rating)}</td>
+                    <td class="p-1.5">${date}</td>
+                    <td class="p-1.5">${escapeHtml(process)}</td>
+                    <td class="p-1.5">${escapeHtml(opCond)}</td>
+                    <td class="p-1.5 text-center">${del}</td>
+                    <td class="p-1.5 text-center text-emerald-700">${acc}</td>
+                    <td class="p-1.5 text-center text-amber-600">${rework}</td>
+                    <td class="p-1.5 text-center text-red-600">${rej}</td>
+                    <td class="p-1.5 text-center text-blue-600">${cond}</td>
+                    <td class="p-1.5 text-center">${escapeHtml(rating)}</td>
                 </tr>`;
             }
             html += `</tbody></table></div>`;
@@ -1390,19 +1355,14 @@
                 ]
             ];
             const rowsToExport = filteredRows.length ? filteredRows : allRows;
-            const partSelect = document.getElementById('filterParts');
-            const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
-            const partSet = new Set(selectedParts);
-            let exportRows = rowsToExport;
-            if (partSet.size > 0) exportRows = rowsToExport.filter(r => partSet.has(r.partName));
 
             const assemblyMap = new Map();
-            for (const row of exportRows) {
+            for (const row of rowsToExport) {
                 const key = row.subSubKey;
                 if (!assemblyMap.has(key)) assemblyMap.set(key, { progress: row.assemblyProgressPct });
             }
 
-            for (const row of exportRows) {
+            for (const row of rowsToExport) {
                 const comp = assemblyMap.get(row.subSubKey)?.progress;
                 const compVal = comp !== null && comp !== undefined ? comp : 0;
                 const rawTagNo = window.partNumberMap?.get(row.partName) || '—';
@@ -1435,15 +1395,13 @@
             const title = document.getElementById('filterTitle').value;
             const subtitle = document.getElementById('filterSubtitle').value;
             const subSub = document.getElementById('filterSubSub').value;
-            const partSelect = document.getElementById('filterParts');
-            const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             let filtered = [...allRows];
             if (client) filtered = filtered.filter(r => r.client === client);
             if (title) filtered = filtered.filter(r => r.title === title);
             if (subtitle) filtered = filtered.filter(r => r.subtitle === subtitle);
             if (subSub) filtered = filtered.filter(r => r.subSub === subSub);
             filteredRows = filtered;
-            renderAnalysis(filtered, selectedParts);
+            renderAnalysis(filtered);
         }
 
         function populateFilters(rows) {
@@ -1451,7 +1409,6 @@
             const titles = [...new Set(rows.map(r => r.title))].sort();
             const subtitles = [...new Set(rows.map(r => r.subtitle))].sort();
             const subSubs = [...new Set(rows.map(r => r.subSub))].sort();
-            const parts = [...new Set(rows.map(r => r.partName))].sort();
 
             document.getElementById('filterClient').innerHTML = '<option value="">All Clients</option>' + clients.map(c =>
                 `<option>${escapeHtml(c)}</option>`).join('');
@@ -1461,11 +1418,6 @@
                 `<option>${escapeHtml(s)}</option>`).join('');
             document.getElementById('filterSubSub').innerHTML = '<option value="">All</option>' + subSubs.map(s =>
                 `<option>${escapeHtml(s)}</option>`).join('');
-
-            const partSelect = document.getElementById('filterParts');
-            partSelect.innerHTML = '<option value="">All Parts</option>' + parts.map(p =>
-                `<option>${escapeHtml(p)}</option>`).join('');
-            partSelect.size = Math.min(parts.length + 1, 6);
         }
 
         function clearFilters() {
@@ -1473,7 +1425,6 @@
             document.getElementById('filterTitle').value = '';
             document.getElementById('filterSubtitle').value = '';
             document.getElementById('filterSubSub').value = '';
-            document.getElementById('filterParts').value = '';
             applyFilters();
         }
 
@@ -1498,7 +1449,6 @@
         document.getElementById('filterTitle').addEventListener('change', applyFilters);
         document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
         document.getElementById('filterSubSub').addEventListener('change', applyFilters);
-        document.getElementById('filterParts').addEventListener('change', applyFilters);
         window.addEventListener('keydown', e => {
             if (e.key === 'Escape') { closePartModal(e);
                 closeAssemblyModal(e);
