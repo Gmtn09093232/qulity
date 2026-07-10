@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard | Quality Inspections</title>
+    <title>Quality Dashboard</title>
     <script src="https://cdn.tailwindcss.com">
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
@@ -91,8 +91,42 @@
             font-size: 1.5rem;
             opacity: 0.4;
         }
-        .chart-container .chartjs-legend {
-            margin-top: 4px;
+        .tab-btn {
+            transition: all 0.2s;
+            font-weight: 500;
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px 8px 0 0;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #1e293b;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+            border-top: 3px solid #3b82f6;
+        }
+        .tab-btn.inactive {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        .tab-btn.inactive:hover {
+            background: #e2e8f0;
+        }
+        .view-panel {
+            display: none;
+        }
+        .view-panel.active {
+            display: block;
+        }
+        .badge-assembly {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.6rem;
+            border-radius: 999px;
+            font-weight: 600;
+            margin-left: 6px;
         }
     </style>
 </head>
@@ -100,170 +134,200 @@
 
     <div class="max-w-7xl mx-auto p-4 md:p-6">
 
-        <!-- Header -->
+        <!-- ===== HEADER ===== -->
         <div class="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap justify-between items-center gap-3">
             <div>
                 <h1 class="text-2xl font-bold text-blue-900 flex items-center gap-2">
                     <i class="fas fa-chart-pie text-blue-600"></i> Quality Control Dashboard
                 </h1>
-                <p class="text-gray-600 text-sm">All Processes Inspection Summary</p>
+                <p class="text-gray-600 text-sm" id="viewSubtitle">All Processes (excluding Assembly types)</p>
             </div>
-            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-md transition">
-                <i class="fas fa-sync-alt"></i> Refresh
+            <div class="flex flex-wrap gap-2">
+                <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-md transition">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== TAB NAVIGATION ===== -->
+        <div class="bg-white rounded-t-lg shadow px-2 pt-2 flex flex-wrap gap-1 border-b border-gray-200">
+            <button class="tab-btn active" data-view="main" onclick="switchView('main')">
+                <i class="fas fa-th-large mr-1"></i> Main Dashboard
+                <span class="text-xs text-gray-400 font-normal ml-1">(excl. Assembly)</span>
+            </button>
+            <button class="tab-btn inactive" data-view="assembly" onclick="switchView('assembly')">
+                <i class="fas fa-tools mr-1"></i> Assembly View
+                <span class="badge-assembly">welding + fastener</span>
             </button>
         </div>
 
-        <!-- ==================== FILTERS (MOVED TO TOP) ==================== -->
-        <div class="bg-white rounded-lg shadow p-4 mb-6">
-            <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-sliders-h text-gray-600"></i> Filters</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                <div><label class="block text-sm font-medium">Process Type</label><select id="filterProcess" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Processes</option></select></div>
-                <div><label class="block text-sm font-medium">Engineer Name</label><select id="filterEngineer" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Engineers</option></select></div>
-                <div><label class="block text-sm font-medium">Project Name</label><select id="filterProjectName" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Projects</option></select></div>
-                <div><label class="block text-sm font-medium">Workstation</label><select id="filterWorkstation" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Workstations</option><option value="machine shop">Machine Shop</option><option value="fabrication">Fabrication</option><option value="assembling">Assembling</option><option value="forging">Forging</option><option value="foundry">Foundry</option><option value="wood shop">Wood Shop</option></select></div>
-                <div><label class="block text-sm font-medium">Location</label><select id="filterLocation" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Locations</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>
-                <div><label class="block text-sm font-medium">Date From</label><input type="date" id="filterDateFrom" class="w-full border rounded p-2 mt-1 bg-white"></div>
-                <div><label class="block text-sm font-medium">Date To</label><input type="date" id="filterDateTo" class="w-full border rounded p-2 mt-1 bg-white"></div>
-            </div>
-            <div class="mt-4 flex flex-wrap justify-end gap-2">
-                <button onclick="applyFilters()" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-2 rounded-lg transition flex items-center gap-2">
-                    <i class="fas fa-filter"></i> Apply Filters
-                </button>
-                <button onclick="resetFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition flex items-center gap-2">
-                    <i class="fas fa-undo"></i> Reset
-                </button>
-            </div>
-        </div>
-        <!-- ================================================================ -->
+        <!-- ========================================================== -->
+        <!-- ===== VIEW: MAIN (excludes assembly types) ===== -->
+        <!-- ========================================================== -->
+        <div id="viewMain" class="view-panel active">
 
-        <!-- Quantity Summary Table -->
-        <div class="bg-white rounded-lg shadow p-4 mb-6">
-            <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-cubes text-blue-600"></i> Total Quantities (Sum of all inspections)</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm border-collapse">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="p-2 border text-left">Delivered Qty</th>
-                            <th class="p-2 border text-left">Accepted Qty</th>
-                            <th class="p-2 border text-left">Rework Qty</th>
-                            <th class="p-2 border text-left">Reject Qty</th>
-                            <th class="p-2 border text-left">Conditional Accept Qty</th>
-                        </tr>
-                    </thead>
-                    <tbody id="quantitySummaryBody">
-                        <tr><td colspan="5" class="text-center p-4 text-gray-400">-</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Results Distribution – ALL CHART TYPES displayed simultaneously -->
-        <div class="bg-white rounded-lg shadow p-4 mb-6">
-            <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-                <h2 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-chart-pie text-blue-600"></i> Results Distribution (by Quantity) – All Views</h2>
-                <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">hover for details</span>
-            </div>
-
-            <!-- Chart Grid – 6 charts -->
-            <div class="chart-grid" id="chartGrid">
-                <!-- Bar Chart -->
-                <div class="chart-box">
-                    <h3><i class="fas fa-chart-bar"></i> Bar</h3>
-                    <div class="chart-container"><canvas id="chartBar"></canvas></div>
+            <!-- Filters -->
+            <div class="bg-white rounded-b-lg shadow p-4 mb-6">
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-sliders-h text-gray-600"></i> Filters</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    <div><label class="block text-sm font-medium">Process Type</label><select id="filterProcess" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Processes</option></select></div>
+                    <div><label class="block text-sm font-medium">Engineer Name</label><select id="filterEngineer" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Engineers</option></select></div>
+                    <div><label class="block text-sm font-medium">Project Name</label><select id="filterProjectName" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Projects</option></select></div>
+                    <div><label class="block text-sm font-medium">Workstation</label><select id="filterWorkstation" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Workstations</option><option value="machine shop">Machine Shop</option><option value="fabrication">Fabrication</option><option value="assembling">Assembling</option><option value="forging">Forging</option><option value="foundry">Foundry</option><option value="wood shop">Wood Shop</option></select></div>
+                    <div><label class="block text-sm font-medium">Location</label><select id="filterLocation" class="w-full border rounded p-2 mt-1 bg-white"><option value="">All Locations</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>
+                    <div><label class="block text-sm font-medium">Date From</label><input type="date" id="filterDateFrom" class="w-full border rounded p-2 mt-1 bg-white"></div>
+                    <div><label class="block text-sm font-medium">Date To</label><input type="date" id="filterDateTo" class="w-full border rounded p-2 mt-1 bg-white"></div>
                 </div>
-                <!-- Pie Chart -->
-                <div class="chart-box">
-                    <h3><i class="fas fa-chart-pie"></i> Pie</h3>
-                    <div class="chart-container"><canvas id="chartPie"></canvas></div>
-                </div>
-                <!-- Doughnut Chart -->
-                <div class="chart-box">
-                    <h3><i class="fas fa-circle"></i> Doughnut</h3>
-                    <div class="chart-container"><canvas id="chartDoughnut"></canvas></div>
-                </div>
-                <!-- Horizontal Bar (FIXED) -->
-                <div class="chart-box">
-                    <h3><i class="fas fa-chart-bar fa-rotate-90"></i> Horizontal</h3>
-                    <div class="chart-container"><canvas id="chartHorizontal"></canvas></div>
-                </div>
-                <!-- Polar Area -->
-                <div class="chart-box">
-                    <h3><i class="fas fa-chart-area"></i> Polar</h3>
-                    <div class="chart-container"><canvas id="chartPolar"></canvas></div>
-                </div>
-                <!-- Radar -->
-                <div class="chart-box">
-                    <h3><i class="fas fa-chart-line"></i> Radar</h3>
-                    <div class="chart-container"><canvas id="chartRadar"></canvas></div>
+                <div class="mt-4 flex flex-wrap justify-end gap-2">
+                    <button onclick="applyFilters()" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-2 rounded-lg transition flex items-center gap-2">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                    <button onclick="resetFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition flex items-center gap-2">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
                 </div>
             </div>
 
-            <!-- Data Table (below charts) -->
-            <div class="mt-6 border-t pt-4">
+            <!-- Quantity Summary -->
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-cubes text-blue-600"></i> Total Quantities (Sum of all inspections)</h2>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm border-collapse">
                         <thead class="bg-gray-100">
-                            <tr><th class="p-2 border text-left">Result</th><th class="p-2 border text-left">Total Quantity</th><th class="p-2 border text-left">Percentage (%)</th></tr>
+                            <tr><th class="p-2 border text-left">Delivered Qty</th><th class="p-2 border text-left">Accepted Qty</th><th class="p-2 border text-left">Rework Qty</th><th class="p-2 border text-left">Reject Qty</th><th class="p-2 border text-left">Conditional Accept Qty</th></tr>
                         </thead>
-                        <tbody id="resultsTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr>
-                        </tbody>
+                        <tbody id="quantitySummaryBody"><tr><td colspan="5" class="text-center p-4 text-gray-400">-</td></tr></tbody>
                     </table>
                 </div>
             </div>
-        </div>
 
-        <!-- Internal Failure Cost by Process Type -->
-        <div class="bg-white rounded-lg shadow p-4 mb-6">
-            <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-industry text-red-600"></i> Internal Failure Cost by Process Type</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm border-collapse">
-                    <thead class="bg-gray-100">
-                        <tr><th class="p-2 border text-left">Process Type</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr>
-                    </thead>
-                    <tbody id="failureCostTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody>
-                </table>
+            <!-- Results Distribution -->
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
+                    <h2 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-chart-pie text-blue-600"></i> Results Distribution (by Quantity) – All Views</h2>
+                    <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">hover for details</span>
+                </div>
+                <div class="chart-grid" id="chartGrid">
+                    <div class="chart-box"><h3><i class="fas fa-chart-bar"></i> Bar</h3><div class="chart-container"><canvas id="chartBar"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-chart-pie"></i> Pie</h3><div class="chart-container"><canvas id="chartPie"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-circle"></i> Doughnut</h3><div class="chart-container"><canvas id="chartDoughnut"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-chart-bar fa-rotate-90"></i> Horizontal</h3><div class="chart-container"><canvas id="chartHorizontal"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-chart-area"></i> Polar</h3><div class="chart-container"><canvas id="chartPolar"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-chart-line"></i> Radar</h3><div class="chart-container"><canvas id="chartRadar"></canvas></div></div>
+                </div>
+                <div class="mt-6 border-t pt-4">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm border-collapse">
+                            <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Result</th><th class="p-2 border text-left">Total Quantity</th><th class="p-2 border text-left">Percentage (%)</th></tr></thead>
+                            <tbody id="resultsTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="mt-3 text-sm text-gray-600 border-t pt-2">
-                <span class="font-semibold">Grand Total: </span><span id="failureCostGrandTotal" class="font-bold text-red-700">0.00</span> ETB
-            </div>
-        </div>
 
-        <!-- Internal Failure Cost by Title -->
-        <div class="bg-white rounded-lg shadow p-4 mb-6">
-            <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-folder-open text-red-600"></i> Internal Failure Cost by Title (Project)</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm border-collapse">
-                    <thead class="bg-gray-100">
-                        <tr><th class="p-2 border text-left">Project Title</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr>
-                    </thead>
-                    <tbody id="failureCostTitleTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody>
-                </table>
+            <!-- Failure Cost by Process -->
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-industry text-red-600"></i> Internal Failure Cost by Process Type</h2>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Process Type</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr></thead><tbody id="failureCostTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+                <div class="mt-3 text-sm text-gray-600 border-t pt-2"><span class="font-semibold">Grand Total: </span><span id="failureCostGrandTotal" class="font-bold text-red-700">0.00</span> ETB</div>
             </div>
-            <div class="mt-3 text-sm text-gray-600 border-t pt-2">
-                <span class="font-semibold">Grand Total: </span><span id="failureCostTitleGrandTotal" class="font-bold text-red-700">0.00</span> ETB
-            </div>
-        </div>
 
-        <!-- Data Table -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="p-3 text-left">Date &amp; Time</th>
-                            <th class="p-3 text-left">Process</th>
-                            <th class="p-3 text-left">Project Name</th>
-                            <th class="p-3 text-left">Engineer</th>
-                            <th class="p-3 text-left">Result</th>
-                            <th class="p-3 text-left">Points</th>
-                            <th class="p-3 text-left">Operator</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inspectionTableBody"><tr><td colspan="7" class="text-center p-4 text-gray-400">Loading data...</td></tr></tbody>
-                </table>
+            <!-- Failure Cost by Title -->
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-folder-open text-red-600"></i> Internal Failure Cost by Title (Project)</h2>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Project Title</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr></thead><tbody id="failureCostTitleTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+                <div class="mt-3 text-sm text-gray-600 border-t pt-2"><span class="font-semibold">Grand Total: </span><span id="failureCostTitleGrandTotal" class="font-bold text-red-700">0.00</span> ETB</div>
             </div>
-            <div id="tableInfo" class="p-3 text-sm text-gray-500 border-t"></div>
+
+            <!-- Data Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="p-3 text-left">Date &amp; Time</th><th class="p-3 text-left">Process</th><th class="p-3 text-left">Project Name</th><th class="p-3 text-left">Engineer</th><th class="p-3 text-left">Result</th><th class="p-3 text-left">Points</th><th class="p-3 text-left">Operator</th></tr></thead><tbody id="inspectionTableBody"><tr><td colspan="7" class="text-center p-4 text-gray-400">Loading data...</td></tr></tbody></table></div>
+                <div id="tableInfo" class="p-3 text-sm text-gray-500 border-t"></div>
+            </div>
+
         </div>
+        <!-- ===== END VIEW: MAIN ===== -->
+
+
+        <!-- ========================================================== -->
+        <!-- ===== VIEW: ASSEMBLY (welding + fastener only) ===== -->
+        <!-- ========================================================== -->
+        <div id="viewAssembly" class="view-panel">
+
+            <!-- Assembly-specific header -->
+            <div class="bg-white rounded-b-lg shadow p-4 mb-6 flex flex-wrap justify-between items-center gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-blue-900 flex items-center gap-2">
+                        <i class="fas fa-tools text-orange-600"></i> Assembly Processes
+                        <span class="text-sm font-normal text-gray-500 ml-2">welding · fastener</span>
+                    </h2>
+                    <p class="text-gray-600 text-sm">Results distribution for Assembly (Welding) and Assembly (Fastener) only</p>
+                </div>
+                <div class="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
+                    <i class="fas fa-filter mr-1"></i> Auto-filtered
+                </div>
+            </div>
+
+            <!-- Quantity Summary -->
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-cubes text-blue-600"></i> Total Quantities (Assembly only)</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm border-collapse">
+                        <thead class="bg-gray-100">
+                            <tr><th class="p-2 border text-left">Delivered Qty</th><th class="p-2 border text-left">Accepted Qty</th><th class="p-2 border text-left">Rework Qty</th><th class="p-2 border text-left">Reject Qty</th><th class="p-2 border text-left">Conditional Accept Qty</th></tr>
+                        </thead>
+                        <tbody id="assemblyQuantityBody"><tr><td colspan="5" class="text-center p-4 text-gray-400">-</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Results Distribution – Assembly -->
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
+                    <h2 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-chart-pie text-orange-600"></i> Assembly Results Distribution</h2>
+                    <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">hover for details</span>
+                </div>
+                <div class="chart-grid">
+                    <div class="chart-box"><h3><i class="fas fa-chart-bar"></i> Bar</h3><div class="chart-container"><canvas id="assemblyChartBar"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-chart-pie"></i> Pie</h3><div class="chart-container"><canvas id="assemblyChartPie"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-circle"></i> Doughnut</h3><div class="chart-container"><canvas id="assemblyChartDoughnut"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-chart-bar fa-rotate-90"></i> Horizontal</h3><div class="chart-container"><canvas id="assemblyChartHorizontal"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-chart-area"></i> Polar</h3><div class="chart-container"><canvas id="assemblyChartPolar"></canvas></div></div>
+                    <div class="chart-box"><h3><i class="fas fa-chart-line"></i> Radar</h3><div class="chart-container"><canvas id="assemblyChartRadar"></canvas></div></div>
+                </div>
+                <div class="mt-6 border-t pt-4">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm border-collapse">
+                            <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Result</th><th class="p-2 border text-left">Total Quantity</th><th class="p-2 border text-left">Percentage (%)</th></tr></thead>
+                            <tbody id="assemblyResultsTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Failure Cost by Process (Assembly only) -->
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-industry text-red-600"></i> Internal Failure Cost by Process (Assembly)</h2>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Process Type</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr></thead><tbody id="assemblyFailureCostTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+                <div class="mt-3 text-sm text-gray-600 border-t pt-2"><span class="font-semibold">Grand Total: </span><span id="assemblyFailureCostGrandTotal" class="font-bold text-red-700">0.00</span> ETB</div>
+            </div>
+
+            <!-- Failure Cost by Title (Assembly only) -->
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-folder-open text-red-600"></i> Internal Failure Cost by Title (Assembly)</h2>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Project Title</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr></thead><tbody id="assemblyFailureCostTitleTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+                <div class="mt-3 text-sm text-gray-600 border-t pt-2"><span class="font-semibold">Grand Total: </span><span id="assemblyFailureCostTitleGrandTotal" class="font-bold text-red-700">0.00</span> ETB</div>
+            </div>
+
+            <!-- Data Table – Assembly -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="p-3 text-left">Date &amp; Time</th><th class="p-3 text-left">Process</th><th class="p-3 text-left">Project Name</th><th class="p-3 text-left">Engineer</th><th class="p-3 text-left">Result</th><th class="p-3 text-left">Points</th><th class="p-3 text-left">Operator</th></tr></thead><tbody id="assemblyTableBody"><tr><td colspan="7" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+                <div id="assemblyTableInfo" class="p-3 text-sm text-gray-500 border-t"></div>
+            </div>
+
+        </div>
+        <!-- ===== END VIEW: ASSEMBLY ===== -->
+
     </div>
 
     <script>
@@ -271,8 +335,10 @@
         //  STATE
         // ──────────────────────────────────────────────
         let allInspections = [];
-        let chartInstances = {};
-        let currentFilteredData = [];
+        let mainChartInstances = {};
+        let assemblyChartInstances = {};
+        let currentMainData = [];
+        let currentAssemblyData = [];
 
         const RESULT_COLORS = {
             'Accepted': '#22c55e',
@@ -280,6 +346,8 @@
             'Reject': '#ef4444',
             'Conditional Accept': '#3b82f6'
         };
+
+        const ASSEMBLY_TYPES = ['assembly (welding)', 'assembly (fastener)'];
 
         // ──────────────────────────────────────────────
         //  HELPERS
@@ -329,6 +397,12 @@
             return isNaN(n) ? 0 : n;
         }
 
+        function isAssemblyType(process) {
+            if (!process) return false;
+            const p = process.trim().toLowerCase();
+            return ASSEMBLY_TYPES.some(t => p === t.toLowerCase());
+        }
+
         // ──────────────────────────────────────────────
         //  FETCH
         // ──────────────────────────────────────────────
@@ -339,9 +413,12 @@
                 allInspections = await res.json();
                 populateDropdowns();
                 applyFilters();
+                updateAssemblyView();
             } catch (err) {
                 console.error(err);
                 document.getElementById('inspectionTableBody').innerHTML =
+                    '<tr><td colspan="7" class="text-center text-red-500">⚠️ Error loading data. Please try again.</td></tr>';
+                document.getElementById('assemblyTableBody').innerHTML =
                     '<tr><td colspan="7" class="text-center text-red-500">⚠️ Error loading data. Please try again.</td></tr>';
             }
         }
@@ -354,7 +431,8 @@
                 engineerSet = new Set(),
                 projectSet = new Set();
             allInspections.forEach(i => {
-                if (i.process_type) processSet.add(i.process_type);
+                // Exclude assembly types from main dropdowns
+                if (i.process_type && !isAssemblyType(i.process_type)) processSet.add(i.process_type);
                 if (i.username) engineerSet.add(i.username);
                 const proj = getProjectName(i);
                 if (proj) projectSet.add(proj);
@@ -374,7 +452,7 @@
         }
 
         // ──────────────────────────────────────────────
-        //  FILTERS
+        //  FILTERS (MAIN VIEW)
         // ──────────────────────────────────────────────
         function applyFilters() {
             const processFilter = document.getElementById('filterProcess').value;
@@ -385,7 +463,7 @@
             const dateFrom = document.getElementById('filterDateFrom').value;
             const dateTo = document.getElementById('filterDateTo').value;
 
-            let filtered = [...allInspections];
+            let filtered = allInspections.filter(i => !isAssemblyType(i.process_type));
 
             if (processFilter) filtered = filtered.filter(i => i.process_type === processFilter);
             if (engineerFilter) filtered = filtered.filter(i => i.username === engineerFilter);
@@ -399,12 +477,12 @@
                 to.setHours(23, 59, 59, 999);
                 filtered = filtered.filter(i => new Date(i.submitted_at) <= to); }
 
-            currentFilteredData = filtered;
-            updateQuantitySummary(filtered);
-            updateResultsByQuantity(filtered);
-            updateFailureCostByProcess(filtered);
-            updateFailureCostByTitle(filtered);
-            updateTable(filtered);
+            currentMainData = filtered;
+            updateQuantitySummary(filtered, 'quantitySummaryBody');
+            updateResultsByQuantity(filtered, 'resultsTableBody', mainChartInstances, 'chart');
+            updateFailureCostByProcess(filtered, 'failureCostTableBody', 'failureCostGrandTotal');
+            updateFailureCostByTitle(filtered, 'failureCostTitleTableBody', 'failureCostTitleGrandTotal');
+            updateTable(filtered, 'inspectionTableBody', 'tableInfo');
         }
 
         function resetFilters() {
@@ -419,9 +497,23 @@
         }
 
         // ──────────────────────────────────────────────
-        //  QUANTITY SUMMARY TABLE
+        //  ASSEMBLY VIEW
         // ──────────────────────────────────────────────
-        function updateQuantitySummary(data) {
+        function updateAssemblyView() {
+            const assemblyData = allInspections.filter(i => isAssemblyType(i.process_type));
+            currentAssemblyData = assemblyData;
+
+            updateQuantitySummary(assemblyData, 'assemblyQuantityBody');
+            updateResultsByQuantity(assemblyData, 'assemblyResultsTableBody', assemblyChartInstances, 'assemblyChart');
+            updateFailureCostByProcess(assemblyData, 'assemblyFailureCostTableBody', 'assemblyFailureCostGrandTotal');
+            updateFailureCostByTitle(assemblyData, 'assemblyFailureCostTitleTableBody', 'assemblyFailureCostTitleGrandTotal');
+            updateTable(assemblyData, 'assemblyTableBody', 'assemblyTableInfo');
+        }
+
+        // ──────────────────────────────────────────────
+        //  QUANTITY SUMMARY (generic)
+        // ──────────────────────────────────────────────
+        function updateQuantitySummary(data, tbodyId) {
             let sumDelivered = 0,
                 sumAccepted = 0,
                 sumRework = 0,
@@ -434,7 +526,7 @@
                 sumReject += safeNum(insp.reject_qty);
                 sumConditional += safeNum(insp.conditional_accept_qty);
             });
-            document.getElementById('quantitySummaryBody').innerHTML = `
+            document.getElementById(tbodyId).innerHTML = `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="p-2 border font-semibold">${sumDelivered.toLocaleString()}</td>
                     <td class="p-2 border font-semibold text-green-700">${sumAccepted.toLocaleString()}</td>
@@ -446,7 +538,7 @@
         }
 
         // ──────────────────────────────────────────────
-        //  RESULTS DISTRIBUTION – generate data & render all charts
+        //  RESULTS BY QUANTITY (generic)
         // ──────────────────────────────────────────────
         function getResultTotals(data) {
             let accepted = 0,
@@ -462,16 +554,16 @@
             return { accepted, rework, reject, conditional };
         }
 
-        function updateResultsByQuantity(data) {
+        function updateResultsByQuantity(data, tbodyId, chartStore, chartPrefix) {
             const totals = getResultTotals(data);
             const { accepted, rework, reject, conditional } = totals;
             const totalQuantity = accepted + rework + reject + conditional;
 
-            const tbody = document.getElementById('resultsTableBody');
+            const tbody = document.getElementById(tbodyId);
             if (totalQuantity === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No quantity data available</td></tr>';
-                destroyAllCharts();
-                showEmptyChartMessages();
+                destroyCharts(chartStore);
+                showEmptyChartMessages(chartPrefix);
                 return;
             }
 
@@ -482,7 +574,6 @@
                 { label: 'Conditional Accept Qty', value: conditional, color: '#3b82f6' }
             ];
 
-            // Update table
             tbody.innerHTML = items.map(item => `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="p-2 border">${item.label}</td>
@@ -491,58 +582,50 @@
                 </tr>
             `).join('');
 
-            // Render all six charts
-            renderAllCharts(items, totalQuantity);
+            renderAllCharts(items, totalQuantity, chartStore, chartPrefix);
         }
 
         // ──────────────────────────────────────────────
-        //  RENDER ALL CHARTS – FIXED for horizontal bar
+        //  RENDER ALL CHARTS (generic)
         // ──────────────────────────────────────────────
-        function renderAllCharts(items, totalQuantity) {
-            destroyAllCharts();
-            clearEmptyMessages();
+        function renderAllCharts(items, totalQuantity, chartStore, prefix) {
+            destroyCharts(chartStore);
+            clearEmptyMessages(prefix);
 
             const chartConfigs = [
-                { id: 'chartBar', type: 'bar', label: 'Bar' },
-                { id: 'chartPie', type: 'pie', label: 'Pie' },
-                { id: 'chartDoughnut', type: 'doughnut', label: 'Doughnut' },
-                { id: 'chartHorizontal', type: 'horizontalBar', label: 'Horizontal' },
-                { id: 'chartPolar', type: 'polarArea', label: 'Polar' },
-                { id: 'chartRadar', type: 'radar', label: 'Radar' }
+                { id: prefix + 'Bar', type: 'bar', label: 'Bar' },
+                { id: prefix + 'Pie', type: 'pie', label: 'Pie' },
+                { id: prefix + 'Doughnut', type: 'doughnut', label: 'Doughnut' },
+                { id: prefix + 'Horizontal', type: 'horizontalBar', label: 'Horizontal' },
+                { id: prefix + 'Polar', type: 'polarArea', label: 'Polar' },
+                { id: prefix + 'Radar', type: 'radar', label: 'Radar' }
             ];
 
             chartConfigs.forEach(cfg => {
                 const canvas = document.getElementById(cfg.id);
-                if (!canvas) {
-                    console.warn(`Canvas #${cfg.id} not found`);
-                    return;
-                }
+                if (!canvas) { console.warn('Canvas not found:', cfg.id); return; }
                 const ctx = canvas.getContext('2d');
 
                 try {
-                    const chartData = buildChartData(items, cfg.type);
-                    if (!chartData) {
-                        showEmptyOnCanvas(canvas);
-                        return;
-                    }
+                    const chartData = buildChartData(items, cfg.type, totalQuantity);
+                    if (!chartData) { showEmptyOnCanvas(canvas); return; }
                     const chart = new Chart(ctx, chartData);
-                    chartInstances[cfg.id] = chart;
+                    chartStore[cfg.id] = chart;
                 } catch (err) {
-                    console.error(`Error creating chart ${cfg.id}:`, err);
+                    console.error('Error creating chart', cfg.id, err);
                     showEmptyOnCanvas(canvas);
                 }
             });
         }
 
-        function buildChartData(items, type) {
+        function buildChartData(items, type, total) {
             const labels = items.map(d => d.label);
             const values = items.map(d => d.value);
             const colors = items.map(d => d.color);
-            const total = values.reduce((a, b) => a + b, 0);
+            const totalVal = values.reduce((a, b) => a + b, 0);
 
-            if (total === 0) return null;
+            if (totalVal === 0) return null;
 
-            // Base config – type will be overridden for horizontalBar
             let config = {
                 type: type,
                 data: {},
@@ -552,20 +635,15 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: {
-                                font: { size: 10 },
-                                padding: 8,
-                                usePointStyle: true,
-                                pointStyle: 'circle',
-                                boxWidth: 10
-                            }
+                            labels: { font: { size: 10 }, padding: 8, usePointStyle: true, pointStyle: 'circle',
+                                boxWidth: 10 }
                         },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     let label = context.label || '';
                                     let raw = context.raw;
-                                    let pct = total > 0 ? ((raw / total) * 100).toFixed(1) : 0;
+                                    let pct = totalVal > 0 ? ((raw / totalVal) * 100).toFixed(1) : 0;
                                     return `${label}: ${raw.toLocaleString()} (${pct}%)`;
                                 }
                             }
@@ -575,143 +653,74 @@
                 }
             };
 
-            // ── Bar (vertical) ──
             if (type === 'bar') {
-                config.data = {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Total Quantity',
-                        data: values,
-                        backgroundColor: colors.map(c => c + 'CC'),
-                        borderColor: colors,
-                        borderWidth: 2,
-                        borderRadius: 4,
-                        barPercentage: 0.6
-                    }]
-                };
-                config.options.scales = {
-                    y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() }, grid: { color: '#e9ecef' } },
-                    x: { grid: { display: false } }
-                };
-            }
-            // ── Horizontal Bar (FIXED: use 'bar' type + indexAxis: 'y') ──
-            else if (type === 'horizontalBar') {
-                config.type = 'bar'; // critical: Chart.js v4 uses 'bar' with indexAxis
-                config.data = {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Total Quantity',
-                        data: values,
-                        backgroundColor: colors.map(c => c + 'CC'),
-                        borderColor: colors,
-                        borderWidth: 2,
-                        borderRadius: 4,
-                        barPercentage: 0.6
-                    }]
-                };
+                config.data = { labels, datasets: [{ label: 'Total Quantity', data: values, backgroundColor: colors.map(c =>
+                            c + 'CC'), borderColor: colors, borderWidth: 2, borderRadius: 4, barPercentage: 0.6 }] };
+                config.options.scales = { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() },
+                        grid: { color: '#e9ecef' } }, x: { grid: { display: false } } };
+            } else if (type === 'horizontalBar') {
+                config.type = 'bar';
+                config.data = { labels, datasets: [{ label: 'Total Quantity', data: values, backgroundColor: colors.map(c =>
+                            c + 'CC'), borderColor: colors, borderWidth: 2, borderRadius: 4, barPercentage: 0.6 }] };
                 config.options.indexAxis = 'y';
-                config.options.scales = {
-                    x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() }, grid: { color: '#e9ecef' } },
-                    y: { grid: { display: false } }
-                };
-            }
-            // ── Pie ──
-            else if (type === 'pie') {
-                config.data = {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: colors,
-                        borderColor: '#ffffff',
-                        borderWidth: 2,
-                        hoverOffset: 8
-                    }]
-                };
+                config.options.scales = { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() },
+                        grid: { color: '#e9ecef' } }, y: { grid: { display: false } } };
+            } else if (type === 'pie') {
+                config.data = { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#ffffff',
+                        borderWidth: 2, hoverOffset: 8 }] };
                 config.options.plugins.legend.position = 'right';
                 config.options.scales = {};
-            }
-            // ── Doughnut ──
-            else if (type === 'doughnut') {
-                config.data = {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: colors,
-                        borderColor: '#ffffff',
-                        borderWidth: 2,
-                        hoverOffset: 8,
-                        cutout: '55%'
-                    }]
-                };
+            } else if (type === 'doughnut') {
+                config.data = { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#ffffff',
+                        borderWidth: 2, hoverOffset: 8, cutout: '55%' }] };
                 config.options.plugins.legend.position = 'right';
                 config.options.scales = {};
-            }
-            // ── Polar Area ──
-            else if (type === 'polarArea') {
-                config.data = {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: colors.map(c => c + 'CC'),
-                        borderColor: colors,
-                        borderWidth: 2,
-                        hoverOffset: 8
-                    }]
-                };
+            } else if (type === 'polarArea') {
+                config.data = { labels, datasets: [{ data: values, backgroundColor: colors.map(c => c + 'CC'),
+                        borderColor: colors, borderWidth: 2, hoverOffset: 8 }] };
                 config.options.plugins.legend.position = 'right';
-                config.options.scales = {
-                    r: { beginAtZero: true, ticks: { stepSize: Math.ceil(Math.max(...values) / 5) || 1 } }
-                };
-            }
-            // ── Radar ──
-            else if (type === 'radar') {
-                config.data = {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Quantity',
-                        data: values,
-                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                        borderColor: '#3b82f6',
-                        borderWidth: 2,
-                        pointBackgroundColor: colors,
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        fill: true,
-                        tension: 0.1
-                    }]
-                };
-                config.options.scales = {
-                    r: { beginAtZero: true, ticks: { stepSize: Math.ceil(Math.max(...values) / 5) || 1 } }
-                };
+                config.options.scales = { r: { beginAtZero: true, ticks: { stepSize: Math.ceil(Math.max(...values) / 5) ||
+                                1 } } };
+            } else if (type === 'radar') {
+                config.data = { labels, datasets: [{ label: 'Quantity', data: values, backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                        borderColor: '#3b82f6', borderWidth: 2, pointBackgroundColor: colors, pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2, pointRadius: 4, fill: true, tension: 0.1 }] };
+                config.options.scales = { r: { beginAtZero: true, ticks: { stepSize: Math.ceil(Math.max(...values) / 5) ||
+                                1 } } };
                 config.options.plugins.legend.position = 'bottom';
             }
 
             return config;
         }
 
-        function destroyAllCharts() {
-            Object.keys(chartInstances).forEach(key => {
-                try {
-                    if (chartInstances[key]) {
-                        chartInstances[key].destroy();
+        function destroyCharts(store) {
+            Object.keys(store).forEach(key => {
+                try { if (store[key]) store[key].destroy(); } catch (e) { /* ignore */ }
+                delete store[key];
+            });
+        }
+
+        function clearEmptyMessages(prefix) {
+            const ids = [prefix + 'Bar', prefix + 'Pie', prefix + 'Doughnut', prefix + 'Horizontal', prefix + 'Polar',
+                prefix + 'Radar'
+            ];
+            ids.forEach(id => {
+                const canvas = document.getElementById(id);
+                if (canvas) {
+                    const parent = canvas.parentElement;
+                    if (parent) {
+                        const msg = parent.querySelector('.empty-chart-msg');
+                        if (msg) msg.remove();
+                        canvas.style.display = 'block';
                     }
-                } catch (e) { /* ignore */ }
-                delete chartInstances[key];
+                }
             });
         }
 
-        function clearEmptyMessages() {
-            document.querySelectorAll('.chart-container').forEach(container => {
-                const msg = container.querySelector('.empty-chart-msg');
-                if (msg) msg.remove();
-                const canvas = container.querySelector('canvas');
-                if (canvas) canvas.style.display = 'block';
-            });
-        }
-
-        function showEmptyChartMessages() {
-            const ids = ['chartBar', 'chartPie', 'chartDoughnut', 'chartHorizontal', 'chartPolar', 'chartRadar'];
+        function showEmptyChartMessages(prefix) {
+            const ids = [prefix + 'Bar', prefix + 'Pie', prefix + 'Doughnut', prefix + 'Horizontal', prefix + 'Polar',
+                prefix + 'Radar'
+            ];
             ids.forEach(id => {
                 const canvas = document.getElementById(id);
                 if (canvas) showEmptyOnCanvas(canvas);
@@ -732,9 +741,9 @@
         }
 
         // ──────────────────────────────────────────────
-        //  FAILURE COST BY PROCESS
+        //  FAILURE COST (generic)
         // ──────────────────────────────────────────────
-        function updateFailureCostByProcess(data) {
+        function updateFailureCostByProcess(data, tbodyId, grandTotalId) {
             const costMap = new Map();
             let grandTotal = 0;
             data.forEach(insp => {
@@ -744,8 +753,8 @@
                 costMap.set(process, (costMap.get(process) || 0) + cost);
                 grandTotal += cost;
             });
-            const tbody = document.getElementById('failureCostTableBody');
-            const grandSpan = document.getElementById('failureCostGrandTotal');
+            const tbody = document.getElementById(tbodyId);
+            const grandSpan = document.getElementById(grandTotalId);
             if (grandTotal === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No failure cost data</td></tr>';
                 grandSpan.innerText = '0.00';
@@ -762,10 +771,7 @@
             grandSpan.innerText = grandTotal.toFixed(2);
         }
 
-        // ──────────────────────────────────────────────
-        //  FAILURE COST BY TITLE
-        // ──────────────────────────────────────────────
-        function updateFailureCostByTitle(data) {
+        function updateFailureCostByTitle(data, tbodyId, grandTotalId) {
             const costMap = new Map();
             let grandTotal = 0;
             data.forEach(insp => {
@@ -775,8 +781,8 @@
                 costMap.set(title, (costMap.get(title) || 0) + cost);
                 grandTotal += cost;
             });
-            const tbody = document.getElementById('failureCostTitleTableBody');
-            const grandSpan = document.getElementById('failureCostTitleGrandTotal');
+            const tbody = document.getElementById(tbodyId);
+            const grandSpan = document.getElementById(grandTotalId);
             if (grandTotal === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No failure cost data</td></tr>';
                 grandSpan.innerText = '0.00';
@@ -794,13 +800,14 @@
         }
 
         // ──────────────────────────────────────────────
-        //  DATA TABLE
+        //  DATA TABLE (generic)
         // ──────────────────────────────────────────────
-        function updateTable(data) {
-            const tbody = document.getElementById('inspectionTableBody');
+        function updateTable(data, tbodyId, infoId) {
+            const tbody = document.getElementById(tbodyId);
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">No inspections match filters</td></tr>';
-                document.getElementById('tableInfo').innerText = 'Showing 0 records';
+                tbody.innerHTML =
+                    '<tr><td colspan="7" class="text-center p-4 text-gray-400">No inspections match filters</td></tr>';
+                document.getElementById(infoId).innerText = 'Showing 0 records';
                 return;
             }
             tbody.innerHTML = data.map(i => `
@@ -814,13 +821,76 @@
                     <td class="p-3">${escapeHtml(i.operator_name) || '-'}</td>
                 </tr>
             `).join('');
-            document.getElementById('tableInfo').innerText = `Showing ${data.length} of ${allInspections.length} inspections`;
+            document.getElementById(infoId).innerText = `Showing ${data.length} of ${allInspections.length} inspections`;
+        }
+
+        // ──────────────────────────────────────────────
+        //  TAB SWITCHING
+        // ──────────────────────────────────────────────
+        function switchView(view) {
+            // Update tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'inactive');
+                if (btn.dataset.view === view) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.add('inactive');
+                }
+            });
+
+            // Update panels
+            document.querySelectorAll('.view-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+
+            // Update subtitle
+            const subtitle = document.getElementById('viewSubtitle');
+            if (view === 'main') {
+                subtitle.textContent = 'All Processes (excluding Assembly types)';
+            } else {
+                subtitle.textContent = 'Assembly Processes: Welding + Fastener';
+            }
+
+            // If switching to assembly, refresh its data (in case new data arrived)
+            if (view === 'assembly') {
+                // Re-run assembly update to ensure charts render correctly
+                const assemblyData = allInspections.filter(i => isAssemblyType(i.process_type));
+                currentAssemblyData = assemblyData;
+                updateQuantitySummary(assemblyData, 'assemblyQuantityBody');
+                updateResultsByQuantity(assemblyData, 'assemblyResultsTableBody', assemblyChartInstances, 'assemblyChart');
+                updateFailureCostByProcess(assemblyData, 'assemblyFailureCostTableBody', 'assemblyFailureCostGrandTotal');
+                updateFailureCostByTitle(assemblyData, 'assemblyFailureCostTitleTableBody',
+                'assemblyFailureCostTitleGrandTotal');
+                updateTable(assemblyData, 'assemblyTableBody', 'assemblyTableInfo');
+            }
         }
 
         // ──────────────────────────────────────────────
         //  INIT
         // ──────────────────────────────────────────────
-        fetchData();
+        // Ensure main view is active on load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default tab
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'inactive');
+                if (btn.dataset.view === 'main') {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.add('inactive');
+                }
+            });
+            document.getElementById('viewMain').classList.add('active');
+            document.getElementById('viewAssembly').classList.remove('active');
+
+            fetchData();
+        });
+
+        // Also handle case where fetchData might be called after DOM ready
+        // We'll call fetchData directly
+        // But we need to make sure the assembly view gets rendered after fetch
+        // The fetchData already calls updateAssemblyView
+        // And the switchView for assembly also re-renders
     </script>
 
 </body>
