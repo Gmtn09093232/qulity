@@ -154,6 +154,14 @@
             color: #4f46e5;
         }
 
+        .clickable-completion {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .clickable-completion:hover {
+            opacity: 0.75;
+        }
+
         .progress-bar-bg {
             background-color: #e2e8f0;
             border-radius: 999px;
@@ -324,7 +332,7 @@
                         <i class="fa-regular fa-circle-check"></i> Welding &amp; Fastener
                     </span>
                 </h1>
-                <p class="text-sm text-gray-500 mt-1">Breakdown by Subtitle &amp; Sub‑Sub Assembly – <span class="font-medium text-indigo-600">Assembly Completion = assembly_progress_pct from rolling_inspections</span></p>
+                <p class="text-sm text-gray-500 mt-1">Breakdown by Subtitle &amp; Sub‑Sub Assembly – <span class="font-medium text-indigo-600">Click Assembly Completion to see parts with tag_no</span></p>
             </div>
             <div class="flex gap-3 flex-wrap">
                 <button onclick="exportAnalysisToExcel()" class="btn-excel"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
@@ -422,7 +430,18 @@
             </div>
         </div>
 
-        <!-- Assembly Detail Modal -->
+        <!-- Assembly Completion Modal (shows parts from assembly processes with tag_no) -->
+        <div id="completionModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCompletionModal(event)">
+            <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
+                <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center z-10">
+                    <h3 class="font-bold text-lg" id="completionModalTitle">Assembly Parts</h3>
+                    <button onclick="closeCompletionModal()" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div id="completionModalBody" class="p-4"></div>
+            </div>
+        </div>
+
+        <!-- Assembly Detail Modal (shows parts from other processes) -->
         <div id="assemblyModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeAssemblyModal(event)">
             <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center z-10">
@@ -489,15 +508,14 @@
         }
 
         function getPartNumber(insp) {
-            const candidates = ['Part Number', 'Drawing Number', 'Part ID', 'part_number', 'drawing_number'];
+            const candidates = ['Part Number', 'Drawing Number', 'Part ID', 'part_number', 'drawing_number', 'tag_no', 'Tag No', 'Tag Number'];
             for (const key of candidates) {
                 const val = insp.extra_fields?.[key] || insp[key];
                 if (val && val.trim()) return val.trim();
             }
             if (insp.extra_fields) {
                 for (const [k, v] of Object.entries(insp.extra_fields)) {
-                    if (k.toLowerCase().includes('number') || k.toLowerCase().includes('id') || k.toLowerCase().includes(
-                            'drawing')) {
+                    if (k.toLowerCase().includes('number') || k.toLowerCase().includes('id') || k.toLowerCase().includes('drawing') || k.toLowerCase().includes('tag')) {
                         if (v && v.trim()) return v.trim();
                     }
                 }
@@ -554,7 +572,7 @@
         let nonTargetSubSubMap = new Map();         // for other processes (parts list)
         let partInspectionsMap = new Map();
         let partToSubSubKey = new Map();
-        let partNumberMap = new Map();              // for non-target parts
+        let partNumberMap = new Map();              // for all parts (tag_no)
 
         // ─── FETCH & AGGREGATE ───
         async function fetchInspections() {
@@ -583,7 +601,15 @@
 
             // --- Non-target sub-sub map (for parts list in modal) ---
             const nonTargetMap = new Map();
-            const pnMap = new Map(); // part number lookup from non-target
+            const pnMap = new Map(); // part number lookup from ALL inspections (tag_no)
+            for (const insp of inspections) {
+                const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
+                if (!pnMap.has(partName)) {
+                    const num = getPartNumber(insp);
+                    if (num) pnMap.set(partName, num);
+                }
+            }
+
             for (const insp of nonTargetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
                 const title = getExtraField(insp, 'Project Name') || 'Untitled';
@@ -591,8 +617,6 @@
                 const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 const delivered = insp.delivered_qty || 0;
-                // We no longer need accepted/rework for this view, but keep them for potential use
-                // We'll just store delivered for the table
 
                 const key = `${client}||${title}||${subtitle}||${subSub}`;
                 if (!nonTargetMap.has(key)) {
@@ -601,22 +625,16 @@
                         title,
                         subtitle,
                         subSub,
-                        parts: new Map(), // partName -> { delivered }
+                        parts: new Map(),
                     });
                 }
                 const entry = nonTargetMap.get(key);
                 const partData = entry.parts.get(partName) || { delivered: 0 };
                 partData.delivered += delivered;
                 entry.parts.set(partName, partData);
-
-                // Capture part number from first occurrence
-                if (!pnMap.has(partName)) {
-                    const num = getPartNumber(insp);
-                    if (num) pnMap.set(partName, num);
-                }
             }
 
-            // --- Target sub-sub map (for main analysis and total delivered) ---
+            // --- Target sub-sub map (for main analysis and completion modal) ---
             const targetMap = new Map();
             for (const insp of targetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -626,6 +644,7 @@
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 const delivered = insp.delivered_qty || 0;
                 const accepted = insp.accepted_qty || 0;
+                const conditional = insp.conditional_accept_qty || 0;
                 const progress = getAssemblyProgressPct(insp);
                 const submittedAt = new Date(insp.submitted_at);
 
@@ -639,17 +658,20 @@
                         parts: new Map(),
                         totalDelivered: 0,
                         totalAccepted: 0,
+                        totalConditional: 0,
                         assemblyProgressPct: null,
                         latestDate: null,
                     });
                 }
                 const entry = targetMap.get(key);
-                const partData = entry.parts.get(partName) || { delivered: 0, accepted: 0 };
+                const partData = entry.parts.get(partName) || { delivered: 0, accepted: 0, conditional: 0 };
                 partData.delivered += delivered;
                 partData.accepted += accepted;
+                partData.conditional += conditional;
                 entry.parts.set(partName, partData);
                 entry.totalDelivered += delivered;
                 entry.totalAccepted += accepted;
+                entry.totalConditional += conditional;
 
                 if (progress !== null) {
                     if (!entry.latestDate || submittedAt > entry.latestDate) {
@@ -674,8 +696,7 @@
                         partName: partName,
                         delivered: partData.delivered,
                         accepted: partData.accepted,
-                        subSubTotalDelivered: entry.totalDelivered,
-                        subSubTotalAccepted: entry.totalAccepted,
+                        conditional: partData.conditional,
                         assemblyProgressPct: progressPct,
                         subSubPartCount: entry.parts.size,
                     });
@@ -701,7 +722,7 @@
                 nonTargetMap,
                 partInspections: partInspMap,
                 partToSubSubKey: p2ss,
-                partNumberMap: pnMap,
+                partNumberMap: pnMap, // tag_no for all parts
             };
         }
 
@@ -749,6 +770,7 @@
                         parts: [],
                         totalDelivered: 0,
                         totalAccepted: 0,
+                        totalConditional: 0,
                         subSubPartCount: row.subSubPartCount,
                         subtitlePartCount: row.subtitlePartCount,
                         assemblyProgressPct: row.assemblyProgressPct,
@@ -759,9 +781,11 @@
                     partName: row.partName,
                     delivered: row.delivered,
                     accepted: row.accepted,
+                    conditional: row.conditional,
                 });
                 entry.totalDelivered += row.delivered;
                 entry.totalAccepted += row.accepted;
+                entry.totalConditional += row.conditional;
             }
 
             const uniqueParts = new Set(filteredRows.map(r => r.partName));
@@ -793,6 +817,11 @@
                         subSubPartCount: assemblyEntry ? assemblyEntry.parts.length : 0,
                         subtitlePartCount: row.subtitlePartCount,
                         assemblyProgressPct: comp,
+                        subSubKey: row.subSubKey,
+                        client: c,
+                        title: t,
+                        subtitle: s,
+                        subSub: ss,
                     };
                 }
                 hierarchy[c][t][s][ss].parts.push({
@@ -844,6 +873,15 @@
                             const pctSub = totalParts > 0 ? (subtitlePartCnt / totalParts) * 100 : 0;
                             const completion = subSubData.assemblyProgressPct;
 
+                            // Store assembly context for click handler
+                            const assemContext = {
+                                client: subSubData.client,
+                                title: subSubData.title,
+                                subtitle: subSubData.subtitle,
+                                subSub: subSubData.subSub,
+                                subSubKey: subSubData.subSubKey
+                            };
+
                             let subSubPrinted = false;
                             for (const part of parts) {
                                 html += `<tr>`;
@@ -874,8 +912,10 @@
                                     subSubPrinted = true;
                                 }
                                 const compVal = safePct(completion);
+                                // Make the Assembly Completion clickable
+                                const ctx = `'${escapeHtml(subSubData.subSub)}'|'${escapeHtml(subSubData.client)}'|'${escapeHtml(subSubData.title)}'|'${escapeHtml(subSubData.subtitle)}'`;
                                 html += `<td class="text-center">
-                                    <div class="flex items-center gap-2 justify-center">
+                                    <div class="flex items-center gap-2 justify-center clickable-completion" onclick="showCompletionDetails('${escapeHtml(subSubData.subSub)}', '${escapeHtml(subSubData.client)}', '${escapeHtml(subSubData.title)}', '${escapeHtml(subSubData.subtitle)}')">
                                         <span class="percent-value">${compVal.toFixed(1)}%</span>
                                         <div class="progress-bar-bg w-20"><div class="progress-fill" style="width:${compVal}%"></div></div>
                                     </div>
@@ -893,13 +933,84 @@
             document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')})`;
         }
 
-        // ─── ASSEMBLY MODAL ───
+        // ─── COMPLETION MODAL (shows parts from assembly processes with tag_no) ───
+        function showCompletionDetails(subSub, client, title, subtitle) {
+            const key = `${client}||${title}||${subtitle}||${subSub}`;
+            const targetEntry = window.subSubAssemblyMap?.get(key);
+
+            const titleEl = document.getElementById('completionModalTitle');
+            titleEl.innerText = `🔧 ${escapeHtml(subSub)} — Assembly Parts`;
+
+            const body = document.getElementById('completionModalBody');
+
+            if (!targetEntry || targetEntry.parts.size === 0) {
+                body.innerHTML = `
+                    <div class="text-sm text-gray-500 p-4 text-center">No assembly parts found for this sub‑sub assembly.</div>
+                `;
+                document.getElementById('completionModal').classList.remove('hidden');
+                return;
+            }
+
+            const partsList = Array.from(targetEntry.parts.entries());
+            const totalDelivered = targetEntry.totalDelivered || 0;
+            const totalAccepted = targetEntry.totalAccepted || 0;
+            const totalConditional = targetEntry.totalConditional || 0;
+            const totalAcceptedCond = totalAccepted + totalConditional;
+
+            const sortedParts = partsList.sort((a, b) => {
+                const sumA = a[1].accepted + a[1].conditional;
+                const sumB = b[1].accepted + b[1].conditional;
+                return sumB - sumA;
+            });
+
+            let html = `
+                <div class="text-sm text-gray-600 mb-4 flex flex-wrap items-center gap-3">
+                    <span>
+                        <span class="font-medium">${escapeHtml(client)}</span> · 
+                        <span class="font-medium">${escapeHtml(title)}</span> · 
+                        <span class="font-medium">${escapeHtml(subtitle)}</span>
+                    </span>
+                    <span class="text-xs text-gray-400">
+                        ${sortedParts.length} parts · ${formatQty(totalDelivered)} delivered · ${formatQty(totalAcceptedCond)} accepted + conditional
+                    </span>
+                </div>
+                <div class="text-xs text-gray-400 mb-2 italic">Parts from Assembling (welding) and Assembling (fastener) — tag_no from database</div>
+                <table class="subsub-parts-table">
+                    <thead>
+                        <tr>
+                            <th>Part Name</th>
+                            <th>tag_no (Part Number)</th>
+                            <th class="text-center">Delivered</th>
+                            <th class="text-center">Accepted</th>
+                            <th class="text-center">Conditional</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            for (const [pName, data] of sortedParts) {
+                const tagNo = window.partNumberMap?.get(pName) || '—';
+                html += `<tr>
+                    <td><span class="part-link" onclick="closeCompletionModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
+                    <td>${escapeHtml(tagNo)}</td>
+                    <td class="text-center">${formatQty(data.delivered)}</td>
+                    <td class="text-center text-emerald-700">${formatQty(data.accepted)}</td>
+                    <td class="text-center text-blue-600">${formatQty(data.conditional)}</td>
+                </tr>`;
+            }
+            html += `</tbody></table>`;
+
+            body.innerHTML = html;
+            document.getElementById('completionModal').classList.remove('hidden');
+        }
+
+        function closeCompletionModal(e) {
+            if (!e || e.target === document.getElementById('completionModal') || e.target.closest('.fa-xmark') || e.target.closest('button')) {
+                document.getElementById('completionModal').classList.add('hidden');
+            }
+        }
+
+        // ─── ASSEMBLY MODAL (shows parts from other processes) ───
         function showAssemblyDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
-
-            // Get target entry for total delivered (from assembly inspections)
-            const targetEntry = window.subSubAssemblyMap?.get(key);
-            // Get non-target entry for parts list
             const nonTargetEntry = window.nonTargetSubSubMap?.get(key);
 
             const titleEl = document.getElementById('assemblyModalTitle');
@@ -907,7 +1018,6 @@
 
             const body = document.getElementById('assemblyModalBody');
 
-            // If no non-target parts, show message
             if (!nonTargetEntry || nonTargetEntry.parts.size === 0) {
                 body.innerHTML = `
                     <div class="text-sm text-gray-500 p-4 text-center">No parts found for this assembly from other processes.</div>
@@ -916,23 +1026,22 @@
                 return;
             }
 
-            // Get selected parts from main filter (optional)
             const partSelect = document.getElementById('filterParts');
             const selectedParts = Array.from(partSelect.selectedOptions).map(opt => opt.value).filter(v => v !== '');
             const partSet = new Set(selectedParts);
 
-            // Build list of parts (filtered by main part selection)
             let partsList = Array.from(nonTargetEntry.parts.entries());
             if (partSet.size > 0) {
                 partsList = partsList.filter(([pName]) => partSet.has(pName));
             }
 
-            // Total delivered from assembly inspections (target)
-            const totalDeliveredAssembly = targetEntry ? targetEntry.totalDelivered : 0;
             const totalParts = partsList.length;
-
-            // Sort by delivered (descending)
             const sortedParts = partsList.sort((a, b) => b[1].delivered - a[1].delivered);
+
+            // Get target total for display
+            const targetKey = `${client}||${title}||${subtitle}||${subSub}`;
+            const targetEntry = window.subSubAssemblyMap?.get(targetKey);
+            const totalDeliveredAssembly = targetEntry ? targetEntry.totalDelivered : 0;
 
             let html = `
                 <div class="text-sm text-gray-600 mb-4 flex flex-wrap items-center gap-3">
@@ -971,8 +1080,7 @@
         }
 
         function closeAssemblyModal(e) {
-            if (!e || e.target === document.getElementById('assemblyModal') || e.target.closest('.fa-xmark') || e.target.closest(
-                    'button')) {
+            if (!e || e.target === document.getElementById('assemblyModal') || e.target.closest('.fa-xmark') || e.target.closest('button')) {
                 document.getElementById('assemblyModal').classList.add('hidden');
             }
         }
@@ -1042,8 +1150,7 @@
         }
 
         function closePartModal(e) {
-            if (!e || e.target === document.getElementById('partModal') || e.target.closest('.fa-xmark') || e.target.closest(
-                    'button')) {
+            if (!e || e.target === document.getElementById('partModal') || e.target.closest('.fa-xmark') || e.target.closest('button')) {
                 document.getElementById('partModal').classList.add('hidden');
             }
         }
@@ -1055,8 +1162,8 @@
                 return;
             }
             const data = [
-                ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'Part Number', 'Delivered Qty',
-                    'Accepted Qty', 'Rework Qty', 'Assembly Completion (%)'
+                ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'tag_no (Part Number)', 'Delivered Qty',
+                    'Accepted Qty', 'Conditional Qty', 'Assembly Completion (%)'
                 ]
             ];
             const rowsToExport = filteredRows.length ? filteredRows : allRows;
@@ -1072,24 +1179,22 @@
             for (const row of exportRows) {
                 const key = row.subSubKey;
                 if (!assemblyMap.has(key)) {
-                    assemblyMap.set(key, {
-                        progress: row.assemblyProgressPct,
-                    });
+                    assemblyMap.set(key, { progress: row.assemblyProgressPct });
                 }
             }
 
             for (const row of exportRows) {
                 const comp = assemblyMap.get(row.subSubKey)?.progress;
                 const compVal = comp !== null && comp !== undefined ? comp : 0;
-                const partNum = window.partNumberMap?.get(row.partName) || '—';
+                const tagNo = window.partNumberMap?.get(row.partName) || '—';
                 data.push([
                     row.client, row.title, row.subtitle, row.subSub,
-                    row.partName, partNum, row.delivered, row.accepted, row.rework || 0,
+                    row.partName, tagNo, row.delivered, row.accepted, row.conditional || 0,
                     compVal.toFixed(1) + '%'
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 18 }, { wch: 14 },
+            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 14 },
             { wch: 14 }, { wch: 14 }, { wch: 20 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Assembly Analysis');
@@ -1152,8 +1257,8 @@
             const inspections = await fetchInspections();
             const result = aggregateAssemblyData(inspections);
             allRows = result.rows;
-            window.subSubAssemblyMap = result.targetMap;       // for assembly progress (target)
-            window.nonTargetSubSubMap = result.nonTargetMap;   // for parts list (non-target)
+            window.subSubAssemblyMap = result.targetMap;
+            window.nonTargetSubSubMap = result.nonTargetMap;
             window.partInspectionsMap = result.partInspections;
             window.partToSubSubKey = result.partToSubSubKey;
             window.partNumberMap = result.partNumberMap;
@@ -1174,6 +1279,7 @@
             if (e.key === 'Escape') {
                 closePartModal(e);
                 closeAssemblyModal(e);
+                closeCompletionModal(e);
             }
         });
 
