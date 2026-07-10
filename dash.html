@@ -281,6 +281,7 @@
         .subsub-parts-table td {
             padding: 6px 10px;
             border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
         }
         .subsub-parts-table .part-link {
             color: #2563eb;
@@ -300,6 +301,18 @@
         .subsub-parts-table .tag-list-item {
             display: block;
             font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        .subsub-parts-table .qty-list {
+            display: block;
+            line-height: 1.6;
+            padding: 2px 0;
+        }
+        .subsub-parts-table .qty-list-item {
+            display: block;
+            font-size: 0.8rem;
+            text-align: right;
+            white-space: nowrap;
         }
 
         .inspection-history-wrap {
@@ -341,7 +354,7 @@
                         <i class="fa-regular fa-circle-check"></i> Welding &amp; Fastener
                     </span>
                 </h1>
-                <p class="text-sm text-gray-500 mt-1">Breakdown by Subtitle &amp; Sub‑Sub Assembly – <span class="font-medium text-indigo-600">Click Assembly Completion to see parts with tag_no</span></p>
+                <p class="text-sm text-gray-500 mt-1">Breakdown by Subtitle &amp; Sub‑Sub Assembly – <span class="font-medium text-indigo-600">Click Assembly Completion to see parts with tag_no &amp; qty</span></p>
             </div>
             <div class="flex gap-3 flex-wrap">
                 <button onclick="exportAnalysisToExcel()" class="btn-excel"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
@@ -439,7 +452,7 @@
             </div>
         </div>
 
-        <!-- Assembly Completion Modal (shows parts from assembly processes with tag_no) -->
+        <!-- Assembly Completion Modal (shows parts from assembly processes with tag_no and qty) -->
         <div id="completionModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCompletionModal(event)">
             <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center z-10">
@@ -516,64 +529,63 @@
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
-        function parseTagNo(tagNoValue) {
+        function parseTagNoPairs(tagNoValue) {
             if (!tagNoValue) return null;
             if (typeof tagNoValue === 'string') {
                 const trimmed = tagNoValue.trim();
-                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
                     try {
                         const parsed = JSON.parse(trimmed);
-                        return parsed;
-                    } catch (e) {
-                        // If JSON parsing fails, try manual extraction for {key: val, ...}
-                        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-                            const pairs = trimmed.slice(1, -1).split(',').map(p => p.trim());
-                            const result = {};
-                            for (const pair of pairs) {
-                                const parts = pair.split(':');
-                                if (parts.length === 2) {
-                                    let key = parts[0].trim().replace(/^"|"$/g, '');
-                                    let val = parts[1].trim().replace(/^"|"$/g, '');
-                                    result[key] = val;
-                                }
+                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                            const pairs = [];
+                            for (const [key, val] of Object.entries(parsed)) {
+                                pairs.push({ name: key, qty: String(val) });
                             }
-                            if (Object.keys(result).length > 0) {
-                                return result;
+                            return pairs;
+                        }
+                    } catch (e) {
+                        // Manual parse: {"name": qty, ...}
+                        const pairs = [];
+                        const content = trimmed.slice(1, -1);
+                        const parts = content.split(',').map(p => p.trim());
+                        for (const part of parts) {
+                            const colonIdx = part.indexOf(':');
+                            if (colonIdx > 0) {
+                                let key = part.slice(0, colonIdx).trim().replace(/^"|"$/g, '');
+                                let val = part.slice(colonIdx + 1).trim().replace(/^"|"$/g, '');
+                                pairs.push({ name: key, qty: val });
                             }
                         }
-                        return trimmed;
+                        if (pairs.length > 0) return pairs;
                     }
                 }
-                return trimmed;
-            }
-            return tagNoValue;
-        }
-
-        function formatTagNoList(tagNoValue) {
-            const parsed = parseTagNo(tagNoValue);
-            if (parsed === null || parsed === undefined) return '—';
-
-            if (typeof parsed === 'object' && parsed !== null) {
-                if (Array.isArray(parsed)) {
-                    return parsed.map(item => escapeHtml(String(item))).join('<br>');
-                } else {
-                    const keys = Object.keys(parsed);
-                    if (keys.length === 0) return '—';
-                    // Display as "key: value" on each line
-                    return keys.map(key => escapeHtml(key) + ': ' + escapeHtml(String(parsed[key]))).join('<br>');
+                // If it's an array
+                if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                    try {
+                        const arr = JSON.parse(trimmed);
+                        if (Array.isArray(arr)) {
+                            return arr.map(item => ({ name: String(item), qty: '' }));
+                        }
+                    } catch (e) {}
                 }
-            }
-
-            // If it's a simple string with commas, split and display as list
-            if (typeof parsed === 'string' && parsed.includes(',')) {
-                const parts = parsed.split(',').map(s => s.trim()).filter(s => s);
-                if (parts.length > 1) {
-                    return parts.map(p => escapeHtml(p)).join('<br>');
+                // Plain string with comma
+                if (trimmed.includes(',')) {
+                    const items = trimmed.split(',').map(s => s.trim()).filter(s => s);
+                    return items.map(item => ({ name: item, qty: '' }));
                 }
-                return escapeHtml(parsed);
+                return [{ name: trimmed, qty: '' }];
             }
-
-            return escapeHtml(String(parsed));
+            if (typeof tagNoValue === 'object' && tagNoValue !== null) {
+                if (Array.isArray(tagNoValue)) {
+                    return tagNoValue.map(item => ({ name: String(item), qty: '' }));
+                }
+                const pairs = [];
+                for (const [key, val] of Object.entries(tagNoValue)) {
+                    pairs.push({ name: key, qty: String(val) });
+                }
+                return pairs;
+            }
+            return [{ name: String(tagNoValue), qty: '' }];
         }
 
         function getPartNumber(insp) {
@@ -581,11 +593,7 @@
             for (const key of candidates) {
                 let val = insp.extra_fields?.[key] || insp[key];
                 if (val && val.trim()) {
-                    const trimmed = val.trim();
-                    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-                        return trimmed;
-                    }
-                    return trimmed;
+                    return val.trim();
                 }
             }
             if (insp.extra_fields) {
@@ -593,11 +601,7 @@
                     if (v && v.trim()) {
                         const lowerK = k.toLowerCase();
                         if (lowerK.includes('tag') || lowerK.includes('number') || lowerK.includes('id') || lowerK.includes('drawing')) {
-                            const trimmed = v.trim();
-                            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-                                return trimmed;
-                            }
-                            return trimmed;
+                            return v.trim();
                         }
                     }
                 }
@@ -1045,6 +1049,7 @@
                         <tr>
                             <th>Part Name</th>
                             <th>tag_no (Part Number)</th>
+                            <th class="text-center">Qty</th>
                             <th class="text-center">Delivered</th>
                             <th class="text-center">Accepted</th>
                             <th class="text-center">Conditional</th>
@@ -1053,10 +1058,15 @@
                     <tbody>`;
             for (const [pName, data] of sortedParts) {
                 const rawTagNo = window.partNumberMap?.get(pName) || null;
-                const formattedTagNo = formatTagNoList(rawTagNo);
+                const pairs = parseTagNoPairs(rawTagNo);
+
+                const tagNames = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
+                const tagQtys = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
+
                 html += `<tr>
                     <td><span class="part-link" onclick="closeCompletionModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
-                    <td>${formattedTagNo}</td>
+                    <td>${tagNames}</td>
+                    <td class="text-center">${tagQtys}</td>
                     <td class="text-center">${formatQty(data.delivered)}</td>
                     <td class="text-center text-emerald-700">${formatQty(data.accepted)}</td>
                     <td class="text-center text-blue-600">${formatQty(data.conditional)}</td>
@@ -1126,16 +1136,21 @@
                         <tr>
                             <th>Part Name</th>
                             <th>Part Number</th>
+                            <th class="text-center">Qty</th>
                             <th class="text-center">Delivered</th>
                         </tr>
                     </thead>
                     <tbody>`;
             for (const [pName, data] of sortedParts) {
                 const rawTagNo = window.partNumberMap?.get(pName) || null;
-                const formattedTagNo = formatTagNoList(rawTagNo);
+                const pairs = parseTagNoPairs(rawTagNo);
+                const tagNames = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
+                const tagQtys = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
+
                 html += `<tr>
                     <td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
-                    <td>${formattedTagNo}</td>
+                    <td>${tagNames}</td>
+                    <td class="text-center">${tagQtys}</td>
                     <td class="text-center">${formatQty(data.delivered)}</td>
                 </tr>`;
             }
@@ -1228,8 +1243,8 @@
                 return;
             }
             const data = [
-                ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'tag_no (Part Number)', 'Delivered Qty',
-                    'Accepted Qty', 'Conditional Qty', 'Assembly Completion (%)'
+                ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'tag_no (Part Number)', 'Qty',
+                    'Delivered Qty', 'Accepted Qty', 'Conditional Qty', 'Assembly Completion (%)'
                 ]
             ];
             const rowsToExport = filteredRows.length ? filteredRows : allRows;
@@ -1253,32 +1268,25 @@
                 const comp = assemblyMap.get(row.subSubKey)?.progress;
                 const compVal = comp !== null && comp !== undefined ? comp : 0;
                 const rawTagNo = window.partNumberMap?.get(row.partName) || '—';
-                let tagNoDisplay = rawTagNo;
-                if (typeof rawTagNo === 'string' && (rawTagNo.startsWith('{') || rawTagNo.startsWith('['))) {
-                    try {
-                        const parsed = JSON.parse(rawTagNo);
-                        if (typeof parsed === 'object' && parsed !== null) {
-                            if (Array.isArray(parsed)) {
-                                tagNoDisplay = parsed.join(', ');
-                            } else {
-                                tagNoDisplay = Object.keys(parsed).map(k => `${k}: ${parsed[k]}`).join('; ');
-                            }
-                        } else {
-                            tagNoDisplay = String(parsed);
-                        }
-                    } catch (e) {
-                        tagNoDisplay = rawTagNo;
-                    }
+                const pairs = parseTagNoPairs(rawTagNo);
+                let tagDisplay = '—';
+                let qtyDisplay = '—';
+                if (pairs && pairs.length > 0) {
+                    tagDisplay = pairs.map(p => p.name).join('; ');
+                    qtyDisplay = pairs.map(p => p.qty).join('; ');
+                } else if (rawTagNo !== '—') {
+                    tagDisplay = String(rawTagNo);
                 }
                 data.push([
                     row.client, row.title, row.subtitle, row.subSub,
-                    row.partName, tagNoDisplay, row.delivered, row.accepted, row.conditional || 0,
+                    row.partName, tagDisplay, qtyDisplay,
+                    row.delivered, row.accepted, row.conditional || 0,
                     compVal.toFixed(1) + '%'
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 30 }, { wch: 14 },
-            { wch: 14 }, { wch: 14 }, { wch: 20 }];
+            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 30 }, { wch: 12 },
+            { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 20 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Assembly Analysis');
             XLSX.writeFile(wb, `assembly_analysis_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
