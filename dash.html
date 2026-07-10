@@ -518,7 +518,6 @@
 
         function parseTagNo(tagNoValue) {
             if (!tagNoValue) return null;
-            // If it's a string that looks like JSON, try to parse it
             if (typeof tagNoValue === 'string') {
                 const trimmed = tagNoValue.trim();
                 if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
@@ -526,7 +525,22 @@
                         const parsed = JSON.parse(trimmed);
                         return parsed;
                     } catch (e) {
-                        // Not valid JSON, return as string
+                        // If JSON parsing fails, try manual extraction for {key: val, ...}
+                        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                            const pairs = trimmed.slice(1, -1).split(',').map(p => p.trim());
+                            const result = {};
+                            for (const pair of pairs) {
+                                const parts = pair.split(':');
+                                if (parts.length === 2) {
+                                    let key = parts[0].trim().replace(/^"|"$/g, '');
+                                    let val = parts[1].trim().replace(/^"|"$/g, '');
+                                    result[key] = val;
+                                }
+                            }
+                            if (Object.keys(result).length > 0) {
+                                return result;
+                            }
+                        }
                         return trimmed;
                     }
                 }
@@ -539,17 +553,14 @@
             const parsed = parseTagNo(tagNoValue);
             if (parsed === null || parsed === undefined) return '—';
 
-            // If it's an object (JSON), extract values as a list
             if (typeof parsed === 'object' && parsed !== null) {
-                const items = [];
                 if (Array.isArray(parsed)) {
-                    // Array - join with line breaks
                     return parsed.map(item => escapeHtml(String(item))).join('<br>');
                 } else {
-                    // Object - show keys (part names) as list
                     const keys = Object.keys(parsed);
                     if (keys.length === 0) return '—';
-                    return keys.map(key => escapeHtml(key)).join('<br>');
+                    // Display as "key: value" on each line
+                    return keys.map(key => escapeHtml(key) + ': ' + escapeHtml(String(parsed[key]))).join('<br>');
                 }
             }
 
@@ -566,15 +577,13 @@
         }
 
         function getPartNumber(insp) {
-            // Try multiple fields for tag_no / part number
             const candidates = ['tag_no', 'Tag No', 'Tag Number', 'Part Number', 'Drawing Number', 'Part ID', 'part_number', 'drawing_number'];
             for (const key of candidates) {
                 let val = insp.extra_fields?.[key] || insp[key];
                 if (val && val.trim()) {
-                    // If it's a JSON object string, return as-is for later parsing
                     const trimmed = val.trim();
                     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-                        return trimmed; // Return raw JSON string
+                        return trimmed;
                     }
                     return trimmed;
                 }
@@ -645,7 +654,7 @@
         let nonTargetSubSubMap = new Map();
         let partInspectionsMap = new Map();
         let partToSubSubKey = new Map();
-        let partNumberMap = new Map(); // partName -> raw tag_no value
+        let partNumberMap = new Map();
 
         // ─── FETCH & AGGREGATE ───
         async function fetchInspections() {
@@ -663,7 +672,6 @@
             const targetInsp = inspections.filter(insp => isTargetProcess(insp.process_type));
             const nonTargetInsp = inspections.filter(insp => !isTargetProcess(insp.process_type));
 
-            // Part inspections map (for part detail modal)
             const partInspMap = new Map();
             for (const insp of inspections) {
                 const pn = getExtraField(insp, 'Part Name') || 'Unnamed Part';
@@ -671,7 +679,6 @@
                 partInspMap.get(pn).push(insp);
             }
 
-            // Part number map (tag_no) from ALL inspections
             const pnMap = new Map();
             for (const insp of inspections) {
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
@@ -681,7 +688,6 @@
                 }
             }
 
-            // Non-target map
             const nonTargetMap = new Map();
             for (const insp of nonTargetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -707,7 +713,6 @@
                 entry.parts.set(partName, partData);
             }
 
-            // Target map
             const targetMap = new Map();
             for (const insp of targetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -754,7 +759,6 @@
                 }
             }
 
-            // Build rows
             const rows = [];
             const p2ss = new Map();
             for (const [key, entry] of targetMap) {
@@ -1249,15 +1253,16 @@
                 const comp = assemblyMap.get(row.subSubKey)?.progress;
                 const compVal = comp !== null && comp !== undefined ? comp : 0;
                 const rawTagNo = window.partNumberMap?.get(row.partName) || '—';
-                // For export, extract keys from JSON object if present
                 let tagNoDisplay = rawTagNo;
-                if (typeof rawTagNo === 'string' && rawTagNo.startsWith('{')) {
+                if (typeof rawTagNo === 'string' && (rawTagNo.startsWith('{') || rawTagNo.startsWith('['))) {
                     try {
                         const parsed = JSON.parse(rawTagNo);
-                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-                            tagNoDisplay = Object.keys(parsed).join(', ');
-                        } else if (Array.isArray(parsed)) {
-                            tagNoDisplay = parsed.join(', ');
+                        if (typeof parsed === 'object' && parsed !== null) {
+                            if (Array.isArray(parsed)) {
+                                tagNoDisplay = parsed.join(', ');
+                            } else {
+                                tagNoDisplay = Object.keys(parsed).map(k => `${k}: ${parsed[k]}`).join('; ');
+                            }
                         } else {
                             tagNoDisplay = String(parsed);
                         }
