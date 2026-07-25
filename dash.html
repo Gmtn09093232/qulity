@@ -10,11 +10,12 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ── same as before ── */
         body {
             background: #f0f4f8;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
+
+        /* ── Toast ── */
         .toast-container {
             position: fixed;
             top: 24px;
@@ -55,6 +56,8 @@
             font-size: 1.3rem;
             flex-shrink: 0;
         }
+
+        /* ── Cards ── */
         .stat-card {
             background: white;
             border-radius: 1rem;
@@ -100,6 +103,8 @@
             border-radius: 999px;
             font-weight: 600;
         }
+
+        /* ── Filters ── */
         .filter-select {
             border-radius: 0.6rem;
             border: 1.5px solid #e2e8f0;
@@ -123,6 +128,8 @@
             letter-spacing: 0.04em;
             margin-bottom: 2px;
         }
+
+        /* ── Table ── */
         .table-wrapper {
             overflow-x: auto;
             border-radius: 1rem;
@@ -152,6 +159,7 @@
         tr:hover td {
             background: #fafbfc;
         }
+
         .clickable-assembly {
             cursor: pointer;
             font-weight: 700;
@@ -165,6 +173,7 @@
         .clickable-assembly:hover {
             color: #4f46e5;
         }
+
         .clickable-completion {
             cursor: pointer;
             transition: all 0.2s;
@@ -175,6 +184,7 @@
             background: #eef2ff;
             transform: scale(1.02);
         }
+
         .progress-bar-bg {
             background: #e2e8f0;
             border-radius: 999px;
@@ -196,6 +206,8 @@
             min-width: 48px;
             display: inline-block;
         }
+
+        /* ── Group Headers ── */
         .subtitle-group-name {
             font-weight: 700;
             color: #4f46e5;
@@ -217,6 +229,8 @@
             font-weight: 700;
             color: #0f172a;
         }
+
+        /* ── Buttons ── */
         .btn-excel {
             background: #0b9e6e;
             color: white;
@@ -250,6 +264,8 @@
             background: #f8fafc;
             border-color: #a5b4fc;
         }
+
+        /* ── Modals ── */
         .modal-overlay {
             background: rgba(0, 0, 0, 0.45);
             backdrop-filter: blur(6px);
@@ -295,6 +311,8 @@
         .modal-card .modal-body {
             padding: 1rem 1.25rem;
         }
+
+        /* ── Sub-sub parts table inside modal ── */
         .subsub-parts-table {
             width: 100%;
             font-size: 0.8rem;
@@ -329,6 +347,7 @@
         .subsub-parts-table .part-link:hover {
             color: #1e40af;
         }
+
         .modal-summary-badge {
             display: inline-block;
             background: #eef2ff;
@@ -338,6 +357,8 @@
             font-size: 0.65rem;
             font-weight: 600;
         }
+
+        /* ── Banner / Hero ── */
         .hero-banner {
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4f46e5 100%);
             border-radius: 1.5rem;
@@ -400,6 +421,7 @@
         .hero-banner .hero-image-placeholder i {
             font-size: 1.2rem;
         }
+
         .inspection-history-wrap {
             max-height: 260px;
             overflow-y: auto;
@@ -415,6 +437,7 @@
             z-index: 2;
             background: #f8fafc;
         }
+
         @media (max-width: 640px) {
             .hero-banner {
                 padding: 1rem 1rem;
@@ -493,7 +516,6 @@
                 <p class="text-xs text-gray-500">
                     <i class="fa-regular fa-circle-info text-indigo-400 mr-1"></i>
                     Showing <strong>only parts selected</strong> in the QC inspection's Part List for each sub‑sub assembly.
-                    <span class="text-emerald-600 font-medium">Delivered = quantity from Part List</span>
                 </p>
             </div>
             <div class="flex gap-2 flex-wrap">
@@ -509,7 +531,7 @@
             </div>
         </div>
 
-        <!-- ─── FILTERS ─── -->
+        <!-- ─── FILTERS (compact) ─── -->
         <div class="bg-white rounded-xl shadow-sm p-3 md:p-4 mb-4 border border-gray-100/80">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 items-end filter-grid">
                 <div>
@@ -536,7 +558,7 @@
             </div>
         </div>
 
-        <!-- ─── STAT CARDS ─── -->
+        <!-- ─── STAT CARDS (compact) ─── -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4">
             <div class="stat-card">
                 <div class="flex items-center justify-between mb-0.5">
@@ -556,7 +578,7 @@
                     <span class="stat-badge">total</span>
                 </div>
                 <div class="stat-value text-blue-700" id="totalDelivered">—</div>
-                <div class="stat-label">Total Delivered (selected qty)</div>
+                <div class="stat-label">Total Delivered Qty</div>
             </div>
             <div class="stat-card">
                 <div class="flex items-center justify-between mb-0.5">
@@ -811,10 +833,7 @@
         let partInspectionsMap = new Map();
         let partToSubSubKey = new Map();
         let partNumberMap = new Map();
-        // selectedPartsMap: key → Map(partName → qty)
-        let selectedPartsMap = new Map();
-        // totalSelectedDeliveredMap: key → total selected qty
-        let totalSelectedDeliveredMap = new Map();
+        let selectedPartsMap = new Map(); // sub-sub key → Set of selected part names
 
         // ─── FETCH & AGGREGATE ───
         async function fetchInspections() {
@@ -832,10 +851,8 @@
             const targetInsp = inspections.filter(insp => isTargetProcess(insp.process_type));
             const nonTargetInsp = inspections.filter(insp => !isTargetProcess(insp.process_type));
 
-            // ─── Step 1: Build selected parts map with quantities from assembly inspections ───
-            const selectedMap = new Map(); // key → Map(partName → qty)
-            const totalDeliveredMap = new Map(); // key → total qty
-
+            // ─── Step 1: Build selected parts map from assembly inspections ───
+            const selectedMap = new Map(); // key → Set of part names
             for (const insp of targetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
                 const title = getExtraField(insp, 'Project Name') || 'Untitled';
@@ -844,69 +861,48 @@
                 const key = `${client}||${title}||${subtitle}||${subSub}`;
 
                 const extra = insp.extra_fields || {};
-                let partQtyMap = new Map();
+                let selectedNames = [];
 
-                // Check selectedParts (object mapping part name → qty)
-                if (extra.selectedParts && typeof extra.selectedParts === 'object' && !Array.isArray(extra.selectedParts)) {
-                    for (const [pName, qty] of Object.entries(extra.selectedParts)) {
-                        if (pName && pName.trim()) {
-                            partQtyMap.set(pName.trim(), parseFloat(qty) || 0);
-                        }
-                    }
-                }
-                // If selectedParts is an array of objects with name and qty
-                if (extra.selectedParts && Array.isArray(extra.selectedParts)) {
-                    for (const item of extra.selectedParts) {
-                        const pName = item.name || item;
-                        if (pName && pName.trim()) {
-                            const qty = item.qty !== undefined ? parseFloat(item.qty) || 0 : 0;
-                            partQtyMap.set(pName.trim(), qty);
-                        }
-                    }
-                }
-                // Also check selectedPartNames (array of names) – assume qty=1 if not specified
+                // Check selectedPartNames (array)
                 if (extra.selectedPartNames && Array.isArray(extra.selectedPartNames)) {
-                    for (const pName of extra.selectedPartNames) {
-                        if (pName && pName.trim()) {
-                            if (!partQtyMap.has(pName.trim())) {
-                                partQtyMap.set(pName.trim(), 1);
-                            }
-                        }
+                    selectedNames = extra.selectedPartNames.filter(n => n && n.trim());
+                }
+
+                // Check selectedParts (object or array)
+                if (extra.selectedParts) {
+                    if (Array.isArray(extra.selectedParts)) {
+                        const names = extra.selectedParts.map(p => p.name || p).filter(n => n && n.trim());
+                        selectedNames = [...selectedNames, ...names];
+                    } else if (typeof extra.selectedParts === 'object') {
+                        const names = Object.keys(extra.selectedParts).filter(n => n && n.trim());
+                        selectedNames = [...selectedNames, ...names];
                     }
                 }
-                // Check Tag No. (may contain JSON with qty)
+
+                // Check Tag No. (may contain JSON or string with parts)
                 const tagNo = extra['Tag No.'];
                 if (tagNo && typeof tagNo === 'string') {
                     const pairs = parseTagNoPairs(tagNo);
                     if (pairs) {
-                        for (const p of pairs) {
-                            if (p.name && p.name.trim()) {
-                                const qty = parseFloat(p.qty) || 0;
-                                partQtyMap.set(p.name.trim(), qty);
-                            }
-                        }
-                    }
-                }
-                if (tagNo && typeof tagNo === 'object' && !Array.isArray(tagNo)) {
-                    for (const [pName, qty] of Object.entries(tagNo)) {
-                        if (pName && pName.trim()) {
-                            partQtyMap.set(pName.trim(), parseFloat(qty) || 0);
-                        }
+                        const names = pairs.map(p => p.name).filter(n => n && n.trim());
+                        selectedNames = [...selectedNames, ...names];
                     }
                 }
 
-                // If we have any parts, store the map and compute total
-                if (partQtyMap.size > 0) {
-                    selectedMap.set(key, partQtyMap);
-                    let total = 0;
-                    for (const qty of partQtyMap.values()) {
-                        total += qty;
-                    }
-                    totalDeliveredMap.set(key, total);
+                // Also check if Tag No. is an object
+                if (tagNo && typeof tagNo === 'object' && !Array.isArray(tagNo)) {
+                    const names = Object.keys(tagNo).filter(n => n && n.trim());
+                    selectedNames = [...selectedNames, ...names];
+                }
+
+                if (!selectedMap.has(key)) selectedMap.set(key, new Set());
+                const set = selectedMap.get(key);
+                for (const name of selectedNames) {
+                    if (name && name.trim()) set.add(name.trim());
                 }
             }
 
-            // ─── Step 2: Build targetMap (assembly inspections) for progress and accepted/conditional ───
+            // ─── Step 2: Build targetMap (assembly inspections) ───
             const targetMap = new Map();
             for (const insp of targetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -965,9 +961,9 @@
 
                 const key = `${client}||${title}||${subtitle}||${subSub}`;
 
-                // Only include if this part is in the selected map for this key
-                const partQtyMap = selectedMap.get(key);
-                if (!partQtyMap || !partQtyMap.has(partName)) continue;
+                // Only include if this part is in the selected set for this sub-sub
+                const selectedSet = selectedMap.get(key);
+                if (!selectedSet || !selectedSet.has(partName)) continue;
 
                 if (!nonTargetMap.has(key)) {
                     nonTargetMap.set(key, { client, title, subtitle, subSub, parts: new Map() });
@@ -979,7 +975,7 @@
             }
 
             // ─── Step 4: Also ensure selected parts with no non-target data appear with 0 ───
-            for (const [key, partQtyMap] of selectedMap) {
+            for (const [key, selectedSet] of selectedMap) {
                 if (!nonTargetMap.has(key)) {
                     const parts = key.split('||');
                     if (parts.length === 4) {
@@ -994,7 +990,7 @@
                 }
                 const entry = nonTargetMap.get(key);
                 if (entry) {
-                    for (const partName of partQtyMap.keys()) {
+                    for (const partName of selectedSet) {
                         if (!entry.parts.has(partName)) {
                             entry.parts.set(partName, { delivered: 0 });
                         }
@@ -1017,12 +1013,10 @@
 
             for (const [key, entry] of targetMap) {
                 const progressPct = entry.assemblyProgressPct;
-                const partQtyMap = selectedMap.get(key) || new Map();
+                // Only include parts that are in the selected set for this key
+                const selectedSet = selectedMap.get(key) || new Set();
                 for (const [partName, partData] of entry.parts) {
-                    // Only include if part is in selected map
-                    if (!partQtyMap.has(partName)) continue;
-                    // Use the selected qty as the "delivered" for display (though we will use this later)
-                    const selectedQty = partQtyMap.get(partName) || 0;
+                    if (!selectedSet.has(partName)) continue;
                     rows.push({
                         client: entry.client,
                         title: entry.title,
@@ -1030,38 +1024,38 @@
                         subSub: entry.subSub,
                         subSubKey: key,
                         partName: partName,
-                        delivered: selectedQty, // use selected qty for display
+                        delivered: partData.delivered,
                         accepted: partData.accepted,
                         conditional: partData.conditional,
                         assemblyProgressPct: progressPct,
-                        subSubPartCount: partQtyMap.size,
+                        subSubPartCount: entry.parts.size,
                     });
                     p2ss.set(partName, key);
                 }
             }
 
-            // Also add parts from selectedMap that might not be in targetMap
-            for (const [key, partQtyMap] of selectedMap) {
-                const entry = targetMap.get(key);
-                if (!entry) {
-                    const parts = key.split('||');
-                    if (parts.length === 4) {
-                        for (const [partName, qty] of partQtyMap) {
-                            rows.push({
-                                client: parts[0],
-                                title: parts[1],
-                                subtitle: parts[2],
-                                subSub: parts[3],
-                                subSubKey: key,
-                                partName: partName,
-                                delivered: qty,
-                                accepted: 0,
-                                conditional: 0,
-                                assemblyProgressPct: null,
-                                subSubPartCount: partQtyMap.size,
-                            });
-                            p2ss.set(partName, key);
-                        }
+            // Also add parts from nonTargetMap that might not be in targetMap
+            for (const [key, entry] of nonTargetMap) {
+                const selectedSet = selectedMap.get(key) || new Set();
+                for (const [partName, partData] of entry.parts) {
+                    if (!selectedSet.has(partName)) continue;
+                    // Check if this part is already in rows
+                    const exists = rows.some(r => r.partName === partName && r.subSubKey === key);
+                    if (!exists) {
+                        rows.push({
+                            client: entry.client,
+                            title: entry.title,
+                            subtitle: entry.subtitle,
+                            subSub: entry.subSub,
+                            subSubKey: key,
+                            partName: partName,
+                            delivered: partData.delivered || 0,
+                            accepted: 0,
+                            conditional: 0,
+                            assemblyProgressPct: null,
+                            subSubPartCount: selectedSet.size,
+                        });
+                        p2ss.set(partName, key);
                     }
                 }
             }
@@ -1094,7 +1088,6 @@
                 partToSubSubKey: p2ss,
                 partNumberMap: pnMap,
                 selectedPartsMap: selectedMap,
-                totalSelectedDeliveredMap: totalDeliveredMap,
             };
         }
 
@@ -1153,17 +1146,9 @@
                 entry.totalConditional += row.conditional;
             }
 
-            // Override totalDelivered with selected total from totalSelectedDeliveredMap
-            for (const [key, entry] of assemblyMap) {
-                const selTotal = window.totalSelectedDeliveredMap?.get(key);
-                if (selTotal !== undefined) {
-                    entry.totalDelivered = selTotal;
-                }
-            }
-
             const uniqueParts = new Set(filteredRows.map(r => r.partName));
             const totalParts = uniqueParts.size;
-            const totalDelivered = Array.from(assemblyMap.values()).reduce((sum, e) => sum + e.totalDelivered, 0);
+            const totalDelivered = filteredRows.reduce((sum, r) => sum + r.delivered, 0);
             const subtitles = new Set(filteredRows.map(r => r.subtitle));
             const subSubs = new Set(filteredRows.map(r => r.subSub));
 
@@ -1264,7 +1249,7 @@
                                         <div class="clickable-assembly" onclick="showAssemblyDetails('${escapeHtml(subSub)}','${escapeHtml(client)}','${escapeHtml(title)}','${escapeHtml(subtitle)}')">
                                             ${escapeHtml(subSub)}
                                         </div>
-                                        <span class="group-meta">${partCount} parts · <span class="highlight">${formatQty(totalDeliv)}</span> total delivered (selected qty)</span>
+                                        <span class="group-meta">${partCount} parts · <span class="highlight">${formatQty(totalDeliv)}</span> total delivered</span>
                                     </td>`;
                                     subSubPrinted = true;
                                 }
@@ -1286,76 +1271,39 @@
             document.getElementById('recordCount').innerText = `${filteredRows.length} part records`;
             document.getElementById('recordCountBottom').innerText =
             `${totalParts} unique parts · ${subSubs.size} sub‑sub assemblies`;
-            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')}) — delivered = selected qty`;
+            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')}) — only selected parts shown`;
         }
 
         // ─── COMPLETION MODAL ───
         function showCompletionDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
             const targetEntry = window.subSubAssemblyMap?.get(key);
-            const partQtyMap = window.selectedPartsMap?.get(key) || new Map();
+            const selectedSet = window.selectedPartsMap?.get(key) || new Set();
             const titleEl = document.getElementById('completionModalTitle');
             titleEl.innerHTML = `<i class="fa-regular fa-chart-pie text-indigo-500 mr-2"></i>${escapeHtml(subSub)} — Assembly Parts`;
             const body = document.getElementById('completionModalBody');
 
             if (!targetEntry || targetEntry.parts.size === 0) {
-                if (partQtyMap.size === 0) {
-                    body.innerHTML =
-                        `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No assembly parts found.</div>`;
-                    document.getElementById('completionModal').classList.remove('hidden');
-                    return;
-                }
-                // Show selected parts with 0 accepted/conditional
-                const sortedParts = Array.from(partQtyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-                let html = `
-                    <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
-                        <span><span class="font-medium">${escapeHtml(client)}</span> · <span class="font-medium">${escapeHtml(title)}</span> · <span class="font-medium">${escapeHtml(subtitle)}</span></span>
-                        <span class="modal-summary-badge">${sortedParts.length} parts</span>
-                        <span class="modal-summary-badge bg-emerald-50 text-emerald-700">${formatQty(Array.from(partQtyMap.values()).reduce((a,b)=>a+b,0))} delivered (selected)</span>
-                        <span class="modal-summary-badge bg-indigo-50 text-indigo-700"><i class="fa-regular fa-check-circle mr-1"></i>selected only</span>
-                    </div>
-                    <div class="text-xs text-gray-400 mb-2"><i class="fa-regular fa-tag mr-1"></i> Parts from <strong>Assembling (welding)</strong> and <strong>Assembling (fastener)</strong> — tag_no from database</div>
-                    <div class="overflow-x-auto">
-                        <table class="subsub-parts-table">
-                            <thead><tr><th>Part Name</th><th>tag_no (Part Number)</th><th class="text-center">Qty</th><th class="text-center">Delivered</th><th class="text-center">Accepted</th><th class="text-center">Conditional</th></tr></thead>
-                            <tbody>`;
-                for (const [pName, qty] of sortedParts) {
-                    const rawTagNo = window.partNumberMap?.get(pName) || null;
-                    const pairs = parseTagNoPairs(rawTagNo);
-                    const tagNames = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
-                    const tagQtys = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
-                    html += `<tr>
-                        <td><span class="part-link" onclick="closeCompletionModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
-                        <td>${tagNames}</td>
-                        <td class="text-center">${tagQtys}</td>
-                        <td class="text-center font-medium">${formatQty(qty)}</td>
-                        <td class="text-center text-emerald-700">0</td>
-                        <td class="text-center text-blue-600">0</td>
-                    </tr>`;
-                }
-                html += `</tbody></table></div>`;
-                body.innerHTML = html;
+                body.innerHTML =
+                    `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No assembly parts found.</div>`;
                 document.getElementById('completionModal').classList.remove('hidden');
                 return;
             }
 
-            // Filter parts to only those in partQtyMap (selected)
-            const partsList = Array.from(targetEntry.parts.entries())
-                .filter(([pName]) => partQtyMap.has(pName))
-                .map(([pName, data]) => [pName, { ...data, selectedQty: partQtyMap.get(pName) || 0 }]);
-
-            // Use selected qty as delivered in this modal as well? For consistency, we'll show selected qty as Delivered.
-            const totalDelivered = partsList.reduce((sum, [_, d]) => sum + d.selectedQty, 0);
-            const totalAccepted = partsList.reduce((sum, [_, d]) => sum + (d.accepted || 0), 0);
-            const totalConditional = partsList.reduce((sum, [_, d]) => sum + (d.conditional || 0), 0);
+            // Only show selected parts
+            const partsList = Array.from(targetEntry.parts.entries()).filter(([pName]) => selectedSet.has(pName));
+            const totalDelivered = partsList.reduce((sum, [_, data]) => sum + (data.delivered || 0), 0);
+            const totalAccepted = partsList.reduce((sum, [_, data]) => sum + (data.accepted || 0), 0);
+            const totalConditional = partsList.reduce((sum, [_, data]) => sum + (data.conditional || 0), 0);
             const totalAcceptedCond = totalAccepted + totalConditional;
-            const sortedParts = partsList.sort((a, b) => a[0].localeCompare(b[0]));
+            const sortedParts = partsList.sort((a, b) => (b[1].accepted + b[1].conditional) - (a[1].accepted + a[1]
+            .conditional));
 
             let html = `
                 <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
                     <span><span class="font-medium">${escapeHtml(client)}</span> · <span class="font-medium">${escapeHtml(title)}</span> · <span class="font-medium">${escapeHtml(subtitle)}</span></span>
                     <span class="modal-summary-badge">${sortedParts.length} parts</span>
-                    <span class="modal-summary-badge bg-emerald-50 text-emerald-700">${formatQty(totalDelivered)} delivered (selected)</span>
+                    <span class="modal-summary-badge bg-emerald-50 text-emerald-700">${formatQty(totalDelivered)} delivered</span>
                     <span class="modal-summary-badge bg-blue-50 text-blue-700">${formatQty(totalAcceptedCond)} accepted + conditional</span>
                     <span class="modal-summary-badge bg-indigo-50 text-indigo-700"><i class="fa-regular fa-check-circle mr-1"></i>selected only</span>
                 </div>
@@ -1373,8 +1321,8 @@
                     <td><span class="part-link" onclick="closeCompletionModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
                     <td>${tagNames}</td>
                     <td class="text-center">${tagQtys}</td>
-                    <td class="text-center font-medium">${formatQty(data.selectedQty)}</td>
-                    <td class="text-center text-emerald-700">${formatQty(data.accepted)}</td>
+                    <td class="text-center">${formatQty(data.delivered)}</td>
+                    <td class="text-center text-emerald-700 font-medium">${formatQty(data.accepted)}</td>
                     <td class="text-center text-blue-600">${formatQty(data.conditional)}</td>
                 </tr>`;
             }
@@ -1394,33 +1342,72 @@
         // ─── ASSEMBLY MODAL (other processes) ───
         function showAssemblyDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
-            const partQtyMap = window.selectedPartsMap?.get(key) || new Map();
+            const nonTargetEntry = window.nonTargetSubSubMap?.get(key);
+            const selectedSet = window.selectedPartsMap?.get(key) || new Set();
             const titleEl = document.getElementById('assemblyModalTitle');
             titleEl.innerHTML = `<i class="fa-regular fa-cubes text-amber-500 mr-2"></i>${escapeHtml(subSub)} — Component Parts`;
             const body = document.getElementById('assemblyModalBody');
 
-            // We want to show all selected parts with their quantities from partQtyMap.
-            // Even if there is no non-target data, we show them with delivered = qty.
-            const partsList = Array.from(partQtyMap.entries()).map(([pName, qty]) => [pName, { delivered: qty }]);
+            if (!nonTargetEntry || nonTargetEntry.parts.size === 0) {
+                // Still show selected parts even if they have no non-target data
+                if (selectedSet.size === 0) {
+                    body.innerHTML =
+                        `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No parts selected for this assembly.</div>`;
+                    document.getElementById('assemblyModal').classList.remove('hidden');
+                    return;
+                }
+                // Show selected parts with 0 delivered
+                const partsList = Array.from(selectedSet).map(name => [name, { delivered: 0 }]);
+                const targetKey = `${client}||${title}||${subtitle}||${subSub}`;
+                const targetEntry = window.subSubAssemblyMap?.get(targetKey);
+                const totalDeliveredAssembly = targetEntry ? targetEntry.totalDelivered : 0;
 
-            if (partsList.length === 0) {
-                body.innerHTML =
-                    `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No parts selected for this assembly.</div>`;
+                let html = `
+                    <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
+                        <span><span class="font-medium">${escapeHtml(client)}</span> · <span class="font-medium">${escapeHtml(title)}</span> · <span class="font-medium">${escapeHtml(subtitle)}</span></span>
+                        <span class="modal-summary-badge">${partsList.length} parts</span>
+                        <span class="modal-summary-badge bg-indigo-50 text-indigo-700">${formatQty(totalDeliveredAssembly)} total delivered (assembly)</span>
+                        <span class="modal-summary-badge bg-amber-50 text-amber-700"><i class="fa-regular fa-check-circle mr-1"></i>selected only</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mb-2"><i class="fa-regular fa-gear mr-1"></i> Parts from processes other than Assembling (welding) and Assembling (fastener) — <strong>only selected parts</strong></div>
+                    <div class="overflow-x-auto">
+                        <table class="subsub-parts-table">
+                            <thead><tr><th>Part Name</th><th>Part Number</th><th class="text-center">Qty</th><th class="text-center">Delivered</th></tr></thead>
+                            <tbody>`;
+                for (const [pName, data] of partsList) {
+                    const rawTagNo = window.partNumberMap?.get(pName) || null;
+                    const pairs = parseTagNoPairs(rawTagNo);
+                    const tagNames = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
+                    const tagQtys = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
+                    html += `<tr>
+                        <td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
+                        <td>${tagNames}</td>
+                        <td class="text-center">${tagQtys}</td>
+                        <td class="text-center font-medium">${formatQty(data.delivered)}</td>
+                    </tr>`;
+                }
+                html += `</tbody></table></div>`;
+                body.innerHTML = html;
                 document.getElementById('assemblyModal').classList.remove('hidden');
                 return;
             }
 
-            const totalDeliveredAssembly = partsList.reduce((sum, [_, d]) => sum + d.delivered, 0);
-            const sortedParts = partsList.sort((a, b) => a[0].localeCompare(b[0]));
+            // Filter to only selected parts
+            const partsList = Array.from(nonTargetEntry.parts.entries()).filter(([pName]) => selectedSet.has(pName));
+            const totalParts = partsList.length;
+            const sortedParts = partsList.sort((a, b) => b[1].delivered - a[1].delivered);
+            const targetKey = `${client}||${title}||${subtitle}||${subSub}`;
+            const targetEntry = window.subSubAssemblyMap?.get(targetKey);
+            const totalDeliveredAssembly = targetEntry ? targetEntry.totalDelivered : 0;
 
             let html = `
                 <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
                     <span><span class="font-medium">${escapeHtml(client)}</span> · <span class="font-medium">${escapeHtml(title)}</span> · <span class="font-medium">${escapeHtml(subtitle)}</span></span>
-                    <span class="modal-summary-badge">${sortedParts.length} parts</span>
-                    <span class="modal-summary-badge bg-indigo-50 text-indigo-700">${formatQty(totalDeliveredAssembly)} total delivered (selected qty)</span>
+                    <span class="modal-summary-badge">${totalParts} parts</span>
+                    <span class="modal-summary-badge bg-indigo-50 text-indigo-700">${formatQty(totalDeliveredAssembly)} total delivered (assembly)</span>
                     <span class="modal-summary-badge bg-amber-50 text-amber-700"><i class="fa-regular fa-check-circle mr-1"></i>selected only</span>
                 </div>
-                <div class="text-xs text-gray-400 mb-2"><i class="fa-regular fa-gear mr-1"></i> Parts from processes other than Assembling (welding) and Assembling (fastener) — <strong>Delivered = quantity from Part List</strong></div>
+                <div class="text-xs text-gray-400 mb-2"><i class="fa-regular fa-gear mr-1"></i> Parts from processes other than Assembling (welding) and Assembling (fastener) — <strong>only selected parts</strong></div>
                 <div class="overflow-x-auto">
                     <table class="subsub-parts-table">
                         <thead><tr><th>Part Name</th><th>Part Number</th><th class="text-center">Qty</th><th class="text-center">Delivered</th></tr></thead>
@@ -1450,7 +1437,7 @@
             }
         }
 
-        // ─── PART DETAIL MODAL ─── (unchanged)
+        // ─── PART DETAIL MODAL ───
         function showPartDetails(partName) {
             const inspections = window.partInspectionsMap?.get(partName);
             if (!inspections || !inspections.length) {
@@ -1525,7 +1512,7 @@
             if (!allRows.length) { showToast('No data to export', 'error'); return; }
             const data = [
                 ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'tag_no (Part Number)', 'Qty',
-                    'Delivered (selected qty)', 'Accepted Qty', 'Conditional Qty', 'Assembly Completion (%)'
+                    'Delivered Qty', 'Accepted Qty', 'Conditional Qty', 'Assembly Completion (%)'
                 ]
             ];
             const rowsToExport = filteredRows.length ? filteredRows : allRows;
@@ -1613,11 +1600,10 @@
             window.partToSubSubKey = result.partToSubSubKey;
             window.partNumberMap = result.partNumberMap;
             window.selectedPartsMap = result.selectedPartsMap;
-            window.totalSelectedDeliveredMap = result.totalSelectedDeliveredMap;
             populateFilters(allRows);
             filteredRows = [...allRows];
             applyFilters();
-            showToast(`Data refreshed – ${allRows.length} part records (delivered = selected qty)`, 'info');
+            showToast(`Data refreshed – ${allRows.length} part records (only selected parts shown)`, 'info');
         }
 
         // ─── EVENT LISTENERS ───
