@@ -8,13 +8,10 @@
     </script>
     <script src="https://unpkg.com/@supabase/supabase-js@2">
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js">
-    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
 
     <style>
-        /* ── reset & base ── */
         * {
             margin: 0;
             padding: 0;
@@ -23,227 +20,123 @@
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
-            background: linear-gradient(145deg, #eef2f7 0%, #f8fafc 100%);
+            background: #f1f5f9;
             color: #1e293b;
-            overflow-x: hidden;
         }
 
-        /* ── background orbs (soft blue-white) ── */
-        .bg-orbs {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         }
-        .bg-orbs .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.20;
-            animation: orbFloat 18s ease-in-out infinite alternate;
+        .card-header {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px 24px;
+            border-radius: 16px 16px 0 0;
         }
-        .bg-orbs .orb:nth-child(1) {
-            width: 500px;
-            height: 500px;
-            background: #b9d0f0;
-            top: -10%;
-            left: -8%;
-            animation-delay: 0s;
-        }
-        .bg-orbs .orb:nth-child(2) {
-            width: 600px;
-            height: 600px;
-            background: #c7dbf5;
-            bottom: -15%;
-            right: -10%;
-            animation-delay: -6s;
-        }
-        .bg-orbs .orb:nth-child(3) {
-            width: 400px;
-            height: 400px;
-            background: #d4e2f7;
-            top: 40%;
-            right: 20%;
-            animation-delay: -12s;
-            opacity: 0.12;
-        }
-        @keyframes orbFloat {
-            0% {
-                transform: translate(0, 0) scale(1);
-            }
-            100% {
-                transform: translate(40px, -30px) scale(1.1);
-            }
+        .card-body {
+            padding: 20px 24px;
         }
 
-        /* ── glassmorphism (light, blue-white) ── */
-        .glass {
-            background: rgba(255, 255, 255, 0.60);
-            backdrop-filter: blur(20px) saturate(1.4);
-            -webkit-backdrop-filter: blur(20px) saturate(1.4);
-            border: 1px solid rgba(255, 255, 255, 0.50);
-            box-shadow: 0 8px 32px rgba(0, 20, 40, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-        }
-        .glass-strong {
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: blur(28px) saturate(1.6);
-            -webkit-backdrop-filter: blur(28px) saturate(1.6);
-            border: 1px solid rgba(255, 255, 255, 0.55);
-            box-shadow: 0 12px 48px rgba(0, 20, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        }
-        .glass-input {
-            background: rgba(255, 255, 255, 0.70);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(200, 215, 235, 0.40);
+        .input-field {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            width: 100%;
             color: #1e293b;
-            transition: all 0.25s ease;
+            transition: border-color 0.15s;
         }
-        .glass-input:focus {
-            background: rgba(255, 255, 255, 0.85);
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08), inset 0 0 20px rgba(59, 130, 246, 0.02);
+        .input-field:focus {
+            border-color: #2563eb;
             outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
         }
-        .glass-input::placeholder {
+        .input-field:disabled,
+        .input-field[readonly] {
+            background: #f1f5f9;
+            cursor: not-allowed;
+        }
+        .input-field::placeholder {
             color: #94a3b8;
         }
-        .glass-select {
-            background: rgba(255, 255, 255, 0.70);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(200, 215, 235, 0.40);
-            color: #1e293b;
-            transition: all 0.25s ease;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234b5a7a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 36px;
-        }
-        .glass-select:focus {
-            background-color: rgba(255, 255, 255, 0.85);
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
-            outline: none;
-        }
-        .glass-select option {
+
+        .select-field {
             background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            width: 100%;
             color: #1e293b;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+            transition: border-color 0.15s;
+        }
+        .select-field:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
         }
 
-        /* ── buttons ── */
         .btn-primary {
-            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            background: #2563eb;
             border: none;
             color: #fff;
             font-weight: 600;
             padding: 10px 28px;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.95rem;
-            letter-spacing: 0.3px;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.25);
-        }
-        .btn-primary:active {
-            transform: scale(0.96);
-        }
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.50);
-            border: 1px solid rgba(200, 215, 235, 0.40);
-            color: #1e293b;
-            padding: 10px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.25s ease;
+            transition: background 0.15s, transform 0.1s;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.95rem;
-            backdrop-filter: blur(8px);
+            font-size: 0.9rem;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            padding: 10px 22px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
         }
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.75);
-            border-color: #94a3b8;
-            transform: translateY(-1px);
+            background: #e2e8f0;
         }
-        .btn-secondary:active {
-            transform: scale(0.96);
-        }
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px solid rgba(239, 68, 68, 0.15);
+
+        .btn-danger-sm {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
             color: #b91c1c;
-            padding: 6px 14px;
-            border-radius: 8px;
+            padding: 4px 12px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.8rem;
-        }
-        .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.25);
-        }
-
-        /* ── cards ── */
-        .card-glow {
-            position: relative;
-            overflow: hidden;
-        }
-        .card-glow::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            padding: 1px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 235, 0.03));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-        }
-
-        /* ── tables ── */
-        .table-glass {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-            background: rgba(255, 255, 255, 0.30);
-        }
-        .table-glass th {
-            background: rgba(255, 255, 255, 0.50);
-            backdrop-filter: blur(8px);
-            padding: 12px 10px;
-            font-weight: 600;
             font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #475569;
-            border-bottom: 1px solid rgba(200, 215, 235, 0.30);
-            text-align: left;
+            transition: background 0.15s;
         }
-        .table-glass td {
-            padding: 10px 10px;
-            border-bottom: 1px solid rgba(200, 215, 235, 0.15);
-            vertical-align: top;
-            background: rgba(255, 255, 255, 0.20);
-        }
-        .table-glass tr:hover td {
-            background: rgba(255, 255, 255, 0.40);
+        .btn-danger-sm:hover {
+            background: #fee2e2;
         }
 
-        /* ── rating pills ── */
         .rating-pill {
             display: inline-block;
             padding: 2px 12px;
@@ -254,170 +147,139 @@
             letter-spacing: 0.3px;
         }
         .rating-pill.accepted {
-            background: rgba(34, 197, 94, 0.10);
+            background: #dcfce7;
             color: #15803d;
         }
         .rating-pill.conditional {
-            background: rgba(234, 179, 8, 0.10);
+            background: #fef9c3;
             color: #a16207;
         }
         .rating-pill.rework {
-            background: rgba(251, 146, 60, 0.10);
+            background: #ffedd5;
             color: #c2410c;
         }
         .rating-pill.reject {
-            background: rgba(239, 68, 68, 0.10);
+            background: #fee2e2;
             color: #b91c1c;
         }
 
-        /* ── secret overlay ── */
-        #secretOverlay {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            transition: opacity 0.8s ease, visibility 0.8s ease;
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
         }
-        #secretOverlay.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
+        .status-dot.online {
+            background: #22c55e;
         }
-        #secretOverlay .card {
-            background: rgba(255, 255, 255, 0.80);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.60);
-            border-radius: 32px;
-            padding: 48px 40px;
-            max-width: 400px;
-            width: 92%;
-            text-align: center;
-            box-shadow: 0 32px 80px rgba(0, 20, 40, 0.10), 0 0 120px rgba(59, 130, 246, 0.03);
-            position: relative;
-            overflow: hidden;
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
         }
-        #secretOverlay .card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 32px;
-            background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.04), transparent 70%);
-            pointer-events: none;
-        }
-        #secretOverlay .gear-icon {
-            font-size: 3.2rem;
-            display: block;
-            color: #2563eb;
-            opacity: 0.30;
-            animation: spin-slow 16s linear infinite;
-            margin-bottom: 12px;
-        }
-        #secretOverlay h2 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 4px;
-            letter-spacing: -0.3px;
-        }
-        #secretOverlay .sub {
-            color: #64748b;
-            font-size: 0.9rem;
-            margin-bottom: 28px;
-        }
-        #secretOverlay input {
+        .table-wrap table {
             width: 100%;
-            padding: 16px 20px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.70);
-            border: 1px solid rgba(200, 215, 235, 0.40);
-            color: #0f172a;
-            font-size: 1.2rem;
-            text-align: center;
-            letter-spacing: 8px;
-            outline: none;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-        #secretOverlay input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 40px rgba(59, 130, 246, 0.06);
-        }
-        #secretOverlay input::placeholder {
-            color: #94a3b8;
-            letter-spacing: 2px;
-            font-size: 0.9rem;
-        }
-        #secretOverlay .btn-submit {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #2563eb, #3b82f6);
-            color: #fff;
-            font-weight: 700;
-            font-size: 1.05rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 24px rgba(37, 99, 235, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 8px;
-        }
-        #secretOverlay .btn-submit:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 40px rgba(37, 99, 235, 0.25);
-        }
-        #secretOverlay .error {
-            color: #b91c1c;
+            border-collapse: collapse;
             font-size: 0.85rem;
-            min-height: 28px;
-            margin-top: 10px;
+        }
+        .table-wrap th {
+            background: #f8fafc;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .table-wrap td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eef2f6;
+            vertical-align: middle;
+            background: #ffffff;
+        }
+        .table-wrap tr:hover td {
+            background: #fafbfc;
+        }
+
+        .part-qty-table td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        .part-qty-table input[type="number"] {
+            width: 70px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            font-size: 0.85rem;
+        }
+        .part-qty-table input[type="number"]:focus {
+            border-color: #2563eb;
+            outline: none;
+        }
+
+        .part-list-multi {
+            min-height: 80px;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            padding: 4px;
+        }
+        .part-list-multi option {
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .part-list-multi option:checked {
+            background: #dbeafe;
+            color: #1e293b;
+        }
+
+        .remove-part-btn {
+            color: #b91c1c;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0 4px;
+            opacity: 0.6;
+            transition: opacity 0.15s;
+        }
+        .remove-part-btn:hover {
+            opacity: 1;
+        }
+
+        .assembly-progress {
+            background: #f0f7ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 14px 20px;
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
+            gap: 20px;
+        }
+        .assembly-progress .progress-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e40af;
+            line-height: 1.2;
+        }
+        .assembly-progress .progress-label {
+            font-weight: 600;
+            color: #1e40af;
+            font-size: 0.85rem;
+        }
+        .assembly-progress .progress-detail {
+            color: #475569;
+            font-size: 0.85rem;
         }
 
-        @keyframes spin-slow {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        .shake {
-            animation: shake 0.5s ease;
-        }
-        @keyframes shake {
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-            20% {
-                transform: translateX(-12px);
-            }
-            40% {
-                transform: translateX(12px);
-            }
-            60% {
-                transform: translateX(-6px);
-            }
-            80% {
-                transform: translateX(6px);
-            }
-        }
-
-        /* ── toasts ── */
         .toast-container {
             position: fixed;
-            top: 24px;
-            right: 24px;
+            top: 20px;
+            right: 20px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -427,18 +289,16 @@
             width: 90%;
         }
         .toast {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(200, 215, 235, 0.40);
-            border-radius: 14px;
-            padding: 14px 20px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 18px;
             color: #0f172a;
             font-size: 0.9rem;
-            box-shadow: 0 12px 48px rgba(0, 20, 40, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
             border-left: 4px solid #2563eb;
             transform: translateX(120%);
-            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             pointer-events: auto;
         }
         .toast.show {
@@ -453,37 +313,7 @@
         .toast .toast-content {
             display: flex;
             align-items: center;
-            gap: 12px;
-        }
-        .toast .toast-icon {
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        /* ── misc ── */
-        #mainContent {
-            position: relative;
-            z-index: 1;
-            display: none;
-            padding: 20px 16px 40px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        #mainContent.visible {
-            display: block;
-        }
-
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-track {
-            background: rgba(200, 215, 235, 0.20);
-            border-radius: 8px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: rgba(37, 99, 235, 0.20);
-            border-radius: 8px;
+            gap: 10px;
         }
 
         .btn-spinner {
@@ -507,105 +337,174 @@
             pointer-events: none;
         }
 
-        .part-list-multi {
-            min-height: 60px;
-            background: rgba(255, 255, 255, 0.40);
-            border-radius: 8px;
-        }
-        .part-list-multi option {
-            background: #ffffff;
-            color: #1e293b;
-            padding: 4px 8px;
-        }
-        .part-qty-table td {
-            padding: 4px 6px;
-            border-bottom: 1px solid rgba(200, 215, 235, 0.20);
-        }
-        .part-qty-table input[type="number"] {
-            width: 70px;
-            padding: 4px 6px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.60);
-            border: 1px solid rgba(200, 215, 235, 0.30);
-            color: #1e293b;
-            font-size: 0.85rem;
-        }
-        .part-qty-table input[type="number"]:focus {
-            border-color: #3b82f6;
-            outline: none;
-        }
-        .remove-part-btn {
-            color: #b91c1c;
-            cursor: pointer;
-            font-size: 0.9rem;
-            padding: 0 4px;
-            opacity: 0.6;
-            transition: opacity 0.2s;
-        }
-        .remove-part-btn:hover {
-            opacity: 1;
-        }
-
-        .assembly-progress {
-            background: rgba(37, 99, 235, 0.04);
-            border: 1px solid rgba(37, 99, 235, 0.10);
-            border-radius: 12px;
-            padding: 14px 20px;
+        .history-item {
             display: flex;
             flex-wrap: wrap;
+            justify-content: space-between;
             align-items: center;
-            gap: 20px;
-        }
-        .assembly-progress .progress-label {
-            font-weight: 600;
-            color: #1e40af;
-            font-size: 0.85rem;
-        }
-        .assembly-progress .progress-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #1e40af;
-            line-height: 1.2;
-        }
-        .assembly-progress .progress-detail {
-            color: #475569;
-            font-size: 0.85rem;
-        }
-        .assembly-progress .delivered-input {
-            width: 140px;
-            padding: 6px 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #eef2f6;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.40);
-            border: 1px solid rgba(200, 215, 235, 0.30);
-            color: #1e293b;
-            cursor: not-allowed;
+            transition: background 0.1s;
+        }
+        .history-item:hover {
+            background: #f8fafc;
         }
 
-        /* ── responsive ── */
+        #secretOverlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            background: #f1f5f9;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #secretOverlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #secretOverlay .card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 40px 36px;
+            max-width: 400px;
+            width: 92%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+        }
+        #secretOverlay .gear-icon {
+            font-size: 2.8rem;
+            display: block;
+            color: #2563eb;
+            opacity: 0.3;
+            margin-bottom: 8px;
+        }
+        #secretOverlay h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+        #secretOverlay .sub {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+        #secretOverlay input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            color: #0f172a;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 6px;
+            outline: none;
+            transition: border-color 0.15s;
+            background: #ffffff;
+        }
+        #secretOverlay input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+        }
+        #secretOverlay .btn-submit {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #2563eb;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        #secretOverlay .btn-submit:hover {
+            background: #1d4ed8;
+        }
+        #secretOverlay .error {
+            color: #b91c1c;
+            font-size: 0.85rem;
+            min-height: 28px;
+            margin-top: 10px;
+        }
+        .shake {
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-10px);
+            }
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        #mainContent {
+            display: none;
+            padding: 16px 16px 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        #mainContent.visible {
+            display: block;
+        }
+
+        .clickable-part {
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            font-weight: 600;
+            color: #2563eb;
+        }
+        .clickable-part:hover {
+            opacity: 0.8;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #eef2f6;
+            border-radius: 8px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+
         @media (max-width: 700px) {
             #secretOverlay .card {
-                padding: 32px 20px;
-            }
-            #secretOverlay h2 {
-                font-size: 1.3rem;
+                padding: 28px 18px;
             }
             #mainContent {
-                padding: 12px 8px 32px;
+                padding: 10px 6px 24px;
             }
-            .glass {
-                backdrop-filter: blur(16px);
+            .card-body {
+                padding: 14px 12px;
             }
             .btn-primary {
-                padding: 8px 20px;
+                padding: 8px 18px;
                 font-size: 0.85rem;
             }
             .assembly-progress {
                 flex-direction: column;
                 align-items: stretch;
                 gap: 12px;
-            }
-            .assembly-progress .flex-1 {
-                text-align: center !important;
             }
             .toast-container {
                 top: 12px;
@@ -614,7 +513,6 @@
             }
         }
 
-        /* ── print ── */
         @media print {
             body * {
                 visibility: hidden;
@@ -636,19 +534,6 @@
             .no-print {
                 display: none !important;
             }
-            .glass,
-            .glass-strong {
-                background: #ffffff !important;
-                backdrop-filter: none !important;
-                border: 1px solid #ddd !important;
-                box-shadow: none !important;
-            }
-            .glass-input,
-            .glass-select {
-                background: #f5f7fa !important;
-                border: 1px solid #ccc !important;
-                color: #000 !important;
-            }
             .btn-primary,
             .btn-secondary {
                 display: none !important;
@@ -658,25 +543,16 @@
 </head>
 <body>
 
-    <!-- ─── BG ORBS ─── -->
-    <div class="bg-orbs">
-        <div class="orb"></div>
-        <div class="orb"></div>
-        <div class="orb"></div>
-    </div>
-
     <!-- ─── TOASTS ─── -->
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- ─── SECURITY OVERLAY ─── -->
     <div id="secretOverlay">
-        <div class="card" id="secretCard">
+        <div class="card">
             <span class="gear-icon">⚙️</span>
             <h2>🔐 Secure Access</h2>
             <p class="sub">Enter the secret code to continue</p>
-            <div class="input-group">
-                <input type="password" id="secretInput" placeholder="•••••" autofocus />
-            </div>
+            <input type="password" id="secretInput" placeholder="•••••" autofocus />
             <button class="btn-submit" onclick="checkSecret()">
                 <span>Unlock</span> <i class="fa-solid fa-arrow-right"></i>
             </button>
@@ -688,229 +564,235 @@
     <div id="mainContent">
 
         <!-- Header -->
-        <div class="glass-strong rounded-2xl p-5 md:p-7 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 card-glow">
-            <div>
-                <h1 class="text-xl md:text-2xl font-bold text-slate-800">
-                    Amhara Metal Industry &amp; Machine Technology Development Enterprise
-                </h1>
-                <p class="text-sm text-slate-500 font-medium mt-0.5">
-                    <i class="fa-regular fa-clipboard mr-2"></i>Quality Assurance Directorate – Inspection Checklist
-                </p>
-            </div>
-            <div class="flex items-center gap-3 text-sm text-slate-500">
-                <span class="hidden sm:inline"><i class="fa-regular fa-clock mr-1"></i><span id="liveClock">--:--</span></span>
-                <span class="px-3 py-1 rounded-full bg-blue-50/80 border border-blue-200/60 text-blue-700 text-xs font-medium">
-                    <i class="fa-solid fa-cloud-upload-alt mr-1"></i> Live
-                </span>
+        <div class="card mb-5">
+            <div class="card-header flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-800">
+                        Amhara Metal Industry &amp; Machine Technology Development Enterprise
+                    </h1>
+                    <p class="text-sm text-slate-500 font-medium mt-0.5">
+                        <i class="fa-regular fa-clipboard mr-2"></i>Quality Assurance Directorate – Inspection Checklist
+                    </p>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-slate-500">
+                    <span class="hidden sm:inline"><i class="fa-regular fa-clock mr-1"></i><span id="liveClock">--:--</span></span>
+                    <span class="px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium">
+                        <i class="fa-solid fa-cloud-upload-alt mr-1"></i> Live
+                    </span>
+                </div>
             </div>
         </div>
 
         <!-- Form -->
-        <form id="inspectionForm" class="glass-strong rounded-2xl p-5 md:p-7 space-y-6 card-glow">
+        <form id="inspectionForm" class="card mb-5">
 
-            <input type="hidden" id="editId" value="" />
-            <input type="hidden" id="isEditMode" value="false" />
+            <div class="card-body space-y-5">
+                <input type="hidden" id="editId" value="" />
+                <input type="hidden" id="isEditMode" value="false" />
 
-            <!-- Row: Process + Engineer -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Process Type <span class="text-rose-600">*</span></label>
-                    <select id="processType" class="glass-select w-full rounded-xl px-4 py-3 text-sm" onchange="switchProcess()">
-                        <option value="Incoming">Incoming inspection (revised format)</option>
-                        <option value="Punching">Punching Process</option>
-                        <option value="Rolling">Rolling Process</option>
-                        <option value="Bending">Bending Process</option>
-                        <option value="Welding">Welding Process</option>
-                        <option value="Pressing">Pressing Process</option>
-                        <option value="Milling">Milling Process</option>
-                        <option value="Casting">Casting Process</option>
-                        <option value="PatternCore">Pattern &amp; Core Making</option>
-                        <option value="Assembling">Assembling (welding)</option>
-                        <option value="Testing">Testing Process</option>
-                        <option value="Painting">Painting Process</option>
-                        <option value="Packaging">Packaging Process</option>
-                        <option value="Shearing">Shearing Operation</option>
-                        <option value="Lathe">Lathe Operation</option>
-                        <option value="Drilling">Drilling Process</option>
-                        <option value="BoringHoning">Boring &amp; Honing</option>
-                        <option value="Grinding">Grinding Process</option>
-                        <option value="Forging">Forging Process</option>
-                        <option value="Molding">Molding Process</option>
-                        <option value="Polishing">Polishing &amp; Finishing</option>
-                        <option value="GasCutting">Gas Cutting Process</option>
-                        <option value="FastenersAssembly">Assembling (Fastener)</option>
-                        <option value="Hardening">Hardening Process</option>
-                        <option value="Tempering">Tempering Process</option>
-                        <option value="Coating">Coating Process</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1.5">QC Engineer Name <span class="text-rose-600">*</span></label>
-                    <input type="text" id="qcEngineerName" class="glass-input w-full rounded-xl px-4 py-3 text-sm" placeholder="e.g. Abebech Alemu" required />
-                </div>
-            </div>
-
-            <!-- Row: Source + Document -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Source of Process Inspection</label>
-                    <div class="flex flex-wrap gap-5 mt-1">
-                        <label class="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="sourceType" value="Outsource" required class="accent-blue-600" /> Outsource</label>
-                        <label class="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="sourceType" value="Insource" class="accent-blue-600" /> Insource</label>
+                <!-- Row: Process + Engineer -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Process Type <span class="text-rose-600">*</span></label>
+                        <select id="processType" class="select-field" onchange="switchProcess()">
+                            <!-- Incoming inspection removed per user request -->
+                            <option value="Punching">Punching Process</option>
+                            <option value="Rolling">Rolling Process</option>
+                            <option value="Bending">Bending Process</option>
+                            <option value="Welding">Welding Process</option>
+                            <option value="Pressing">Pressing Process</option>
+                            <option value="Milling">Milling Process</option>
+                            <option value="Casting">Casting Process</option>
+                            <option value="PatternCore">Pattern &amp; Core Making</option>
+                            <option value="Assembling">Assembling (welding)</option>
+                            <option value="Testing">Testing Process</option>
+                            <option value="Painting">Painting Process</option>
+                            <option value="Packaging">Packaging Process</option>
+                            <option value="Shearing">Shearing Operation</option>
+                            <option value="Lathe">Lathe Operation</option>
+                            <option value="Drilling">Drilling Process</option>
+                            <option value="BoringHoning">Boring &amp; Honing</option>
+                            <option value="Grinding">Grinding Process</option>
+                            <option value="Forging">Forging Process</option>
+                            <option value="Molding">Molding Process</option>
+                            <option value="Polishing">Polishing &amp; Finishing</option>
+                            <option value="GasCutting">Gas Cutting Process</option>
+                            <option value="FastenersAssembly">Assembling (Fastener)</option>
+                            <option value="Hardening">Hardening Process</option>
+                            <option value="Tempering">Tempering Process</option>
+                            <option value="Coating">Coating Process</option>
+                        </select>
                     </div>
-                    <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm mt-2" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Document Availability</label>
-                    <div class="flex gap-6">
-                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" id="designAvail" class="accent-blue-600" /> Design</label>
-                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" id="mppAvail" class="accent-blue-600" /> MPP</label>
-                    </div>
-                    <label class="block text-sm font-medium text-slate-600 mt-3 mb-1.5">Operation Condition</label>
-                    <select id="operationStatus" class="glass-select w-full rounded-xl px-4 py-2.5 text-sm">
-                        <option value="Holdup">Holdup</option>
-                        <option value="Continue">Continue</option>
-                        <option value="Ending">Ending</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Row: Shift, Operator, Hours, Time -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Shift Number</label>
-                    <div class="flex gap-4">
-                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="shift" value="1" class="accent-blue-600" /> Shift 1</label>
-                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="shift" value="2" class="accent-blue-600" /> Shift 2</label>
-                        <label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="shift" value="3" class="accent-blue-600" /> Shift 3</label>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">QC Engineer Name <span class="text-rose-600">*</span></label>
+                        <input type="text" id="qcEngineerName" class="input-field" placeholder="e.g. Abebech Alemu" required />
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1.5" for="operatorName">Operator Name</label>
-                    <input type="text" id="operatorName" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="Operator's name" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1.5" for="laborHours">Labor Hours</label>
-                    <input type="number" step="0.5" id="laborHours" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="e.g. 2.5" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1.5" for="machiningHours">Machining Hours</label>
-                    <input type="number" step="0.5" id="machiningHours" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="e.g. 1.5" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Inspection Time</label>
-                    <div class="flex gap-2">
-                        <input type="time" id="startTime" class="glass-input rounded-xl px-3 py-2.5 text-sm w-1/2" title="Start" />
-                        <input type="time" id="endTime" class="glass-input rounded-xl px-3 py-2.5 text-sm w-1/2" title="End" />
-                    </div>
-                    <span id="totalTimeDisplay" class="text-xs text-slate-500 mt-1 block">Total: -- min</span>
-                </div>
-            </div>
 
-            <!-- Dynamic Fields -->
-            <div id="dynamicFieldsContainer">
-                <div class="text-slate-500 text-center py-6 text-sm">Loading inspection table…</div>
-            </div>
-
-            <!-- Last Operation -->
-            <div id="lastOperationContainer" class="mt-2 hidden">
-                <div class="bg-blue-50/60 border border-blue-200/60 rounded-xl p-4">
-                    <h4 class="font-bold text-blue-800 text-sm flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Last Operation for this Part</h4>
-                    <div id="lastOpData" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
-                        <div><span class="text-slate-500">Process:</span> <span id="lastOpProcess" class="font-medium text-slate-800">—</span></div>
-                        <div><span class="text-slate-500">Condition:</span> <span id="lastOpCondition" class="font-medium text-slate-800">—</span></div>
-                        <div><span class="text-slate-500">Date:</span> <span id="lastOpDate" class="font-medium text-slate-800">—</span></div>
-                        <div><span class="text-slate-500">Rating:</span> <span id="lastOpRating" class="font-medium text-slate-800">—</span></div>
+                <!-- Row: Source + Document -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Source of Process Inspection</label>
+                        <div class="flex flex-wrap gap-4 mt-1">
+                            <label class="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="sourceType" value="Outsource" required class="accent-blue-600" /> Outsource</label>
+                            <label class="flex items-center gap-2 text-sm text-slate-700"><input type="radio" name="sourceType" value="Insource" class="accent-blue-600" /> Insource</label>
+                        </div>
+                        <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="input-field mt-2" />
                     </div>
-                    <div class="mt-2 text-sm">
-                        <span class="text-slate-500">Suggested Next:</span>
-                        <span id="lastOpSuggested" class="font-medium text-blue-700">—</span>
-                    </div>
-                    <div id="lastOpNoData" class="text-slate-500 text-sm italic mt-2 hidden">No previous operation found for this part.</div>
-                </div>
-            </div>
-
-            <!-- Quantity Summary (non-assembly) -->
-            <div id="quantitySummary" class="grid grid-cols-2 md:grid-cols-5 gap-3 bg-white/40 rounded-xl p-4">
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Delivered Qty</label><input type="number" id="deliveredQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm bg-white/40 cursor-not-allowed" readonly /></div>
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Accepted Qty</label><input type="number" id="acceptedQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Rework Qty</label><input type="number" id="reworkQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Reject Qty</label><input type="number" id="rejectQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-            </div>
-
-            <!-- Assembly Progress -->
-            <div id="assemblyProgressContainer" class="mt-2 hidden">
-                <div class="assembly-progress">
-                    <div class="flex-1">
-                        <span class="progress-label"><i class="fa-solid fa-boxes mr-2"></i>Total Delivered (sum)</span>
-                        <input type="number" id="totalDeliveredQty" min="0" step="1" value="0" class="delivered-input w-full" readonly />
-                    </div>
-                    <div class="flex-1 text-center">
-                        <span class="progress-label">Assembly Completion</span>
-                        <div class="progress-value" id="assemblyProgressDisplay">0%</div>
-                        <div class="progress-detail" id="assemblyProgressDetail">0 / 0 delivered</div>
-                    </div>
-                    <div class="flex-1 text-right">
-                        <span class="progress-label">Total Qty (Accepted + Conditional)</span>
-                        <div class="text-2xl font-bold text-blue-700" id="totalAcceptedConditionalDisplay">0</div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Document Availability</label>
+                        <div class="flex gap-6">
+                            <label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" id="designAvail" class="accent-blue-600" /> Design</label>
+                            <label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" id="mppAvail" class="accent-blue-600" /> MPP</label>
+                        </div>
+                        <label class="block text-sm font-medium text-slate-700 mt-3 mb-1">Operation Condition</label>
+                        <select id="operationStatus" class="select-field">
+                            <option value="Holdup">Holdup</option>
+                            <option value="Continue">Continue</option>
+                            <option value="Ending">Ending</option>
+                        </select>
                     </div>
                 </div>
-            </div>
 
-            <!-- Internal Failure Costs -->
-            <div class="glass rounded-xl p-5">
-                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><i class="fa-solid fa-coins text-amber-600/70"></i> Internal Failure Costs</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
-                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Defected Material Cost (ETB)</label><input type="number" step="0.01" id="defectedMaterialCost" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Level</label><select id="levelSelect" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select --</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="custom">Custom</option></select></div>
-                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Salary per Hour (ETB)</label><input type="number" step="0.001" id="salaryPerHour" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
-                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Machine Description</label><select id="machineDescriptionSelect" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select Machine --</option></select></div>
-                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div>
+                <!-- Row: Shift, Operator, Hours, Time -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Shift Number</label>
+                        <div class="flex gap-3">
+                            <label class="text-sm text-slate-700 flex items-center gap-1.5"><input type="radio" name="shift" value="1" class="accent-blue-600" /> Shift 1</label>
+                            <label class="text-sm text-slate-700 flex items-center gap-1.5"><input type="radio" name="shift" value="2" class="accent-blue-600" /> Shift 2</label>
+                            <label class="text-sm text-slate-700 flex items-center gap-1.5"><input type="radio" name="shift" value="3" class="accent-blue-600" /> Shift 3</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1" for="operatorName">Operator Name</label>
+                        <input type="text" id="operatorName" class="input-field" placeholder="Operator's name" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1" for="laborHours">Labor Hours</label>
+                        <input type="number" step="0.5" id="laborHours" class="input-field" placeholder="e.g. 2.5" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1" for="machiningHours">Machining Hours</label>
+                        <input type="number" step="0.5" id="machiningHours" class="input-field" placeholder="e.g. 1.5" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Inspection Time</label>
+                        <div class="flex gap-2">
+                            <input type="time" id="startTime" class="input-field w-1/2" title="Start" />
+                            <input type="time" id="endTime" class="input-field w-1/2" title="End" />
+                        </div>
+                        <span id="totalTimeDisplay" class="text-xs text-slate-500 mt-1 block">Total: -- min</span>
+                    </div>
                 </div>
-                <div class="mt-4 p-3 rounded-xl bg-white/50 border border-white/60 flex flex-wrap items-center justify-between gap-3">
-                    <span class="font-medium text-slate-700">Total Internal Failure Cost (ETB):</span>
-                    <span id="totalFailureCostDisplay" class="text-xl font-bold text-blue-700">0.00</span>
-                    <input type="hidden" id="totalInternalFailureCost" />
+
+                <!-- Dynamic Fields -->
+                <div id="dynamicFieldsContainer">
+                    <div class="text-slate-500 text-center py-6 text-sm">Loading inspection table…</div>
                 </div>
-            </div>
 
-            <!-- Suggested Next Operation -->
-            <div class="border-t border-slate-200/60 pt-4">
-                <label class="block text-sm font-medium text-slate-600 mb-1.5">Suggested Next Operation</label>
-                <input type="text" id="suggestedNextOp" list="suggestedNextList" class="glass-input w-full rounded-xl px-4 py-2.5 text-sm" placeholder="Type or select a suggestion…" />
-                <datalist id="suggestedNextList"></datalist>
-            </div>
+                <!-- Last Operation -->
+                <div id="lastOperationContainer" class="mt-2 hidden">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <h4 class="font-bold text-blue-800 text-sm flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Last Operation for this Part</h4>
+                        <div id="lastOpData" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
+                            <div><span class="text-slate-500">Process:</span> <span id="lastOpProcess" class="font-medium text-slate-800">—</span></div>
+                            <div><span class="text-slate-500">Condition:</span> <span id="lastOpCondition" class="font-medium text-slate-800">—</span></div>
+                            <div><span class="text-slate-500">Date:</span> <span id="lastOpDate" class="font-medium text-slate-800">—</span></div>
+                            <div><span class="text-slate-500">Rating:</span> <span id="lastOpRating" class="font-medium text-slate-800">—</span></div>
+                        </div>
+                        <div class="mt-2 text-sm">
+                            <span class="text-slate-500">Suggested Next:</span>
+                            <span id="lastOpSuggested" class="font-medium text-blue-700">—</span>
+                        </div>
+                        <div id="lastOpNoData" class="text-slate-500 text-sm italic mt-2 hidden">No previous operation found for this part.</div>
+                    </div>
+                </div>
 
-            <!-- Actions -->
-            <div class="flex flex-wrap justify-end gap-3 no-print pt-2 border-t border-slate-200/60">
-                <button type="button" onclick="resetForm()" class="btn-secondary text-sm">
-                    <i class="fa-regular fa-arrow-rotate-left"></i> Reset
-                </button>
-                <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="btn-secondary text-sm hidden">
-                    <i class="fa-regular fa-pen-to-square"></i> Cancel Edit
-                </button>
-                <button type="button" id="saveBtn" onclick="saveToBackend()" class="btn-primary text-sm">
-                    <i class="fa-solid fa-cloud-upload-alt"></i>
-                    <span id="saveBtnText">Save to Cloud</span>
-                </button>
+                <!-- Quantity Summary (non-assembly) -->
+                <div id="quantitySummary" class="grid grid-cols-2 md:grid-cols-5 gap-3 bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Delivered Qty</label><input type="number" id="deliveredQty" class="input-field bg-slate-100 cursor-not-allowed" readonly /></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Accepted Qty</label><input type="number" id="acceptedQty" class="input-field" /></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Rework Qty</label><input type="number" id="reworkQty" class="input-field" /></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Reject Qty</label><input type="number" id="rejectQty" class="input-field" /></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="input-field" /></div>
+                </div>
+
+                <!-- Assembly Progress -->
+                <div id="assemblyProgressContainer" class="mt-2 hidden">
+                    <div class="assembly-progress">
+                        <div class="flex-1">
+                            <span class="progress-label"><i class="fa-solid fa-boxes mr-2"></i>Total Delivered (sum)</span>
+                            <input type="number" id="totalDeliveredQty" min="0" step="1" value="0" class="input-field bg-slate-100 cursor-not-allowed" readonly />
+                        </div>
+                        <div class="flex-1 text-center">
+                            <span class="progress-label">Assembly Completion</span>
+                            <div class="progress-value" id="assemblyProgressDisplay">0%</div>
+                            <div class="progress-detail" id="assemblyProgressDetail">0 / 0 delivered</div>
+                        </div>
+                        <div class="flex-1 text-right">
+                            <span class="progress-label">Total Qty (Accepted + Conditional)</span>
+                            <div class="text-2xl font-bold text-blue-700" id="totalAcceptedConditionalDisplay">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Internal Failure Costs -->
+                <div class="card border border-slate-200 p-4">
+                    <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><i class="fa-solid fa-coins text-amber-600"></i> Internal Failure Costs</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Defected Material Cost (ETB)</label><input type="number" step="0.01" id="defectedMaterialCost" class="input-field" /></div>
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Level</label><select id="levelSelect" class="select-field"><option value="">-- Select --</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="custom">Custom</option></select></div>
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Salary per Hour (ETB)</label><input type="number" step="0.001" id="salaryPerHour" class="input-field" /></div>
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Machine Description</label><select id="machineDescriptionSelect" class="select-field"><option value="">-- Select Machine --</option></select></div>
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="input-field" /></div>
+                    </div>
+                    <div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                        <span class="font-medium text-slate-700">Total Internal Failure Cost (ETB):</span>
+                        <span id="totalFailureCostDisplay" class="text-xl font-bold text-blue-700">0.00</span>
+                        <input type="hidden" id="totalInternalFailureCost" />
+                    </div>
+                </div>
+
+                <!-- Suggested Next Operation -->
+                <div class="border-t border-slate-200 pt-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Suggested Next Operation</label>
+                    <input type="text" id="suggestedNextOp" list="suggestedNextList" class="input-field" placeholder="Type or select a suggestion…" />
+                    <datalist id="suggestedNextList"></datalist>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-wrap justify-end gap-3 no-print pt-3 border-t border-slate-200">
+                    <button type="button" onclick="resetForm()" class="btn-secondary text-sm">
+                        <i class="fa-regular fa-arrow-rotate-left"></i> Reset
+                    </button>
+                    <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="btn-secondary text-sm hidden">
+                        <i class="fa-regular fa-pen-to-square"></i> Cancel Edit
+                    </button>
+                    <button type="button" id="saveBtn" onclick="saveToBackend()" class="btn-primary text-sm">
+                        <i class="fa-solid fa-cloud-upload-alt"></i>
+                        <span id="saveBtnText">Save to Cloud</span>
+                    </button>
+                </div>
+                <div id="formMessage" class="text-center text-sm mt-2 text-slate-500"></div>
             </div>
-            <div id="formMessage" class="text-center text-sm mt-2 text-slate-500"></div>
         </form>
 
         <!-- History -->
-        <div class="glass-strong rounded-2xl p-5 md:p-6 mt-6 card-glow no-print">
-            <div class="flex flex-wrap justify-between items-center gap-3">
+        <div class="card no-print">
+            <div class="card-header flex flex-wrap justify-between items-center gap-3">
                 <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><i class="fa-regular fa-clock text-blue-600"></i> Previous Inspections</h3>
                 <button onclick="loadHistory()" class="text-blue-600 text-sm hover:text-blue-800 transition flex items-center gap-1.5">
                     <i class="fa-solid fa-rotate-right"></i> Refresh
                 </button>
             </div>
-            <div id="inspectionHistory" class="max-h-72 overflow-y-auto scrollbar-thin text-sm mt-3 space-y-1"></div>
+            <div class="card-body">
+                <div id="inspectionHistory" class="max-h-72 overflow-y-auto scrollbar-thin text-sm space-y-1"></div>
+            </div>
         </div>
 
         <!-- Footer -->
-        <div class="text-center text-xs text-slate-400/80 mt-6 no-print">
+        <div class="text-center text-xs text-slate-400 mt-6 no-print">
             AMIMTDE · Quality Assurance Directorate v2.0
         </div>
     </div>
@@ -927,32 +809,22 @@
         function checkSecret() {
             const input = document.getElementById('secretInput');
             const errorEl = document.getElementById('secretError');
-            const card = document.getElementById('secretCard');
             const entered = input.value;
             if (entered === CORRECT_SECRET) {
                 sessionStorage.setItem('secretUnlocked', 'true');
-                card.style.animation = 'pulse-glow 0.6s ease';
-                setTimeout(() => {
-                    document.getElementById('secretOverlay').classList.add('hidden');
-                    document.getElementById('mainContent').classList.add('visible');
-                    errorEl.textContent = '';
-                    initApp();
-                }, 400);
+                document.getElementById('secretOverlay').classList.add('hidden');
+                document.getElementById('mainContent').classList.add('visible');
+                errorEl.textContent = '';
+                initApp();
             } else {
                 input.classList.add('shake');
                 errorEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Wrong secret number!';
-                input.style.borderColor = '#b91c1c';
-                setTimeout(() => {
-                    input.classList.remove('shake');
-                    input.style.borderColor = '';
+                setTimeout(() => { input.classList.remove('shake');
                     input.value = '';
-                    input.focus();
-                }, 600);
+                    input.focus(); }, 500);
             }
         }
-        document.getElementById('secretInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') checkSecret();
-        });
+        document.getElementById('secretInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkSecret(); });
 
         // ─── LIVE CLOCK ───
         function updateClock() {
@@ -970,18 +842,12 @@
             toast.className = `toast ${type}`;
             const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
             const icon = iconMap[type] || 'fa-info-circle';
-            toast.innerHTML = `
-                        <div class="toast-content">
-                          <span class="toast-icon"><i class="fa-solid ${icon}"></i></span>
-                          <span>${message}</span>
-                        </div>
-                      `;
+            toast.innerHTML =
+                `<div class="toast-content"><span><i class="fa-solid ${icon}"></i></span><span>${message}</span></div>`;
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.add('show'));
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }, 4000);
+            setTimeout(() => { toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400); }, 4000);
         }
 
         // ─── GLOBALS ───
@@ -1001,8 +867,6 @@
         let currentEngineer = '';
         let g_allInspections = [];
         let selectedParts = [];
-
-        // Map to store historical delivered quantity (accepted + conditional) per part
         let historicalPartQtyMap = new Map();
 
         const engineerFromUrl = new URLSearchParams(window.location.search).get('engineer');
@@ -1011,7 +875,7 @@
             const f = document.getElementById('qcEngineerName');
             f.value = currentEngineer;
             f.readOnly = true;
-            f.classList.add('bg-white/40', 'cursor-not-allowed');
+            f.classList.add('bg-slate-100', 'cursor-not-allowed');
         }
 
         // ─── HELPERS ───
@@ -1049,7 +913,6 @@
             return Array.from(partsSet);
         }
 
-        // Compute historical delivered quantity (accepted + conditional) for each part
         function computeHistoricalQuantities() {
             historicalPartQtyMap.clear();
             for (const insp of g_allInspections) {
@@ -1066,7 +929,6 @@
             }
         }
 
-        // Get default quantity for a part: historical sum or 1 if none
         function getDefaultQtyForPart(partName) {
             const hist = historicalPartQtyMap.get(partName);
             return (hist !== undefined && hist > 0) ? hist : 1;
@@ -1164,11 +1026,8 @@
             updateAssemblyProgress();
         }
 
-        // ─── FIXED: ASSEMBLY COMPLETION ──────────────────────────────────────
-        // Formula: Assembly Completion = sum(selected parts quantities) / sum(delivered qty of ALL parts in sub‑sub assembly)
         function updateAssemblyProgress() {
             const selectEl = document.getElementById('extra_Tag_No_');
-            // Numerator: sum of user‑specified quantities for selected parts
             const numerator = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
             document.getElementById('totalDeliveredQty').value = numerator;
             document.getElementById('totalAcceptedConditionalDisplay').textContent = numerator;
@@ -1179,32 +1038,19 @@
                 return;
             }
 
-            // All parts in the sub‑sub assembly = all options in the dropdown
             const allOptions = Array.from(selectEl.options).filter(o => o.value !== '' && !o.disabled);
-            // Denominator: sum of historical delivered quantities for ALL parts in the sub‑sub assembly
             let denominator = 0;
             allOptions.forEach(opt => {
-                const partName = opt.value;
-                const histQty = historicalPartQtyMap.get(partName) || 0; // 0 if no historical data
-                denominator += histQty;
+                const hist = historicalPartQtyMap.get(opt.value) || 0;
+                denominator += hist;
             });
-
-            // If no historical data for any part, fallback to total parts count
-            if (denominator === 0) {
-                // Use 1 per part as fallback so progress can still be shown
-                denominator = allOptions.length;
-            }
+            if (denominator === 0) denominator = allOptions.length || 1;
 
             const pct = denominator > 0 ? Math.round((numerator / denominator) * 100) : 0;
-
             const displayEl = document.getElementById('assemblyProgressDisplay');
             displayEl.textContent = pct + '%';
-            document.getElementById('assemblyProgressDetail').textContent =
-                `${numerator} / ${denominator} delivered`;
-
-            if (pct >= 100) displayEl.style.color = '#15803d';
-            else if (pct >= 50) displayEl.style.color = '#a16207';
-            else displayEl.style.color = '#b91c1c';
+            document.getElementById('assemblyProgressDetail').textContent = `${numerator} / ${denominator} delivered`;
+            displayEl.style.color = pct >= 100 ? '#15803d' : pct >= 50 ? '#a16207' : '#b91c1c';
         }
 
         function onPartListSelectChange() {
@@ -1280,10 +1126,7 @@
         function updateVisibility() {
             const qtySummary = document.getElementById('quantitySummary');
             const assemblyProgress = document.getElementById('assemblyProgressContainer');
-            if (currentProcess === 'Incoming') {
-                qtySummary.style.display = 'none';
-                assemblyProgress.classList.add('hidden');
-            } else if (isAssemblyProcess()) {
+            if (isAssemblyProcess()) {
                 qtySummary.style.display = 'none';
                 assemblyProgress.classList.remove('hidden');
             } else {
@@ -1456,7 +1299,6 @@
                             updateAssemblyProgress(); }, 300);
                     }
                 } catch (err) {
-                    console.error(err);
                     showToast('❌ OCR failed. Please fill manually.', 'error');
                 } finally { document.body.removeChild(fileInput); }
             };
@@ -1641,8 +1483,7 @@
                 "Hardening": ["heat treatment"],
                 "Tempering": ["heat treatment"],
                 "Testing": ["testing lab"],
-                "Packaging": ["packaging"],
-                "Incoming": ["warehouse"]
+                "Packaging": ["packaging"]
             };
             return map[processType] || ["general"];
         }
@@ -1651,7 +1492,7 @@
             const opts = getWorkStationOptionsForProcess(currentProcess);
             const all = [...opts, "other"];
             let html =
-                `<div><label class="block text-xs font-medium text-slate-500 mb-1">Work Station</label><select id="extra_Work_Station" class="glass-select w-full rounded-lg px-3 py-2 text-sm">`;
+                `<div><label class="block text-xs font-medium text-slate-500 mb-1">Work Station</label><select id="extra_Work_Station" class="select-field">`;
             all.forEach(opt => {
                 const sel = (savedValue === opt) ? 'selected' : '';
                 html += `<option value="${opt}" ${sel}>${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`;
@@ -1753,165 +1594,72 @@
 
         function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
-        // ─── INCOMING FORM ───
-        function renderIncomingForm() {
-            return `
-                        <div class="glass rounded-xl p-5 space-y-5">
-                          <div class="text-center font-bold text-xl text-slate-700">INCOMING MATERIAL INSPECTION REPORT</div>
-                          <div class="text-right text-sm text-slate-500">Document No. QAD/001</div>
-                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-medium text-slate-500 mb-1">1. Source of Item</label><div class="flex gap-4"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="sourceItem" value="Local" class="accent-blue-600" /> Local</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="sourceItem" value="Foreign" class="accent-blue-600" /> Foreign</label></div><div><label class="text-xs text-slate-500">Address:</label><input type="text" id="sourceAddress" class="glass-input w-full rounded-lg px-3 py-2 text-sm mt-1" /></div></div>
-                            <div><label class="block text-xs font-medium text-slate-500 mb-1">2. Procurement type</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Direct" class="accent-blue-600" /> Direct</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Proforma" class="accent-blue-600" /> Proforma</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Bid" class="accent-blue-600" /> Bid</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="procType" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="procTypeOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><label class="text-xs text-slate-500 mt-1 block">Method of Inspection:</label><input type="text" id="methodInspection" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="visual inspection etc." /></div>
-                            <div><label class="block text-xs font-medium text-slate-500 mb-1">3. The PR is Requested by</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="PR Form" class="accent-blue-600" /> PR Form</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Letter" class="accent-blue-600" /> Letter</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="System" class="accent-blue-600" /> System</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="radio" name="prRequestedBy" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="prRequestOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div></div>
-                            <div><label class="block text-xs font-medium text-slate-500 mb-1">4. Final Reference Document for Specification</label><div class="flex flex-wrap gap-3"><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="PR" class="accent-blue-600" /> PR</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Proforma Invoice" class="accent-blue-600" /> Proforma Invoice</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Agreement" class="accent-blue-600" /> Agreement</label><label class="text-sm text-slate-700 flex items-center gap-2"><input type="checkbox" value="Other" class="accent-blue-600" /> Other</label><input type="text" id="refDocOther" placeholder="Specify" class="glass-input rounded-lg px-3 py-1.5 text-sm w-28" /></div><div class="flex flex-wrap gap-3 mt-1"><span class="text-xs text-slate-500">No. of Page (PR):</span><input type="number" id="refPagePR" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-500">Proforma:</span><input type="number" id="refPageProforma" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /><span class="text-xs text-slate-500">Agreement:</span><input type="number" id="refPageAgreement" class="glass-input rounded-lg px-2 py-1 w-16 text-sm" /></div></div>
-                          </div>
-                          <div><label class="block text-sm font-medium text-slate-600 mb-2">5. List of Items</label><div class="overflow-x-auto"><table class="table-glass text-xs" id="incomingItemsTable"><thead><tr><th>Specification as per requester</th><th>Supplied Material Description</th><th>Actual Supplied Specification</th><th>Model</th><th>Brand</th><th>Origin</th><th>Colour</th><th>Serial No.</th><th>Unit</th><th>Delivered Qty</th><th>Accepted Qty</th><th>Rejected Qty</th><th>Conditional Accepted Qty</th><th>Supplier</th><th>Remark</th><th class="w-8"></th></tr></thead><tbody id="incomingItemsBody"></tbody></table></div><button type="button" onclick="addIncomingItemRow()" class="btn-secondary text-xs mt-2"><i class="fa-regular fa-plus mr-1"></i> Add Item</button></div>
-                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-xs font-medium text-slate-500 mb-1">Reason For Reject</label><textarea id="reasonReject" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Reason for Conditional Accepted</label><textarea id="reasonConditional" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div></div>
-                          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-200/60 pt-4"><div><label class="block text-xs font-medium text-slate-500 mb-1">Inspected By</label><input type="text" id="inspectedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">SIGNATURE</label><input type="text" id="inspectedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">DATE</label><input type="date" id="inspectedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Collaborated By</label><input type="text" id="collabBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Signature</label><input type="text" id="collabSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Date</label><input type="date" id="collabDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div><div><label class="block text-xs font-medium text-slate-500 mb-1">Approved By</label><input type="text" id="approvedBy" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">Signature</label><input type="text" id="approvedSign" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /><label class="block text-xs font-medium text-slate-500 mt-2 mb-1">DATE</label><input type="date" id="approvedDate" class="glass-input w-full rounded-lg px-3 py-2 text-sm" /></div></div>
-                          <div><label class="block text-xs font-medium text-slate-500 mb-1">REMARK</label><textarea id="generalRemark" rows="2" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></textarea></div>
-                          <div class="text-xs text-slate-500 italic">Note: Please attach the final reference Document for specification. Form Modification Is not Allowed.</div>
-                        </div>`;
-        }
-
-        function addIncomingItemRow(data) {
-            const tbody = document.getElementById("incomingItemsBody");
-            if (!tbody) return;
-            const row = document.createElement("tr");
-            row.className = "border-b border-slate-200/50";
-            const fields = ["specReq", "suppliedDesc", "actualSpec", "model", "brand", "origin", "colour", "serialNo", "unit",
-                "deliveredQty", "acceptedQty", "rejectedQty", "condAcceptedQty", "supplier", "remark"
-            ];
-            fields.forEach(f => {
-                const td = document.createElement("td");
-                td.className = "p-1";
-                const input = document.createElement("input");
-                input.type = f.includes("Qty") ? "number" : "text";
-                input.className = "glass-input w-full rounded px-2 py-1 text-xs";
-                input.placeholder = f;
-                if (data && data[f] !== undefined) input.value = data[f];
-                td.appendChild(input);
-                row.appendChild(td);
-            });
-            const delTd = document.createElement("td");
-            delTd.className = "text-center";
-            const delBtn = document.createElement("button");
-            delBtn.innerHTML = "❌";
-            delBtn.className = "text-rose-600/60 hover:text-rose-500 text-xs transition";
-            delBtn.onclick = () => row.remove();
-            delTd.appendChild(delBtn);
-            row.appendChild(delTd);
-            tbody.appendChild(row);
-        }
-
-        function getIncomingItemsData() {
-            const rows = document.querySelectorAll("#incomingItemsBody tr");
-            const items = [];
-            rows.forEach(row => {
-                const inputs = row.querySelectorAll("input");
-                if (inputs.length === 15) items.push({
-                    specReq: inputs[0].value,
-                    suppliedDesc: inputs[1].value,
-                    actualSpec: inputs[2].value,
-                    model: inputs[3].value,
-                    brand: inputs[4].value,
-                    origin: inputs[5].value,
-                    colour: inputs[6].value,
-                    serialNo: inputs[7].value,
-                    unit: inputs[8].value,
-                    deliveredQty: inputs[9].value,
-                    acceptedQty: inputs[10].value,
-                    rejectedQty: inputs[11].value,
-                    condAcceptedQty: inputs[12].value,
-                    supplier: inputs[13].value,
-                    remark: inputs[14].value
-                });
-            });
-            return items;
-        }
-
-        function setIncomingItemsData(items) {
-            const tbody = document.getElementById("incomingItemsBody");
-            if (tbody) tbody.innerHTML = "";
-            if (items && items.length) items.forEach(item => addIncomingItemRow(item));
-            else addIncomingItemRow();
-        }
-
         // ─── DYNAMIC FIELDS ───
         function renderDynamicFields() {
             const container = document.getElementById("dynamicFieldsContainer");
             if (!container) return;
-            if (currentProcess === "Incoming") {
-                container.innerHTML = renderIncomingForm();
-                if (document.getElementById("incomingItemsBody") && document.getElementById("incomingItemsBody").children
-                    .length === 0)
-                    addIncomingItemRow();
-                document.getElementById("quantitySummary").style.display = "none";
-                document.getElementById("assemblyProgressContainer").classList.add('hidden');
-                return;
-            }
             const def = getCurrentDef();
             let html =
                 `<div class="mb-3"><button type="button" class="btn-secondary text-sm" onclick="scanDocumentAndFill()" title="Scan document with OCR to auto-fill client, title, DWG and part"><i class="fa-solid fa-camera mr-2"></i> Scan Document</button></div>`;
             if (def.extraFields && def.extraFields.length) {
-                html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-200/60 pb-5 mb-5">`;
+                html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-200 pb-5 mb-5">`;
                 def.extraFields.forEach(field => {
                     const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                     if (field === "Work Station") {
                         html += getWorkStationHtml(currentProcess, "");
                     } else if (field === "Location") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Location</label><select id="${safeId}" class="glass-select w-full rounded-lg px-3 py-2 text-sm"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Location</label><select id="${safeId}" class="select-field"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
                     } else if (field === "Customer Name") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
                     } else if (field === "Project Name") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
                     } else if (field === "Subtitle") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="input-field" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
                     } else if (field === "Sub Sub Assembly") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="input-field" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
                     } else if (field === "Drawing No.") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Auto-filled after scan"></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" class="input-field" placeholder="Auto-filled after scan"></div>`;
                     } else if (field === "Part Name") {
-                        // ─── CHANGED: label dynamically shows "Assembly Name" for assembly processes ───
                         const labelText = isAssemblyProcess() ? 'Assembly Name' : 'Part Name';
                         const placeholderText = isAssemblyProcess() ? 'Assembly name' : 'Auto-filled after scan';
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">${labelText}</label><input type="text" id="${safeId}" list="partNameDatalist" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="${placeholderText}" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">${labelText}</label><input type="text" id="${safeId}" list="partNameDatalist" class="input-field" placeholder="${placeholderText}" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
                     } else if (field === "Tag No.") {
                         if (isAssemblyProcess()) {
                             html += `
                                         <div class="part-list-container">
                                           <label class="block text-xs font-medium text-slate-500 mb-1">Part List <span class="text-slate-400 text-xs">(select parts, then enter qty)</span></label>
-                                          <select id="${safeId}" multiple size="4" class="glass-select w-full rounded-lg px-3 py-2 text-sm part-list-multi">
+                                          <select id="${safeId}" multiple size="4" class="part-list-multi w-full">
                                             <option value="">-- Select Parts --</option>
                                           </select>
-                                          <div id="selectedPartsContainer" class="selected-parts-container mt-2 bg-white/40 rounded-lg p-2 max-h-48 overflow-y-auto scrollbar-thin">
+                                          <div id="selectedPartsContainer" class="mt-2 bg-slate-50 rounded-lg p-2 max-h-48 overflow-y-auto scrollbar-thin border border-slate-200">
                                             <div class="text-slate-500 text-sm italic py-1">No parts selected</div>
                                           </div>
                                         </div>
                                       `;
                         } else {
                             html +=
-                                `<div><label class="block text-xs font-medium text-slate-500 mb-1">Tag No.</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="Tag number"></div>`;
+                                `<div><label class="block text-xs font-medium text-slate-500 mb-1">Tag No.</label><input type="text" id="${safeId}" class="input-field" placeholder="Tag number"></div>`;
                         }
                     } else if (field !== "Work Station") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">${field}</label><input type="text" id="${safeId}" class="glass-input w-full rounded-lg px-3 py-2 text-sm"></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">${field}</label><input type="text" id="${safeId}" class="input-field"></div>`;
                     }
                 });
                 html += `</div>`;
             }
             html +=
-                `<div class="overflow-x-auto rounded-xl border border-slate-200/40"><table class="table-glass text-sm"><thead><tr><th class="p-3">Inspection Parameters</th><th class="p-3">Acceptance Conditions</th><th class="p-3">Cause of Defects</th></tr></thead><tbody>`;
+                `<div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-sm border-collapse"><thead><tr class="bg-slate-50"><th class="p-3 text-left font-semibold text-slate-600 border-b border-slate-200">Inspection Parameters</th><th class="p-3 text-left font-semibold text-slate-600 border-b border-slate-200">Acceptance Conditions</th><th class="p-3 text-left font-semibold text-slate-600 border-b border-slate-200">Cause of Defects</th></tr></thead><tbody>`;
             def.parameters.forEach((param, idx) => {
                 const paramId = `p_${idx}`;
                 html +=
-                    `<tr><td class="p-3 font-medium text-slate-700">${param}</td><td class="p-3"><select id="rating_${paramId}" class="glass-select w-full rounded-lg px-3 py-1.5 text-sm">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="p-3"><div class="flex flex-wrap gap-3">${causeFields.map(cause => `<label class="text-sm text-slate-700 flex items-center gap-1.5"><input type="checkbox" class="cause-check accent-blue-600" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
+                    `<tr><td class="p-3 font-medium text-slate-700 border-b border-slate-100">${param}</td><td class="p-3 border-b border-slate-100"><select id="rating_${paramId}" class="select-field py-1.5">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="p-3 border-b border-slate-100"><div class="flex flex-wrap gap-3">${causeFields.map(cause => `<label class="text-sm text-slate-700 flex items-center gap-1.5"><input type="checkbox" class="cause-check accent-blue-600" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
             });
             html += `</tbody></table></div>`;
             container.innerHTML = html;
@@ -1962,24 +1710,6 @@
 
         // ─── GET / SET EXTRA FIELDS ───
         function getExtraFields() {
-            if (currentProcess === "Incoming") {
-                return {
-                    incoming_items: getIncomingItemsData(),
-                    sourceAddress: document.getElementById("sourceAddress")?.value || "",
-                    procType: document.querySelector('input[name="procType"]:checked')?.value || "",
-                    methodInspection: document.getElementById("methodInspection")?.value || "",
-                    reasonReject: document.getElementById("reasonReject")?.value || "",
-                    reasonConditional: document.getElementById("reasonConditional")?.value || "",
-                    inspectedBy: document.getElementById("inspectedBy")?.value || "",
-                    approvedBy: document.getElementById("approvedBy")?.value || "",
-                    generalRemark: document.getElementById("generalRemark")?.value || "",
-                    sourceItem: document.querySelector('input[name="sourceItem"]:checked')?.value || "",
-                    prRequestedBy: document.querySelector('input[name="prRequestedBy"]:checked')?.value || "",
-                    refDocs: { pr: document.getElementById("refPagePR")?.value, proforma: document.getElementById(
-                            "refPageProforma")?.value, agreement: document.getElementById("refPageAgreement")
-                            ?.value }
-                };
-            }
             const def = getCurrentDef();
             const extra = {};
             let partsObj = null;
@@ -2007,27 +1737,6 @@
         }
 
         function setExtraFields(extra) {
-            if (currentProcess === "Incoming") {
-                if (extra && extra.incoming_items) setIncomingItemsData(extra.incoming_items);
-                if (extra.sourceAddress) document.getElementById("sourceAddress").value = extra.sourceAddress;
-                if (extra.methodInspection) document.getElementById("methodInspection").value = extra.methodInspection;
-                if (extra.reasonReject) document.getElementById("reasonReject").value = extra.reasonReject;
-                if (extra.reasonConditional) document.getElementById("reasonConditional").value = extra
-                .reasonConditional;
-                if (extra.inspectedBy) document.getElementById("inspectedBy").value = extra.inspectedBy;
-                if (extra.approvedBy) document.getElementById("approvedBy").value = extra.approvedBy;
-                if (extra.generalRemark) document.getElementById("generalRemark").value = extra.generalRemark;
-                if (extra.procType) { const radio = document.querySelector(
-                        `input[name="procType"][value="${extra.procType}"]`);
-                    if (radio) radio.checked = true; }
-                if (extra.sourceItem) { const radio = document.querySelector(
-                        `input[name="sourceItem"][value="${extra.sourceItem}"]`);
-                    if (radio) radio.checked = true; }
-                if (extra.prRequestedBy) { const radio = document.querySelector(
-                        `input[name="prRequestedBy"][value="${extra.prRequestedBy}"]`);
-                    if (radio) radio.checked = true; }
-                return;
-            }
             const def = getCurrentDef();
             if (isAssemblyProcess()) {
                 let partsObj = {};
@@ -2057,7 +1766,6 @@
         }
 
         function getAcceptanceData() {
-            if (currentProcess === "Incoming") return {};
             const def = getCurrentDef();
             const data = {};
             for (let i = 0; i < def.parameters.length; i++) {
@@ -2071,7 +1779,6 @@
         }
 
         function setAcceptanceData(acceptance) {
-            if (currentProcess === "Incoming") return;
             const def = getCurrentDef();
             for (let i = 0; i < def.parameters.length; i++) {
                 const paramId = `p_${i}`;
@@ -2093,8 +1800,7 @@
             const sal = +document.getElementById("salaryPerHour").value || 0;
             const machH = +document.getElementById("machiningHours").value || 0;
             const machR = +document.getElementById("machiningCostPerHr").value || 0;
-            const mult = 1;
-            const total = (mat + lab * sal + machH * machR) * mult;
+            const total = (mat + lab * sal + machH * machR);
             document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
             document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
             return total;
@@ -2138,7 +1844,6 @@
                     noDataDiv.classList.remove('hidden');
                 }
             } catch (err) {
-                console.error(err);
                 dataDiv.classList.add('hidden');
                 noDataDiv.classList.remove('hidden');
                 noDataDiv.textContent = '❌ Could not load data.';
@@ -2231,14 +1936,13 @@
                     selected_parts_count = selectedParts.length;
                     const selectEl = document.getElementById('extra_Tag_No_');
                     const allOptions = selectEl ? Array.from(selectEl.options).filter(o => o.value !== '' && !o.disabled) : [];
-                    // For assembly, we store the total delivered qty of all parts in the sub‑assembly as denominator
                     let denom = 0;
                     allOptions.forEach(opt => {
                         const hist = historicalPartQtyMap.get(opt.value) || 0;
                         denom += hist;
                     });
-                    if (denom === 0) denom = allOptions.length;
-                    assembly_progress_pct = denom > 0 ? Math.round((total_delivered_qty / denom) * 100) : 0;
+                    if (denom === 0) denom = allOptions.length || 1;
+                    assembly_progress_pct = Math.round((total_delivered_qty / denom) * 100);
                     delivered_qty = total_delivered_qty;
                     accepted_qty = total_delivered_qty;
                     rework_qty = 0;
@@ -2324,7 +2028,7 @@
                 if (!displayData.length) histDiv.innerHTML =
                     "<p class='text-slate-500 text-sm italic py-2'>No inspections found.</p>";
                 else histDiv.innerHTML = displayData.map(row =>
-                    `<div class="flex flex-wrap justify-between items-center py-2 px-2 rounded-lg hover:bg-white/60 transition border-b border-slate-200/50">
+                    `<div class="history-item">
                                 <div class="text-sm">
                                   <span class="text-slate-700 font-medium">${new Date(row.submitted_at).toLocaleString()}</span>
                                   <span class="text-slate-500 ml-3">${row.process_type||'Rolling'}</span>
@@ -2430,7 +2134,7 @@
 
         // ─── SUGGESTED NEXT OPS ───
         const PROCESS_ORDER = [
-            "Incoming", "Punching", "Rolling", "Bending", "Welding", "Pressing",
+            "Punching", "Rolling", "Bending", "Welding", "Pressing",
             "Milling", "Casting", "PatternCore", "Assembling", "Testing",
             "Painting", "Packaging", "Shearing", "Lathe", "Drilling",
             "BoringHoning", "Grinding", "Forging", "Molding", "Polishing",
@@ -2537,7 +2241,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('🔐 QC Inspection ready – glass UI (blue-white)');
+        console.log('✅ QC Inspection ready – simplified UI');
     </script>
 </body>
 </html>
