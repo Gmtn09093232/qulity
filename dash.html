@@ -10,7 +10,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ── same as before, kept for brevity ── */
+        /* ── same as before ── */
         body {
             background: #f0f4f8;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -493,7 +493,7 @@
                 <p class="text-xs text-gray-500">
                     <i class="fa-regular fa-circle-info text-indigo-400 mr-1"></i>
                     Showing <strong>only parts selected</strong> in the QC inspection's Part List for each sub‑sub assembly.
-                    <span class="text-emerald-600 font-medium">Delivered = quantity entered in Part List</span>
+                    <span class="text-emerald-600 font-medium">Delivered = quantity from Part List</span>
                 </p>
             </div>
             <div class="flex gap-2 flex-wrap">
@@ -609,7 +609,7 @@
         </div>
     </div>
 
-    <!-- ─── COMPLETION MODAL (assembly parts) ─── -->
+    <!-- ─── COMPLETION MODAL ─── -->
     <div id="completionModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCompletionModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -811,8 +811,10 @@
         let partInspectionsMap = new Map();
         let partToSubSubKey = new Map();
         let partNumberMap = new Map();
-        let selectedPartsMap = new Map(); // sub-sub key → Map of part name → qty (selected qty)
-        let totalSelectedDeliveredMap = new Map(); // sub-sub key → total selected delivered qty
+        // selectedPartsMap: key → Map(partName → qty)
+        let selectedPartsMap = new Map();
+        // totalSelectedDeliveredMap: key → total selected qty
+        let totalSelectedDeliveredMap = new Map();
 
         // ─── FETCH & AGGREGATE ───
         async function fetchInspections() {
@@ -830,9 +832,9 @@
             const targetInsp = inspections.filter(insp => isTargetProcess(insp.process_type));
             const nonTargetInsp = inspections.filter(insp => !isTargetProcess(insp.process_type));
 
-            // ─── Step 1: Build selected parts map with qty from assembly inspections ───
+            // ─── Step 1: Build selected parts map with quantities from assembly inspections ───
             const selectedMap = new Map(); // key → Map(partName → qty)
-            const totalDeliveredMap = new Map(); // key → total selected qty
+            const totalDeliveredMap = new Map(); // key → total qty
 
             for (const insp of targetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -893,10 +895,9 @@
                     }
                 }
 
-                // If still empty, fallback to default? no, we leave empty
+                // If we have any parts, store the map and compute total
                 if (partQtyMap.size > 0) {
                     selectedMap.set(key, partQtyMap);
-                    // total delivered = sum of qty values
                     let total = 0;
                     for (const qty of partQtyMap.values()) {
                         total += qty;
@@ -952,7 +953,7 @@
                 }
             }
 
-            // ─── Step 3: Build nonTargetMap but ONLY include selected parts, and use selected qty ───
+            // ─── Step 3: Build nonTargetMap but ONLY include selected parts ───
             const nonTargetMap = new Map();
             for (const insp of nonTargetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -960,8 +961,8 @@
                 const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
                 const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
-                // We don't use delivered_qty from non-target for the "Delivered" column; we use selected qty.
-                // But we keep the inspection for part details if needed.
+                const delivered = insp.delivered_qty || 0;
+
                 const key = `${client}||${title}||${subtitle}||${subSub}`;
 
                 // Only include if this part is in the selected map for this key
@@ -972,13 +973,12 @@
                     nonTargetMap.set(key, { client, title, subtitle, subSub, parts: new Map() });
                 }
                 const entry = nonTargetMap.get(key);
-                // Store the part with its delivered_qty from non-target (for history), but we will override display
                 const partData = entry.parts.get(partName) || { delivered: 0 };
-                partData.delivered += insp.delivered_qty || 0;
+                partData.delivered += delivered;
                 entry.parts.set(partName, partData);
             }
 
-            // ─── Step 4: Also ensure all selected parts appear in nonTargetMap (with 0 delivered if no non-target) ───
+            // ─── Step 4: Also ensure selected parts with no non-target data appear with 0 ───
             for (const [key, partQtyMap] of selectedMap) {
                 if (!nonTargetMap.has(key)) {
                     const parts = key.split('||');
@@ -994,9 +994,9 @@
                 }
                 const entry = nonTargetMap.get(key);
                 if (entry) {
-                    for (const [partName, qty] of partQtyMap) {
+                    for (const partName of partQtyMap.keys()) {
                         if (!entry.parts.has(partName)) {
-                            entry.parts.set(partName, { delivered: 0 }); // we'll override with qty later
+                            entry.parts.set(partName, { delivered: 0 });
                         }
                     }
                 }
@@ -1021,7 +1021,7 @@
                 for (const [partName, partData] of entry.parts) {
                     // Only include if part is in selected map
                     if (!partQtyMap.has(partName)) continue;
-                    // Use the selected qty as the "delivered" value for display
+                    // Use the selected qty as the "delivered" for display (though we will use this later)
                     const selectedQty = partQtyMap.get(partName) || 0;
                     rows.push({
                         client: entry.client,
@@ -1030,21 +1030,20 @@
                         subSub: entry.subSub,
                         subSubKey: key,
                         partName: partName,
-                        delivered: selectedQty, // use selected qty
+                        delivered: selectedQty, // use selected qty for display
                         accepted: partData.accepted,
                         conditional: partData.conditional,
                         assemblyProgressPct: progressPct,
-                        subSubPartCount: partQtyMap.size, // number of selected parts
+                        subSubPartCount: partQtyMap.size,
                     });
                     p2ss.set(partName, key);
                 }
             }
 
-            // Also add parts from selectedMap that might not be in targetMap (no assembly inspection yet)
+            // Also add parts from selectedMap that might not be in targetMap
             for (const [key, partQtyMap] of selectedMap) {
                 const entry = targetMap.get(key);
                 if (!entry) {
-                    // No assembly inspection, but parts selected – create rows with 0 accepted/conditional
                     const parts = key.split('||');
                     if (parts.length === 4) {
                         for (const [partName, qty] of partQtyMap) {
@@ -1067,7 +1066,7 @@
                 }
             }
 
-            // ─── Step 6: Build subtitle part counts (unique selected parts) ───
+            // ─── Step 6: Build subtitle part counts ───
             const subtitlePartCounts = new Map();
             for (const row of rows) {
                 const sk = `${row.client}||${row.title}||${row.subtitle}`;
@@ -1094,8 +1093,8 @@
                 partInspections: partInspMap,
                 partToSubSubKey: p2ss,
                 partNumberMap: pnMap,
-                selectedPartsMap: selectedMap, // part name → qty
-                totalDeliveredMap: totalDeliveredMap, // sub-sub key → total selected qty
+                selectedPartsMap: selectedMap,
+                totalSelectedDeliveredMap: totalDeliveredMap,
             };
         }
 
@@ -1154,9 +1153,17 @@
                 entry.totalConditional += row.conditional;
             }
 
+            // Override totalDelivered with selected total from totalSelectedDeliveredMap
+            for (const [key, entry] of assemblyMap) {
+                const selTotal = window.totalSelectedDeliveredMap?.get(key);
+                if (selTotal !== undefined) {
+                    entry.totalDelivered = selTotal;
+                }
+            }
+
             const uniqueParts = new Set(filteredRows.map(r => r.partName));
             const totalParts = uniqueParts.size;
-            const totalDelivered = filteredRows.reduce((sum, r) => sum + r.delivered, 0);
+            const totalDelivered = Array.from(assemblyMap.values()).reduce((sum, e) => sum + e.totalDelivered, 0);
             const subtitles = new Set(filteredRows.map(r => r.subtitle));
             const subSubs = new Set(filteredRows.map(r => r.subSub));
 
@@ -1279,10 +1286,10 @@
             document.getElementById('recordCount').innerText = `${filteredRows.length} part records`;
             document.getElementById('recordCountBottom').innerText =
             `${totalParts} unique parts · ${subSubs.size} sub‑sub assemblies`;
-            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')}) — only selected parts shown, delivered = selected qty`;
+            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')}) — delivered = selected qty`;
         }
 
-        // ─── COMPLETION MODAL (assembly parts) ───
+        // ─── COMPLETION MODAL ───
         function showCompletionDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
             const targetEntry = window.subSubAssemblyMap?.get(key);
@@ -1292,7 +1299,6 @@
             const body = document.getElementById('completionModalBody');
 
             if (!targetEntry || targetEntry.parts.size === 0) {
-                // Still show selected parts if any
                 if (partQtyMap.size === 0) {
                     body.innerHTML =
                         `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No assembly parts found.</div>`;
@@ -1338,6 +1344,7 @@
                 .filter(([pName]) => partQtyMap.has(pName))
                 .map(([pName, data]) => [pName, { ...data, selectedQty: partQtyMap.get(pName) || 0 }]);
 
+            // Use selected qty as delivered in this modal as well? For consistency, we'll show selected qty as Delivered.
             const totalDelivered = partsList.reduce((sum, [_, d]) => sum + d.selectedQty, 0);
             const totalAccepted = partsList.reduce((sum, [_, d]) => sum + (d.accepted || 0), 0);
             const totalConditional = partsList.reduce((sum, [_, d]) => sum + (d.conditional || 0), 0);
@@ -1387,18 +1394,14 @@
         // ─── ASSEMBLY MODAL (other processes) ───
         function showAssemblyDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
-            const nonTargetEntry = window.nonTargetSubSubMap?.get(key);
             const partQtyMap = window.selectedPartsMap?.get(key) || new Map();
             const titleEl = document.getElementById('assemblyModalTitle');
             titleEl.innerHTML = `<i class="fa-regular fa-cubes text-amber-500 mr-2"></i>${escapeHtml(subSub)} — Component Parts`;
             const body = document.getElementById('assemblyModalBody');
 
-            // We need to show selected parts with their quantities from partQtyMap
-            // even if no non-target data exists.
-            const partsList = Array.from(partQtyMap.entries()).map(([pName, qty]) => {
-                // If nonTargetEntry has this part, we can show additional info, but we use qty as delivered.
-                return [pName, { delivered: qty }];
-            });
+            // We want to show all selected parts with their quantities from partQtyMap.
+            // Even if there is no non-target data, we show them with delivered = qty.
+            const partsList = Array.from(partQtyMap.entries()).map(([pName, qty]) => [pName, { delivered: qty }]);
 
             if (partsList.length === 0) {
                 body.innerHTML =
@@ -1610,7 +1613,7 @@
             window.partToSubSubKey = result.partToSubSubKey;
             window.partNumberMap = result.partNumberMap;
             window.selectedPartsMap = result.selectedPartsMap;
-            window.totalSelectedDeliveredMap = result.totalDeliveredMap;
+            window.totalSelectedDeliveredMap = result.totalSelectedDeliveredMap;
             populateFilters(allRows);
             filteredRows = [...allRows];
             applyFilters();
