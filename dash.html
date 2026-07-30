@@ -10,12 +10,11 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
+        /* (styles unchanged – omitted for brevity, but included in final code) */
         body {
             background: #f0f4f8;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
-
-        /* ── Toast ── */
         .toast-container {
             position: fixed;
             top: 24px;
@@ -43,26 +42,15 @@
             align-items: center;
             gap: 12px;
         }
-        .toast.show {
-            transform: translateX(0);
-        }
-        .toast.error {
-            border-left-color: #f87171;
-        }
-        .toast.info {
-            border-left-color: #60a5fa;
-        }
-        .toast .toast-icon {
-            font-size: 1.3rem;
-            flex-shrink: 0;
-        }
-
-        /* ── Cards ── */
+        .toast.show { transform: translateX(0); }
+        .toast.error { border-left-color: #f87171; }
+        .toast.info { border-left-color: #60a5fa; }
+        .toast .toast-icon { font-size: 1.3rem; flex-shrink: 0; }
         .stat-card {
             background: white;
             border-radius: 1rem;
             padding: 0.75rem 1rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             border: 1px solid #e9edf2;
             transition: all 0.2s;
             position: relative;
@@ -70,7 +58,7 @@
         }
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.07);
         }
         .stat-card .stat-icon-wrapper {
             width: 34px;
@@ -103,8 +91,6 @@
             border-radius: 999px;
             font-weight: 600;
         }
-
-        /* ── Filters ── */
         .filter-select {
             border-radius: 0.6rem;
             border: 1.5px solid #e2e8f0;
@@ -117,7 +103,7 @@
         .filter-select:focus {
             outline: none;
             border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
         }
         .filter-label {
             display: block;
@@ -128,17 +114,8 @@
             letter-spacing: 0.04em;
             margin-bottom: 2px;
         }
-
-        /* ── Table ── */
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 1rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-        }
+        .table-wrapper { overflow-x: auto; border-radius: 1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th {
             background: #f8fafc;
             padding: 12px 12px;
@@ -156,10 +133,7 @@
             vertical-align: middle;
             color: #0f172a;
         }
-        tr:hover td {
-            background: #fafbfc;
-        }
-
+        tr:hover td { background: #fafbfc; }
         .clickable-assembly {
             cursor: pointer;
             font-weight: 700;
@@ -170,10 +144,7 @@
             text-decoration-color: #a5b4fc;
             text-decoration-thickness: 2px;
         }
-        .clickable-assembly:hover {
-            color: #4f46e5;
-        }
-
+        .clickable-assembly:hover { color: #4f46e5; }
         .clickable-completion {
             cursor: pointer;
             transition: all 0.2s;
@@ -184,7 +155,6 @@
             background: #eef2ff;
             transform: scale(1.02);
         }
-
         .progress-bar-bg {
             background: #e2e8f0;
             border-radius: 999px;
@@ -206,8 +176,6 @@
             min-width: 48px;
             display: inline-block;
         }
-
-        /* ── Group Headers ── */
         .subtitle-group-name {
             font-weight: 700;
             color: #4f46e5;
@@ -229,8 +197,6 @@
             font-weight: 700;
             color: #0f172a;
         }
-
-        /* ── Buttons ── */
         .btn-excel {
             background: #0b9e6e;
             color: white;
@@ -264,10 +230,8 @@
             background: #f8fafc;
             border-color: #a5b4fc;
         }
-
-        /* ── Modals ── */
         .modal-overlay {
-            background: rgba(0, 0, 0, 0.45);
+            background: rgba(0,0,0,0.45);
             backdrop-filter: blur(6px);
         }
         .modal-card {
@@ -277,7 +241,7 @@
             width: 100%;
             max-height: 92vh;
             overflow: auto;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.25);
         }
         .modal-card .modal-header {
             background: white;
@@ -305,14 +269,8 @@
             transition: color 0.2s;
             padding: 0 4px;
         }
-        .modal-card .modal-close:hover {
-            color: #0f172a;
-        }
-        .modal-card .modal-body {
-            padding: 1rem 1.25rem;
-        }
-
-        /* ── Sub-sub parts table inside modal ── */
+        .modal-card .modal-close:hover { color: #0f172a; }
+        .modal-card .modal-body { padding: 1rem 1.25rem; }
         .subsub-parts-table {
             width: 100%;
             font-size: 0.8rem;
@@ -344,10 +302,7 @@
             text-decoration-color: #c7d2fe;
             transition: color 0.15s;
         }
-        .subsub-parts-table .part-link:hover {
-            color: #1e40af;
-        }
-
+        .subsub-parts-table .part-link:hover { color: #1e40af; }
         .modal-summary-badge {
             display: inline-block;
             background: #eef2ff;
@@ -357,8 +312,6 @@
             font-size: 0.65rem;
             font-weight: 600;
         }
-
-        /* ── Banner / Hero ── */
         .hero-banner {
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4f46e5 100%);
             border-radius: 1.5rem;
@@ -369,7 +322,7 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 1rem;
-            box-shadow: 0 8px 30px rgba(79, 70, 229, 0.25);
+            box-shadow: 0 8px 30px rgba(79,70,229,0.25);
             position: relative;
             overflow: hidden;
         }
@@ -380,14 +333,11 @@
             right: -20%;
             width: 400px;
             height: 400px;
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255,255,255,0.04);
             border-radius: 50%;
             pointer-events: none;
         }
-        .hero-banner .hero-icon {
-            font-size: 2rem;
-            opacity: 0.9;
-        }
+        .hero-banner .hero-icon { font-size: 2rem; opacity: 0.9; }
         .hero-banner .hero-title {
             font-size: 1.3rem;
             font-weight: 700;
@@ -399,99 +349,72 @@
             font-weight: 400;
         }
         .hero-banner .hero-badge {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255,255,255,0.15);
             backdrop-filter: blur(4px);
             padding: 3px 12px;
             border-radius: 999px;
             font-size: 0.65rem;
             font-weight: 600;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         .hero-banner .hero-image-placeholder {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255,255,255,0.08);
             padding: 0.3rem 1rem 0.3rem 0.8rem;
             border-radius: 999px;
             backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255,255,255,0.06);
             font-size: 0.8rem;
         }
-        .hero-banner .hero-image-placeholder i {
-            font-size: 1.2rem;
-        }
-
+        .hero-banner .hero-image-placeholder i { font-size: 1.2rem; }
         .inspection-history-wrap {
             max-height: 260px;
             overflow-y: auto;
             border: 1px solid #e2e8f0;
             border-radius: 0.75rem;
         }
-        .inspection-history-wrap table {
-            font-size: 0.75rem;
-        }
+        .inspection-history-wrap table { font-size: 0.75rem; }
         .inspection-history-wrap th {
             position: sticky;
             top: 0;
             z-index: 2;
             background: #f8fafc;
         }
-
         @media (max-width: 640px) {
             .hero-banner {
                 padding: 1rem 1rem;
                 flex-direction: column;
                 align-items: flex-start;
             }
-            .hero-banner .hero-title {
-                font-size: 1.1rem;
-            }
-            .stat-card .stat-value {
-                font-size: 1.2rem;
-            }
-            .modal-card {
-                max-width: 100%;
-                margin: 0.5rem;
-                border-radius: 1rem;
-            }
-            .modal-card .modal-header {
-                padding: 0.5rem 0.75rem;
-            }
-            .modal-card .modal-body {
-                padding: 0.5rem 0.75rem;
-            }
-            .subsub-parts-table {
-                font-size: 0.7rem;
-            }
+            .hero-banner .hero-title { font-size: 1.1rem; }
+            .stat-card .stat-value { font-size: 1.2rem; }
+            .modal-card { max-width: 100%; margin: 0.5rem; border-radius: 1rem; }
+            .modal-card .modal-header { padding: 0.5rem 0.75rem; }
+            .modal-card .modal-body { padding: 0.5rem 0.75rem; }
+            .subsub-parts-table { font-size: 0.7rem; }
             .subsub-parts-table th,
-            .subsub-parts-table td {
-                padding: 4px 5px;
-            }
+            .subsub-parts-table td { padding: 4px 5px; }
             .stat-card .stat-icon-wrapper {
                 width: 30px;
                 height: 30px;
                 font-size: 0.9rem;
             }
-            .filter-grid {
-                grid-template-columns: 1fr 1fr !important;
-            }
+            .filter-grid { grid-template-columns: 1fr 1fr !important; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Toast container -->
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="max-w-7xl mx-auto px-4 py-4 md:px-6">
 
-        <!-- ─── HERO BANNER ─── -->
+        <!-- Hero Banner -->
         <div class="hero-banner mb-5">
             <div class="flex items-center gap-3 flex-wrap">
-                <div class="hero-icon">
-                    <i class="fa-solid fa-industry"></i>
-                </div>
+                <div class="hero-icon"><i class="fa-solid fa-industry"></i></div>
                 <div>
                     <div class="hero-title">Assembly Process Analysis</div>
                     <div class="hero-sub">Welding &amp; Fastener — QC insights</div>
@@ -507,7 +430,7 @@
             </div>
         </div>
 
-        <!-- ─── HEADER ─── -->
+        <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
             <div>
                 <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -516,6 +439,7 @@
                 <p class="text-xs text-gray-500">
                     <i class="fa-regular fa-circle-info text-indigo-400 mr-1"></i>
                     Showing <strong>only parts selected</strong> in the QC inspection's Part List for each sub‑sub assembly.
+                    <br><span class="text-indigo-400 text-[0.6rem]">Completion = (assembled parts / total parts) × 100</span>
                 </p>
             </div>
             <div class="flex gap-2 flex-wrap">
@@ -531,7 +455,7 @@
             </div>
         </div>
 
-        <!-- ─── FILTERS (compact) ─── -->
+        <!-- Filters -->
         <div class="bg-white rounded-xl shadow-sm p-3 md:p-4 mb-4 border border-gray-100/80">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 items-end filter-grid">
                 <div>
@@ -558,7 +482,7 @@
             </div>
         </div>
 
-        <!-- ─── STAT CARDS (compact) ─── -->
+        <!-- Stat Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4">
             <div class="stat-card">
                 <div class="flex items-center justify-between mb-0.5">
@@ -600,7 +524,7 @@
             </div>
         </div>
 
-        <!-- ─── MAIN TABLE ─── -->
+        <!-- Main Table -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100/80 overflow-hidden">
             <div class="px-4 py-2.5 border-b bg-slate-50/60 flex flex-wrap justify-between items-center gap-2">
                 <h2 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
@@ -631,7 +555,7 @@
         </div>
     </div>
 
-    <!-- ─── COMPLETION MODAL ─── -->
+    <!-- Modals -->
     <div id="completionModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCompletionModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -642,7 +566,6 @@
         </div>
     </div>
 
-    <!-- ─── ASSEMBLY MODAL (other processes) ─── -->
     <div id="assemblyModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeAssemblyModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -653,7 +576,6 @@
         </div>
     </div>
 
-    <!-- ─── PART DETAIL MODAL ─── -->
     <div id="partModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closePartModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -783,23 +705,6 @@
             return null;
         }
 
-        function getAssemblyProgressPct(insp) {
-            if (insp.assembly_progress_pct !== undefined && insp.assembly_progress_pct !== null) {
-                const val = parseFloat(insp.assembly_progress_pct);
-                if (!isNaN(val)) return val;
-            }
-            if (insp.extra_fields) {
-                const candidates = ['Assembly Progress %', 'assembly_progress_pct', 'Assembly Progress'];
-                for (const key of candidates) {
-                    if (insp.extra_fields[key] !== undefined) {
-                        const val = parseFloat(insp.extra_fields[key]);
-                        if (!isNaN(val)) return val;
-                    }
-                }
-            }
-            return null;
-        }
-
         function getSuggestedNext(insp) {
             if (insp.suggested_next_operation && insp.suggested_next_operation.trim() !== '') {
                 return insp.suggested_next_operation.trim();
@@ -833,7 +738,8 @@
         let partInspectionsMap = new Map();
         let partToSubSubKey = new Map();
         let partNumberMap = new Map();
-        let selectedPartsMap = new Map(); // sub-sub key → Set of selected part names
+        let selectedPartsMap = new Map();      // key → Set of selected part names
+        let allPartsMap = new Map();           // key → Set of ALL part names (from all inspections)
 
         // ─── FETCH & AGGREGATE ───
         async function fetchInspections() {
@@ -888,8 +794,6 @@
                         selectedNames = [...selectedNames, ...names];
                     }
                 }
-
-                // Also check if Tag No. is an object
                 if (tagNo && typeof tagNo === 'object' && !Array.isArray(tagNo)) {
                     const names = Object.keys(tagNo).filter(n => n && n.trim());
                     selectedNames = [...selectedNames, ...names];
@@ -900,6 +804,19 @@
                 for (const name of selectedNames) {
                     if (name && name.trim()) set.add(name.trim());
                 }
+            }
+
+            // ─── Step 1b: Build ALL parts map (from ALL inspections) ───
+            const allMap = new Map();
+            for (const insp of inspections) {
+                const client = getExtraField(insp, 'Customer Name') || 'Unknown';
+                const title = getExtraField(insp, 'Project Name') || 'Untitled';
+                const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
+                const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
+                const key = `${client}||${title}||${subtitle}||${subSub}`;
+                const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
+                if (!allMap.has(key)) allMap.set(key, new Set());
+                allMap.get(key).add(partName);
             }
 
             // ─── Step 2: Build targetMap (assembly inspections) ───
@@ -913,7 +830,6 @@
                 const delivered = insp.delivered_qty || 0;
                 const accepted = insp.accepted_qty || 0;
                 const conditional = insp.conditional_accept_qty || 0;
-                const progress = getAssemblyProgressPct(insp);
                 const submittedAt = new Date(insp.submitted_at);
 
                 const key = `${client}||${title}||${subtitle}||${subSub}`;
@@ -927,7 +843,6 @@
                         totalDelivered: 0,
                         totalAccepted: 0,
                         totalConditional: 0,
-                        assemblyProgressPct: null,
                         latestDate: null,
                     });
                 }
@@ -940,12 +855,8 @@
                 entry.totalDelivered += delivered;
                 entry.totalAccepted += accepted;
                 entry.totalConditional += conditional;
-
-                if (progress !== null) {
-                    if (!entry.latestDate || submittedAt > entry.latestDate) {
-                        entry.latestDate = submittedAt;
-                        entry.assemblyProgressPct = progress;
-                    }
+                if (!entry.latestDate || submittedAt > entry.latestDate) {
+                    entry.latestDate = submittedAt;
                 }
             }
 
@@ -1012,8 +923,6 @@
             }
 
             for (const [key, entry] of targetMap) {
-                const progressPct = entry.assemblyProgressPct;
-                // Only include parts that are in the selected set for this key
                 const selectedSet = selectedMap.get(key) || new Set();
                 for (const [partName, partData] of entry.parts) {
                     if (!selectedSet.has(partName)) continue;
@@ -1027,7 +936,6 @@
                         delivered: partData.delivered,
                         accepted: partData.accepted,
                         conditional: partData.conditional,
-                        assemblyProgressPct: progressPct,
                         subSubPartCount: entry.parts.size,
                     });
                     p2ss.set(partName, key);
@@ -1039,7 +947,6 @@
                 const selectedSet = selectedMap.get(key) || new Set();
                 for (const [partName, partData] of entry.parts) {
                     if (!selectedSet.has(partName)) continue;
-                    // Check if this part is already in rows
                     const exists = rows.some(r => r.partName === partName && r.subSubKey === key);
                     if (!exists) {
                         rows.push({
@@ -1052,7 +959,6 @@
                             delivered: partData.delivered || 0,
                             accepted: 0,
                             conditional: 0,
-                            assemblyProgressPct: null,
                             subSubPartCount: selectedSet.size,
                         });
                         p2ss.set(partName, key);
@@ -1060,7 +966,7 @@
                 }
             }
 
-            // ─── Step 6: Build subtitle part counts ───
+            // ─── Step 6: Build subtitle part counts (based on selected parts) ───
             const subtitlePartCounts = new Map();
             for (const row of rows) {
                 const sk = `${row.client}||${row.title}||${row.subtitle}`;
@@ -1080,6 +986,16 @@
                 partInspMap.get(pn).push(insp);
             }
 
+            // ─── Store computed completion in a separate map ───
+            const completionMap = new Map();
+            for (const [key, selectedSet] of selectedMap) {
+                const allSet = allMap.get(key) || new Set();
+                const total = allSet.size;
+                const assembled = selectedSet.size;
+                const pct = total > 0 ? (assembled / total) * 100 : 0;
+                completionMap.set(key, { total, assembled, pct });
+            }
+
             return {
                 rows,
                 targetMap,
@@ -1088,6 +1004,8 @@
                 partToSubSubKey: p2ss,
                 partNumberMap: pnMap,
                 selectedPartsMap: selectedMap,
+                allPartsMap: allMap,
+                completionMap: completionMap,
             };
         }
 
@@ -1120,10 +1038,16 @@
                 return;
             }
 
+            // Build assembly map from filtered rows, also fetch total parts from allPartsMap
             const assemblyMap = new Map();
             for (const row of filteredRows) {
                 const key = row.subSubKey;
                 if (!assemblyMap.has(key)) {
+                    // Get total parts from allPartsMap
+                    const allSet = window.allPartsMap?.get(key) || new Set();
+                    const totalParts = allSet.size;
+                    const selectedCount = row.subSubPartCount; // this is number of selected parts for this key
+                    const completion = totalParts > 0 ? (selectedCount / totalParts) * 100 : 0;
                     assemblyMap.set(key, {
                         client: row.client,
                         title: row.title,
@@ -1135,7 +1059,9 @@
                         totalConditional: 0,
                         subSubPartCount: row.subSubPartCount,
                         subtitlePartCount: row.subtitlePartCount,
-                        assemblyProgressPct: row.assemblyProgressPct,
+                        totalParts: totalParts,
+                        assembledParts: selectedCount,
+                        completion: completion,
                     });
                 }
                 const entry = assemblyMap.get(key);
@@ -1168,7 +1094,7 @@
                 const ss = row.subSub;
                 if (!hierarchy[c][t][s][ss]) {
                     const assemblyEntry = assemblyMap.get(row.subSubKey);
-                    const comp = assemblyEntry ? assemblyEntry.assemblyProgressPct : null;
+                    const comp = assemblyEntry ? assemblyEntry.completion : 0;
                     hierarchy[c][t][s][ss] = {
                         parts: [],
                         subSubTotalDelivered: assemblyEntry ? assemblyEntry.totalDelivered : 0,
@@ -1180,6 +1106,8 @@
                         title: t,
                         subtitle: s,
                         subSub: ss,
+                        totalParts: assemblyEntry ? assemblyEntry.totalParts : 0,
+                        assembledParts: assemblyEntry ? assemblyEntry.assembledParts : 0,
                     };
                 }
                 hierarchy[c][t][s][ss].parts.push({ partName: row.partName, delivered: row.delivered });
@@ -1245,11 +1173,14 @@
                                     subtitlePrinted = true;
                                 }
                                 if (!subSubPrinted) {
+                                    const totalP = subSubData.totalParts;
+                                    const assembledP = subSubData.assembledParts;
                                     html += `<td rowspan="${parts.length}" class="align-top">
                                         <div class="clickable-assembly" onclick="showAssemblyDetails('${escapeHtml(subSub)}','${escapeHtml(client)}','${escapeHtml(title)}','${escapeHtml(subtitle)}')">
                                             ${escapeHtml(subSub)}
                                         </div>
                                         <span class="group-meta">${partCount} parts · <span class="highlight">${formatQty(totalDeliv)}</span> total delivered</span>
+                                        <span class="group-meta text-indigo-400">${assembledP}/${totalP} assembled</span>
                                     </td>`;
                                     subSubPrinted = true;
                                 }
@@ -1270,8 +1201,8 @@
             tbody.innerHTML = html;
             document.getElementById('recordCount').innerText = `${filteredRows.length} part records`;
             document.getElementById('recordCountBottom').innerText =
-            `${totalParts} unique parts · ${subSubs.size} sub‑sub assemblies`;
-            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')}) — only selected parts shown`;
+                `${totalParts} unique parts · ${subSubs.size} sub‑sub assemblies`;
+            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records (${TARGET_PROCESSES.join(', ')}) — completion = assembled / total parts`;
         }
 
         // ─── COMPLETION MODAL ───
@@ -1279,13 +1210,21 @@
             const key = `${client}||${title}||${subtitle}||${subSub}`;
             const targetEntry = window.subSubAssemblyMap?.get(key);
             const selectedSet = window.selectedPartsMap?.get(key) || new Set();
+            const allSet = window.allPartsMap?.get(key) || new Set();
+            const totalParts = allSet.size;
+            const assembledParts = selectedSet.size;
+            const completion = totalParts > 0 ? (assembledParts / totalParts) * 100 : 0;
+
             const titleEl = document.getElementById('completionModalTitle');
-            titleEl.innerHTML = `<i class="fa-regular fa-chart-pie text-indigo-500 mr-2"></i>${escapeHtml(subSub)} — Assembly Parts`;
+            titleEl.innerHTML = `<i class="fa-regular fa-chart-pie text-indigo-500 mr-2"></i>${escapeHtml(subSub)} — Assembly Progress`;
             const body = document.getElementById('completionModalBody');
 
             if (!targetEntry || targetEntry.parts.size === 0) {
-                body.innerHTML =
-                    `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No assembly parts found.</div>`;
+                body.innerHTML = `
+                    <div class="text-sm text-gray-500 p-4 text-center">
+                        <i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>
+                        No assembly parts found.
+                    </div>`;
                 document.getElementById('completionModal').classList.remove('hidden');
                 return;
             }
@@ -1296,8 +1235,7 @@
             const totalAccepted = partsList.reduce((sum, [_, data]) => sum + (data.accepted || 0), 0);
             const totalConditional = partsList.reduce((sum, [_, data]) => sum + (data.conditional || 0), 0);
             const totalAcceptedCond = totalAccepted + totalConditional;
-            const sortedParts = partsList.sort((a, b) => (b[1].accepted + b[1].conditional) - (a[1].accepted + a[1]
-            .conditional));
+            const sortedParts = partsList.sort((a, b) => (b[1].accepted + b[1].conditional) - (a[1].accepted + a[1].conditional));
 
             let html = `
                 <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
@@ -1305,7 +1243,10 @@
                     <span class="modal-summary-badge">${sortedParts.length} parts</span>
                     <span class="modal-summary-badge bg-emerald-50 text-emerald-700">${formatQty(totalDelivered)} delivered</span>
                     <span class="modal-summary-badge bg-blue-50 text-blue-700">${formatQty(totalAcceptedCond)} accepted + conditional</span>
-                    <span class="modal-summary-badge bg-indigo-50 text-indigo-700"><i class="fa-regular fa-check-circle mr-1"></i>selected only</span>
+                    <span class="modal-summary-badge bg-indigo-50 text-indigo-700">
+                        <i class="fa-regular fa-check-circle mr-1"></i>
+                        ${assembledParts}/${totalParts} assembled (${completion.toFixed(1)}%)
+                    </span>
                 </div>
                 <div class="text-xs text-gray-400 mb-2"><i class="fa-regular fa-tag mr-1"></i> Parts from <strong>Assembling (welding)</strong> and <strong>Assembling (fastener)</strong> — tag_no from database</div>
                 <div class="overflow-x-auto">
@@ -1356,7 +1297,6 @@
                     document.getElementById('assemblyModal').classList.remove('hidden');
                     return;
                 }
-                // Show selected parts with 0 delivered
                 const partsList = Array.from(selectedSet).map(name => [name, { delivered: 0 }]);
                 const targetKey = `${client}||${title}||${subtitle}||${subSub}`;
                 const targetEntry = window.subSubAssemblyMap?.get(targetKey);
@@ -1517,15 +1457,22 @@
             ];
             const rowsToExport = filteredRows.length ? filteredRows : allRows;
 
-            const assemblyMap = new Map();
+            // Compute completion for each sub-sub key
+            const completionMap = new Map();
             for (const row of rowsToExport) {
                 const key = row.subSubKey;
-                if (!assemblyMap.has(key)) assemblyMap.set(key, { progress: row.assemblyProgressPct });
+                if (!completionMap.has(key)) {
+                    const allSet = window.allPartsMap?.get(key) || new Set();
+                    const selectedSet = window.selectedPartsMap?.get(key) || new Set();
+                    const total = allSet.size;
+                    const assembled = selectedSet.size;
+                    const pct = total > 0 ? (assembled / total) * 100 : 0;
+                    completionMap.set(key, pct);
+                }
             }
 
             for (const row of rowsToExport) {
-                const comp = assemblyMap.get(row.subSubKey)?.progress;
-                const compVal = comp !== null && comp !== undefined ? comp : 0;
+                const compVal = completionMap.get(row.subSubKey) || 0;
                 const rawTagNo = window.partNumberMap?.get(row.partName) || '—';
                 const pairs = parseTagNoPairs(rawTagNo);
                 let tagDisplay = '—',
@@ -1600,10 +1547,12 @@
             window.partToSubSubKey = result.partToSubSubKey;
             window.partNumberMap = result.partNumberMap;
             window.selectedPartsMap = result.selectedPartsMap;
+            window.allPartsMap = result.allPartsMap;
+            window.completionMap = result.completionMap;
             populateFilters(allRows);
             filteredRows = [...allRows];
             applyFilters();
-            showToast(`Data refreshed – ${allRows.length} part records (only selected parts shown)`, 'info');
+            showToast(`Data refreshed – ${allRows.length} part records (completion = assembled / total)`, 'info');
         }
 
         // ─── EVENT LISTENERS ───
