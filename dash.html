@@ -10,7 +10,6 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* (styles remain unchanged – same as before) */
         body {
             background: #f0f4f8;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -439,7 +438,7 @@
                 <p class="text-xs text-gray-500">
                     <i class="fa-regular fa-circle-info text-indigo-400 mr-1"></i>
                     Showing <strong>only parts selected</strong> in the QC inspection's Part List for each sub‑sub assembly.
-                    <br><span class="text-indigo-400 text-[0.6rem]">Completion = (delivered qty from assembly) / (total required qty from Tag No.) × 100</span>
+                    <br><span class="text-indigo-400 text-[0.6rem]">Completion = (selected parts / total parts) × 100</span>
                 </p>
             </div>
             <div class="flex gap-2 flex-wrap">
@@ -740,8 +739,7 @@
         let partNumberMap = new Map();
         let selectedPartsMap = new Map();      // key → Set of selected part names
         let allPartsMap = new Map();           // key → Set of ALL part names (from all inspections)
-        let partRequiredQtyMap = new Map();    // partName → required qty (from Tag No.)
-        let assemblyCompletionData = new Map(); // key → { totalRequired, totalDelivered, pct }
+        let assemblyCompletionData = new Map(); // key → { totalParts, selectedParts, pct }
 
         // ─── FETCH & AGGREGATE ───
         async function fetchInspections() {
@@ -758,36 +756,6 @@
         function aggregateAssemblyData(inspections) {
             const targetInsp = inspections.filter(insp => isTargetProcess(insp.process_type));
             const nonTargetInsp = inspections.filter(insp => !isTargetProcess(insp.process_type));
-
-            // ─── Step 0: Build required quantity map from Tag No. ───
-            const reqQtyMap = new Map();
-            for (const insp of inspections) {
-                const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
-                if (reqQtyMap.has(partName)) continue; // keep first seen
-                const extra = insp.extra_fields || {};
-                const tagNo = extra['Tag No.'];
-                if (tagNo) {
-                    const pairs = parseTagNoPairs(tagNo);
-                    if (pairs && pairs.length > 0) {
-                        // If Tag No. is a single part, the quantity might be in the value
-                        // For simplicity, we take the quantity from the first pair that matches partName
-                        // But often Tag No. contains multiple parts, so we need to find the one matching partName
-                        // However, we are storing per part, so we need to find the qty for this part.
-                        // Actually, Tag No. usually lists all parts with quantities. We can iterate and store each part's qty.
-                        for (const pair of pairs) {
-                            const name = pair.name.trim();
-                            if (name && !reqQtyMap.has(name)) {
-                                const qty = parseFloat(pair.qty) || 1;
-                                reqQtyMap.set(name, qty);
-                            }
-                        }
-                    }
-                }
-                // If no Tag No., default qty = 1
-                if (!reqQtyMap.has(partName)) {
-                    reqQtyMap.set(partName, 1);
-                }
-            }
 
             // ─── Step 1: Build selected parts map from assembly inspections ───
             const selectedMap = new Map(); // key → Set of part names
@@ -833,7 +801,7 @@
                 }
             }
 
-            // ─── Step 1b: Build ALL parts map ───
+            // ─── Step 2: Build ALL parts map (from ALL inspections) ───
             const allMap = new Map();
             for (const insp of inspections) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -846,7 +814,7 @@
                 allMap.get(key).add(partName);
             }
 
-            // ─── Step 2: Build targetMap (assembly inspections) ───
+            // ─── Step 3: Build targetMap (assembly inspections) ───
             const targetMap = new Map();
             for (const insp of targetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -887,7 +855,7 @@
                 }
             }
 
-            // ─── Step 3: Build nonTargetMap but ONLY include selected parts ───
+            // ─── Step 4: Build nonTargetMap but ONLY include selected parts ───
             const nonTargetMap = new Map();
             for (const insp of nonTargetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
@@ -910,7 +878,7 @@
                 entry.parts.set(partName, partData);
             }
 
-            // ─── Step 4: Ensure selected parts with no non-target data appear with 0 ───
+            // ─── Step 5: Ensure selected parts with no non-target data appear with 0 ───
             for (const [key, selectedSet] of selectedMap) {
                 if (!nonTargetMap.has(key)) {
                     const parts = key.split('||');
@@ -934,7 +902,7 @@
                 }
             }
 
-            // ─── Step 5: Build rows for display ───
+            // ─── Step 6: Build rows for display ───
             const rows = [];
             const p2ss = new Map();
             const pnMap = new Map();
@@ -990,7 +958,7 @@
                 }
             }
 
-            // ─── Step 6: Build subtitle part counts ───
+            // ─── Step 7: Build subtitle part counts ───
             const subtitlePartCounts = new Map();
             for (const row of rows) {
                 const sk = `${row.client}||${row.title}||${row.subtitle}`;
@@ -1010,28 +978,18 @@
                 partInspMap.get(pn).push(insp);
             }
 
-            // ─── Compute completion data per sub-sub key ───
+            // ─── Compute completion data per sub-sub key using PART COUNTS ───
             const completionData = new Map();
             for (const [key, allSet] of allMap) {
-                // total required = sum of required qty for each part in allSet
-                let totalRequired = 0;
-                for (const partName of allSet) {
-                    const qty = reqQtyMap.get(partName) || 1;
-                    totalRequired += qty;
-                }
-                // total delivered = sum of delivered_qty from targetMap for selected parts only
-                let totalDelivered = 0;
-                const targetEntry = targetMap.get(key);
+                const totalParts = allSet.size;
                 const selectedSet = selectedMap.get(key) || new Set();
-                if (targetEntry) {
-                    for (const [partName, partData] of targetEntry.parts) {
-                        if (selectedSet.has(partName)) {
-                            totalDelivered += partData.delivered;
-                        }
-                    }
-                }
-                const pct = totalRequired > 0 ? (totalDelivered / totalRequired) * 100 : 0;
-                completionData.set(key, { totalRequired, totalDelivered, pct });
+                const selectedPartsCount = selectedSet.size;
+                const pct = totalParts > 0 ? (selectedPartsCount / totalParts) * 100 : 0;
+                completionData.set(key, {
+                    totalParts: totalParts,
+                    selectedParts: selectedPartsCount,
+                    pct: pct
+                });
             }
 
             return {
@@ -1043,7 +1001,6 @@
                 partNumberMap: pnMap,
                 selectedPartsMap: selectedMap,
                 allPartsMap: allMap,
-                partRequiredQtyMap: reqQtyMap,
                 completionData: completionData,
             };
         }
@@ -1082,7 +1039,7 @@
             for (const row of filteredRows) {
                 const key = row.subSubKey;
                 if (!assemblyMap.has(key)) {
-                    const compData = window.assemblyCompletionData?.get(key) || { totalRequired: 0, totalDelivered: 0, pct: 0 };
+                    const compData = window.assemblyCompletionData?.get(key) || { totalParts: 0, selectedParts: 0, pct: 0 };
                     assemblyMap.set(key, {
                         client: row.client,
                         title: row.title,
@@ -1094,8 +1051,8 @@
                         totalConditional: 0,
                         subSubPartCount: row.subSubPartCount,
                         subtitlePartCount: row.subtitlePartCount,
-                        totalRequired: compData.totalRequired || 0,
-                        totalDeliveredQty: compData.totalDelivered || 0,
+                        totalParts: compData.totalParts || 0,
+                        selectedParts: compData.selectedParts || 0,
                         completion: compData.pct || 0,
                     });
                 }
@@ -1130,8 +1087,8 @@
                 if (!hierarchy[c][t][s][ss]) {
                     const assemblyEntry = assemblyMap.get(row.subSubKey);
                     const comp = assemblyEntry ? assemblyEntry.completion : 0;
-                    const totalReq = assemblyEntry ? assemblyEntry.totalRequired : 0;
-                    const totalDeliv = assemblyEntry ? assemblyEntry.totalDeliveredQty : 0;
+                    const totalP = assemblyEntry ? assemblyEntry.totalParts : 0;
+                    const selectedP = assemblyEntry ? assemblyEntry.selectedParts : 0;
                     hierarchy[c][t][s][ss] = {
                         parts: [],
                         subSubTotalDelivered: assemblyEntry ? assemblyEntry.totalDelivered : 0,
@@ -1143,8 +1100,8 @@
                         title: t,
                         subtitle: s,
                         subSub: ss,
-                        totalRequired: totalReq,
-                        totalDeliveredQty: totalDeliv,
+                        totalParts: totalP,
+                        selectedParts: selectedP,
                     };
                 }
                 hierarchy[c][t][s][ss].parts.push({ partName: row.partName, delivered: row.delivered });
@@ -1188,8 +1145,8 @@
                             const subtitlePartCnt = subSubData.subtitlePartCount;
                             const pctSub = totalParts > 0 ? (subtitlePartCnt / totalParts) * 100 : 0;
                             const completion = subSubData.assemblyProgressPct;
-                            const totalReq = subSubData.totalRequired;
-                            const totalDelivQty = subSubData.totalDeliveredQty;
+                            const totalP = subSubData.totalParts;
+                            const selectedP = subSubData.selectedParts;
 
                             let subSubPrinted = false;
                             for (const part of parts) {
@@ -1217,11 +1174,12 @@
                                             ${escapeHtml(subSub)}
                                         </div>
                                         <span class="group-meta">${partCount} parts · <span class="highlight">${formatQty(totalDeliv)}</span> total delivered</span>
+                                        <span class="group-meta text-indigo-400">${selectedP}/${totalP} parts selected</span>
                                     </td>`;
                                     subSubPrinted = true;
                                 }
                                 const compVal = safePct(completion);
-                                const fraction = `${totalDelivQty} / ${totalReq}`;
+                                const fraction = `${selectedP} / ${totalP}`;
                                 html += `<td class="text-center">
                                     <div class="flex flex-col items-center clickable-completion" onclick="showCompletionDetails('${escapeHtml(subSub)}','${escapeHtml(client)}','${escapeHtml(title)}','${escapeHtml(subtitle)}')">
                                         <div class="flex items-center gap-2 w-full justify-center">
@@ -1242,13 +1200,13 @@
             document.getElementById('recordCount').innerText = `${filteredRows.length} part records`;
             document.getElementById('recordCountBottom').innerText =
                 `${totalParts} unique parts · ${subSubs.size} sub‑sub assemblies`;
-            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records — completion = delivered qty / required qty`;
+            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records — completion = selected parts / total parts`;
         }
 
         // ─── COMPLETION MODAL ───
         function showCompletionDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
-            const compData = window.assemblyCompletionData?.get(key) || { totalRequired: 0, totalDelivered: 0, pct: 0 };
+            const compData = window.assemblyCompletionData?.get(key) || { totalParts: 0, selectedParts: 0, pct: 0 };
             const targetEntry = window.subSubAssemblyMap?.get(key);
             const selectedSet = window.selectedPartsMap?.get(key) || new Set();
             const allSet = window.allPartsMap?.get(key) || new Set();
@@ -1274,8 +1232,8 @@
             const totalAcceptedCond = totalAccepted + totalConditional;
             const sortedParts = partsList.sort((a, b) => (b[1].accepted + b[1].conditional) - (a[1].accepted + a[1].conditional));
 
-            const totalReq = compData.totalRequired || 0;
-            const totalDeliv = compData.totalDelivered || 0;
+            const totalP = compData.totalParts || 0;
+            const selectedP = compData.selectedParts || 0;
             const pct = compData.pct || 0;
 
             let html = `
@@ -1286,7 +1244,7 @@
                     <span class="modal-summary-badge bg-blue-50 text-blue-700">${formatQty(totalAcceptedCond)} accepted + conditional</span>
                     <span class="modal-summary-badge bg-indigo-50 text-indigo-700">
                         <i class="fa-regular fa-check-circle mr-1"></i>
-                        ${totalDeliv} / ${totalReq} delivered (${pct.toFixed(0)}%)
+                        ${selectedP} / ${totalP} parts assembled (${pct.toFixed(0)}%)
                     </span>
                 </div>
                 <div class="text-xs text-gray-400 mb-2"><i class="fa-regular fa-tag mr-1"></i> Parts from <strong>Assembling (welding)</strong> and <strong>Assembling (fastener)</strong> — tag_no from database</div>
@@ -1491,7 +1449,7 @@
             if (!allRows.length) { showToast('No data to export', 'error'); return; }
             const data = [
                 ['Client', 'Project Title', 'Subtitle', 'Sub‑Sub Assembly', 'Part Name', 'tag_no (Part Number)', 'Qty',
-                    'Delivered Qty', 'Accepted Qty', 'Conditional Qty', 'Completion (%)', 'Delivered / Required'
+                    'Delivered Qty', 'Accepted Qty', 'Conditional Qty', 'Completion (%)', 'Selected / Total'
                 ]
             ];
             const rowsToExport = filteredRows.length ? filteredRows : allRows;
@@ -1500,13 +1458,13 @@
             for (const row of rowsToExport) {
                 const key = row.subSubKey;
                 if (!compMap.has(key)) {
-                    const compData = window.assemblyCompletionData?.get(key) || { totalRequired: 0, totalDelivered: 0, pct: 0 };
+                    const compData = window.assemblyCompletionData?.get(key) || { totalParts: 0, selectedParts: 0, pct: 0 };
                     compMap.set(key, compData);
                 }
             }
 
             for (const row of rowsToExport) {
-                const comp = compMap.get(row.subSubKey) || { totalRequired: 0, totalDelivered: 0, pct: 0 };
+                const comp = compMap.get(row.subSubKey) || { totalParts: 0, selectedParts: 0, pct: 0 };
                 const rawTagNo = window.partNumberMap?.get(row.partName) || '—';
                 const pairs = parseTagNoPairs(rawTagNo);
                 let tagDisplay = '—',
@@ -1520,7 +1478,7 @@
                     row.partName, tagDisplay, qtyDisplay,
                     row.delivered, row.accepted, row.conditional || 0,
                     comp.pct.toFixed(1) + '%',
-                    `${comp.totalDelivered} / ${comp.totalRequired}`
+                    `${comp.selectedParts} / ${comp.totalParts}`
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -1583,12 +1541,11 @@
             window.partNumberMap = result.partNumberMap;
             window.selectedPartsMap = result.selectedPartsMap;
             window.allPartsMap = result.allPartsMap;
-            window.partRequiredQtyMap = result.partRequiredQtyMap;
             window.assemblyCompletionData = result.completionData;
             populateFilters(allRows);
             filteredRows = [...allRows];
             applyFilters();
-            showToast(`Data refreshed – ${allRows.length} part records (completion = delivered / required)`, 'info');
+            showToast(`Data refreshed – ${allRows.length} part records (completion = selected / total parts)`, 'info');
         }
 
         // ─── EVENT LISTENERS ───
