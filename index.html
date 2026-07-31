@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
 
     <style>
+        /* (styles unchanged – same as before) */
         * {
             margin: 0;
             padding: 0;
@@ -23,7 +24,6 @@
             background: #f1f5f9;
             color: #1e293b;
         }
-
         .card {
             background: #ffffff;
             border-radius: 16px;
@@ -39,7 +39,6 @@
         .card-body {
             padding: 20px 24px;
         }
-
         .input-field {
             background: #ffffff;
             border: 1px solid #d1d5db;
@@ -63,7 +62,6 @@
         .input-field::placeholder {
             color: #94a3b8;
         }
-
         .select-field {
             background: #ffffff;
             border: 1px solid #d1d5db;
@@ -84,7 +82,6 @@
             outline: none;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
         }
-
         .btn-primary {
             background: #2563eb;
             border: none;
@@ -105,7 +102,6 @@
         .btn-primary:active {
             transform: scale(0.97);
         }
-
         .btn-secondary {
             background: #f1f5f9;
             border: 1px solid #e2e8f0;
@@ -122,7 +118,6 @@
         .btn-secondary:hover {
             background: #e2e8f0;
         }
-
         .btn-danger-sm {
             background: #fef2f2;
             border: 1px solid #fecaca;
@@ -136,7 +131,6 @@
         .btn-danger-sm:hover {
             background: #fee2e2;
         }
-
         .rating-pill {
             display: inline-block;
             padding: 2px 12px;
@@ -162,7 +156,6 @@
             background: #fee2e2;
             color: #b91c1c;
         }
-
         .status-dot {
             display: inline-block;
             width: 8px;
@@ -173,7 +166,6 @@
         .status-dot.online {
             background: #22c55e;
         }
-
         .table-wrap {
             overflow-x: auto;
             border-radius: 12px;
@@ -204,7 +196,6 @@
         .table-wrap tr:hover td {
             background: #fafbfc;
         }
-
         .part-qty-table td {
             padding: 4px 6px;
             border-bottom: 1px solid #eef2f6;
@@ -221,7 +212,6 @@
             border-color: #2563eb;
             outline: none;
         }
-
         .part-list-multi {
             min-height: 80px;
             background: #ffffff;
@@ -237,7 +227,6 @@
             background: #dbeafe;
             color: #1e293b;
         }
-
         .remove-part-btn {
             color: #b91c1c;
             cursor: pointer;
@@ -249,7 +238,6 @@
         .remove-part-btn:hover {
             opacity: 1;
         }
-
         .assembly-progress {
             background: #f0f7ff;
             border: 1px solid #bfdbfe;
@@ -275,7 +263,6 @@
             color: #475569;
             font-size: 0.85rem;
         }
-
         .toast-container {
             position: fixed;
             top: 20px;
@@ -315,7 +302,6 @@
             align-items: center;
             gap: 10px;
         }
-
         .btn-spinner {
             display: inline-block;
             width: 18px;
@@ -336,7 +322,6 @@
             opacity: 0.7;
             pointer-events: none;
         }
-
         .history-item {
             display: flex;
             flex-wrap: wrap;
@@ -350,7 +335,6 @@
         .history-item:hover {
             background: #f8fafc;
         }
-
         #secretOverlay {
             position: fixed;
             inset: 0;
@@ -452,7 +436,6 @@
                 transform: translateX(10px);
             }
         }
-
         #mainContent {
             display: none;
             padding: 16px 16px 32px;
@@ -462,7 +445,6 @@
         #mainContent.visible {
             display: block;
         }
-
         .clickable-part {
             cursor: pointer;
             text-decoration: underline;
@@ -473,7 +455,6 @@
         .clickable-part:hover {
             opacity: 0.8;
         }
-
         .scrollbar-thin::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -486,7 +467,6 @@
             background: #cbd5e1;
             border-radius: 8px;
         }
-
         @media (max-width: 700px) {
             #secretOverlay .card {
                 padding: 28px 18px;
@@ -512,7 +492,6 @@
                 width: calc(100% - 24px);
             }
         }
-
         @media print {
             body * {
                 visibility: hidden;
@@ -595,7 +574,6 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Process Type <span class="text-rose-600">*</span></label>
                         <select id="processType" class="select-field" onchange="switchProcess()">
-                            <!-- Incoming inspection removed per user request -->
                             <option value="Punching">Punching Process</option>
                             <option value="Rolling">Rolling Process</option>
                             <option value="Bending">Bending Process</option>
@@ -718,11 +696,11 @@
                     <div><label class="block text-xs font-medium text-slate-500 mb-1">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="input-field" /></div>
                 </div>
 
-                <!-- Assembly Progress -->
+                <!-- Assembly Progress (UPDATED: part‑count based) -->
                 <div id="assemblyProgressContainer" class="mt-2 hidden">
                     <div class="assembly-progress">
                         <div class="flex-1">
-                            <span class="progress-label"><i class="fa-solid fa-boxes mr-2"></i>Total Delivered (sum)</span>
+                            <span class="progress-label"><i class="fa-solid fa-boxes mr-2"></i>Assembled Parts</span>
                             <input type="number" id="totalDeliveredQty" min="0" step="1" value="0" class="input-field bg-slate-100 cursor-not-allowed" readonly />
                         </div>
                         <div class="flex-1 text-center">
@@ -731,8 +709,8 @@
                             <div class="progress-detail" id="assemblyProgressDetail">0 / 0 delivered</div>
                         </div>
                         <div class="flex-1 text-right">
-                            <span class="progress-label">Total Qty (Accepted + Conditional)</span>
-                            <div class="text-2xl font-bold text-blue-700" id="totalAcceptedConditionalDisplay">0</div>
+                            <span class="progress-label">Total Parts</span>
+                            <div class="text-2xl font-bold text-blue-700" id="totalPartsCountDisplay">0</div>
                         </div>
                     </div>
                 </div>
@@ -1026,31 +1004,30 @@
             updateAssemblyProgress();
         }
 
+        // ─── UPDATED: Part‑count based assembly progress ───
         function updateAssemblyProgress() {
-            const selectEl = document.getElementById('extra_Tag_No_');
-            const numerator = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
-            document.getElementById('totalDeliveredQty').value = numerator;
-            document.getElementById('totalAcceptedConditionalDisplay').textContent = numerator;
+            if (!isAssemblyProcess()) return;
 
-            if (!selectEl || !isAssemblyProcess()) {
-                document.getElementById('assemblyProgressDisplay').textContent = '0%';
-                document.getElementById('assemblyProgressDetail').textContent = '0 / 0 delivered';
-                return;
-            }
+            // Get total parts for this sub-sub assembly from all inspections
+            const filters = getPartListFilters();
+            const allParts = findMatchingParts(filters);
+            const totalParts = allParts.length;
 
-            const allOptions = Array.from(selectEl.options).filter(o => o.value !== '' && !o.disabled);
-            let denominator = 0;
-            allOptions.forEach(opt => {
-                const hist = historicalPartQtyMap.get(opt.value) || 0;
-                denominator += hist;
-            });
-            if (denominator === 0) denominator = allOptions.length || 1;
+            // Assembled parts = number of selected parts
+            const assembledParts = selectedParts.length;
 
-            const pct = denominator > 0 ? Math.round((numerator / denominator) * 100) : 0;
+            // Compute percentage
+            const pct = totalParts > 0 ? Math.round((assembledParts / totalParts) * 100) : 0;
+
+            // Update display
+            document.getElementById('totalDeliveredQty').value = assembledParts;
+            document.getElementById('totalPartsCountDisplay').textContent = totalParts;
+
             const displayEl = document.getElementById('assemblyProgressDisplay');
             displayEl.textContent = pct + '%';
-            document.getElementById('assemblyProgressDetail').textContent = `${numerator} / ${denominator} delivered`;
             displayEl.style.color = pct >= 100 ? '#15803d' : pct >= 50 ? '#a16207' : '#b91c1c';
+
+            document.getElementById('assemblyProgressDetail').textContent = `${assembledParts} / ${totalParts} delivered`;
         }
 
         function onPartListSelectChange() {
@@ -1708,7 +1685,7 @@
             }
         }
 
-        // ─── GET / SET EXTRA FIELDS ───
+        // ─── GET / SET EXTRA FIELDS (UPDATED: totalDeliveredQty = count) ───
         function getExtraFields() {
             const def = getCurrentDef();
             const extra = {};
@@ -1717,7 +1694,7 @@
                 partsObj = {};
                 selectedParts.forEach(p => { partsObj[p.name] = p.qty || 0; });
                 extra['selectedParts'] = partsObj;
-                extra['totalDeliveredQty'] = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
+                extra['totalDeliveredQty'] = selectedParts.length; // count, not sum
                 extra['selectedPartNames'] = selectedParts.map(p => p.name);
             }
             if (def.extraFields) {
@@ -1912,7 +1889,7 @@
             }
         }
 
-        // ─── SAVE ───
+        // ─── SAVE (UPDATED: part‑count based) ───
         async function saveToBackend() {
             const saveBtn = document.getElementById('saveBtn');
             const saveText = document.getElementById('saveBtnText');
@@ -1932,19 +1909,15 @@
                 let total_delivered_qty, selected_parts_count, assembly_progress_pct;
 
                 if (isAssemblyProcess()) {
-                    total_delivered_qty = selectedParts.reduce((sum, p) => sum + (p.qty || 0), 0);
-                    selected_parts_count = selectedParts.length;
-                    const selectEl = document.getElementById('extra_Tag_No_');
-                    const allOptions = selectEl ? Array.from(selectEl.options).filter(o => o.value !== '' && !o.disabled) : [];
-                    let denom = 0;
-                    allOptions.forEach(opt => {
-                        const hist = historicalPartQtyMap.get(opt.value) || 0;
-                        denom += hist;
-                    });
-                    if (denom === 0) denom = allOptions.length || 1;
-                    assembly_progress_pct = Math.round((total_delivered_qty / denom) * 100);
-                    delivered_qty = total_delivered_qty;
-                    accepted_qty = total_delivered_qty;
+                    const filters = getPartListFilters();
+                    const allParts = findMatchingParts(filters);
+                    const totalParts = allParts.length;
+                    const assembledParts = selectedParts.length;
+                    total_delivered_qty = assembledParts; // count
+                    selected_parts_count = assembledParts;
+                    assembly_progress_pct = totalParts > 0 ? Math.round((assembledParts / totalParts) * 100) : 0;
+                    delivered_qty = assembledParts;
+                    accepted_qty = assembledParts;
                     rework_qty = 0;
                     reject_qty = 0;
                     conditional_accept_qty = 0;
@@ -2241,7 +2214,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('✅ QC Inspection ready – simplified UI');
+        console.log('✅ QC Inspection ready – Assembly progress now uses part counts.');
     </script>
 </body>
 </html>
