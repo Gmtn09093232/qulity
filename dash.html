@@ -10,6 +10,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
+        /* (styles unchanged – same as before) */
         body {
             background: #f0f4f8;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -438,7 +439,7 @@
                 <p class="text-xs text-gray-500">
                     <i class="fa-regular fa-circle-info text-indigo-400 mr-1"></i>
                     Showing <strong>only parts selected</strong> in the QC inspection's Part List for each sub‑sub assembly.
-                    <br><span class="text-indigo-400 text-[0.6rem]">Completion = (selected parts / total parts) × 100</span>
+                    <br><span class="text-indigo-400 text-[0.6rem]">Completion = (selected parts / total parts) × 100 &nbsp;|&nbsp; Total parts from assembly inspections only</span>
                 </p>
             </div>
             <div class="flex gap-2 flex-wrap">
@@ -738,7 +739,7 @@
         let partToSubSubKey = new Map();
         let partNumberMap = new Map();
         let selectedPartsMap = new Map();      // key → Set of selected part names
-        let allPartsMap = new Map();           // key → Set of ALL part names (from all inspections)
+        let allPartsMap = new Map();           // key → Set of ALL part names (from assembly inspections ONLY)
         let assemblyCompletionData = new Map(); // key → { totalParts, selectedParts, pct }
 
         // ─── FETCH & AGGREGATE ───
@@ -801,9 +802,10 @@
                 }
             }
 
-            // ─── Step 2: Build ALL parts map (from ALL inspections) ───
+            // ─── Step 2: Build ALL parts map (from assembly inspections ONLY) ───
+            // This is the key fix: only assembly inspections define the total parts for a sub‑sub assembly.
             const allMap = new Map();
-            for (const insp of inspections) {
+            for (const insp of targetInsp) {
                 const client = getExtraField(insp, 'Customer Name') || 'Unknown';
                 const title = getExtraField(insp, 'Project Name') || 'Untitled';
                 const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
@@ -1200,7 +1202,7 @@
             document.getElementById('recordCount').innerText = `${filteredRows.length} part records`;
             document.getElementById('recordCountBottom').innerText =
                 `${totalParts} unique parts · ${subSubs.size} sub‑sub assemblies`;
-            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records — completion = selected parts / total parts`;
+            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records — completion = selected parts / total parts (assembly-only)`;
         }
 
         // ─── COMPLETION MODAL ───
@@ -1545,7 +1547,7 @@
             populateFilters(allRows);
             filteredRows = [...allRows];
             applyFilters();
-            showToast(`Data refreshed – ${allRows.length} part records (completion = selected / total parts)`, 'info');
+            showToast(`Data refreshed – ${allRows.length} part records (completion = selected / total parts – assembly only)`, 'info');
         }
 
         // ─── EVENT LISTENERS ───
