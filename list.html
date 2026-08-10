@@ -585,7 +585,7 @@
                 </div>
                 <div>
                     <div class="stat-value" id="totalAcceptedSum">0</div>
-                    <div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Accepted</div>
+                    <div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Accepted (first op)</div>
                 </div>
             </div>
             <div class="summary-card flex items-center gap-4">
@@ -594,7 +594,7 @@
                 </div>
                 <div>
                     <div class="stat-value" id="totalConditionalSum">0</div>
-                    <div class="stat-label"><i class="fa-regular fa-flag mr-1"></i> Conditional</div>
+                    <div class="stat-label"><i class="fa-regular fa-flag mr-1"></i> Conditional (first op)</div>
                 </div>
             </div>
         </div>
@@ -742,7 +742,7 @@
             engSet = new Set();
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  FETCH
+        //  FETCH  —  now only sums first operation for summary cards
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         async function fetchReportData() {
             const tbody = document.getElementById('reportTableBody');
@@ -762,6 +762,7 @@
                 let sumD = 0,
                     sumA = 0,
                     sumC = 0;
+                const seenParts = new Set();
 
                 for (const insp of data) {
                     const proc = insp.process_type || '';
@@ -778,13 +779,18 @@
                     const cond = num(insp.conditional_accept_qty);
                     const del = acc + cond;
 
+                    const partKey = `${cl}|${pr}|${st}|${sa}|${part}`;
+                    const isFirst = !seenParts.has(partKey);
+                    if (isFirst) {
+                        seenParts.add(partKey);
+                        sumD += del;
+                        sumA += acc;
+                        sumC += cond;
+                    }
+
                     if (pr) projSet.add(pr);
                     if (proc) procSet.add(proc);
                     if (eng) engSet.add(eng);
-
-                    sumD += del;
-                    sumA += acc;
-                    sumC += cond;
 
                     rows.push({
                         client: cl,
@@ -801,7 +807,9 @@
                         conditionalRaw: cond,
                         process: proc,
                         engineer: eng,
-                        search: `${cl} ${pr} ${st} ${sa} ${draw} ${part} ${del} ${acc} ${cond} ${proc} ${eng}`.toLowerCase()
+                        search: `${cl} ${pr} ${st} ${sa} ${draw} ${part} ${del} ${acc} ${cond} ${proc} ${eng}`.toLowerCase(),
+                        // mark if this row is the first for its part (used later)
+                        isFirstOp: isFirst
                     });
                 }
 
@@ -877,7 +885,7 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  RENDER AGGREGATED  —  Delivered = first operation only
+        //  RENDER AGGREGATED  —  Delivered, Accepted, Conditional = first operation only
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function renderAggregated(rows) {
             const tbody = document.getElementById('reportTableBody');
@@ -908,13 +916,14 @@
                 if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, cond: 0, drawings: new Set(),
                     firstSeen: false });
                 const pe = ae.parts.get(p);
-                // Delivered = only the FIRST operation's (accepted + conditional)
+                // Only add if first time we see this part
                 if (!pe.firstSeen) {
                     pe.deliv += r.deliveredRaw;
+                    pe.acc += r.acceptedRaw;
+                    pe.cond += r.conditionalRaw;
                     pe.firstSeen = true;
                 }
-                pe.acc += r.acceptedRaw;
-                pe.cond += r.conditionalRaw;
+                // Always collect drawings
                 if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
 
@@ -1151,7 +1160,7 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  EXPORT XLSX
+        //  EXPORT XLSX  —  uses the same first‑op logic
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function exportToExcelXLSX() {
             const search = document.getElementById('searchInput').value.toLowerCase();
@@ -1187,10 +1196,10 @@
                 const pe = ae.parts.get(p);
                 if (!pe.firstSeen) {
                     pe.deliv += r.deliveredRaw;
+                    pe.acc += r.acceptedRaw;
+                    pe.cond += r.conditionalRaw;
                     pe.firstSeen = true;
                 }
-                pe.acc += r.acceptedRaw;
-                pe.cond += r.conditionalRaw;
                 if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
 
@@ -1373,7 +1382,7 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  COPY TO CLIPBOARD
+        //  COPY TO CLIPBOARD  —  uses the same first‑op logic
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         async function copyTableToClipboard() {
             const search = document.getElementById('searchInput').value.toLowerCase();
@@ -1387,7 +1396,7 @@
             if (eng) filtered = filtered.filter(r => r.engineer === eng);
             if (search) filtered = filtered.filter(r => r.search.includes(search));
 
-            // Build tree (same as export)
+            // Build tree (same as render)
             const cm = new Map();
             for (const r of filtered) {
                 const c = r.client;
@@ -1409,10 +1418,10 @@
                 const pe = ae.parts.get(p);
                 if (!pe.firstSeen) {
                     pe.deliv += r.deliveredRaw;
+                    pe.acc += r.acceptedRaw;
+                    pe.cond += r.conditionalRaw;
                     pe.firstSeen = true;
                 }
-                pe.acc += r.acceptedRaw;
-                pe.cond += r.conditionalRaw;
                 if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
 
