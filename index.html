@@ -834,14 +834,18 @@
         let allSubtitles = new Set();
         let allSubSubAssemblies = new Set();
         let allPartNames = new Set();
-        let allDrawingNos = new Set(); // NEW: for DWG No. suggestions
-        let clientTitleMap = new Map();
-        let clientSubtitleMap = new Map();
-        let clientSubSubMap = new Map();
-        let clientPartMap = new Map();
-        let clientDrawingMap = new Map(); // NEW
+        let allDrawingNos = new Set();
+        // Hierarchical maps
+        let clientTitleMap = new Map(); // client -> Set of titles
+        let titleSubtitleMap = new Map(); // key: client|title -> Set of subtitles
+        let subtitleSubSubMap = new Map(); // key: client|title|subtitle -> Set of subSubs
+        let subSubDrawingMap = new Map(); // key: client|title|subtitle|subSub -> Set of drawing nos.
+        let subSubPartMap = new Map(); // same key -> Set of part names
+
+        // Last used timestamps for sorting (global, not hierarchical)
         let lastUsedMap = { client: new Map(), title: new Map(), subtitle: new Map(), subSub: new Map(), part: new Map(),
             drawing: new Map() };
+
         let currentProcess = document.getElementById("processType").value;
         let isEditMode = false,
             editId = null;
@@ -1037,75 +1041,9 @@
             updateAssemblyProgress();
         }
 
-        // ─── APP INIT ───
-        function initApp() {
-            renderDynamicFields();
-            loadHistory();
-            populateMachineDropdown();
-            populateSuggestedNextOps();
-            const clientInput = document.getElementById('extra_Customer_Name');
-            if (clientInput) {
-                clientInput.removeEventListener('input', filterSuggestionsByCurrentClient);
-                clientInput.addEventListener('input', filterSuggestionsByCurrentClient);
-            }
-            ['extra_Part_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly', 'extra_Drawing_No_',
-                'extra_Tag_No_'
-            ].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.addEventListener('change', () => {
-                        fetchLastOperation();
-                        if (id === 'extra_Subtitle' || id === 'extra_Sub_Sub_Assembly' || id === 'extra_Customer_Name' || id === 'extra_Project_Name') {
-                            if (isAssemblyProcess()) {
-                                populatePartListMultiSelect();
-                                renderSelectedPartsTable();
-                                updateAssemblyProgress();
-                            }
-                        }
-                    });
-                    el.addEventListener('input', () => {
-                        clearTimeout(el._timer);
-                        el._timer = setTimeout(() => {
-                            fetchLastOperation();
-                            if (id === 'extra_Subtitle' || id === 'extra_Sub_Sub_Assembly' || id === 'extra_Customer_Name' || id === 'extra_Project_Name') {
-                                if (isAssemblyProcess()) {
-                                    populatePartListMultiSelect();
-                                    renderSelectedPartsTable();
-                                    updateAssemblyProgress();
-                                }
-                            }
-                        }, 400);
-                    });
-                }
-            });
-            attachPartListListeners();
-            updateVisibility();
-            if (isAssemblyProcess()) {
-                document.getElementById('assemblyProgressContainer').classList.remove('hidden');
-                setTimeout(() => {
-                    populatePartListMultiSelect();
-                    renderSelectedPartsTable();
-                    updateAssemblyProgress();
-                }, 300);
-            } else {
-                document.getElementById('assemblyProgressContainer').classList.add('hidden');
-            }
-        }
-
-        function updateVisibility() {
-            const qtySummary = document.getElementById('quantitySummary');
-            const assemblyProgress = document.getElementById('assemblyProgressContainer');
-            if (isAssemblyProcess()) {
-                qtySummary.style.display = 'none';
-                assemblyProgress.classList.remove('hidden');
-            } else {
-                qtySummary.style.display = 'grid';
-                assemblyProgress.classList.add('hidden');
-            }
-        }
-
-        // ─── SUGGESTIONS (UPDATED: includes DWG No.) ───
+        // ─── CASCADING SUGGESTIONS ───
         function updateSuggestionsFromInspections(inspections) {
+            // Clear all sets and maps
             allClientNames.clear();
             allProjectTitles.clear();
             allSubtitles.clear();
@@ -1113,10 +1051,10 @@
             allPartNames.clear();
             allDrawingNos.clear();
             clientTitleMap.clear();
-            clientSubtitleMap.clear();
-            clientSubSubMap.clear();
-            clientPartMap.clear();
-            clientDrawingMap.clear();
+            titleSubtitleMap.clear();
+            subtitleSubSubMap.clear();
+            subSubDrawingMap.clear();
+            subSubPartMap.clear();
             lastUsedMap.client.clear();
             lastUsedMap.title.clear();
             lastUsedMap.subtitle.clear();
@@ -1126,57 +1064,63 @@
 
             for (const insp of inspections) {
                 const extra = insp.extra_fields || {};
-                const client = extra["Customer Name"]?.trim();
-                const title = extra["Project Name"]?.trim();
-                const subtitle = extra["Subtitle"]?.trim();
-                const subSub = extra["Sub Sub Assembly"]?.trim();
-                const part = extra["Part Name"]?.trim();
-                const drawing = extra["Drawing No."]?.trim();
+                const client = (extra['Customer Name'] || '').trim();
+                const title = (extra['Project Name'] || '').trim();
+                const subtitle = (extra['Subtitle'] || '').trim();
+                const subSub = (extra['Sub Sub Assembly'] || '').trim();
+                const drawing = (extra['Drawing No.'] || '').trim();
+                const part = (extra['Part Name'] || '').trim();
                 const ts = new Date(insp.submitted_at || insp.created_at || Date.now()).getTime();
 
                 if (client) {
                     allClientNames.add(client);
-                    if (!lastUsedMap.client.has(client) || ts > lastUsedMap.client.get(client)) lastUsedMap.client.set(
-                        client, ts);
+                    if (!lastUsedMap.client.has(client) || ts > lastUsedMap.client.get(client))
+                        lastUsedMap.client.set(client, ts);
 
                     if (title) {
                         allProjectTitles.add(title);
-                        if (!lastUsedMap.title.has(title) || ts > lastUsedMap.title.get(title)) lastUsedMap.title.set(
-                            title, ts);
+                        if (!lastUsedMap.title.has(title) || ts > lastUsedMap.title.get(title))
+                            lastUsedMap.title.set(title, ts);
                         if (!clientTitleMap.has(client)) clientTitleMap.set(client, new Set());
                         clientTitleMap.get(client).add(title);
-                    }
-                    if (subtitle) {
-                        allSubtitles.add(subtitle);
-                        if (!lastUsedMap.subtitle.has(subtitle) || ts > lastUsedMap.subtitle.get(subtitle)) lastUsedMap
-                            .subtitle.set(subtitle, ts);
-                        if (!clientSubtitleMap.has(client)) clientSubtitleMap.set(client, new Set());
-                        clientSubtitleMap.get(client).add(subtitle);
-                    }
-                    if (subSub) {
-                        allSubSubAssemblies.add(subSub);
-                        if (!lastUsedMap.subSub.has(subSub) || ts > lastUsedMap.subSub.get(subSub)) lastUsedMap.subSub
-                            .set(subSub, ts);
-                        if (!clientSubSubMap.has(client)) clientSubSubMap.set(client, new Set());
-                        clientSubSubMap.get(client).add(subSub);
-                    }
-                    if (part) {
-                        allPartNames.add(part);
-                        if (!lastUsedMap.part.has(part) || ts > lastUsedMap.part.get(part)) lastUsedMap.part.set(part,
-                            ts);
-                        if (!clientPartMap.has(client)) clientPartMap.set(client, new Set());
-                        clientPartMap.get(client).add(part);
-                    }
-                    if (drawing) {
-                        allDrawingNos.add(drawing);
-                        if (!lastUsedMap.drawing.has(drawing) || ts > lastUsedMap.drawing.get(drawing)) lastUsedMap
-                            .drawing.set(drawing, ts);
-                        if (!clientDrawingMap.has(client)) clientDrawingMap.set(client, new Set());
-                        clientDrawingMap.get(client).add(drawing);
+
+                        const key1 = client + '|' + title;
+                        if (subtitle) {
+                            allSubtitles.add(subtitle);
+                            if (!lastUsedMap.subtitle.has(subtitle) || ts > lastUsedMap.subtitle.get(subtitle))
+                                lastUsedMap.subtitle.set(subtitle, ts);
+                            if (!titleSubtitleMap.has(key1)) titleSubtitleMap.set(key1, new Set());
+                            titleSubtitleMap.get(key1).add(subtitle);
+
+                            const key2 = key1 + '|' + subtitle;
+                            if (subSub) {
+                                allSubSubAssemblies.add(subSub);
+                                if (!lastUsedMap.subSub.has(subSub) || ts > lastUsedMap.subSub.get(subSub))
+                                    lastUsedMap.subSub.set(subSub, ts);
+                                if (!subtitleSubSubMap.has(key2)) subtitleSubSubMap.set(key2, new Set());
+                                subtitleSubSubMap.get(key2).add(subSub);
+
+                                const key3 = key2 + '|' + subSub;
+                                if (drawing) {
+                                    allDrawingNos.add(drawing);
+                                    if (!lastUsedMap.drawing.has(drawing) || ts > lastUsedMap.drawing.get(drawing))
+                                        lastUsedMap.drawing.set(drawing, ts);
+                                    if (!subSubDrawingMap.has(key3)) subSubDrawingMap.set(key3, new Set());
+                                    subSubDrawingMap.get(key3).add(drawing);
+                                }
+                                if (part) {
+                                    allPartNames.add(part);
+                                    if (!lastUsedMap.part.has(part) || ts > lastUsedMap.part.get(part))
+                                        lastUsedMap.part.set(part, ts);
+                                    if (!subSubPartMap.has(key3)) subSubPartMap.set(key3, new Set());
+                                    subSubPartMap.get(key3).add(part);
+                                }
+                            }
+                        }
                     }
                 }
             }
-            refreshDatalistOptions();
+            refreshAllDatalists();
         }
 
         function getSortedValues(set, map) {
@@ -1185,9 +1129,13 @@
             return arr;
         }
 
-        function refreshDatalistOptions(clientFilter) {
-            const filter = (clientFilter && clientFilter.trim() !== '') ? clientFilter.trim() : null;
+        function refreshAllDatalists() {
+            const client = document.getElementById('extra_Customer_Name')?.value?.trim() || '';
+            const title = document.getElementById('extra_Project_Name')?.value?.trim() || '';
+            const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
+            const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
 
+            // Client datalist (always all)
             const clientDL = document.getElementById("customerNameDatalist");
             if (clientDL) {
                 clientDL.innerHTML = "";
@@ -1198,76 +1146,101 @@
                 });
             }
 
+            // Title: filter by client if exists
             const titleDL = document.getElementById("projectNameDatalist");
             if (titleDL) {
                 titleDL.innerHTML = "";
-                let titles = filter && clientTitleMap.has(filter) ? Array.from(clientTitleMap.get(filter)) : Array.from(
-                    allProjectTitles);
-                titles.sort((a, b) => (lastUsedMap.title.get(b) || 0) - (lastUsedMap.title.get(a) || 0));
-                titles.forEach(n => {
+                let titles = allProjectTitles;
+                if (client) {
+                    titles = clientTitleMap.has(client) ? clientTitleMap.get(client) : new Set();
+                }
+                getSortedValues(titles, lastUsedMap.title).forEach(n => {
                     const o = document.createElement("option");
                     o.value = n;
                     titleDL.appendChild(o);
                 });
             }
 
+            // Subtitle: filter by client+title if both exist
             const subtitleDL = document.getElementById("subtitleDatalist");
             if (subtitleDL) {
                 subtitleDL.innerHTML = "";
-                let subtitles = filter && clientSubtitleMap.has(filter) ? Array.from(clientSubtitleMap.get(filter)) :
-                    Array.from(allSubtitles);
-                subtitles.sort((a, b) => (lastUsedMap.subtitle.get(b) || 0) - (lastUsedMap.subtitle.get(a) || 0));
-                subtitles.forEach(n => {
+                let subtitles = allSubtitles;
+                if (client && title) {
+                    const key = client + '|' + title;
+                    subtitles = titleSubtitleMap.has(key) ? titleSubtitleMap.get(key) : new Set();
+                } else if (client) {
+                    // fallback: all subtitles for this client (from clientSubtitleMap) – we don't have that, but we could build it.
+                    // For simplicity, we'll show all if not both.
+                }
+                getSortedValues(subtitles, lastUsedMap.subtitle).forEach(n => {
                     const o = document.createElement("option");
                     o.value = n;
                     subtitleDL.appendChild(o);
                 });
             }
 
+            // Sub Sub: filter by client+title+subtitle
             const subSubDL = document.getElementById("subSubDatalist");
             if (subSubDL) {
                 subSubDL.innerHTML = "";
-                let subSubs = filter && clientSubSubMap.has(filter) ? Array.from(clientSubSubMap.get(filter)) : Array.from(
-                    allSubSubAssemblies);
-                subSubs.sort((a, b) => (lastUsedMap.subSub.get(b) || 0) - (lastUsedMap.subSub.get(a) || 0));
-                subSubs.forEach(n => {
+                let subSubs = allSubSubAssemblies;
+                if (client && title && subtitle) {
+                    const key = client + '|' + title + '|' + subtitle;
+                    subSubs = subtitleSubSubMap.has(key) ? subtitleSubSubMap.get(key) : new Set();
+                }
+                getSortedValues(subSubs, lastUsedMap.subSub).forEach(n => {
                     const o = document.createElement("option");
                     o.value = n;
                     subSubDL.appendChild(o);
                 });
             }
 
-            const partDL = document.getElementById("partNameDatalist");
-            if (partDL) {
-                partDL.innerHTML = "";
-                let parts = filter && clientPartMap.has(filter) ? Array.from(clientPartMap.get(filter)) : Array.from(
-                    allPartNames);
-                parts.sort((a, b) => (lastUsedMap.part.get(b) || 0) - (lastUsedMap.part.get(a) || 0));
-                parts.forEach(n => {
-                    const o = document.createElement("option");
-                    o.value = n;
-                    partDL.appendChild(o);
-                });
-            }
-
-            // ─── NEW: DWG No. datalist ───
+            // Drawing No.: filter by client+title+subtitle+subSub
             const drawingDL = document.getElementById("drawingNoDatalist");
             if (drawingDL) {
                 drawingDL.innerHTML = "";
-                let drawings = filter && clientDrawingMap.has(filter) ? Array.from(clientDrawingMap.get(filter)) :
-                    Array.from(allDrawingNos);
-                drawings.sort((a, b) => (lastUsedMap.drawing.get(b) || 0) - (lastUsedMap.drawing.get(a) || 0));
-                drawings.forEach(n => {
+                let drawings = allDrawingNos;
+                if (client && title && subtitle && subSub) {
+                    const key = client + '|' + title + '|' + subtitle + '|' + subSub;
+                    drawings = subSubDrawingMap.has(key) ? subSubDrawingMap.get(key) : new Set();
+                }
+                getSortedValues(drawings, lastUsedMap.drawing).forEach(n => {
                     const o = document.createElement("option");
                     o.value = n;
                     drawingDL.appendChild(o);
                 });
             }
+
+            // Part Name: filter by client+title+subtitle+subSub
+            const partDL = document.getElementById("partNameDatalist");
+            if (partDL) {
+                partDL.innerHTML = "";
+                let parts = allPartNames;
+                if (client && title && subtitle && subSub) {
+                    const key = client + '|' + title + '|' + subtitle + '|' + subSub;
+                    parts = subSubPartMap.has(key) ? subSubPartMap.get(key) : new Set();
+                }
+                getSortedValues(parts, lastUsedMap.part).forEach(n => {
+                    const o = document.createElement("option");
+                    o.value = n;
+                    partDL.appendChild(o);
+                });
+            }
         }
 
-        function filterSuggestionsByCurrentClient() {
-            const clientInput = document.getElementById('extra_Customer_Name');
-            if (clientInput) refreshDatalistOptions(clientInput.value.trim() || null);
+        // ─── ATTACH EVENT LISTENERS FOR CASCADING ───
+        function attachCascadingListeners() {
+            const fields = ['extra_Customer_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', refreshAllDatalists);
+                    el.addEventListener('change', refreshAllDatalists);
+                }
+            });
+            // Also when Part Name changes, we might want to refresh DWG? No, DWG depends on subSub, not part.
+            // But we can add for completeness.
         }
 
         // ─── SCAN ───
@@ -1290,7 +1263,7 @@
                     const drawingInput = document.getElementById("extra_Drawing_No_");
                     const partInput = document.getElementById("extra_Part_Name");
                     if (clientInput && extracted.clientName) { clientInput.value = extracted.clientName;
-                        refreshDatalistOptions(extracted.clientName.trim()); }
+                        refreshAllDatalists(); }
                     if (titleInput && extracted.projectTitle) titleInput.value = extracted.projectTitle;
                     if (drawingInput && extracted.drawingNo) drawingInput.value = extracted.drawingNo;
                     if (partInput && extracted.partName) partInput.value = extracted.partName;
@@ -1596,7 +1569,7 @@
 
         function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
-        // ─── DYNAMIC FIELDS (UPDATED: DWG No. gets datalist) ───
+        // ─── DYNAMIC FIELDS ───
         function renderDynamicFields() {
             const container = document.getElementById("dynamicFieldsContainer");
             if (!container) return;
@@ -1625,7 +1598,6 @@
                         html +=
                             `<div><label class="block text-xs font-medium text-slate-500 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="input-field" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
                     } else if (field === "Drawing No.") {
-                        // ─── ADDED datalist for DWG No. ───
                         html +=
                             `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" list="drawingNoDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="drawingNoDatalist"></datalist></div>`;
                     } else if (field === "Part Name") {
@@ -1667,16 +1639,12 @@
             html += `</tbody></table></div>`;
             container.innerHTML = html;
 
-            refreshDatalistOptions();
-            const clientInput = document.getElementById('extra_Customer_Name');
-            if (clientInput) {
-                clientInput.removeEventListener('input', filterSuggestionsByCurrentClient);
-                clientInput.addEventListener('input', filterSuggestionsByCurrentClient);
-                if (clientInput.value.trim()) refreshDatalistOptions(clientInput.value.trim());
-            }
-            const partName = document.getElementById('extra_Part_Name')?.value?.trim();
-            if (partName) fetchLastOperation();
+            // Attach cascading listeners to the newly created fields
+            attachCascadingListeners();
+            // Also refresh suggestions now
+            refreshAllDatalists();
 
+            // Additional listeners for part list and others
             attachPartListListeners();
 
             if (isAssemblyProcess()) {
@@ -1761,6 +1729,8 @@
                     }
                 });
             }
+            // Refresh suggestions after setting
+            refreshAllDatalists();
             if (isAssemblyProcess()) {
                 setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
@@ -1882,7 +1852,7 @@
             document.getElementById("cancelEditBtn").classList.add("hidden");
             if (engineerFromUrl) document.getElementById('qcEngineerName').value = currentEngineer;
             populateMachineDropdown();
-            refreshDatalistOptions();
+            refreshAllDatalists();
             populateSuggestedNextOps();
             document.getElementById('suggestedNextOp').value = '';
             document.getElementById('lastOperationContainer').classList.add('hidden');
@@ -2114,9 +2084,8 @@
             const savedWorkStation = inspection.extra_fields?.["Work Station"];
             if (savedWorkStation) { const wsSelect = document.getElementById("extra_Work_Station"); if (wsSelect) wsSelect
                     .value = savedWorkStation; }
-            const clientInput = document.getElementById('extra_Customer_Name');
-            if (clientInput && clientInput.value.trim()) refreshDatalistOptions(clientInput.value.trim());
-            else refreshDatalistOptions();
+            // Refresh suggestions
+            refreshAllDatalists();
             const suggestedInput = document.getElementById('suggestedNextOp');
             if (inspection.suggested_next_operation) suggestedInput.value = inspection.suggested_next_operation;
             else populateSuggestedNextOps();
@@ -2240,7 +2209,26 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('✅ QC Inspection ready – all suggestion fields active (Client, Title, Subtitle, Sub Sub, DWG, Part).');
+        // ─── INIT ───
+        function initApp() {
+            renderDynamicFields();
+            loadHistory();
+            populateMachineDropdown();
+            populateSuggestedNextOps();
+            // Also attach listeners for part list etc.
+            attachPartListListeners();
+            updateVisibility();
+            if (isAssemblyProcess()) {
+                document.getElementById('assemblyProgressContainer').classList.remove('hidden');
+                setTimeout(() => { populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                    updateAssemblyProgress(); }, 300);
+            } else {
+                document.getElementById('assemblyProgressContainer').classList.add('hidden');
+            }
+        }
+
+        console.log('✅ QC Inspection ready – cascading suggestions active (Client → Title → Subtitle → Sub Sub → DWG / Part).');
     </script>
 </body>
 </html>
