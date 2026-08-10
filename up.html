@@ -10,7 +10,6 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* (all styles unchanged) */
         body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
         .status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
         .progress-bar { height: 6px; border-radius: 10px; background-color: #e2e8f0; }
@@ -66,7 +65,6 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="max-w-7xl mx-auto px-4 py-6 md:px-6">
-        <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
@@ -82,7 +80,6 @@
             </div>
         </div>
 
-        <!-- Global Filters -->
         <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
@@ -104,14 +101,12 @@
             <div><button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl text-sm">Clear Filters</button></div>
         </div>
 
-        <!-- Summary Cards -->
         <div class="grid grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-diagram-project"></i> Active Projects</div><p class="text-2xl font-bold" id="totalProjects">—</p></div>
             <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Need Follow‑up</div><p class="text-2xl font-bold text-amber-600" id="needFollowup">—</p></div>
             <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-chart-line"></i> Avg. Acceptance</div><p class="text-2xl font-bold text-emerald-600" id="avgAcceptance">—%</p></div>
         </div>
 
-        <!-- Projects Table -->
         <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
             <div class="px-5 py-3 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
                 <h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2>
@@ -145,7 +140,6 @@
             </div>
         </div>
 
-        <!-- Modals -->
         <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closeModal(event)">
             <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
@@ -171,9 +165,6 @@
     </div>
 
     <script>
-        // ============================================================
-        // EXCLUDED PROCESS TYPES
-        // ============================================================
         const EXCLUDED_PROCESS_TYPES = ['Assembling (welding)', 'Assembling (fastener)'];
         function isExcludedProcess(processType) {
             if (!processType) return false;
@@ -182,15 +173,11 @@
                    lower.includes('assembling(welding)') || lower.includes('assembling(fastener)');
         }
 
-        // ============================================================
-        // GLOBAL STATE
-        // ============================================================
         let allProjects = [];
         let allInspectionsRaw = [];
         let currentModalProject = null;
         let currentFilteredProjects = [];
 
-        // ─── Toast ───
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             if (!container) return;
@@ -206,7 +193,6 @@
             }, 4000);
         }
 
-        // ─── Field extraction ───
         function getExtraField(insp, field) {
             if (field === 'Operation Condition') {
                 const raw = insp.operation_status?.trim() || '';
@@ -238,16 +224,11 @@
             }
         }
 
-        // ─── Delivered = sum of four categories ───
         function computeDelivered(insp) {
             return (insp.accepted_qty || 0) + (insp.rework_qty || 0) + (insp.reject_qty || 0) + (insp.conditional_accept_qty || 0);
         }
 
-        // ================================================================
-        // AGGREGATION – main table uses total sum of four; modal uses first-op
-        // ================================================================
         function aggregateInspectionsForProject(inspections) {
-            // 1) Find the FIRST operation for each part (for modal)
             const partFirstOp = new Map();
             for (const insp of inspections) {
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
@@ -270,7 +251,6 @@
                 }
             }
 
-            // 2) Build subtitle/part structure and also compute total sums across all ops
             let totalAcceptedAll = 0, totalReworkAll = 0, totalRejectAll = 0, totalConditionalAll = 0;
             let totalInspections = 0;
             let lastDate = null;
@@ -278,7 +258,6 @@
             const partLastInsp = new Map();
             const subSubAssemblySet = new Set();
 
-            // First pass: gather all inspections to populate partsMap and aggregate all-ops totals
             for (const insp of inspections) {
                 const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
                 const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
@@ -307,13 +286,11 @@
                     });
                 }
 
-                // Initialize subtitle if not exists
                 if (!subtitlesMap.has(subtitle)) {
                     subtitlesMap.set(subtitle, {
                         name: subtitle,
                         subSub: subSub,
                         totalInspections: 0,
-                        // These will be filled with first-op values later
                         sumDelivered: 0,
                         sumAcceptedFirst: 0,
                         sumReworkFirst: 0,
@@ -325,10 +302,9 @@
                 const sub = subtitlesMap.get(subtitle);
                 sub.totalInspections++;
 
-                // Initialize part data if not exists
                 if (!sub.partsMap.has(partName)) {
                     sub.partsMap.set(partName, {
-                        quantity: 0, // first-op delivered
+                        quantity: 0,
                         dwgSet: new Set(),
                         tagSet: new Set(),
                         operationsSet: new Set(),
@@ -341,7 +317,6 @@
                     });
                 }
                 const partData = sub.partsMap.get(partName);
-                // Accumulate all-ops counts for part (for status and operations)
                 if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
                 if (tagNo !== '—') partData.tagSet.add(tagNo);
                 partData.operationsSet.add(opDesc);
@@ -352,7 +327,6 @@
                 sub.partsMap.set(partName, partData);
             }
 
-            // 3) Now compute first-op sums for each subtitle and set part quantity
             for (const [subtitle, sub] of subtitlesMap) {
                 let subDelivered = 0;
                 let subAccFirst = 0, subRwkFirst = 0, subRejFirst = 0, subCndFirst = 0;
@@ -386,7 +360,6 @@
                 subtitlesMap.set(subtitle, sub);
             }
 
-            // 4) Build subtitlesArray for modal (first-op values)
             const suggestedNextOpsSet = new Set();
             const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => {
                 const partsList = Array.from(sub.partsMap.entries()).map(([partName, data]) => {
@@ -414,17 +387,16 @@
                     name: sub.name,
                     subSub: sub.subSub || '—',
                     totalInspections: sub.totalInspections,
-                    sumDelivered: sub.sumDelivered, // first-op sum
-                    sumAccepted: sub.sumAcceptedFirst,   // first-op accepted
-                    sumRework: sub.sumReworkFirst,       // first-op rework
-                    sumReject: sub.sumRejectFirst,       // first-op reject
-                    sumConditional: sub.sumConditionalFirst, // first-op conditional
+                    sumDelivered: sub.sumDelivered,
+                    sumAccepted: sub.sumAcceptedFirst,
+                    sumRework: sub.sumReworkFirst,
+                    sumReject: sub.sumRejectFirst,
+                    sumConditional: sub.sumConditionalFirst,
                     acceptRate: sub.sumDelivered ? (sub.sumAcceptedFirst / sub.sumDelivered) * 100 : 0,
                     partsList: partsList
                 };
             });
 
-            // 5) Main table total delivered = sum of four across ALL operations
             const totalDeliveredAll = totalAcceptedAll + totalReworkAll + totalRejectAll + totalConditionalAll;
             const acceptanceRate = totalDeliveredAll ? (totalAcceptedAll / totalDeliveredAll) * 100 : 0;
             let followStatus = 'on_track';
@@ -432,7 +404,7 @@
             else if (totalReworkAll + totalRejectAll > 0) followStatus = 'needs_action';
 
             return {
-                totalDelivered: totalDeliveredAll,          // main table: sum of four across all ops
+                totalDelivered: totalDeliveredAll,
                 totalAccepted: totalAcceptedAll,
                 totalRework: totalReworkAll,
                 totalReject: totalRejectAll,
@@ -442,7 +414,7 @@
                 acceptanceRate: acceptanceRate.toFixed(1),
                 followStatus,
                 lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
-                subtitlesArray,          // modal uses first-op values
+                subtitlesArray,
                 suggestedNextOps: Array.from(suggestedNextOpsSet),
                 subSubAssemblyList: Array.from(subSubAssemblySet).sort()
             };
@@ -477,7 +449,6 @@
             return Array.from(subs).sort();
         }
 
-        // ─── Helpers for status dots ───
         function getPartStatusClass(part) {
             if (part.rejectCount > 0) return 'part-status-reject';
             if (part.reworkCount > 0) return 'part-status-rework';
@@ -491,7 +462,6 @@
             return '<span class="status-dot status-dot-accept" title="Accepted"></span>';
         }
 
-        // ─── Render projects table ───
         function renderProjects(projects) {
             currentFilteredProjects = projects;
             const tbody = document.getElementById('projectsTableBody');
@@ -524,7 +494,6 @@
             document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
         }
 
-        // ─── Export functions ───
         function exportGlobalToExcel() {
             if (!currentFilteredProjects.length) { showToast('No data to export', 'error'); return; }
             const rows = [['Client','Project Title','Sub‑assemblies','Sub Sub Assembly (first)','Inspections','Delivered Qty (total sum)','Accepted Qty','Rework Qty','Reject Qty','Conditional Accept','Accept %','Last Inspection','Status']];
@@ -587,7 +556,6 @@
             showToast('Excel exported', 'success');
         }
 
-        // ─── Part detail modal ───
         function showPartDetails(partName) {
             if (!currentModalProject) return;
             const allInspections = currentModalProject.inspections;
@@ -668,7 +636,6 @@
                 document.getElementById('partModal').classList.add('hidden');
         }
 
-        // ─── Show project details modal ───
         function showProjectDetails(client, title) {
             const project = allProjects.find(p => p.client === client && p.title === title);
             if (!project) { showToast('Project not found', 'error'); return; }
@@ -826,7 +793,6 @@
                 document.getElementById('modal').classList.add('hidden');
         }
 
-        // ─── Filters and refresh ───
         let originalProjects = [];
 
         function applyFilters() {
@@ -890,7 +856,6 @@
             return str.replace(/[&<>]/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[m]));
         }
 
-        // ─── Event listeners ───
         document.getElementById('filterClient').addEventListener('change', applyFilters);
         document.getElementById('filterTitle').addEventListener('change', applyFilters);
         document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
