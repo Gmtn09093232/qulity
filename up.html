@@ -10,7 +10,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* (all styles unchanged from previous) */
+        /* (all styles unchanged) */
         body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
         .status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
         .progress-bar { height: 6px; border-radius: 10px; background-color: #e2e8f0; }
@@ -247,7 +247,7 @@
         // AGGREGATION – main table uses total sum of four; modal uses first-op
         // ================================================================
         function aggregateInspectionsForProject(inspections) {
-            // 1) Find the FIRST operation for each part (for side view)
+            // 1) Find the FIRST operation for each part (for modal)
             const partFirstOp = new Map();
             for (const insp of inspections) {
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
@@ -271,13 +271,14 @@
             }
 
             // 2) Build subtitle/part structure and also compute total sums across all ops
-            let totalAccepted = 0, totalRework = 0, totalReject = 0, totalConditional = 0;
+            let totalAcceptedAll = 0, totalReworkAll = 0, totalRejectAll = 0, totalConditionalAll = 0;
             let totalInspections = 0;
             let lastDate = null;
             const subtitlesMap = new Map();
             const partLastInsp = new Map();
             const subSubAssemblySet = new Set();
 
+            // First pass: gather all inspections to populate partsMap and aggregate all-ops totals
             for (const insp of inspections) {
                 const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
                 const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
@@ -290,10 +291,10 @@
                 const opDesc = `${processType} (${opCondition})`;
 
                 totalInspections++;
-                totalAccepted += (insp.accepted_qty || 0);
-                totalRework += (insp.rework_qty || 0);
-                totalReject += (insp.reject_qty || 0);
-                totalConditional += (insp.conditional_accept_qty || 0);
+                totalAcceptedAll += (insp.accepted_qty || 0);
+                totalReworkAll += (insp.rework_qty || 0);
+                totalRejectAll += (insp.reject_qty || 0);
+                totalConditionalAll += (insp.conditional_accept_qty || 0);
 
                 const inspDate = new Date(insp.submitted_at);
                 if (!lastDate || inspDate > lastDate) lastDate = inspDate;
@@ -306,26 +307,25 @@
                     });
                 }
 
+                // Initialize subtitle if not exists
                 if (!subtitlesMap.has(subtitle)) {
                     subtitlesMap.set(subtitle, {
                         name: subtitle,
                         subSub: subSub,
                         totalInspections: 0,
-                        sumDelivered: 0, // will be set from first-op
-                        sumAccepted: 0,
-                        sumRework: 0,
-                        sumReject: 0,
-                        sumConditional: 0,
+                        // These will be filled with first-op values later
+                        sumDelivered: 0,
+                        sumAcceptedFirst: 0,
+                        sumReworkFirst: 0,
+                        sumRejectFirst: 0,
+                        sumConditionalFirst: 0,
                         partsMap: new Map()
                     });
                 }
                 const sub = subtitlesMap.get(subtitle);
                 sub.totalInspections++;
-                sub.sumAccepted += (insp.accepted_qty || 0);
-                sub.sumRework += (insp.rework_qty || 0);
-                sub.sumReject += (insp.reject_qty || 0);
-                sub.sumConditional += (insp.conditional_accept_qty || 0);
 
+                // Initialize part data if not exists
                 if (!sub.partsMap.has(partName)) {
                     sub.partsMap.set(partName, {
                         quantity: 0, // first-op delivered
@@ -341,6 +341,7 @@
                     });
                 }
                 const partData = sub.partsMap.get(partName);
+                // Accumulate all-ops counts for part (for status and operations)
                 if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
                 if (tagNo !== '—') partData.tagSet.add(tagNo);
                 partData.operationsSet.add(opDesc);
@@ -351,9 +352,10 @@
                 sub.partsMap.set(partName, partData);
             }
 
-            // 3) Set each part's quantity to first‑op delivered (for side view)
+            // 3) Now compute first-op sums for each subtitle and set part quantity
             for (const [subtitle, sub] of subtitlesMap) {
                 let subDelivered = 0;
+                let subAccFirst = 0, subRwkFirst = 0, subRejFirst = 0, subCndFirst = 0;
                 for (const [partName, partData] of sub.partsMap) {
                     const firstOp = partFirstOp.get(partName);
                     if (firstOp) {
@@ -366,17 +368,25 @@
                             delivered: firstOp.delivered
                         };
                         subDelivered += firstOp.delivered;
+                        subAccFirst += firstOp.accepted;
+                        subRwkFirst += firstOp.rework;
+                        subRejFirst += firstOp.reject;
+                        subCndFirst += firstOp.conditional;
                     } else {
                         partData.quantity = 0;
                         partData.firstOpBreakdown = null;
                     }
                     sub.partsMap.set(partName, partData);
                 }
-                sub.sumDelivered = subDelivered; // first-op sum for this subtitle
+                sub.sumDelivered = subDelivered;
+                sub.sumAcceptedFirst = subAccFirst;
+                sub.sumReworkFirst = subRwkFirst;
+                sub.sumRejectFirst = subRejFirst;
+                sub.sumConditionalFirst = subCndFirst;
                 subtitlesMap.set(subtitle, sub);
             }
 
-            // 4) Build final arrays for modal (side view)
+            // 4) Build subtitlesArray for modal (first-op values)
             const suggestedNextOpsSet = new Set();
             const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => {
                 const partsList = Array.from(sub.partsMap.entries()).map(([partName, data]) => {
@@ -387,7 +397,7 @@
                     }
                     return {
                         part_name: partName,
-                        quantity: data.quantity, // first-op delivered
+                        quantity: data.quantity,
                         dwgList: Array.from(data.dwgSet).join(', '),
                         tagList: Array.from(data.tagSet).join(', '),
                         operations: Array.from(data.operationsSet).join(', '),
@@ -405,34 +415,34 @@
                     subSub: sub.subSub || '—',
                     totalInspections: sub.totalInspections,
                     sumDelivered: sub.sumDelivered, // first-op sum
-                    sumAccepted: sub.sumAccepted,
-                    sumRework: sub.sumRework,
-                    sumReject: sub.sumReject,
-                    sumConditional: sub.sumConditional,
-                    acceptRate: sub.sumDelivered ? (sub.sumAccepted / sub.sumDelivered) * 100 : 0,
+                    sumAccepted: sub.sumAcceptedFirst,   // first-op accepted
+                    sumRework: sub.sumReworkFirst,       // first-op rework
+                    sumReject: sub.sumRejectFirst,       // first-op reject
+                    sumConditional: sub.sumConditionalFirst, // first-op conditional
+                    acceptRate: sub.sumDelivered ? (sub.sumAcceptedFirst / sub.sumDelivered) * 100 : 0,
                     partsList: partsList
                 };
             });
 
             // 5) Main table total delivered = sum of four across ALL operations
-            const totalDelivered = totalAccepted + totalRework + totalReject + totalConditional;
-            const acceptanceRate = totalDelivered ? (totalAccepted / totalDelivered) * 100 : 0;
+            const totalDeliveredAll = totalAcceptedAll + totalReworkAll + totalRejectAll + totalConditionalAll;
+            const acceptanceRate = totalDeliveredAll ? (totalAcceptedAll / totalDeliveredAll) * 100 : 0;
             let followStatus = 'on_track';
-            if (totalDelivered > 0 && (totalReject / totalDelivered) >= 0.5) followStatus = 'critical';
-            else if (totalRework + totalReject > 0) followStatus = 'needs_action';
+            if (totalDeliveredAll > 0 && (totalRejectAll / totalDeliveredAll) >= 0.5) followStatus = 'critical';
+            else if (totalReworkAll + totalRejectAll > 0) followStatus = 'needs_action';
 
             return {
-                totalDelivered,          // main table: sum of four across all ops
-                totalAccepted,
-                totalRework,
-                totalReject,
-                totalConditional,
+                totalDelivered: totalDeliveredAll,          // main table: sum of four across all ops
+                totalAccepted: totalAcceptedAll,
+                totalRework: totalReworkAll,
+                totalReject: totalRejectAll,
+                totalConditional: totalConditionalAll,
                 totalInspections,
                 lastDate,
                 acceptanceRate: acceptanceRate.toFixed(1),
                 followStatus,
                 lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
-                subtitlesArray,          // modal uses first-op delivered
+                subtitlesArray,          // modal uses first-op values
                 suggestedNextOps: Array.from(suggestedNextOpsSet),
                 subSubAssemblyList: Array.from(subSubAssemblySet).sort()
             };
@@ -545,7 +555,7 @@
             if (dateFrom) { const from = new Date(dateFrom); from.setHours(0,0,0,0); filtered = filtered.filter(insp => new Date(insp.submitted_at) >= from); }
             if (dateTo) { const to = new Date(dateTo); to.setHours(23,59,59,999); filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to); }
             const aggregated = aggregateInspectionsForProject(filtered);
-            let rows = [['Sub‑assembly','Sub Sub Assembly','Inspections','Delivered (first op sum)','Accepted','Rework','Reject','Conditional','Accept %']];
+            let rows = [['Sub‑assembly','Sub Sub Assembly','Inspections','Delivered (first op)','Accepted (first op)','Rework (first op)','Reject (first op)','Conditional (first op)','Accept %']];
             for (const sub of aggregated.subtitlesArray) {
                 rows.push([sub.name, sub.subSub, sub.totalInspections, sub.sumDelivered, sub.sumAccepted, sub.sumRework, sub.sumReject, sub.sumConditional, sub.acceptRate.toFixed(1)+'%']);
                 const grouped = {};
@@ -570,7 +580,7 @@
                 rows.push([]);
             }
             const ws = XLSX.utils.aoa_to_sheet(rows);
-            ws['!cols'] = [{wch:25},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}];
+            ws['!cols'] = [{wch:25},{wch:18},{wch:12},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:12}];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, `Project_${currentModalProject.client}_${currentModalProject.title}`);
             XLSX.writeFile(wb, `project_detail_${currentModalProject.client}_${currentModalProject.title}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
@@ -663,7 +673,7 @@
             const project = allProjects.find(p => p.client === client && p.title === title);
             if (!project) { showToast('Project not found', 'error'); return; }
             currentModalProject = project;
-            document.getElementById('modalTitle').innerHTML = `${escapeHtml(client)} / ${escapeHtml(title)} <span class="text-sm font-normal text-blue-600 ml-2">(Delivered in this view = first‑operation sum)</span>`;
+            document.getElementById('modalTitle').innerHTML = `${escapeHtml(client)} / ${escapeHtml(title)} <span class="text-sm font-normal text-blue-600 ml-2">(Values shown are from the first operation per part)</span>`;
 
             const processSet = new Set(), engineerSet = new Set(), opCondSet = new Set(), suggestedSet = new Set();
             project.inspections.forEach(insp => {
@@ -732,7 +742,7 @@
                                 <span><span class="status-dot status-dot-rework inline-block"></span> Rework</span>
                                 <span><span class="status-dot status-dot-conditional inline-block"></span> Conditional</span>
                                 <span><span class="status-dot status-dot-accept inline-block"></span> Accepted</span>
-                                <span class="ml-2 text-blue-600"><i class="fa-regular fa-circle-check"></i> Delivered shown = first‑operation sum</span>
+                                <span class="ml-2 text-blue-600"><i class="fa-regular fa-circle-check"></i> All quantities shown are from the <strong>first operation</strong> per part</span>
                             </div>`;
                     html += aggregated.subtitlesArray.map(sub => {
                         const grouped = {};
@@ -744,8 +754,8 @@
                         let partsTableHtml = '';
                         if (Object.keys(grouped).length) {
                             let rowIdx = 1;
-                            partsTableHtml = `<div class="mt-3"><div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components <span class="text-blue-500 font-normal">(delivered = first‑op sum)</span></div>
-                                <table class="parts-table"><thead><tr><th class="text-center" style="width:40px;">No.</th><th>Part Name</th><th class="text-center">Delivered Qty <span class="text-blue-500 text-[10px]">(first op sum)</span></th><th>DWG No.</th><th>Tag No.</th><th>Operations</th><th>Suggested Next Operation</th></tr></thead><tbody>`;
+                            partsTableHtml = `<div class="mt-3"><div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components <span class="text-blue-500 font-normal">(first‑op quantities)</span></div>
+                                <table class="parts-table"><thead><tr><th class="text-center" style="width:40px;">No.</th><th>Part Name</th><th class="text-center">Delivered Qty <span class="text-blue-500 text-[10px]">(first op)</span></th><th>DWG No.</th><th>Tag No.</th><th>Operations</th><th>Suggested Next Operation</th></tr></thead><tbody>`;
                             const sortedKeys = Object.keys(grouped).sort();
                             for (const ss of sortedKeys) {
                                 const parts = grouped[ss];
@@ -872,7 +882,7 @@
             allProjects = projects;
             populateFilters(projects, filtered);
             applyFilters();
-            showToast('Data refreshed – Delivered = total sum of four columns', 'info');
+            showToast('Data refreshed – modal now shows only first‑op values', 'info');
         }
 
         function escapeHtml(str) {
