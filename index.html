@@ -696,7 +696,7 @@
                     <div><label class="block text-xs font-medium text-slate-500 mb-1">Conditional Accept</label><input type="number" id="conditionalAcceptQty" class="input-field" /></div>
                 </div>
 
-                <!-- Assembly Progress (UPDATED: part‑count based) -->
+                <!-- Assembly Progress -->
                 <div id="assemblyProgressContainer" class="mt-2 hidden">
                     <div class="assembly-progress">
                         <div class="flex-1">
@@ -834,11 +834,14 @@
         let allSubtitles = new Set();
         let allSubSubAssemblies = new Set();
         let allPartNames = new Set();
+        let allDrawingNos = new Set(); // NEW: for DWG No. suggestions
         let clientTitleMap = new Map();
         let clientSubtitleMap = new Map();
         let clientSubSubMap = new Map();
         let clientPartMap = new Map();
-        let lastUsedMap = { client: new Map(), title: new Map(), subtitle: new Map(), subSub: new Map(), part: new Map() };
+        let clientDrawingMap = new Map(); // NEW
+        let lastUsedMap = { client: new Map(), title: new Map(), subtitle: new Map(), subSub: new Map(), part: new Map(),
+            drawing: new Map() };
         let currentProcess = document.getElementById("processType").value;
         let isEditMode = false,
             editId = null;
@@ -1004,29 +1007,18 @@
             updateAssemblyProgress();
         }
 
-        // ─── UPDATED: Part‑count based assembly progress ───
         function updateAssemblyProgress() {
             if (!isAssemblyProcess()) return;
-
-            // Get total parts for this sub-sub assembly from all inspections
             const filters = getPartListFilters();
             const allParts = findMatchingParts(filters);
             const totalParts = allParts.length;
-
-            // Assembled parts = number of selected parts
             const assembledParts = selectedParts.length;
-
-            // Compute percentage
             const pct = totalParts > 0 ? Math.round((assembledParts / totalParts) * 100) : 0;
-
-            // Update display
             document.getElementById('totalDeliveredQty').value = assembledParts;
             document.getElementById('totalPartsCountDisplay').textContent = totalParts;
-
             const displayEl = document.getElementById('assemblyProgressDisplay');
             displayEl.textContent = pct + '%';
             displayEl.style.color = pct >= 100 ? '#15803d' : pct >= 50 ? '#a16207' : '#b91c1c';
-
             document.getElementById('assemblyProgressDetail').textContent = `${assembledParts} / ${totalParts} delivered`;
         }
 
@@ -1112,22 +1104,26 @@
             }
         }
 
-        // ─── SUGGESTIONS ───
+        // ─── SUGGESTIONS (UPDATED: includes DWG No.) ───
         function updateSuggestionsFromInspections(inspections) {
             allClientNames.clear();
             allProjectTitles.clear();
             allSubtitles.clear();
             allSubSubAssemblies.clear();
             allPartNames.clear();
+            allDrawingNos.clear();
             clientTitleMap.clear();
             clientSubtitleMap.clear();
             clientSubSubMap.clear();
             clientPartMap.clear();
+            clientDrawingMap.clear();
             lastUsedMap.client.clear();
             lastUsedMap.title.clear();
             lastUsedMap.subtitle.clear();
             lastUsedMap.subSub.clear();
             lastUsedMap.part.clear();
+            lastUsedMap.drawing.clear();
+
             for (const insp of inspections) {
                 const extra = insp.extra_fields || {};
                 const client = extra["Customer Name"]?.trim();
@@ -1135,11 +1131,14 @@
                 const subtitle = extra["Subtitle"]?.trim();
                 const subSub = extra["Sub Sub Assembly"]?.trim();
                 const part = extra["Part Name"]?.trim();
+                const drawing = extra["Drawing No."]?.trim();
                 const ts = new Date(insp.submitted_at || insp.created_at || Date.now()).getTime();
+
                 if (client) {
                     allClientNames.add(client);
                     if (!lastUsedMap.client.has(client) || ts > lastUsedMap.client.get(client)) lastUsedMap.client.set(
                         client, ts);
+
                     if (title) {
                         allProjectTitles.add(title);
                         if (!lastUsedMap.title.has(title) || ts > lastUsedMap.title.get(title)) lastUsedMap.title.set(
@@ -1168,6 +1167,13 @@
                         if (!clientPartMap.has(client)) clientPartMap.set(client, new Set());
                         clientPartMap.get(client).add(part);
                     }
+                    if (drawing) {
+                        allDrawingNos.add(drawing);
+                        if (!lastUsedMap.drawing.has(drawing) || ts > lastUsedMap.drawing.get(drawing)) lastUsedMap
+                            .drawing.set(drawing, ts);
+                        if (!clientDrawingMap.has(client)) clientDrawingMap.set(client, new Set());
+                        clientDrawingMap.get(client).add(drawing);
+                    }
                 }
             }
             refreshDatalistOptions();
@@ -1181,6 +1187,7 @@
 
         function refreshDatalistOptions(clientFilter) {
             const filter = (clientFilter && clientFilter.trim() !== '') ? clientFilter.trim() : null;
+
             const clientDL = document.getElementById("customerNameDatalist");
             if (clientDL) {
                 clientDL.innerHTML = "";
@@ -1190,6 +1197,7 @@
                     clientDL.appendChild(o);
                 });
             }
+
             const titleDL = document.getElementById("projectNameDatalist");
             if (titleDL) {
                 titleDL.innerHTML = "";
@@ -1202,6 +1210,7 @@
                     titleDL.appendChild(o);
                 });
             }
+
             const subtitleDL = document.getElementById("subtitleDatalist");
             if (subtitleDL) {
                 subtitleDL.innerHTML = "";
@@ -1214,6 +1223,7 @@
                     subtitleDL.appendChild(o);
                 });
             }
+
             const subSubDL = document.getElementById("subSubDatalist");
             if (subSubDL) {
                 subSubDL.innerHTML = "";
@@ -1226,6 +1236,7 @@
                     subSubDL.appendChild(o);
                 });
             }
+
             const partDL = document.getElementById("partNameDatalist");
             if (partDL) {
                 partDL.innerHTML = "";
@@ -1236,6 +1247,20 @@
                     const o = document.createElement("option");
                     o.value = n;
                     partDL.appendChild(o);
+                });
+            }
+
+            // ─── NEW: DWG No. datalist ───
+            const drawingDL = document.getElementById("drawingNoDatalist");
+            if (drawingDL) {
+                drawingDL.innerHTML = "";
+                let drawings = filter && clientDrawingMap.has(filter) ? Array.from(clientDrawingMap.get(filter)) :
+                    Array.from(allDrawingNos);
+                drawings.sort((a, b) => (lastUsedMap.drawing.get(b) || 0) - (lastUsedMap.drawing.get(a) || 0));
+                drawings.forEach(n => {
+                    const o = document.createElement("option");
+                    o.value = n;
+                    drawingDL.appendChild(o);
                 });
             }
         }
@@ -1571,7 +1596,7 @@
 
         function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
 
-        // ─── DYNAMIC FIELDS ───
+        // ─── DYNAMIC FIELDS (UPDATED: DWG No. gets datalist) ───
         function renderDynamicFields() {
             const container = document.getElementById("dynamicFieldsContainer");
             if (!container) return;
@@ -1600,8 +1625,9 @@
                         html +=
                             `<div><label class="block text-xs font-medium text-slate-500 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="input-field" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
                     } else if (field === "Drawing No.") {
+                        // ─── ADDED datalist for DWG No. ───
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" class="input-field" placeholder="Auto-filled after scan"></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" list="drawingNoDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="drawingNoDatalist"></datalist></div>`;
                     } else if (field === "Part Name") {
                         const labelText = isAssemblyProcess() ? 'Assembly Name' : 'Part Name';
                         const placeholderText = isAssemblyProcess() ? 'Assembly name' : 'Auto-filled after scan';
@@ -1685,7 +1711,7 @@
             }
         }
 
-        // ─── GET / SET EXTRA FIELDS (UPDATED: totalDeliveredQty = count) ───
+        // ─── GET / SET EXTRA FIELDS ───
         function getExtraFields() {
             const def = getCurrentDef();
             const extra = {};
@@ -1694,7 +1720,7 @@
                 partsObj = {};
                 selectedParts.forEach(p => { partsObj[p.name] = p.qty || 0; });
                 extra['selectedParts'] = partsObj;
-                extra['totalDeliveredQty'] = selectedParts.length; // count, not sum
+                extra['totalDeliveredQty'] = selectedParts.length;
                 extra['selectedPartNames'] = selectedParts.map(p => p.name);
             }
             if (def.extraFields) {
@@ -1889,7 +1915,7 @@
             }
         }
 
-        // ─── SAVE (UPDATED: part‑count based) ───
+        // ─── SAVE ───
         async function saveToBackend() {
             const saveBtn = document.getElementById('saveBtn');
             const saveText = document.getElementById('saveBtnText');
@@ -1913,7 +1939,7 @@
                     const allParts = findMatchingParts(filters);
                     const totalParts = allParts.length;
                     const assembledParts = selectedParts.length;
-                    total_delivered_qty = assembledParts; // count
+                    total_delivered_qty = assembledParts;
                     selected_parts_count = assembledParts;
                     assembly_progress_pct = totalParts > 0 ? Math.round((assembledParts / totalParts) * 100) : 0;
                     delivered_qty = assembledParts;
@@ -2214,7 +2240,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
                 '>': '&gt;' }[m])); }
 
-        console.log('✅ QC Inspection ready – Assembly progress now uses part counts.');
+        console.log('✅ QC Inspection ready – all suggestion fields active (Client, Title, Subtitle, Sub Sub, DWG, Part).');
     </script>
 </body>
 </html>
