@@ -10,6 +10,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
+        /* ── PRINT ── */
         @media print {
             body * {
                 visibility: hidden;
@@ -38,6 +39,7 @@
             table td {
                 padding: 4px 6px !important;
                 font-size: 0.7rem !important;
+                border: 1px solid #b0b0b0 !important;
             }
             .table-wrapper {
                 border-radius: 0 !important;
@@ -46,10 +48,14 @@
                 display: none !important;
             }
         }
+
+        /* ── GLOBAL ── */
         body {
             background: #f1f5f9;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
+
+        /* ── SCROLL ── */
         .table-wrapper {
             overflow-x: auto;
             border-radius: 1rem;
@@ -69,10 +75,13 @@
         .table-wrapper::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
+        /* ── TABLE ── */
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.82rem;
+            border: 1px solid #d1d5db;
         }
         th {
             background: #f8fafc;
@@ -82,7 +91,8 @@
             padding: 12px 10px;
             font-weight: 600;
             color: #0f172a;
-            border-bottom: 2px solid #e2e8f0;
+            border: 1px solid #d1d5db;
+            border-bottom: 2px solid #b0b8c4;
             white-space: nowrap;
             font-size: 0.7rem;
             letter-spacing: 0.02em;
@@ -96,13 +106,15 @@
         }
         td {
             padding: 8px 6px;
-            border-bottom: 1px solid #f1f5f9;
+            border: 1px solid #d1d5db;
             vertical-align: middle;
             font-size: 0.8rem;
         }
         tr:hover td {
             background-color: #f8fafc;
         }
+
+        /* ── SUMMARY CARDS ── */
         .summary-card {
             transition: all 0.2s ease;
             border-radius: 1rem;
@@ -137,6 +149,8 @@
             text-transform: uppercase;
             letter-spacing: 0.04em;
         }
+
+        /* ── FILTER BAR ── */
         .filter-bar {
             background: white;
             border-radius: 1rem;
@@ -188,6 +202,8 @@
         .filter-excluded-hint i {
             margin-right: 4px;
         }
+
+        /* ── BADGES ── */
         .badge {
             display: inline-block;
             padding: 0.1rem 0.7rem;
@@ -209,6 +225,8 @@
             color: #991b1b;
             border: 1px solid #fca5a5;
         }
+
+        /* ── CELLS ── */
         .col-delivered {
             background: #eff6ff;
             font-weight: 700;
@@ -256,6 +274,8 @@
             display: inline-block;
             font-weight: 500;
         }
+
+        /* ── BADGE CARD (meta) ── */
         .badge-card {
             background: #fafbfc;
             border-radius: 0.5rem;
@@ -319,6 +339,8 @@
             font-size: 0.55rem;
             color: #94a3b8;
         }
+
+        /* ── MANUAL EDIT BUTTON ── */
         .manual-edit-btn {
             background: none;
             border: none;
@@ -333,6 +355,8 @@
             color: #2563eb;
             background: #eef2ff;
         }
+
+        /* ── POPUP ── */
         .manual-edit-popup {
             display: none;
             position: fixed;
@@ -428,6 +452,8 @@
         .manual-edit-popup .popup-actions .btn-save:hover {
             background: #1d4ed8;
         }
+
+        /* ── LOADER ── */
         .loader {
             border: 3px solid #e2e8f0;
             border-top: 3px solid #3b82f6;
@@ -445,6 +471,8 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* ── MISC ── */
         .excluded-badge {
             display: inline-block;
             background: #fee2e2;
@@ -472,6 +500,8 @@
         .btn-icon i {
             font-size: 0.85rem;
         }
+
+        /* ── RESPONSIVE ── */
         @media (max-width: 640px) {
             .summary-card .stat-value {
                 font-size: 1.25rem;
@@ -507,7 +537,7 @@
 
     <div class="max-w-7xl mx-auto p-3 md:p-6">
 
-        <!-- HEADER -->
+        <!-- ═══ HEADER ═══ -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-5 mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
             <div class="flex items-center gap-3">
                 <div class="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600">
@@ -538,7 +568,7 @@
             </div>
         </div>
 
-        <!-- SUMMARY CARDS -->
+        <!-- ═══ SUMMARY CARDS ═══ -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 no-print summary-cards">
             <div class="summary-card flex items-center gap-4">
                 <div class="icon-wrap bg-blue-50 text-blue-600">
@@ -569,7 +599,7 @@
             </div>
         </div>
 
-        <!-- FILTER BAR -->
+        <!-- ═══ FILTER BAR ═══ -->
         <div class="filter-bar no-print mb-5">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
                 <div>
@@ -603,7 +633,7 @@
             </div>
         </div>
 
-        <!-- TABLE -->
+        <!-- ═══ TABLE ═══ -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 report-container overflow-hidden">
             <div class="table-wrapper">
                 <table id="reportTable">
@@ -631,7 +661,7 @@
             </div>
         </div>
 
-        <!-- LEGEND -->
+        <!-- ═══ LEGEND ═══ -->
         <div class="mt-4 flex flex-wrap items-center gap-3 text-xs text-gray-500 no-print bg-white rounded-xl px-4 py-3 border border-gray-100 shadow-sm">
             <span><span class="badge badge-accepted">AMIMTDE</span> amhara metal industry machine technology devlopment entrprise</span>
             >
