@@ -69,7 +69,6 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-flag-checkered text-indigo-600"></i>
                     Project Follow‑Up
-                    <span class="text-xs font-normal text-slate-400 ml-2 bg-slate-100 px-3 py-1 rounded-full">Delivered = Acc+Rwk+Rej+Cnd (all ops)</span>
                 </h1>
             </div>
             <div class="flex gap-3 flex-wrap">
@@ -639,7 +638,7 @@
             const project = allProjects.find(p => p.client === client && p.title === title);
             if (!project) { showToast('Project not found', 'error'); return; }
             currentModalProject = project;
-            document.getElementById('modalTitle').innerHTML = `${escapeHtml(client)} / ${escapeHtml(title)} <span class="text-sm font-normal text-blue-600 ml-2">(Values shown are from the first operation per part)</span>`;
+            document.getElementById('modalTitle').innerHTML = `${escapeHtml(client)} / ${escapeHtml(title)}</span>`;
 
             const processSet = new Set(), engineerSet = new Set(), opCondSet = new Set(), suggestedSet = new Set();
             project.inspections.forEach(insp => {
