@@ -10,6 +10,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
+        /* ... (same as before) ... */
         body {
             background: #f1f5f9;
             font-family: 'Inter', system-ui, sans-serif;
@@ -238,7 +239,6 @@
             display: inline-block;
             border: 1px solid #93b5e8;
         }
-        /* Part status color classes */
         .part-status-reject {
             color: #dc2626 !important;
         }
@@ -251,7 +251,6 @@
         .part-status-accept {
             color: #059669 !important;
         }
-        /* small status dot */
         .status-dot {
             display: inline-block;
             width: 8px;
@@ -277,7 +276,6 @@
             align-items: center;
             gap: 4px;
         }
-        /* Excluded badge */
         .excluded-badge {
             display: inline-block;
             background: #fee2e2;
@@ -310,18 +308,16 @@
             margin-left: 4px;
             white-space: nowrap;
         }
-        .delivered-first {
-            font-weight: 700;
-            color: #1e40af;
-        }
-        .delivered-first .first-op-badge {
-            margin-left: 6px;
+        .delivered-sum-label {
+            font-size: 0.65rem;
+            color: #4b5563;
+            font-weight: 400;
+            margin-left: 4px;
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Toast container -->
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="max-w-7xl mx-auto px-4 py-6 md:px-6">
@@ -331,7 +327,7 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-flag-checkered text-indigo-600"></i>
                     Project Follow‑Up
-                    <span class="text-xs font-normal text-slate-400 ml-2 bg-slate-100 px-3 py-1 rounded-full">First‑op Delivered</span>
+                    <span class="text-xs font-normal text-slate-400 ml-2 bg-slate-100 px-3 py-1 rounded-full">Delivered = Accepted + Rework + Reject + Conditional (first op only)</span>
                 </h1>
             </div>
             <div class="flex gap-3 flex-wrap">
@@ -375,7 +371,7 @@
             <div class="px-5 py-3 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
                 <h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2>
                 <div class="flex items-center gap-3 text-xs text-slate-500">
-                    <span><i class="fa-solid fa-circle text-blue-600 text-[10px] mr-1"></i> Delivered Qty = <strong>First Operation</strong> only</span>
+                    <span><i class="fa-solid fa-circle text-blue-600 text-[10px] mr-1"></i> Delivered = Accepted + Rework + Reject + Conditional <span class="text-blue-500">(first op only)</span></span>
                     <span id="recordCount"></span>
                 </div>
             </div>
@@ -388,7 +384,7 @@
                             <th class="text-center">Sub‑assemblies</th>
                             <th class="text-center">Sub Sub Assembly</th>
                             <th class="text-center">Insp.</th>
-                            <th class="text-center">Delivered Qty <span class="text-blue-600 text-[10px] block font-normal">(first op)</span></th>
+                            <th class="text-center">Delivered Qty <span class="text-blue-600 text-[10px] block font-normal">(first op sum)</span></th>
                             <th class="text-center">Accepted Qty</th>
                             <th class="text-center">Rework Qty</th>
                             <th class="text-center">Reject Qty</th>
@@ -432,7 +428,7 @@
 
     <script>
         // ============================================================
-        // EXCLUDED PROCESS TYPES (case‑insensitive, spaced & unspaced)
+        // EXCLUDED PROCESS TYPES (case‑insensitive)
         // ============================================================
         const EXCLUDED_PROCESS_TYPES = ['Assembling (welding)', 'Assembling (fastener)'];
 
@@ -506,19 +502,25 @@
             }
         }
 
+        // ─── Compute delivered quantity as sum of four categories ───
+        function computeDelivered(insp) {
+            return (insp.accepted_qty || 0) + (insp.rework_qty || 0) + (insp.reject_qty || 0) + (insp.conditional_accept_qty || 0);
+        }
+
         // ================================================================
-        // AGGREGATE – uses FIRST OPERATION delivered quantity per part
+        // AGGREGATE – uses FIRST OPERATION delivered (computed as sum)
         // ================================================================
         function aggregateInspectionsForProject(inspections) {
             // ─── 1) Find the FIRST operation for each part (by submitted_at) ───
-            const partFirstOp = new Map(); // partName -> { date, delivered_qty, dwg, tag, process, opCond, suggested }
+            const partFirstOp = new Map(); // partName -> { date, delivered, dwg, tag, process, opCond, suggested }
             for (const insp of inspections) {
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
                 const inspDate = new Date(insp.submitted_at);
+                const delivered = computeDelivered(insp);
                 if (!partFirstOp.has(partName) || inspDate < partFirstOp.get(partName).date) {
                     partFirstOp.set(partName, {
                         date: inspDate,
-                        delivered_qty: insp.delivered_qty || 0,
+                        delivered: delivered,
                         dwg: getExtraField(insp, 'Drawing No.') || '—',
                         tag: getExtraField(insp, 'Tag No.') || '—',
                         process: insp.process_type || 'Unknown Process',
@@ -552,7 +554,6 @@
                 const opDesc = `${processType} (${opCondition})`;
 
                 totalInspections++;
-                // For accepted/rework/reject/conditional we SUM across all operations
                 totalAccepted += (insp.accepted_qty || 0);
                 totalRework += (insp.rework_qty || 0);
                 totalReject += (insp.reject_qty || 0);
@@ -561,7 +562,6 @@
                 const inspDate = new Date(insp.submitted_at);
                 if (!lastDate || inspDate > lastDate) lastDate = inspDate;
 
-                // Track latest inspection for suggested next
                 if (!partLastInsp.has(partName) || inspDate > partLastInsp.get(partName).date) {
                     const suggested = getSuggestedNext(insp);
                     partLastInsp.set(partName, {
@@ -571,13 +571,12 @@
                     });
                 }
 
-                // Build subtitle map
                 if (!subtitlesMap.has(subtitle)) {
                     subtitlesMap.set(subtitle, {
                         name: subtitle,
                         subSub: subSub,
                         totalInspections: 0,
-                        sumDelivered: 0, // will be set after loop (first-op sum)
+                        sumDelivered: 0,
                         sumAccepted: 0,
                         sumRework: 0,
                         sumReject: 0,
@@ -594,7 +593,7 @@
 
                 if (!sub.partsMap.has(partName)) {
                     sub.partsMap.set(partName, {
-                        quantity: 0, // will be set from partFirstOp after loop
+                        quantity: 0,
                         dwgSet: new Set(),
                         tagSet: new Set(),
                         operationsSet: new Set(),
@@ -618,18 +617,17 @@
 
             // ─── 3) Compute totalDelivered from first-op map ───
             for (const [partName, data] of partFirstOp) {
-                totalDelivered += data.delivered_qty;
+                totalDelivered += data.delivered;
             }
 
-            // ─── 4) Now set each part's quantity to the first-op delivered_qty ───
-            //    Also compute subtitle sumDelivered from first-op quantities
+            // ─── 4) Set each part's quantity to the first-op delivered ───
             for (const [subtitle, sub] of subtitlesMap) {
                 let subDelivered = 0;
                 for (const [partName, partData] of sub.partsMap) {
                     const firstOp = partFirstOp.get(partName);
                     if (firstOp) {
-                        partData.quantity = firstOp.delivered_qty;
-                        subDelivered += firstOp.delivered_qty;
+                        partData.quantity = firstOp.delivered;
+                        subDelivered += firstOp.delivered;
                     } else {
                         partData.quantity = 0;
                     }
@@ -650,7 +648,7 @@
                     }
                     return {
                         part_name: partName,
-                        quantity: data.quantity, // FIRST OPERATION delivered qty
+                        quantity: data.quantity,
                         dwgList: Array.from(data.dwgSet).join(', '),
                         tagList: Array.from(data.tagSet).join(', '),
                         operations: Array.from(data.operationsSet).join(', '),
@@ -666,7 +664,7 @@
                     name: sub.name,
                     subSub: sub.subSub || '—',
                     totalInspections: sub.totalInspections,
-                    sumDelivered: sub.sumDelivered, // FIRST OPERATION sum
+                    sumDelivered: sub.sumDelivered,
                     sumAccepted: sub.sumAccepted,
                     sumRework: sub.sumRework,
                     sumReject: sub.sumReject,
@@ -676,14 +674,13 @@
                 };
             });
 
-            // ─── 6) Compute acceptance rate using first-op delivered ───
             const acceptanceRate = totalDelivered ? (totalAccepted / totalDelivered) * 100 : 0;
             let followStatus = 'on_track';
             if (totalReject / totalDelivered >= 0.5) followStatus = 'critical';
             else if (totalRework + totalReject > 0) followStatus = 'needs_action';
 
             return {
-                totalDelivered, // FIRST OPERATION sum
+                totalDelivered,
                 totalAccepted,
                 totalRework,
                 totalReject,
@@ -700,7 +697,6 @@
         }
 
         function aggregateProjects(inspections) {
-            // Filter out excluded process types early
             const filtered = inspections.filter(insp => !isExcludedProcess(insp.process_type));
             const projectMap = new Map();
             for (const insp of filtered) {
@@ -738,7 +734,6 @@
             return Array.from(subs).sort();
         }
 
-        // ─── Helper: determine part status color class ───
         function getPartStatusClass(part) {
             const rej = part.rejectCount || 0;
             const rework = part.reworkCount || 0;
@@ -749,7 +744,6 @@
             return 'part-status-accept';
         }
 
-        // ─── Helper: get status dot HTML ───
         function getStatusDot(part) {
             const rej = part.rejectCount || 0;
             const rework = part.reworkCount || 0;
@@ -793,7 +787,7 @@
             }
             const rows = [
                 ['Client', 'Project Title', 'Sub‑assemblies', 'Sub Sub Assembly (first)', 'Inspections',
-                    'Delivered Qty (first op)', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept',
+                    'Delivered Qty (first op sum)', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept',
                     'Accept %', 'Last Inspection', 'Status'
                 ]
             ];
@@ -835,7 +829,7 @@
                 filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to); }
             const aggregated = aggregateInspectionsForProject(filtered);
             let rows = [
-                ['Sub‑assembly', 'Sub Sub Assembly', 'Inspections', 'Delivered (first op)', 'Accepted', 'Rework',
+                ['Sub‑assembly', 'Sub Sub Assembly', 'Inspections', 'Delivered (first op sum)', 'Accepted', 'Rework',
                     'Reject', 'Conditional', 'Accept %'
                 ]
             ];
@@ -901,7 +895,7 @@
             const lastInsp = partInspections[partInspections.length - 1];
             const firstProcess = firstInsp?.process_type || '—';
             const firstDate = firstInsp ? new Date(firstInsp.submitted_at).toLocaleDateString() : '—';
-            const firstDelivered = firstInsp?.delivered_qty || 0;
+            const firstDelivered = firstInsp ? computeDelivered(firstInsp) : 0;
             const lastProcess = lastInsp?.process_type || '—';
             const lastDate = lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—';
             const nextOp = lastInsp ? getSuggestedNext(lastInsp) : null;
@@ -910,7 +904,7 @@
                     <table class="suggestion-table">
                         <tr>
                             <td class="suggestion-label">First Operation:</td>
-                            <td class="suggestion-value">${escapeHtml(firstProcess)} (${firstDate}) &mdash; <strong>Delivered: ${firstDelivered}</strong></td>
+                            <td class="suggestion-value">${escapeHtml(firstProcess)} (${firstDate}) &mdash; <strong>Delivered: ${firstDelivered}</strong> (sum of Acc+Rwk+Rjt+Cnd)</td>
                         </tr>
                         <tr>
                             <td class="suggestion-label">Last Operation:</td>
@@ -925,14 +919,14 @@
 
             let tableHtml = `
                     <div class="overflow-x-auto">
-                        <div class="text-xs text-blue-600 mb-2"><i class="fa-regular fa-circle-check"></i> Delivered Qty shown is from the <strong>first operation</strong> only.</div>
+                        <div class="text-xs text-blue-600 mb-2"><i class="fa-regular fa-circle-check"></i> Delivered Qty = Accepted + Rework + Reject + Conditional Accept</div>
                         <table class="min-w-full text-sm border">
                             <thead class="bg-slate-50">
                                 <tr>
                                     <th class="p-2 text-left">Date</th>
                                     <th class="p-2 text-left">Process Type</th>
                                     <th class="p-2 text-left">Operation Condition</th>
-                                    <th class="p-2 text-center">Delivered</th>
+                                    <th class="p-2 text-center">Delivered (sum)</th>
                                     <th class="p-2 text-center">Accepted</th>
                                     <th class="p-2 text-center">Rework</th>
                                     <th class="p-2 text-center">Reject</th>
@@ -947,7 +941,7 @@
                 const date = new Date(insp.submitted_at).toLocaleDateString();
                 const process = insp.process_type || '—';
                 const opCond = getExtraField(insp, 'Operation Condition') || '—';
-                const del = insp.delivered_qty || 0;
+                const del = computeDelivered(insp);
                 const acc = insp.accepted_qty || 0;
                 const rework = insp.rework_qty || 0;
                 const rej = insp.reject_qty || 0;
@@ -990,7 +984,7 @@
             }
             currentModalProject = project;
             document.getElementById('modalTitle').innerHTML =
-                `${escapeHtml(client)} / ${escapeHtml(title)} <span class="text-sm font-normal text-blue-600 ml-2">(Delivered = first operation only)</span>`;
+                `${escapeHtml(client)} / ${escapeHtml(title)} <span class="text-sm font-normal text-blue-600 ml-2">(Delivered = sum of Acc+Rwk+Rjt+Cnd, first op only)</span>`;
 
             const processSet = new Set();
             const engineerSet = new Set();
@@ -1072,7 +1066,7 @@
                                 <span><span class="status-dot status-dot-rework inline-block"></span> Rework</span>
                                 <span><span class="status-dot status-dot-conditional inline-block"></span> Conditional</span>
                                 <span><span class="status-dot status-dot-accept inline-block"></span> Accepted</span>
-                                <span class="ml-2 text-blue-600"><i class="fa-regular fa-circle-check"></i> Delivered = first operation only</span>
+                                <span class="ml-2 text-blue-600"><i class="fa-regular fa-circle-check"></i> Delivered = sum of Acc+Rwk+Rjt+Cnd (first op)</span>
                             </div>
                         `;
                     html = legendHtml;
@@ -1089,13 +1083,13 @@
                             let rowIdx = 1;
                             partsTableHtml = `
                                     <div class="mt-3">
-                                        <div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components <span class="text-blue-500 font-normal">(delivered qty = first operation)</span></div>
+                                        <div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components <span class="text-blue-500 font-normal">(delivered = sum of Acc+Rwk+Rjt+Cnd, first op)</span></div>
                                         <table class="parts-table">
                                             <thead>
                                                 <tr>
                                                     <th class="text-center" style="width: 40px;">No.</th>
                                                     <th>Part Name</th>
-                                                    <th class="text-center">Delivered Qty <span class="text-blue-500 text-[10px]">(first op)</span></th>
+                                                    <th class="text-center">Delivered Qty <span class="text-blue-500 text-[10px]">(first op sum)</span></th>
                                                     <th>DWG No.</th>
                                                     <th>Tag No.</th>
                                                     <th>Operations</th>
@@ -1147,7 +1141,7 @@
                                 </div>
                                 <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
                                     <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
-                                    <div><span class="text-gray-500">Delivered <span class="text-blue-500 text-[10px]">(first op)</span></span><br><span class="text-blue-700 font-bold">${sub.sumDelivered.toLocaleString()}</span></div>
+                                    <div><span class="text-gray-500">Delivered <span class="text-blue-500 text-[10px]">(first op sum)</span></span><br><span class="text-blue-700 font-bold">${sub.sumDelivered.toLocaleString()}</span></div>
                                     <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
                                     <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
                                     <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
@@ -1283,8 +1277,7 @@
             allProjects = projects;
             populateFilters(projects, filteredInspections);
             applyFilters();
-            showToast(`Data refreshed — Delivered Qty = first operation only (excluded: ${EXCLUDED_PROCESS_TYPES.join(', ')})`,
-                'info');
+            showToast(`Data refreshed — Delivered = sum of Accepted, Rework, Reject, Conditional (first op only)`, 'info');
         }
 
         function escapeHtml(str) {
@@ -1302,7 +1295,6 @@
         window.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal();
                 closePartModal(e); } });
 
-        // ─── Start ───
         refreshData();
     </script>
 </body>
