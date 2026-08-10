@@ -298,6 +298,25 @@
             border: 1px solid #fecaca;
             display: inline-block;
         }
+        .first-op-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 0.05rem 0.5rem;
+            border-radius: 9999px;
+            border: 1px solid #93b5e8;
+            display: inline-block;
+            margin-left: 4px;
+            white-space: nowrap;
+        }
+        .delivered-first {
+            font-weight: 700;
+            color: #1e40af;
+        }
+        .delivered-first .first-op-badge {
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -312,7 +331,7 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-flag-checkered text-indigo-600"></i>
                     Project Follow‑Up
-                    
+                    <span class="text-xs font-normal text-slate-400 ml-2 bg-slate-100 px-3 py-1 rounded-full">First‑op Delivered</span>
                 </h1>
             </div>
             <div class="flex gap-3 flex-wrap">
@@ -353,7 +372,13 @@
 
         <!-- Projects Table -->
         <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-            <div class="px-5 py-3 border-b bg-slate-50 flex justify-between"><h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2><span class="text-xs text-slate-400" id="recordCount"></span></div>
+            <div class="px-5 py-3 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
+                <h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2>
+                <div class="flex items-center gap-3 text-xs text-slate-500">
+                    <span><i class="fa-solid fa-circle text-blue-600 text-[10px] mr-1"></i> Delivered Qty = <strong>First Operation</strong> only</span>
+                    <span id="recordCount"></span>
+                </div>
+            </div>
             <div class="table-wrapper">
                 <table class="min-w-full" id="projectsTable">
                     <thead>
@@ -363,7 +388,7 @@
                             <th class="text-center">Sub‑assemblies</th>
                             <th class="text-center">Sub Sub Assembly</th>
                             <th class="text-center">Insp.</th>
-                            <th class="text-center">Delivered Qty</th>
+                            <th class="text-center">Delivered Qty <span class="text-blue-600 text-[10px] block font-normal">(first op)</span></th>
                             <th class="text-center">Accepted Qty</th>
                             <th class="text-center">Rework Qty</th>
                             <th class="text-center">Reject Qty</th>
@@ -415,7 +440,7 @@
             if (!processType) return false;
             const lower = processType.trim().toLowerCase();
             return lower.includes('assembling (welding)') || lower.includes('assembling (fastener)') ||
-                   lower.includes('assembling(welding)') || lower.includes('assembling(fastener)');
+                lower.includes('assembling(welding)') || lower.includes('assembling(fastener)');
         }
 
         // ============================================================
@@ -435,11 +460,11 @@
             toast.className = `toast ${type}`;
             const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
             toast.innerHTML = `
-                <div class="toast-content">
-                    <span class="toast-icon"><i class="fa-solid ${icon}"></i></span>
-                    <span>${message}</span>
-                </div>
-            `;
+                    <div class="toast-content">
+                        <span class="toast-icon"><i class="fa-solid ${icon}"></i></span>
+                        <span>${message}</span>
+                    </div>
+                `;
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.add('show'));
             setTimeout(() => {
@@ -481,6 +506,199 @@
             }
         }
 
+        // ================================================================
+        // AGGREGATE – uses FIRST OPERATION delivered quantity per part
+        // ================================================================
+        function aggregateInspectionsForProject(inspections) {
+            // ─── 1) Find the FIRST operation for each part (by submitted_at) ───
+            const partFirstOp = new Map(); // partName -> { date, delivered_qty, dwg, tag, process, opCond, suggested }
+            for (const insp of inspections) {
+                const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
+                const inspDate = new Date(insp.submitted_at);
+                if (!partFirstOp.has(partName) || inspDate < partFirstOp.get(partName).date) {
+                    partFirstOp.set(partName, {
+                        date: inspDate,
+                        delivered_qty: insp.delivered_qty || 0,
+                        dwg: getExtraField(insp, 'Drawing No.') || '—',
+                        tag: getExtraField(insp, 'Tag No.') || '—',
+                        process: insp.process_type || 'Unknown Process',
+                        opCond: getExtraField(insp, 'Operation Condition') || '—',
+                        suggested: getSuggestedNext(insp)
+                    });
+                }
+            }
+
+            // ─── 2) Build subtitle/part structure ───
+            let totalDelivered = 0;
+            let totalAccepted = 0;
+            let totalRework = 0;
+            let totalReject = 0;
+            let totalConditional = 0;
+            let totalInspections = 0;
+            let lastDate = null;
+            const subtitlesMap = new Map();
+            const partLastInsp = new Map();
+            const subSubAssemblySet = new Set();
+
+            for (const insp of inspections) {
+                const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
+                const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
+                if (subSub && subSub !== '—') subSubAssemblySet.add(subSub);
+                const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
+                const dwgNo = getExtraField(insp, 'Drawing No.') || '—';
+                const tagNo = getExtraField(insp, 'Tag No.') || '—';
+                const processType = insp.process_type || 'Unknown Process';
+                const opCondition = getExtraField(insp, 'Operation Condition') || '—';
+                const opDesc = `${processType} (${opCondition})`;
+
+                totalInspections++;
+                // For accepted/rework/reject/conditional we SUM across all operations
+                totalAccepted += (insp.accepted_qty || 0);
+                totalRework += (insp.rework_qty || 0);
+                totalReject += (insp.reject_qty || 0);
+                totalConditional += (insp.conditional_accept_qty || 0);
+
+                const inspDate = new Date(insp.submitted_at);
+                if (!lastDate || inspDate > lastDate) lastDate = inspDate;
+
+                // Track latest inspection for suggested next
+                if (!partLastInsp.has(partName) || inspDate > partLastInsp.get(partName).date) {
+                    const suggested = getSuggestedNext(insp);
+                    partLastInsp.set(partName, {
+                        process_type: processType,
+                        date: inspDate,
+                        suggested_next: suggested
+                    });
+                }
+
+                // Build subtitle map
+                if (!subtitlesMap.has(subtitle)) {
+                    subtitlesMap.set(subtitle, {
+                        name: subtitle,
+                        subSub: subSub,
+                        totalInspections: 0,
+                        sumDelivered: 0, // will be set after loop (first-op sum)
+                        sumAccepted: 0,
+                        sumRework: 0,
+                        sumReject: 0,
+                        sumConditional: 0,
+                        partsMap: new Map()
+                    });
+                }
+                const sub = subtitlesMap.get(subtitle);
+                sub.totalInspections++;
+                sub.sumAccepted += (insp.accepted_qty || 0);
+                sub.sumRework += (insp.rework_qty || 0);
+                sub.sumReject += (insp.reject_qty || 0);
+                sub.sumConditional += (insp.conditional_accept_qty || 0);
+
+                if (!sub.partsMap.has(partName)) {
+                    sub.partsMap.set(partName, {
+                        quantity: 0, // will be set from partFirstOp after loop
+                        dwgSet: new Set(),
+                        tagSet: new Set(),
+                        operationsSet: new Set(),
+                        subSub: subSub,
+                        rejectCount: 0,
+                        reworkCount: 0,
+                        conditionalCount: 0,
+                        acceptedCount: 0
+                    });
+                }
+                const partData = sub.partsMap.get(partName);
+                if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
+                if (tagNo !== '—') partData.tagSet.add(tagNo);
+                partData.operationsSet.add(opDesc);
+                partData.rejectCount += (insp.reject_qty || 0);
+                partData.reworkCount += (insp.rework_qty || 0);
+                partData.conditionalCount += (insp.conditional_accept_qty || 0);
+                partData.acceptedCount += (insp.accepted_qty || 0);
+                sub.partsMap.set(partName, partData);
+            }
+
+            // ─── 3) Compute totalDelivered from first-op map ───
+            for (const [partName, data] of partFirstOp) {
+                totalDelivered += data.delivered_qty;
+            }
+
+            // ─── 4) Now set each part's quantity to the first-op delivered_qty ───
+            //    Also compute subtitle sumDelivered from first-op quantities
+            for (const [subtitle, sub] of subtitlesMap) {
+                let subDelivered = 0;
+                for (const [partName, partData] of sub.partsMap) {
+                    const firstOp = partFirstOp.get(partName);
+                    if (firstOp) {
+                        partData.quantity = firstOp.delivered_qty;
+                        subDelivered += firstOp.delivered_qty;
+                    } else {
+                        partData.quantity = 0;
+                    }
+                    sub.partsMap.set(partName, partData);
+                }
+                sub.sumDelivered = subDelivered;
+                subtitlesMap.set(subtitle, sub);
+            }
+
+            // ─── 5) Build subtitlesArray ───
+            const suggestedNextOpsSet = new Set();
+            const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => {
+                const partsList = Array.from(sub.partsMap.entries()).map(([partName, data]) => {
+                    const lastInfo = partLastInsp.get(partName);
+                    const suggested = lastInfo ? lastInfo.suggested_next : null;
+                    if (suggested && suggested.trim() !== '') {
+                        suggestedNextOpsSet.add(suggested);
+                    }
+                    return {
+                        part_name: partName,
+                        quantity: data.quantity, // FIRST OPERATION delivered qty
+                        dwgList: Array.from(data.dwgSet).join(', '),
+                        tagList: Array.from(data.tagSet).join(', '),
+                        operations: Array.from(data.operationsSet).join(', '),
+                        suggestedNext: suggested || '—',
+                        subSub: data.subSub || '—',
+                        rejectCount: data.rejectCount,
+                        reworkCount: data.reworkCount,
+                        conditionalCount: data.conditionalCount,
+                        acceptedCount: data.acceptedCount
+                    };
+                });
+                return {
+                    name: sub.name,
+                    subSub: sub.subSub || '—',
+                    totalInspections: sub.totalInspections,
+                    sumDelivered: sub.sumDelivered, // FIRST OPERATION sum
+                    sumAccepted: sub.sumAccepted,
+                    sumRework: sub.sumRework,
+                    sumReject: sub.sumReject,
+                    sumConditional: sub.sumConditional,
+                    acceptRate: sub.sumDelivered ? (sub.sumAccepted / sub.sumDelivered) * 100 : 0,
+                    partsList: partsList
+                };
+            });
+
+            // ─── 6) Compute acceptance rate using first-op delivered ───
+            const acceptanceRate = totalDelivered ? (totalAccepted / totalDelivered) * 100 : 0;
+            let followStatus = 'on_track';
+            if (totalReject / totalDelivered >= 0.5) followStatus = 'critical';
+            else if (totalRework + totalReject > 0) followStatus = 'needs_action';
+
+            return {
+                totalDelivered, // FIRST OPERATION sum
+                totalAccepted,
+                totalRework,
+                totalReject,
+                totalConditional,
+                totalInspections,
+                lastDate,
+                acceptanceRate: acceptanceRate.toFixed(1),
+                followStatus,
+                lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
+                subtitlesArray,
+                suggestedNextOps: Array.from(suggestedNextOpsSet),
+                subSubAssemblyList: Array.from(subSubAssemblySet).sort()
+            };
+        }
+
         function aggregateProjects(inspections) {
             // Filter out excluded process types early
             const filtered = inspections.filter(insp => !isExcludedProcess(insp.process_type));
@@ -509,152 +727,6 @@
             });
             projects.sort((a, b) => (b.lastDate || 0) - (a.lastDate || 0));
             return projects;
-        }
-
-        function aggregateInspectionsForProject(inspections) {
-            let totalDelivered = 0,
-                totalAccepted = 0,
-                totalRework = 0,
-                totalReject = 0,
-                totalConditional = 0;
-            let totalInspections = 0;
-            let lastDate = null;
-            const subtitlesMap = new Map();
-            const partLastInsp = new Map();
-            const subSubAssemblySet = new Set();
-
-            for (const insp of inspections) {
-                const subtitle = getExtraField(insp, 'Subtitle') || '(no subtitle)';
-                const subSub = getExtraField(insp, 'Sub Sub Assembly') || '—';
-                if (subSub && subSub !== '—') subSubAssemblySet.add(subSub);
-                const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
-                const dwgNo = getExtraField(insp, 'Drawing No.') || '—';
-                const tagNo = getExtraField(insp, 'Tag No.') || '—';
-                const processType = insp.process_type || 'Unknown Process';
-                const opCondition = getExtraField(insp, 'Operation Condition') || '—';
-                const opDesc = `${processType} (${opCondition})`;
-
-                totalInspections++;
-                totalDelivered += (insp.delivered_qty || 0);
-                totalAccepted += (insp.accepted_qty || 0);
-                totalRework += (insp.rework_qty || 0);
-                totalReject += (insp.reject_qty || 0);
-                totalConditional += (insp.conditional_accept_qty || 0);
-
-                const inspDate = new Date(insp.submitted_at);
-                if (!lastDate || inspDate > lastDate) lastDate = inspDate;
-
-                if (!partLastInsp.has(partName) || inspDate > partLastInsp.get(partName).date) {
-                    const suggested = getSuggestedNext(insp);
-                    partLastInsp.set(partName, {
-                        process_type: processType,
-                        date: inspDate,
-                        suggested_next: suggested
-                    });
-                }
-
-                if (!subtitlesMap.has(subtitle)) {
-                    subtitlesMap.set(subtitle, {
-                        name: subtitle,
-                        subSub: subSub,
-                        totalInspections: 0,
-                        sumDelivered: 0,
-                        sumAccepted: 0,
-                        sumRework: 0,
-                        sumReject: 0,
-                        sumConditional: 0,
-                        partsMap: new Map()
-                    });
-                }
-                const sub = subtitlesMap.get(subtitle);
-                sub.totalInspections++;
-                sub.sumDelivered += (insp.delivered_qty || 0);
-                sub.sumAccepted += (insp.accepted_qty || 0);
-                sub.sumRework += (insp.rework_qty || 0);
-                sub.sumReject += (insp.reject_qty || 0);
-                sub.sumConditional += (insp.conditional_accept_qty || 0);
-
-                if (!sub.partsMap.has(partName)) {
-                    sub.partsMap.set(partName, {
-                        quantity: 0,
-                        dwgSet: new Set(),
-                        tagSet: new Set(),
-                        operationsSet: new Set(),
-                        subSub: subSub,
-                        rejectCount: 0,
-                        reworkCount: 0,
-                        conditionalCount: 0,
-                        acceptedCount: 0
-                    });
-                }
-                const partData = sub.partsMap.get(partName);
-                partData.quantity += (insp.delivered_qty || 0);
-                if (dwgNo !== '—') partData.dwgSet.add(dwgNo);
-                if (tagNo !== '—') partData.tagSet.add(tagNo);
-                partData.operationsSet.add(opDesc);
-                partData.rejectCount += (insp.reject_qty || 0);
-                partData.reworkCount += (insp.rework_qty || 0);
-                partData.conditionalCount += (insp.conditional_accept_qty || 0);
-                partData.acceptedCount += (insp.accepted_qty || 0);
-                sub.partsMap.set(partName, partData);
-            }
-
-            const acceptanceRate = totalDelivered ? (totalAccepted / totalDelivered) * 100 : 0;
-            let followStatus = 'on_track';
-            if (totalReject / totalDelivered >= 0.5) followStatus = 'critical';
-            else if (totalRework + totalReject > 0) followStatus = 'needs_action';
-
-            const suggestedNextOpsSet = new Set();
-            const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => {
-                const partsList = Array.from(sub.partsMap.entries()).map(([partName, data]) => {
-                    const lastInfo = partLastInsp.get(partName);
-                    const suggested = lastInfo ? lastInfo.suggested_next : null;
-                    if (suggested && suggested.trim() !== '') {
-                        suggestedNextOpsSet.add(suggested);
-                    }
-                    return {
-                        part_name: partName,
-                        quantity: data.quantity,
-                        dwgList: Array.from(data.dwgSet).join(', '),
-                        tagList: Array.from(data.tagSet).join(', '),
-                        operations: Array.from(data.operationsSet).join(', '),
-                        suggestedNext: suggested || '—',
-                        subSub: data.subSub || '—',
-                        rejectCount: data.rejectCount,
-                        reworkCount: data.reworkCount,
-                        conditionalCount: data.conditionalCount,
-                        acceptedCount: data.acceptedCount
-                    };
-                });
-                return {
-                    name: sub.name,
-                    subSub: sub.subSub || '—',
-                    totalInspections: sub.totalInspections,
-                    sumDelivered: sub.sumDelivered,
-                    sumAccepted: sub.sumAccepted,
-                    sumRework: sub.sumRework,
-                    sumReject: sub.sumReject,
-                    sumConditional: sub.sumConditional,
-                    acceptRate: sub.sumDelivered ? (sub.sumAccepted / sub.sumDelivered) * 100 : 0,
-                    partsList: partsList
-                };
-            });
-
-            return {
-                totalDelivered,
-                totalAccepted,
-                totalRework,
-                totalReject,
-                totalConditional,
-                totalInspections,
-                lastDate,
-                acceptanceRate: acceptanceRate.toFixed(1),
-                followStatus,
-                lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
-                subtitlesArray,
-                suggestedNextOps: Array.from(suggestedNextOpsSet),
-                subSubAssemblyList: Array.from(subSubAssemblySet).sort()
-            };
         }
 
         function getAllSubtitles(inspections) {
@@ -704,7 +776,7 @@
                 const subSubCount = list.length;
                 const subSubHtml = `<span class="font-bold">${subSubCount}</span>`;
 
-                return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center">${subSubHtml}</td><td class="text-center">${p.totalInspections}</td><td class="text-center">${p.totalDelivered.toLocaleString()}</td><td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td><td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td><td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td><td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
+                return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td><td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center">${subSubHtml}</td><td class="text-center">${p.totalInspections}</td><td class="text-center text-blue-700 font-bold">${p.totalDelivered.toLocaleString()} <span class="text-[10px] text-blue-400 font-normal">(first op)</span></td><td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td><td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td><td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td><td class="text-center text-blue-600">${p.totalConditional.toLocaleString()}</td><td class="text-center"><div class="flex justify-center items-center gap-2"><span>${p.acceptanceRate}%</span><div class="progress-bar w-16"><div class="progress-fill" style="width:${barWidth}%"></div></div></div></td><td class="text-center text-xs">${p.lastDateStr}</td><td class="text-center"><span class="status-badge ${statusBadge}">${statusText}</span></td><td class="text-center"><button onclick="showProjectDetails('${escapeHtml(p.client)}','${escapeHtml(p.title)}')" class="text-indigo-600"><i class="fa-regular fa-eye"></i> View</button></td></tr>`;
             }).join('');
             document.getElementById('totalProjects').innerText = projects.length;
             const need = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
@@ -720,21 +792,21 @@
                 return;
             }
             const rows = [
-                ['Client', 'Project Title', 'Sub‑assemblies', 'Sub Sub Assembly (first)', 'Inspections', 'Delivered Qty',
-                    'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept', 'Accept %', 'Last Inspection',
-                    'Status'
+                ['Client', 'Project Title', 'Sub‑assemblies', 'Sub Sub Assembly (first)', 'Inspections',
+                    'Delivered Qty (first op)', 'Accepted Qty', 'Rework Qty', 'Reject Qty', 'Conditional Accept',
+                    'Accept %', 'Last Inspection', 'Status'
                 ]
             ];
             for (const p of currentFilteredProjects) {
                 const firstSubSub = (p.subSubAssemblyList && p.subSubAssemblyList.length) ? p.subSubAssemblyList[0] : '';
                 rows.push([p.client, p.title, p.subtitlesArray.length, firstSubSub, p
-                    .totalInspections, p.totalDelivered, p.totalAccepted, p.totalRework, p.totalReject, p
-                    .totalConditional, p.acceptanceRate + '%', p.lastDateStr, p.followStatus === 'critical' ?
-                    'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track')
+                        .totalInspections, p.totalDelivered, p.totalAccepted, p.totalRework, p.totalReject, p
+                        .totalConditional, p.acceptanceRate + '%', p.lastDateStr, p.followStatus === 'critical' ?
+                        'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track')
                 ]);
             }
             const ws = XLSX.utils.aoa_to_sheet(rows);
-            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 12 }, { wch: 20 }, { wch: 12 }, { wch: 14 }, { wch: 14 },
+            ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 12 }, { wch: 20 }, { wch: 12 }, { wch: 16 }, { wch: 14 },
             { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 14 }
             ];
             const wb = XLSX.utils.book_new();
@@ -763,8 +835,8 @@
                 filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to); }
             const aggregated = aggregateInspectionsForProject(filtered);
             let rows = [
-                ['Sub‑assembly', 'Sub Sub Assembly', 'Inspections', 'Delivered', 'Accepted', 'Rework', 'Reject',
-                    'Conditional', 'Accept %'
+                ['Sub‑assembly', 'Sub Sub Assembly', 'Inspections', 'Delivered (first op)', 'Accepted', 'Rework',
+                    'Reject', 'Conditional', 'Accept %'
                 ]
             ];
             for (const sub of aggregated.subtitlesArray) {
@@ -801,7 +873,7 @@
                 rows.push([]);
             }
             const ws = XLSX.utils.aoa_to_sheet(rows);
-            ws['!cols'] = [{ wch: 25 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+            ws['!cols'] = [{ wch: 25 }, { wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
             { wch: 12 }, { wch: 12 }
             ];
             const wb = XLSX.utils.book_new();
@@ -825,42 +897,52 @@
             const body = document.getElementById('partModalBody');
 
             partInspections.sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+            const firstInsp = partInspections[0];
             const lastInsp = partInspections[partInspections.length - 1];
+            const firstProcess = firstInsp?.process_type || '—';
+            const firstDate = firstInsp ? new Date(firstInsp.submitted_at).toLocaleDateString() : '—';
+            const firstDelivered = firstInsp?.delivered_qty || 0;
             const lastProcess = lastInsp?.process_type || '—';
             const lastDate = lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—';
             const nextOp = lastInsp ? getSuggestedNext(lastInsp) : null;
 
             let suggestionHtml = `
-                <table class="suggestion-table">
-                    <tr>
-                        <td class="suggestion-label">Last Operation:</td>
-                        <td class="suggestion-value">${escapeHtml(lastProcess)} (${lastDate})</td>
-                    </tr>
-                    <tr>
-                        <td class="suggestion-label">Suggested Next Operation:</td>
-                        <td class="suggestion-value">${nextOp ? escapeHtml(nextOp) : '—'}</td>
-                    </tr>
-                </table>
-            `;
+                    <table class="suggestion-table">
+                        <tr>
+                            <td class="suggestion-label">First Operation:</td>
+                            <td class="suggestion-value">${escapeHtml(firstProcess)} (${firstDate}) &mdash; <strong>Delivered: ${firstDelivered}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="suggestion-label">Last Operation:</td>
+                            <td class="suggestion-value">${escapeHtml(lastProcess)} (${lastDate})</td>
+                        </tr>
+                        <tr>
+                            <td class="suggestion-label">Suggested Next Operation:</td>
+                            <td class="suggestion-value">${nextOp ? escapeHtml(nextOp) : '—'}</td>
+                        </tr>
+                    </table>
+                `;
 
             let tableHtml = `
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm border">
-                        <thead class="bg-slate-50">
-                            <tr>
-                                <th class="p-2 text-left">Date</th>
-                                <th class="p-2 text-left">Process Type</th>
-                                <th class="p-2 text-left">Operation Condition</th>
-                                <th class="p-2 text-center">Delivered</th>
-                                <th class="p-2 text-center">Accepted</th>
-                                <th class="p-2 text-center">Rework</th>
-                                <th class="p-2 text-center">Reject</th>
-                                <th class="p-2 text-center">Conditional</th>
-                                <th class="p-2 text-center">Rating</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
+                    <div class="overflow-x-auto">
+                        <div class="text-xs text-blue-600 mb-2"><i class="fa-regular fa-circle-check"></i> Delivered Qty shown is from the <strong>first operation</strong> only.</div>
+                        <table class="min-w-full text-sm border">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="p-2 text-left">Date</th>
+                                    <th class="p-2 text-left">Process Type</th>
+                                    <th class="p-2 text-left">Operation Condition</th>
+                                    <th class="p-2 text-center">Delivered</th>
+                                    <th class="p-2 text-center">Accepted</th>
+                                    <th class="p-2 text-center">Rework</th>
+                                    <th class="p-2 text-center">Reject</th>
+                                    <th class="p-2 text-center">Conditional</th>
+                                    <th class="p-2 text-center">Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+            let isFirst = true;
             for (const insp of partInspections) {
                 const date = new Date(insp.submitted_at).toLocaleDateString();
                 const process = insp.process_type || '—';
@@ -871,19 +953,22 @@
                 const rej = insp.reject_qty || 0;
                 const cond = insp.conditional_accept_qty || 0;
                 const rating = insp.acceptance_data?.p0?.rating || '—';
+                const firstRowClass = isFirst ? 'bg-blue-50' : '';
+                const firstBadge = isFirst ? ' <span class="first-op-badge">← first op</span>' : '';
                 tableHtml += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-2">${date}</td>
-                        <td class="p-2">${escapeHtml(process)}</td>
-                        <td class="p-2">${escapeHtml(opCond)}</td>
-                        <td class="p-2 text-center">${del}</td>
-                        <td class="p-2 text-center text-emerald-700">${acc}</td>
-                        <td class="p-2 text-center text-amber-600">${rework}</td>
-                        <td class="p-2 text-center text-red-600">${rej}</td>
-                        <td class="p-2 text-center text-blue-600">${cond}</td>
-                        <td class="p-2 text-center">${escapeHtml(rating)}</td>
-                    </tr>
-                `;
+                        <tr class="border-b hover:bg-gray-50 ${firstRowClass}">
+                            <td class="p-2">${date}${firstBadge}</td>
+                            <td class="p-2">${escapeHtml(process)}</td>
+                            <td class="p-2">${escapeHtml(opCond)}</td>
+                            <td class="p-2 text-center ${isFirst ? 'text-blue-700 font-bold' : ''}">${del}</td>
+                            <td class="p-2 text-center text-emerald-700">${acc}</td>
+                            <td class="p-2 text-center text-amber-600">${rework}</td>
+                            <td class="p-2 text-center text-red-600">${rej}</td>
+                            <td class="p-2 text-center text-blue-600">${cond}</td>
+                            <td class="p-2 text-center">${escapeHtml(rating)}</td>
+                        </tr>
+                    `;
+                isFirst = false;
             }
             tableHtml += `</tbody></table></div>`;
 
@@ -904,7 +989,8 @@
                 return;
             }
             currentModalProject = project;
-            document.getElementById('modalTitle').innerText = `${client} / ${title}`;
+            document.getElementById('modalTitle').innerHTML =
+                `${escapeHtml(client)} / ${escapeHtml(title)} <span class="text-sm font-normal text-blue-600 ml-2">(Delivered = first operation only)</span>`;
 
             const processSet = new Set();
             const engineerSet = new Set();
@@ -934,17 +1020,17 @@
 
             const modalBody = document.getElementById('modalBody');
             const filterBarHtml = `
-                <div class="modal-filter-bar" id="modalFilterBar">
-                    <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">Process Type</label><select id="modalFilterProcess" class="filter-select w-full text-sm"><option value="">All Processes</option>${processOptions.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select></div>
-                    <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">QC Engineer</label><select id="modalFilterEngineer" class="filter-select w-full text-sm"><option value="">All Engineers</option>${engineerOptions.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join('')}</select></div>
-                    <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">Operation Condition</label><select id="modalFilterOpCondition" class="filter-select w-full text-sm"><option value="">All</option>${opCondOptions.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}</select></div>
-                    <div class="flex-1 min-w-[130px]"><label class="text-xs font-medium text-slate-500">Date From</label><input type="date" id="modalFilterDateFrom" class="filter-select w-full text-sm"></div>
-                    <div class="flex-1 min-w-[130px]"><label class="text-xs font-medium text-slate-500">Date To</label><input type="date" id="modalFilterDateTo" class="filter-select w-full text-sm"></div>
-                    <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">Suggested Next Operation</label><select id="modalFilterSuggestedNext" class="filter-select w-full text-sm"><option value="">All</option>${suggestedOptions.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select></div>
-                    <div><button id="clearModalFiltersBtn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg text-sm">Clear</button></div>
-                </div>
-                <div id="modalFilterableContent"></div>
-            `;
+                    <div class="modal-filter-bar" id="modalFilterBar">
+                        <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">Process Type</label><select id="modalFilterProcess" class="filter-select w-full text-sm"><option value="">All Processes</option>${processOptions.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select></div>
+                        <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">QC Engineer</label><select id="modalFilterEngineer" class="filter-select w-full text-sm"><option value="">All Engineers</option>${engineerOptions.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join('')}</select></div>
+                        <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">Operation Condition</label><select id="modalFilterOpCondition" class="filter-select w-full text-sm"><option value="">All</option>${opCondOptions.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}</select></div>
+                        <div class="flex-1 min-w-[130px]"><label class="text-xs font-medium text-slate-500">Date From</label><input type="date" id="modalFilterDateFrom" class="filter-select w-full text-sm"></div>
+                        <div class="flex-1 min-w-[130px]"><label class="text-xs font-medium text-slate-500">Date To</label><input type="date" id="modalFilterDateTo" class="filter-select w-full text-sm"></div>
+                        <div class="flex-1 min-w-[120px]"><label class="text-xs font-medium text-slate-500">Suggested Next Operation</label><select id="modalFilterSuggestedNext" class="filter-select w-full text-sm"><option value="">All</option>${suggestedOptions.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select></div>
+                        <div><button id="clearModalFiltersBtn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg text-sm">Clear</button></div>
+                    </div>
+                    <div id="modalFilterableContent"></div>
+                `;
             modalBody.innerHTML = filterBarHtml;
             const filterableContainer = document.getElementById('modalFilterableContent');
 
@@ -980,14 +1066,15 @@
                 let html = '';
                 if (aggregated.subtitlesArray.length) {
                     const legendHtml = `
-                        <div class="flex flex-wrap gap-3 text-xs mb-3 p-2 bg-slate-50 rounded-lg border">
-                            <span class="font-medium text-slate-600 mr-1">Status legend:</span>
-                            <span><span class="status-dot status-dot-reject inline-block"></span> Reject</span>
-                            <span><span class="status-dot status-dot-rework inline-block"></span> Rework</span>
-                            <span><span class="status-dot status-dot-conditional inline-block"></span> Conditional</span>
-                            <span><span class="status-dot status-dot-accept inline-block"></span> Accepted</span>
-                        </div>
-                    `;
+                            <div class="flex flex-wrap gap-3 text-xs mb-3 p-2 bg-slate-50 rounded-lg border">
+                                <span class="font-medium text-slate-600 mr-1">Status legend:</span>
+                                <span><span class="status-dot status-dot-reject inline-block"></span> Reject</span>
+                                <span><span class="status-dot status-dot-rework inline-block"></span> Rework</span>
+                                <span><span class="status-dot status-dot-conditional inline-block"></span> Conditional</span>
+                                <span><span class="status-dot status-dot-accept inline-block"></span> Accepted</span>
+                                <span class="ml-2 text-blue-600"><i class="fa-regular fa-circle-check"></i> Delivered = first operation only</span>
+                            </div>
+                        `;
                     html = legendHtml;
                     html += aggregated.subtitlesArray.map(sub => {
                         const grouped = {};
@@ -1001,74 +1088,74 @@
                         if (Object.keys(grouped).length) {
                             let rowIdx = 1;
                             partsTableHtml = `
-                                <div class="mt-3">
-                                    <div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components</div>
-                                    <table class="parts-table">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-center" style="width: 40px;">No.</th>
-                                                <th>Part Name</th>
-                                                <th class="text-center">Total Delivered Qty</th>
-                                                <th>DWG No.</th>
-                                                <th>Tag No.</th>
-                                                <th>Operations</th>
-                                                <th>Suggested Next Operation</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                            `;
+                                    <div class="mt-3">
+                                        <div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components <span class="text-blue-500 font-normal">(delivered qty = first operation)</span></div>
+                                        <table class="parts-table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center" style="width: 40px;">No.</th>
+                                                    <th>Part Name</th>
+                                                    <th class="text-center">Delivered Qty <span class="text-blue-500 text-[10px]">(first op)</span></th>
+                                                    <th>DWG No.</th>
+                                                    <th>Tag No.</th>
+                                                    <th>Operations</th>
+                                                    <th>Suggested Next Operation</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                `;
                             const sortedKeys = Object.keys(grouped).sort();
                             for (const ss of sortedKeys) {
                                 const parts = grouped[ss];
                                 partsTableHtml += `
-                                    <tr class="group-header">
-                                        <td colspan="7"><i class="fa-solid fa-folder-open mr-1"></i> Sub Sub: ${escapeHtml(ss)}</td>
-                                    </tr>
-                                `;
+                                        <tr class="group-header">
+                                            <td colspan="7"><i class="fa-solid fa-folder-open mr-1"></i> Sub Sub: ${escapeHtml(ss)}</td>
+                                        </tr>
+                                    `;
                                 for (const part of parts) {
                                     const statusClass = getPartStatusClass(part);
                                     const dotHtml = getStatusDot(part);
                                     partsTableHtml += `
-                                        <tr>
-                                            <td class="text-center text-red-600 font-bold">${rowIdx}</td>
-                                            <td>
-                                                <span class="part-name-wrapper">
-                                                    ${dotHtml}
-                                                    <span class="clickable-part ${statusClass}" onclick="showPartDetails('${escapeHtml(part.part_name)}')">${escapeHtml(part.part_name)}</span>
-                                                </span>
-                                            </td>
-                                            <td class="text-center">${part.quantity}</td>
-                                            <td>${escapeHtml(part.dwgList) || '—'}</td>
-                                            <td>${escapeHtml(part.tagList) || '—'}</td>
-                                            <td class="text-xs">${escapeHtml(part.operations) || '—'}</td>
-                                            <td>${part.suggestedNext && part.suggestedNext !== '—' ? `<span class="suggestion-badge">${escapeHtml(part.suggestedNext)}</span>` : '—'}</td>
-                                        </tr>
-                                    `;
+                                            <tr>
+                                                <td class="text-center text-red-600 font-bold">${rowIdx}</td>
+                                                <td>
+                                                    <span class="part-name-wrapper">
+                                                        ${dotHtml}
+                                                        <span class="clickable-part ${statusClass}" onclick="showPartDetails('${escapeHtml(part.part_name)}')">${escapeHtml(part.part_name)}</span>
+                                                    </span>
+                                                </td>
+                                                <td class="text-center text-blue-700 font-bold">${part.quantity}</td>
+                                                <td>${escapeHtml(part.dwgList) || '—'}</td>
+                                                <td>${escapeHtml(part.tagList) || '—'}</td>
+                                                <td class="text-xs">${escapeHtml(part.operations) || '—'}</td>
+                                                <td>${part.suggestedNext && part.suggestedNext !== '—' ? `<span class="suggestion-badge">${escapeHtml(part.suggestedNext)}</span>` : '—'}</td>
+                                            </tr>
+                                        `;
                                     rowIdx++;
                                 }
                             }
                             partsTableHtml += `</tbody></table></div>`;
                         } else {
                             partsTableHtml =
-                            '<div class="text-xs text-gray-400 italic mt-1">No parts match the current filters.</div>';
+                                '<div class="text-xs text-gray-400 italic mt-1">No parts match the current filters.</div>';
                         }
 
                         return `<div class="bg-white border rounded-xl p-4 mb-4 shadow-sm">
-                            <div class="flex justify-between items-start">
-                                <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
-                                <span class="text-xs text-gray-400">Sub Sub: <strong>${escapeHtml(sub.subSub)}</strong></span>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
-                                <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
-                                <div><span class="text-gray-500">Delivered</span><br><span>${sub.sumDelivered.toLocaleString()}</span></div>
-                                <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
-                                <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
-                                <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
-                                <div><span class="text-gray-500">Conditional</span><br><span class="text-blue-600">${sub.sumConditional.toLocaleString()}</span></div>
-                                <div><span class="text-gray-500">Accept %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
-                            </div>
-                            ${partsTableHtml}
-                        </div>`;
+                                <div class="flex justify-between items-start">
+                                    <h4 class="font-bold text-indigo-700">🔧 ${escapeHtml(sub.name)}</h4>
+                                    <span class="text-xs text-gray-400">Sub Sub: <strong>${escapeHtml(sub.subSub)}</strong></span>
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-8 gap-2 text-center text-sm mt-2">
+                                    <div><span class="text-gray-500">Inspections</span><br><span class="font-bold">${sub.totalInspections}</span></div>
+                                    <div><span class="text-gray-500">Delivered <span class="text-blue-500 text-[10px]">(first op)</span></span><br><span class="text-blue-700 font-bold">${sub.sumDelivered.toLocaleString()}</span></div>
+                                    <div><span class="text-gray-500">Accepted</span><br><span class="text-emerald-700 font-bold">${sub.sumAccepted.toLocaleString()}</span></div>
+                                    <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
+                                    <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
+                                    <div><span class="text-gray-500">Conditional</span><br><span class="text-blue-600">${sub.sumConditional.toLocaleString()}</span></div>
+                                    <div><span class="text-gray-500">Accept %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
+                                </div>
+                                ${partsTableHtml}
+                            </div>`;
                     }).join('');
                 } else {
                     html = '<div class="text-gray-500 italic">No sub‑assemblies match the filters.</div>';
@@ -1145,7 +1232,6 @@
         }
 
         function populateFilters(projects, rawInspections) {
-            // Only use filtered inspections (already excluded)
             const clients = [...new Set(projects.map(p => p.client))].sort();
             const titles = [...new Set(projects.map(p => p.title))].sort();
             const subs = getAllSubtitles(rawInspections);
@@ -1190,15 +1276,15 @@
 
         async function refreshData() {
             const inspections = await fetchInspections();
-            // Filter out excluded process types BEFORE any aggregation
             const filteredInspections = inspections.filter(insp => !isExcludedProcess(insp.process_type));
-            allInspectionsRaw = filteredInspections; // store filtered only
+            allInspectionsRaw = filteredInspections;
             const projects = aggregateProjects(filteredInspections);
             originalProjects = projects;
             allProjects = projects;
             populateFilters(projects, filteredInspections);
             applyFilters();
-            showToast(`Data refreshed (excluded: ${EXCLUDED_PROCESS_TYPES.join(', ')})`, 'info');
+            showToast(`Data refreshed — Delivered Qty = first operation only (excluded: ${EXCLUDED_PROCESS_TYPES.join(', ')})`,
+                'info');
         }
 
         function escapeHtml(str) {
