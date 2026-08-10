@@ -543,7 +543,6 @@
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">Inspection Report</h1>
                     <p class="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-                        <span class="badge badge-accepted text-[0.6rem]">First‑operation delivered (Acc+Cond)</span>
                     </p>
                 </div>
             </div>
@@ -574,7 +573,7 @@
                 </div>
                 <div>
                     <div class="stat-value" id="totalDeliveredSum">0</div>
-                    <div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Delivered (first‑op Acc+Cond)</div>
+                    <div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Delivered (Acc + Cond)</div>
                 </div>
             </div>
             <div class="summary-card flex items-center gap-4">
@@ -583,7 +582,7 @@
                 </div>
                 <div>
                     <div class="stat-value" id="totalAcceptedSum">0</div>
-                    <div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Accepted (first‑op)</div>
+                    <div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Accepted</div>
                 </div>
             </div>
             <div class="summary-card flex items-center gap-4">
@@ -592,7 +591,7 @@
                 </div>
                 <div>
                     <div class="stat-value" id="totalConditionalSum">0</div>
-                    <div class="stat-label"><i class="fa-regular fa-flag mr-1"></i> Conditional (first‑op)</div>
+                    <div class="stat-label"><i class="fa-regular fa-flag mr-1"></i> Conditional</div>
                 </div>
             </div>
         </div>
@@ -775,7 +774,6 @@
                     const acc = num(insp.accepted_qty);
                     const cond = num(insp.conditional_accept_qty);
                     const del = acc + cond;
-                    const submitted = insp.submitted_at || new Date().toISOString();
 
                     if (pr) projSet.add(pr);
                     if (proc) procSet.add(proc);
@@ -800,7 +798,6 @@
                         conditionalRaw: cond,
                         process: proc,
                         engineer: eng,
-                        submitted_at: submitted,
                         search: `${cl} ${pr} ${st} ${sa} ${draw} ${part} ${del} ${acc} ${cond} ${proc} ${eng}`.toLowerCase()
                     });
                 }
@@ -877,7 +874,7 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  RENDER AGGREGATED (uses FIRST OPERATION per part)
+        //  RENDER AGGREGATED
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function renderAggregated(rows) {
             const tbody = document.getElementById('reportTableBody');
@@ -888,60 +885,32 @@
                 return;
             }
 
-            // ── 1) For each part, keep only the earliest inspection ──
-            const partMap = new Map(); // key = client|project|subtitle|subAssembly|part
+            // ── Build tree ──
+            const cm = new Map();
             for (const r of rows) {
-                const key = `${r.client}|${r.project}|${r.subtitle}|${r.subAssembly}|${r.part}`;
-                if (!partMap.has(key)) {
-                    partMap.set(key, {
-                        client: r.client,
-                        project: r.project,
-                        subtitle: r.subtitle,
-                        subAssembly: r.subAssembly,
-                        part: r.part,
-                        delivered: r.deliveredRaw,
-                        accepted: r.acceptedRaw,
-                        conditional: r.conditionalRaw,
-                        drawings: new Set(),
-                        earliestDate: new Date(r.submitted_at)
-                    });
-                }
-                const entry = partMap.get(key);
-                if (r.drawing && r.drawing !== '-') entry.drawings.add(r.drawing);
-                const d = new Date(r.submitted_at);
-                if (d < entry.earliestDate) {
-                    entry.earliestDate = d;
-                    entry.delivered = r.deliveredRaw;
-                    entry.accepted = r.acceptedRaw;
-                    entry.conditional = r.conditionalRaw;
-                }
-            }
-
-            // ── 2) Build hierarchy ──
-            const cm = new Map(); // client -> { titles: Map }
-            for (const [key, entry] of partMap) {
-                const c = entry.client;
+                const c = r.client;
                 if (!cm.has(c)) cm.set(c, { client: c, titles: new Map() });
                 const ce = cm.get(c);
-                const t = entry.project;
-                if (!ce.titles.has(t)) ce.titles.set(t, { title: t, subtitles: new Map() });
+                const t = r.project;
+                if (!ce.titles.has(t)) ce.titles.set(t, { title: t, subtitles: new Map(), parts: new Set(),
+                    deliv: 0 });
                 const te = ce.titles.get(t);
-                const s = entry.subtitle || '';
+                const s = r.subtitle || '';
                 if (!te.subtitles.has(s)) te.subtitles.set(s, { subtitle: s, assemblies: new Map() });
                 const se = te.subtitles.get(s);
-                const a = entry.subAssembly || '';
+                const a = r.subAssembly || '';
                 if (!se.assemblies.has(a)) se.assemblies.set(a, { assembly: a, parts: new Map() });
                 const ae = se.assemblies.get(a);
-                ae.parts.set(entry.part, {
-                    part: entry.part,
-                    delivered: entry.delivered,
-                    accepted: entry.accepted,
-                    conditional: entry.conditional,
-                    drawings: entry.drawings
-                });
+                const p = r.part;
+                if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, cond: 0, drawings: new Set() });
+                const pe = ae.parts.get(p);
+                pe.deliv += r.deliveredRaw;
+                pe.acc += r.acceptedRaw;
+                pe.cond += r.conditionalRaw;
+                if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
 
-            // ── 3) Compute parts count and total delivered per assembly, subtitle, title, client ──
+            // ── Compute parts/deliv per level ──
             for (const ce of cm.values()) {
                 for (const te of ce.titles.values()) {
                     let tParts = new Set(),
@@ -952,9 +921,9 @@
                         for (const ae of se.assemblies.values()) {
                             let aParts = new Set(),
                                 aDeliv = 0;
-                            for (const [pname, pdata] of ae.parts) {
-                                if (pdata.delivered > 0) { aParts.add(pname);
-                                    aDeliv += pdata.delivered; }
+                            for (const pe of ae.parts.values()) {
+                                if (pe.deliv > 0) { aParts.add(pe.part);
+                                    aDeliv += pe.deliv; }
                             }
                             ae.partsSet = aParts;
                             ae.totalDeliv = aDeliv;
@@ -971,7 +940,7 @@
                 }
             }
 
-            // ── 4) Apply overrides ──
+            // ── Apply overrides ──
             const oT = getOverrides(TITLE_KEY);
             const oS = getOverrides(SUBTITLE_KEY);
             const oA = getOverrides(ASSEMBLY_KEY);
@@ -996,8 +965,9 @@
                 }
             }
 
-            // ── 5) Render with proper rowspans ──
-            function countParts(ae) { return ae.partsSet.size; }
+            // ── Rowspan helpers ──
+            function countParts(ae) { let c = 0; for (const pe of ae.parts.values())
+                    if (pe.deliv > 0) c++; return c; }
 
             function rowsAssembly(ae) { return countParts(ae); }
 
@@ -1010,6 +980,7 @@
             function rowsClient(ce) { let s = 0; for (const te of ce.titles.values())
                     s += rowsTitle(te); return s; }
 
+            // ── Render ──
             let html = '',
                 totalParts = 0;
 
@@ -1064,8 +1035,8 @@
                                 isAMan = true; }
                             const aBadge = metaBadge(dispAP, dispAD, isAMan, rawAP, rawAD);
 
-                            for (const [pname, pdata] of ae.parts) {
-                                if (pdata.delivered === 0) continue;
+                            for (const pe of ae.parts.values()) {
+                                if (pe.deliv === 0) continue;
                                 totalParts++;
 
                                 html += `<tr class="hover:bg-gray-50/70 transition">`;
@@ -1112,14 +1083,14 @@
                                     aPrinted = true;
                                 }
 
-                                const drawings = [...pdata.drawings].sort().join(', ');
-                                html += `<td class="cell-nowrap font-medium">${esc(pname)}</td>`;
+                                const drawings = [...pe.drawings].sort().join(', ');
+                                html += `<td class="cell-nowrap font-medium">${esc(pe.part)}</td>`;
                                 html +=
                                     `<td><span class="cell-drawing" title="${esc(drawings) || '—'}">${esc(drawings) || '—'}</span></td>`;
                                 html += `
-                                    <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${fmt(pdata.delivered)}</td>
-                                    <td class="text-right tabular-nums col-accepted">${fmt(pdata.accepted)}</td>
-                                    <td class="text-right tabular-nums col-conditional">${fmt(pdata.conditional)}</td>
+                                    <td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${fmt(pe.deliv)}</td>
+                                    <td class="text-right tabular-nums col-accepted">${fmt(pe.acc)}</td>
+                                    <td class="text-right tabular-nums col-conditional">${fmt(pe.cond)}</td>
                                 `;
                                 html += `</tr>`;
                             }
@@ -1172,7 +1143,7 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  EXPORT XLSX (uses same first‑op logic)
+        //  EXPORT XLSX
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function exportToExcelXLSX() {
             const search = document.getElementById('searchInput').value.toLowerCase();
@@ -1186,60 +1157,31 @@
             if (eng) filtered = filtered.filter(r => r.engineer === eng);
             if (search) filtered = filtered.filter(r => r.search.includes(search));
 
-            // ── Build partMap (earliest per part) ──
-            const partMap = new Map();
-            for (const r of filtered) {
-                const key = `${r.client}|${r.project}|${r.subtitle}|${r.subAssembly}|${r.part}`;
-                if (!partMap.has(key)) {
-                    partMap.set(key, {
-                        client: r.client,
-                        project: r.project,
-                        subtitle: r.subtitle,
-                        subAssembly: r.subAssembly,
-                        part: r.part,
-                        delivered: r.deliveredRaw,
-                        accepted: r.acceptedRaw,
-                        conditional: r.conditionalRaw,
-                        drawings: new Set(),
-                        earliestDate: new Date(r.submitted_at)
-                    });
-                }
-                const entry = partMap.get(key);
-                if (r.drawing && r.drawing !== '-') entry.drawings.add(r.drawing);
-                const d = new Date(r.submitted_at);
-                if (d < entry.earliestDate) {
-                    entry.earliestDate = d;
-                    entry.delivered = r.deliveredRaw;
-                    entry.accepted = r.acceptedRaw;
-                    entry.conditional = r.conditionalRaw;
-                }
-            }
-
-            // ── Build hierarchy ──
+            // Build tree (same as render)
             const cm = new Map();
-            for (const entry of partMap.values()) {
-                const c = entry.client;
+            for (const r of filtered) {
+                const c = r.client;
                 if (!cm.has(c)) cm.set(c, { client: c, titles: new Map() });
                 const ce = cm.get(c);
-                const t = entry.project;
-                if (!ce.titles.has(t)) ce.titles.set(t, { title: t, subtitles: new Map() });
+                const t = r.project;
+                if (!ce.titles.has(t)) ce.titles.set(t, { title: t, subtitles: new Map(), parts: new Set(),
+                    deliv: 0 });
                 const te = ce.titles.get(t);
-                const s = entry.subtitle || '';
+                const s = r.subtitle || '';
                 if (!te.subtitles.has(s)) te.subtitles.set(s, { subtitle: s, assemblies: new Map() });
                 const se = te.subtitles.get(s);
-                const a = entry.subAssembly || '';
+                const a = r.subAssembly || '';
                 if (!se.assemblies.has(a)) se.assemblies.set(a, { assembly: a, parts: new Map() });
                 const ae = se.assemblies.get(a);
-                ae.parts.set(entry.part, {
-                    part: entry.part,
-                    delivered: entry.delivered,
-                    accepted: entry.accepted,
-                    conditional: entry.conditional,
-                    drawings: entry.drawings
-                });
+                const p = r.part;
+                if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, cond: 0, drawings: new Set() });
+                const pe = ae.parts.get(p);
+                pe.deliv += r.deliveredRaw;
+                pe.acc += r.acceptedRaw;
+                pe.cond += r.conditionalRaw;
+                if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
 
-            // ── Compute aggregates ──
             for (const ce of cm.values()) {
                 for (const te of ce.titles.values()) {
                     let tParts = new Set(),
@@ -1250,9 +1192,9 @@
                         for (const ae of se.assemblies.values()) {
                             let aParts = new Set(),
                                 aDeliv = 0;
-                            for (const [pname, pdata] of ae.parts) {
-                                if (pdata.delivered > 0) { aParts.add(pname);
-                                    aDeliv += pdata.delivered; }
+                            for (const pe of ae.parts.values()) {
+                                if (pe.deliv > 0) { aParts.add(pe.part);
+                                    aDeliv += pe.deliv; }
                             }
                             ae.partsSet = aParts;
                             ae.totalDeliv = aDeliv;
@@ -1269,11 +1211,9 @@
                 }
             }
 
-            // ── Overrides ──
-            const oT = getOverrides(TITLE_KEY);
-            const oS = getOverrides(SUBTITLE_KEY);
-            const oA = getOverrides(ASSEMBLY_KEY);
-
+            const oT = getOverrides(TITLE_KEY),
+                oS = getOverrides(SUBTITLE_KEY),
+                oA = getOverrides(ASSEMBLY_KEY);
             for (const ce of cm.values()) {
                 for (const te of ce.titles.values()) {
                     const m = oT[te.title];
@@ -1294,7 +1234,20 @@
                 }
             }
 
-            // ── Build rows for export ──
+            function countParts(ae) { let c = 0; for (const pe of ae.parts.values())
+                    if (pe.deliv > 0) c++; return c; }
+
+            function rowsAssembly(ae) { return countParts(ae); }
+
+            function rowsSubtitle(se) { let s = 0; for (const ae of se.assemblies.values())
+                    s += rowsAssembly(ae); return s; }
+
+            function rowsTitle(te) { let s = 0; for (const se of te.subtitles.values())
+                    s += rowsSubtitle(se); return s; }
+
+            function rowsClient(ce) { let s = 0; for (const te of ce.titles.values())
+                    s += rowsTitle(te); return s; }
+
             const headers = [
                 'Client',
                 'Title', 'Title #Parts', 'Title Total Deliv', 'Title Deliv/Part %',
@@ -1340,9 +1293,9 @@
                                 aD = ae.totalDeliv,
                                 aPct = aP > 0 ? (aD / aP) * 100 : 0;
 
-                            for (const [pname, pdata] of ae.parts) {
-                                if (pdata.delivered === 0) continue;
-                                const draws = [...pdata.drawings].sort().join(', ');
+                            for (const pe of ae.parts.values()) {
+                                if (pe.deliv === 0) continue;
+                                const draws = [...pe.drawings].sort().join(', ');
                                 const row = [];
                                 row.push(firstC ? ce.client : '');
                                 row.push(firstT ? te.title : '');
@@ -1357,11 +1310,11 @@
                                 row.push(firstA ? aP : '');
                                 row.push(firstA ? fmt(aD) : '');
                                 row.push(firstA ? aPct.toFixed(1) + '%' : '');
-                                row.push(pname);
+                                row.push(pe.part);
                                 row.push(draws || '—');
-                                row.push(fmt(pdata.delivered));
-                                row.push(fmt(pdata.accepted));
-                                row.push(fmt(pdata.conditional));
+                                row.push(fmt(pe.deliv));
+                                row.push(fmt(pe.acc));
+                                row.push(fmt(pe.cond));
                                 data.push(row);
                                 rowIdx++;
                                 firstC = false;
@@ -1408,7 +1361,7 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  COPY TO CLIPBOARD (uses same first‑op logic)
+        //  COPY TO CLIPBOARD
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         async function copyTableToClipboard() {
             const search = document.getElementById('searchInput').value.toLowerCase();
@@ -1422,57 +1375,29 @@
             if (eng) filtered = filtered.filter(r => r.engineer === eng);
             if (search) filtered = filtered.filter(r => r.search.includes(search));
 
-            // Build partMap
-            const partMap = new Map();
-            for (const r of filtered) {
-                const key = `${r.client}|${r.project}|${r.subtitle}|${r.subAssembly}|${r.part}`;
-                if (!partMap.has(key)) {
-                    partMap.set(key, {
-                        client: r.client,
-                        project: r.project,
-                        subtitle: r.subtitle,
-                        subAssembly: r.subAssembly,
-                        part: r.part,
-                        delivered: r.deliveredRaw,
-                        accepted: r.acceptedRaw,
-                        conditional: r.conditionalRaw,
-                        drawings: new Set(),
-                        earliestDate: new Date(r.submitted_at)
-                    });
-                }
-                const entry = partMap.get(key);
-                if (r.drawing && r.drawing !== '-') entry.drawings.add(r.drawing);
-                const d = new Date(r.submitted_at);
-                if (d < entry.earliestDate) {
-                    entry.earliestDate = d;
-                    entry.delivered = r.deliveredRaw;
-                    entry.accepted = r.acceptedRaw;
-                    entry.conditional = r.conditionalRaw;
-                }
-            }
-
-            // Build hierarchy
+            // Build tree (same as export)
             const cm = new Map();
-            for (const entry of partMap.values()) {
-                const c = entry.client;
+            for (const r of filtered) {
+                const c = r.client;
                 if (!cm.has(c)) cm.set(c, { client: c, titles: new Map() });
                 const ce = cm.get(c);
-                const t = entry.project;
-                if (!ce.titles.has(t)) ce.titles.set(t, { title: t, subtitles: new Map() });
+                const t = r.project;
+                if (!ce.titles.has(t)) ce.titles.set(t, { title: t, subtitles: new Map(), parts: new Set(),
+                    deliv: 0 });
                 const te = ce.titles.get(t);
-                const s = entry.subtitle || '';
+                const s = r.subtitle || '';
                 if (!te.subtitles.has(s)) te.subtitles.set(s, { subtitle: s, assemblies: new Map() });
                 const se = te.subtitles.get(s);
-                const a = entry.subAssembly || '';
+                const a = r.subAssembly || '';
                 if (!se.assemblies.has(a)) se.assemblies.set(a, { assembly: a, parts: new Map() });
                 const ae = se.assemblies.get(a);
-                ae.parts.set(entry.part, {
-                    part: entry.part,
-                    delivered: entry.delivered,
-                    accepted: entry.accepted,
-                    conditional: entry.conditional,
-                    drawings: entry.drawings
-                });
+                const p = r.part;
+                if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, cond: 0, drawings: new Set() });
+                const pe = ae.parts.get(p);
+                pe.deliv += r.deliveredRaw;
+                pe.acc += r.acceptedRaw;
+                pe.cond += r.conditionalRaw;
+                if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
 
             for (const ce of cm.values()) {
@@ -1485,9 +1410,9 @@
                         for (const ae of se.assemblies.values()) {
                             let aParts = new Set(),
                                 aDeliv = 0;
-                            for (const [pname, pdata] of ae.parts) {
-                                if (pdata.delivered > 0) { aParts.add(pname);
-                                    aDeliv += pdata.delivered; }
+                            for (const pe of ae.parts.values()) {
+                                if (pe.deliv > 0) { aParts.add(pe.part);
+                                    aDeliv += pe.deliv; }
                             }
                             ae.partsSet = aParts;
                             ae.totalDeliv = aDeliv;
@@ -1504,11 +1429,9 @@
                 }
             }
 
-            // Overrides
-            const oT = getOverrides(TITLE_KEY);
-            const oS = getOverrides(SUBTITLE_KEY);
-            const oA = getOverrides(ASSEMBLY_KEY);
-
+            const oT = getOverrides(TITLE_KEY),
+                oS = getOverrides(SUBTITLE_KEY),
+                oA = getOverrides(ASSEMBLY_KEY);
             for (const ce of cm.values()) {
                 for (const te of ce.titles.values()) {
                     const m = oT[te.title];
@@ -1545,11 +1468,11 @@
                             const aP = ae.partsSet.size,
                                 aD = ae.totalDeliv,
                                 aPct = aP > 0 ? (aD / aP) * 100 : 0;
-                            for (const [pname, pdata] of ae.parts) {
-                                if (pdata.delivered === 0) continue;
-                                const draws = [...pdata.drawings].sort().join(', ');
+                            for (const pe of ae.parts.values()) {
+                                if (pe.deliv === 0) continue;
+                                const draws = [...pe.drawings].sort().join(', ');
                                 tsv +=
-                                    `${ce.client}\t${te.title}\t${tP}\t${fmt(tD)}\t${tPct.toFixed(1)}%\t${se.subtitle}\t${sP}\t${fmt(sD)}\t${sPct.toFixed(1)}%\t${ae.assembly}\t${aP}\t${fmt(aD)}\t${aPct.toFixed(1)}%\t${pname}\t${draws || '—'}\t${fmt(pdata.delivered)}\t${fmt(pdata.accepted)}\t${fmt(pdata.conditional)}\n`;
+                                    `${ce.client}\t${te.title}\t${tP}\t${fmt(tD)}\t${tPct.toFixed(1)}%\t${se.subtitle}\t${sP}\t${fmt(sD)}\t${sPct.toFixed(1)}%\t${ae.assembly}\t${aP}\t${fmt(aD)}\t${aPct.toFixed(1)}%\t${pe.part}\t${draws || '—'}\t${fmt(pe.deliv)}\t${fmt(pe.acc)}\t${fmt(pe.cond)}\n`;
                             }
                         }
                     }
@@ -1558,25 +1481,11 @@
 
             try {
                 await navigator.clipboard.writeText(tsv);
-                alert(`✅ Aggregated table copied (first‑operation Delivered) · excl. ${EXCLUDED.join(', ')}`);
+                alert(`✅ Aggregated table copied · excl. ${EXCLUDED.join(', ')}`);
             } catch (err) {
                 alert('❌ Copy failed: ' + err);
             }
         }
-
-        // Helper functions for row counts (used in export/copy)
-        function countParts(ae) { return ae.partsSet.size; }
-
-        function rowsAssembly(ae) { return countParts(ae); }
-
-        function rowsSubtitle(se) { let s = 0; for (const ae of se.assemblies.values())
-                s += rowsAssembly(ae); return s; }
-
-        function rowsTitle(te) { let s = 0; for (const se of te.subtitles.values())
-                s += rowsSubtitle(se); return s; }
-
-        function rowsClient(ce) { let s = 0; for (const te of ce.titles.values())
-                s += rowsTitle(te); return s; }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  CLEAR FILTERS
