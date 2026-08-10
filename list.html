@@ -884,9 +884,7 @@
                     });
                 }
                 const entry = partMap.get(key);
-                // add drawing
                 if (r.drawing && r.drawing !== '-') entry.drawings.add(r.drawing);
-                // check if this row is earlier
                 const d = new Date(r.submitted_at);
                 if (d < entry.earliestDate) {
                     entry.earliestDate = d;
@@ -911,7 +909,6 @@
                 const a = entry.subAssembly || '';
                 if (!se.assemblies.has(a)) se.assemblies.set(a, { assembly: a, parts: new Map() });
                 const ae = se.assemblies.get(a);
-                // store part data
                 ae.parts.set(entry.part, {
                     part: entry.part,
                     delivered: entry.delivered,
@@ -976,7 +973,7 @@
                 }
             }
 
-            // ── 5) Render ──
+            // ── 5) Render with proper rowspans ──
             function countParts(ae) { return ae.partsSet.size; }
 
             function rowsAssembly(ae) { return countParts(ae); }
