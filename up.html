@@ -56,7 +56,6 @@
         .part-status-accept { color: #059669 !important; }
         .part-name-wrapper { display: inline-flex; align-items: center; gap: 4px; }
         .excluded-badge { display: inline-block; background: #fee2e2; color: #991b1b; font-size: 0.6rem; font-weight: 600; padding: 0.1rem 0.5rem; border-radius: 9999px; border: 1px solid #fca5a5; margin-left: 6px; }
-        .debug-breakdown { font-size: 0.7rem; color: #1e40af; background: #eff6ff; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 2px; }
         .formula-legend { font-size: 0.7rem; color: #1e293b; background: #f1f5f9; padding: 2px 12px; border-radius: 20px; display: inline-block; border: 1px solid #cbd5e1; }
     </style>
 </head>
@@ -730,13 +729,8 @@
                                 for (const part of parts) {
                                     const statusClass = getPartStatusClass(part);
                                     const dotHtml = getStatusDot(part);
-                                    let breakdownHtml = '';
-                                    if (part.firstOpBreakdown) {
-                                        const b = part.firstOpBreakdown;
-                                        breakdownHtml = `<div class="debug-breakdown">First op: Acc=${b.accepted}, Rwk=${b.rework}, Rej=${b.reject}, Cnd=${b.conditional} → ${b.delivered}</div>`;
-                                    }
                                     partsTableHtml += `<tr><td class="text-center text-red-600 font-bold">${rowIdx}</td>
-                                        <td><span class="part-name-wrapper">${dotHtml}<span class="clickable-part ${statusClass}" onclick="showPartDetails('${escapeHtml(part.part_name)}')">${escapeHtml(part.part_name)}</span></span>${breakdownHtml}</td>
+                                        <td><span class="part-name-wrapper">${dotHtml}<span class="clickable-part ${statusClass}" onclick="showPartDetails('${escapeHtml(part.part_name)}')">${escapeHtml(part.part_name)}</span></span></td>
                                         <td class="text-center text-blue-700 font-bold">${part.quantity}</td>
                                         <td>${escapeHtml(part.dwgList) || '—'}</td><td>${escapeHtml(part.tagList) || '—'}</td>
                                         <td class="text-xs">${escapeHtml(part.operations) || '—'}</td>
@@ -848,7 +842,7 @@
             allProjects = projects;
             populateFilters(projects, filtered);
             applyFilters();
-            showToast('Data refreshed – modal now shows only first‑op values', 'info');
+            showToast('Data refreshed – modal shows only first‑op values', 'info');
         }
 
         function escapeHtml(str) {
