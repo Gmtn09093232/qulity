@@ -10,7 +10,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ==== (all styles identical to previous version) ==== */
+        /* all styles same as before */
         body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
         .status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
         .progress-bar { height: 6px; border-radius: 10px; background-color: #e2e8f0; }
@@ -57,7 +57,8 @@
         .part-status-accept { color: #059669 !important; }
         .part-name-wrapper { display: inline-flex; align-items: center; gap: 4px; }
         .excluded-badge { display: inline-block; background: #fee2e2; color: #991b1b; font-size: 0.6rem; font-weight: 600; padding: 0.1rem 0.5rem; border-radius: 9999px; border: 1px solid #fca5a5; margin-left: 6px; }
-        .delivered-sum-label { font-size: 0.65rem; color: #4b5563; font-weight: 400; margin-left: 4px; }
+        .debug-breakdown { font-size: 0.7rem; color: #1e40af; background: #eff6ff; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 2px; }
+        .formula-legend { font-size: 0.7rem; color: #1e293b; background: #f1f5f9; padding: 2px 12px; border-radius: 20px; display: inline-block; border: 1px solid #cbd5e1; }
     </style>
 </head>
 <body class="antialiased">
@@ -71,7 +72,7 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-flag-checkered text-indigo-600"></i>
                     Project Follow‑Up
-                    <span class="text-xs font-normal text-slate-400 ml-2 bg-slate-100 px-3 py-1 rounded-full">Delivered = Acc + Rwk + Rej + Cnd (first op only)</span>
+                    <span class="text-xs font-normal text-slate-400 ml-2 bg-slate-100 px-3 py-1 rounded-full">Delivered = Acc+Rwk+Rej+Cnd (first op only)</span>
                 </h1>
             </div>
             <div class="flex gap-3 flex-wrap">
@@ -81,7 +82,7 @@
             </div>
         </div>
 
-        <!-- Global Filters -->
+        <!-- Global Filters (unchanged) -->
         <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Client</label><select id="filterClient" class="filter-select w-full"><option value="">All Clients</option></select></div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Filter by Project Title</label><select id="filterTitle" class="filter-select w-full"><option value="">All Titles</option></select></div>
@@ -115,7 +116,7 @@
             <div class="px-5 py-3 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
                 <h2 class="font-semibold"><i class="fa-regular fa-rectangle-list mr-2"></i> Projects Overview</h2>
                 <div class="flex items-center gap-3 text-xs text-slate-500">
-                    <span><i class="fa-solid fa-circle text-blue-600 text-[10px] mr-1"></i> Delivered = <strong>Accepted + Rework + Reject + Conditional</strong> (first op only)</span>
+                    <span class="formula-legend"><i class="fa-solid fa-circle text-blue-600 text-[10px] mr-1"></i> Delivered = <strong>Accepted + Rework + Reject + Conditional</strong> (first op only)</span>
                     <span id="recordCount"></span>
                 </div>
             </div>
@@ -128,7 +129,7 @@
                             <th class="text-center">Sub‑assemblies</th>
                             <th class="text-center">Sub Sub Assembly</th>
                             <th class="text-center">Insp.</th>
-                            <th class="text-center">Delivered Qty <span class="text-blue-600 text-[10px] block font-normal">(first‑op sum)</span></th>
+                            <th class="text-center">Delivered Qty <span class="text-blue-600 text-[10px] block font-normal">(Acc+Rwk+Rej+Cnd, first op)</span></th>
                             <th class="text-center">Accepted Qty</th>
                             <th class="text-center">Rework Qty</th>
                             <th class="text-center">Reject Qty</th>
@@ -144,7 +145,7 @@
             </div>
         </div>
 
-        <!-- Main Modal -->
+        <!-- Modals (unchanged) -->
         <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closeModal(event)">
             <div class="bg-white rounded-2xl max-w-6xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
@@ -158,7 +159,6 @@
             </div>
         </div>
 
-        <!-- Part Detail Modal -->
         <div id="partModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden" onclick="closePartModal(event)">
             <div class="bg-white rounded-2xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-auto shadow-xl" onclick="event.stopPropagation()">
                 <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
@@ -363,9 +363,17 @@
                     const firstOp = partFirstOp.get(partName);
                     if (firstOp) {
                         partData.quantity = firstOp.delivered;
+                        partData.firstOpBreakdown = {
+                            accepted: firstOp.accepted,
+                            rework: firstOp.rework,
+                            reject: firstOp.reject,
+                            conditional: firstOp.conditional,
+                            delivered: firstOp.delivered
+                        };
                         subDelivered += firstOp.delivered;
                     } else {
                         partData.quantity = 0;
+                        partData.firstOpBreakdown = null;
                     }
                     sub.partsMap.set(partName, partData);
                 }
@@ -393,7 +401,8 @@
                         rejectCount: data.rejectCount,
                         reworkCount: data.reworkCount,
                         conditionalCount: data.conditionalCount,
-                        acceptedCount: data.acceptedCount
+                        acceptedCount: data.acceptedCount,
+                        firstOpBreakdown: data.firstOpBreakdown
                     };
                 });
                 return {
@@ -490,7 +499,7 @@
                 return `<tr><td class="font-medium">${escapeHtml(p.client)}</td><td class="font-mono">${escapeHtml(p.title)}</td>
                         <td class="text-center font-bold">${p.subtitlesArray.length}</td><td class="text-center"><span class="font-bold">${subSubCount}</span></td>
                         <td class="text-center">${p.totalInspections}</td>
-                        <td class="text-center text-blue-700 font-bold">${p.totalDelivered.toLocaleString()} <span class="text-[10px] text-blue-400 font-normal">(first op)</span></td>
+                        <td class="text-center text-blue-700 font-bold">${p.totalDelivered.toLocaleString()} <span class="text-[10px] text-blue-400 font-normal">(sum of 4)</span></td>
                         <td class="text-center text-emerald-700">${p.totalAccepted.toLocaleString()}</td>
                         <td class="text-center text-amber-600">${p.totalRework.toLocaleString()}</td>
                         <td class="text-center text-red-600">${p.totalReject.toLocaleString()}</td>
@@ -508,11 +517,11 @@
             document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
         }
 
-        // ─── Export functions (unchanged) ───
+        // ─── Export functions (identical to previous) ───
         function exportGlobalToExcel() { /* same as before */ }
         function exportModalToExcel() { /* same as before */ }
 
-        // ─── Part detail modal ───
+        // ─── Part detail modal with first‑op breakdown ───
         function showPartDetails(partName) {
             if (!currentModalProject) return;
             const allInspections = currentModalProject.inspections;
@@ -531,15 +540,22 @@
             const firstRej = firstInsp.reject_qty || 0;
             const firstCnd = firstInsp.conditional_accept_qty || 0;
 
+            let totalAllDelivered = 0;
+            for (const insp of partInspections) {
+                totalAllDelivered += computeDelivered(insp);
+            }
+
             let suggestionHtml = `
                 <table class="suggestion-table">
                     <tr><td class="suggestion-label">First Operation (${new Date(firstInsp.submitted_at).toLocaleDateString()}):</td>
                         <td class="suggestion-value">${escapeHtml(firstInsp.process_type || '—')} &nbsp;|&nbsp; 
-                        Delivered = <strong>${firstDelivered}</strong> (Acc:${firstAcc}, Rwk:${firstRwk}, Rej:${firstRej}, Cnd:${firstCnd})</td></tr>
+                        <strong>Delivered = ${firstDelivered}</strong> (Acc:${firstAcc}, Rwk:${firstRwk}, Rej:${firstRej}, Cnd:${firstCnd})</td></tr>
                     <tr><td class="suggestion-label">Last Operation:</td>
                         <td class="suggestion-value">${escapeHtml(lastInsp?.process_type || '—')} (${lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—'})</td></tr>
                     <tr><td class="suggestion-label">Suggested Next Operation:</td>
                         <td class="suggestion-value">${lastInsp ? (getSuggestedNext(lastInsp) || '—') : '—'}</td></tr>
+                    <tr><td class="suggestion-label">Total Delivered (all ops) for this part:</td>
+                        <td class="suggestion-value"><strong>${totalAllDelivered}</strong> (for reference)</td></tr>
                 </table>
             `;
 
@@ -591,9 +607,8 @@
             const project = allProjects.find(p => p.client === client && p.title === title);
             if (!project) { showToast('Project not found', 'error'); return; }
             currentModalProject = project;
-            document.getElementById('modalTitle').innerHTML = `${escapeHtml(client)} / ${escapeHtml(title)} <span class="text-sm font-normal text-blue-600 ml-2">(Delivered = sum of Acc+Rwk+Rej+Cnd, first op only)</span>`;
+            document.getElementById('modalTitle').innerHTML = `${escapeHtml(client)} / ${escapeHtml(title)} <span class="text-sm font-normal text-blue-600 ml-2">(Delivered = Acc+Rwk+Rej+Cnd, first op only)</span>`;
 
-            // Build filter options
             const processSet = new Set(), engineerSet = new Set(), opCondSet = new Set(), suggestedSet = new Set();
             project.inspections.forEach(insp => {
                 if (insp.process_type) processSet.add(insp.process_type);
@@ -673,7 +688,7 @@
                         let partsTableHtml = '';
                         if (Object.keys(grouped).length) {
                             let rowIdx = 1;
-                            partsTableHtml = `<div class="mt-3"><div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components <span class="text-blue-500 font-normal">(delivered = first‑op sum)</span></div>
+                            partsTableHtml = `<div class="mt-3"><div class="text-xs font-semibold text-gray-600 mb-1">📋 Parts / Components <span class="text-blue-500 font-normal">(delivered = first‑op sum of 4)</span></div>
                                 <table class="parts-table"><thead><tr><th class="text-center" style="width:40px;">No.</th><th>Part Name</th><th class="text-center">Delivered Qty <span class="text-blue-500 text-[10px]">(first op sum)</span></th><th>DWG No.</th><th>Tag No.</th><th>Operations</th><th>Suggested Next Operation</th></tr></thead><tbody>`;
                             const sortedKeys = Object.keys(grouped).sort();
                             for (const ss of sortedKeys) {
@@ -682,8 +697,13 @@
                                 for (const part of parts) {
                                     const statusClass = getPartStatusClass(part);
                                     const dotHtml = getStatusDot(part);
+                                    let breakdownHtml = '';
+                                    if (part.firstOpBreakdown) {
+                                        const b = part.firstOpBreakdown;
+                                        breakdownHtml = `<div class="debug-breakdown">First op: Acc=${b.accepted}, Rwk=${b.rework}, Rej=${b.reject}, Cnd=${b.conditional} → ${b.delivered}</div>`;
+                                    }
                                     partsTableHtml += `<tr><td class="text-center text-red-600 font-bold">${rowIdx}</td>
-                                        <td><span class="part-name-wrapper">${dotHtml}<span class="clickable-part ${statusClass}" onclick="showPartDetails('${escapeHtml(part.part_name)}')">${escapeHtml(part.part_name)}</span></span></td>
+                                        <td><span class="part-name-wrapper">${dotHtml}<span class="clickable-part ${statusClass}" onclick="showPartDetails('${escapeHtml(part.part_name)}')">${escapeHtml(part.part_name)}</span></span>${breakdownHtml}</td>
                                         <td class="text-center text-blue-700 font-bold">${part.quantity}</td>
                                         <td>${escapeHtml(part.dwgList) || '—'}</td><td>${escapeHtml(part.tagList) || '—'}</td>
                                         <td class="text-xs">${escapeHtml(part.operations) || '—'}</td>
@@ -716,7 +736,6 @@
                 filterableContainer.innerHTML = html;
             }
 
-            // Attach event listeners
             ['modalFilterProcess','modalFilterEngineer','modalFilterOpCondition','modalFilterSuggestedNext','modalFilterDateFrom','modalFilterDateTo'].forEach(id => {
                 document.getElementById(id).addEventListener('change', updateFilteredContent);
             });
@@ -728,7 +747,6 @@
             });
             updateFilteredContent();
 
-            // Excel button
             const excelBtn = document.getElementById('modalExcelBtn');
             const newExcelBtn = excelBtn.cloneNode(true);
             excelBtn.parentNode.replaceChild(newExcelBtn, excelBtn);
@@ -817,7 +835,7 @@
 
         refreshData();
 
-        // Placeholder for export functions (identical to previous version)
+        // ─── Export functions (copied from previous) ───
         function exportGlobalToExcel() {
             if (!currentFilteredProjects.length) { showToast('No data to export', 'error'); return; }
             const rows = [['Client','Project Title','Sub‑assemblies','Sub Sub Assembly (first)','Inspections','Delivered Qty (first op sum)','Accepted Qty','Rework Qty','Reject Qty','Conditional Accept','Accept %','Last Inspection','Status']];
