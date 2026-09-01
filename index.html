@@ -1872,11 +1872,14 @@
                 return;
             try {
                 const resp = await fetch(`/api/inspections/${id}`, { method: 'DELETE' });
-                if (!resp.ok) throw new Error((await resp.text()) || 'Delete failed');
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    throw new Error(`Status ${resp.status}: ${text}`);
+                }
                 showToast('✅ Record deleted successfully.', 'success');
                 loadHistory();
             } catch (err) {
-                showToast('❌ Error: ' + err.message, 'error');
+                showToast('❌ Error deleting: ' + err.message, 'error');
             }
         }
 
@@ -2016,10 +2019,15 @@
         async function editInspection(id) {
             try {
                 const resp = await fetch(`/api/inspections/${id}`);
-                if (!resp.ok) throw new Error();
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    throw new Error(`Status ${resp.status}: ${text}`);
+                }
                 const insp = await resp.json();
                 populateFormForEdit(insp);
-            } catch (err) { showToast('Error loading inspection', 'error'); }
+            } catch (err) {
+                showToast('Error loading inspection: ' + err.message, 'error');
+            }
         }
 
         // ─── CORRECTED populateFormForEdit ───────────────────────────────────────
