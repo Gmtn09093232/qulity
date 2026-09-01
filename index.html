@@ -774,834 +774,835 @@
             AMIMTDE · Quality Assurance Directorate v2.0
         </div>
     </div>
-    <script>
-    // ─── SECURITY ───
-    const CORRECT_SECRET = "120705";
-    if (sessionStorage.getItem('secretUnlocked') === 'true') {
-        document.getElementById('secretOverlay').classList.add('hidden');
-        document.getElementById('mainContent').classList.add('visible');
-        initApp();
-    }
 
-    function checkSecret() {
-        const input = document.getElementById('secretInput');
-        const errorEl = document.getElementById('secretError');
-        const entered = input.value;
-        if (entered === CORRECT_SECRET) {
-            sessionStorage.setItem('secretUnlocked', 'true');
+    <script>
+        // ─── SECURITY ───
+        const CORRECT_SECRET = "120705";
+        if (sessionStorage.getItem('secretUnlocked') === 'true') {
             document.getElementById('secretOverlay').classList.add('hidden');
             document.getElementById('mainContent').classList.add('visible');
-            errorEl.textContent = '';
             initApp();
-        } else {
-            input.classList.add('shake');
-            errorEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Wrong secret number!';
-            setTimeout(() => { input.classList.remove('shake');
-                input.value = '';
-                input.focus(); }, 500);
         }
-    }
-    document.getElementById('secretInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkSecret(); });
 
-    // ─── LIVE CLOCK ───
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('liveClock').textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit',
-            minute: '2-digit' });
-    }
-    updateClock();
-    setInterval(updateClock, 10000);
-
-    // ─── TOAST ───
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
-        const icon = iconMap[type] || 'fa-info-circle';
-        toast.innerHTML =
-            `<div class="toast-content"><span><i class="fa-solid ${icon}"></i></span><span>${message}</span></div>`;
-        container.appendChild(toast);
-        requestAnimationFrame(() => toast.classList.add('show'));
-        setTimeout(() => { toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400); }, 4000);
-    }
-
-    // ─── GLOBALS ───
-    let allClientNames = new Set();
-    let allProjectTitles = new Set();
-    let allSubtitles = new Set();
-    let allSubSubAssemblies = new Set();
-    let allPartNames = new Set();
-    let allDrawingNos = new Set();
-    // Hierarchical maps
-    let clientTitleMap = new Map(); // client -> Set of titles
-    let titleSubtitleMap = new Map(); // key: client|title -> Set of subtitles
-    let subtitleSubSubMap = new Map(); // key: client|title|subtitle -> Set of subSubs
-    let subSubDrawingMap = new Map(); // key: client|title|subtitle|subSub -> Set of drawing nos.
-    let subSubPartMap = new Map(); // same key -> Set of part names
-
-    // Last used timestamps for sorting (global, not hierarchical)
-    let lastUsedMap = { client: new Map(), title: new Map(), subtitle: new Map(), subSub: new Map(), part: new Map(),
-        drawing: new Map() };
-
-    let currentProcess = document.getElementById("processType").value;
-    let isEditMode = false,
-        editId = null;
-    let currentEngineer = '';
-    let g_allInspections = [];
-    let selectedParts = [];
-    let historicalPartQtyMap = new Map();
-
-    const engineerFromUrl = new URLSearchParams(window.location.search).get('engineer');
-    if (engineerFromUrl) {
-        currentEngineer = decodeURIComponent(engineerFromUrl);
-        const f = document.getElementById('qcEngineerName');
-        f.value = currentEngineer;
-        f.readOnly = true;
-        f.classList.add('bg-slate-100', 'cursor-not-allowed');
-    }
-
-    // ─── HELPERS ───
-    function isAssemblyProcess() {
-        return currentProcess === 'Assembling' || currentProcess === 'FastenersAssembly';
-    }
-
-    function getPartListFilters() {
-        const client = document.getElementById('extra_Customer_Name')?.value?.trim() || '';
-        const title = document.getElementById('extra_Project_Name')?.value?.trim() || '';
-        const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
-        const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
-        return { client, title, subtitle, subSub };
-    }
-
-    function findMatchingParts(filters) {
-        const { client, title, subtitle, subSub } = filters;
-        const partsSet = new Set();
-        if (!client && !title) return [];
-        for (const insp of g_allInspections) {
-            const extra = insp.extra_fields || {};
-            const inspClient = (extra['Customer Name'] || '').trim();
-            const inspTitle = (extra['Project Name'] || '').trim();
-            const inspSubtitle = (extra['Subtitle'] || '').trim();
-            const inspSubSub = (extra['Sub Sub Assembly'] || '').trim();
-            const inspPart = (extra['Part Name'] || '').trim();
-            if (!inspPart) continue;
-            let match = true;
-            if (client && inspClient !== client) match = false;
-            if (match && title && inspTitle !== title) match = false;
-            if (match && subtitle && inspSubtitle !== subtitle) match = false;
-            if (match && subSub && inspSubSub !== subSub) match = false;
-            if (match) partsSet.add(inspPart);
-        }
-        return Array.from(partsSet);
-    }
-
-    function computeHistoricalQuantities() {
-        historicalPartQtyMap.clear();
-        for (const insp of g_allInspections) {
-            const extra = insp.extra_fields || {};
-            const part = (extra['Part Name'] || '').trim();
-            if (!part) continue;
-            const accepted = insp.accepted_qty || 0;
-            const conditional = insp.conditional_accept_qty || 0;
-            const total = accepted + conditional;
-            if (total > 0) {
-                const current = historicalPartQtyMap.get(part) || 0;
-                historicalPartQtyMap.set(part, current + total);
+        function checkSecret() {
+            const input = document.getElementById('secretInput');
+            const errorEl = document.getElementById('secretError');
+            const entered = input.value;
+            if (entered === CORRECT_SECRET) {
+                sessionStorage.setItem('secretUnlocked', 'true');
+                document.getElementById('secretOverlay').classList.add('hidden');
+                document.getElementById('mainContent').classList.add('visible');
+                errorEl.textContent = '';
+                initApp();
+            } else {
+                input.classList.add('shake');
+                errorEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Wrong secret number!';
+                setTimeout(() => { input.classList.remove('shake');
+                    input.value = '';
+                    input.focus(); }, 500);
             }
         }
-    }
+        document.getElementById('secretInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkSecret(); });
 
-    function getDefaultQtyForPart(partName) {
-        const hist = historicalPartQtyMap.get(partName);
-        return (hist !== undefined && hist > 0) ? hist : 1;
-    }
+        // ─── LIVE CLOCK ───
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('liveClock').textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit',
+                minute: '2-digit' });
+        }
+        updateClock();
+        setInterval(updateClock, 10000);
 
-    function populatePartListMultiSelect() {
-        const selectEl = document.getElementById('extra_Tag_No_');
-        if (!selectEl || !isAssemblyProcess()) return;
-
-        const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
-        const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
-
-        const filters = getPartListFilters();
-        let parts = findMatchingParts(filters);
-
-        if (subtitle || subSub) {
-            const lowerSubtitle = subtitle.toLowerCase();
-            const lowerSubSub = subSub.toLowerCase();
-            parts = parts.filter(p => {
-                const lowerP = p.toLowerCase();
-                return !(lowerSubtitle.includes(lowerP) || lowerSubSub.includes(lowerP));
-            });
+        // ─── TOAST ───
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            const icon = iconMap[type] || 'fa-info-circle';
+            toast.innerHTML =
+                `<div class="toast-content"><span><i class="fa-solid ${icon}"></i></span><span>${message}</span></div>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => { toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400); }, 4000);
         }
 
-        selectedParts = selectedParts.filter(sp => parts.includes(sp.name));
+        // ─── GLOBALS ───
+        let allClientNames = new Set();
+        let allProjectTitles = new Set();
+        let allSubtitles = new Set();
+        let allSubSubAssemblies = new Set();
+        let allPartNames = new Set();
+        let allDrawingNos = new Set();
+        // Hierarchical maps
+        let clientTitleMap = new Map(); // client -> Set of titles
+        let titleSubtitleMap = new Map(); // key: client|title -> Set of subtitles
+        let subtitleSubSubMap = new Map(); // key: client|title|subtitle -> Set of subSubs
+        let subSubDrawingMap = new Map(); // key: client|title|subtitle|subSub -> Set of drawing nos.
+        let subSubPartMap = new Map(); // same key -> Set of part names
 
-        selectEl.innerHTML = '<option value="">-- Select Parts --</option>';
-        if (parts.length === 0) {
-            const opt = document.createElement('option');
-            opt.value = '';
-            opt.textContent = '⏳ No parts available (filtered)';
-            opt.disabled = true;
-            selectEl.appendChild(opt);
-        } else {
-            parts.sort((a, b) => a.localeCompare(b));
-            parts.forEach(p => {
+        // Last used timestamps for sorting (global, not hierarchical)
+        let lastUsedMap = { client: new Map(), title: new Map(), subtitle: new Map(), subSub: new Map(), part: new Map(),
+            drawing: new Map() };
+
+        let currentProcess = document.getElementById("processType").value;
+        let isEditMode = false,
+            editId = null;
+        let currentEngineer = '';
+        let g_allInspections = [];
+        let selectedParts = [];
+        let historicalPartQtyMap = new Map();
+
+        const engineerFromUrl = new URLSearchParams(window.location.search).get('engineer');
+        if (engineerFromUrl) {
+            currentEngineer = decodeURIComponent(engineerFromUrl);
+            const f = document.getElementById('qcEngineerName');
+            f.value = currentEngineer;
+            f.readOnly = true;
+            f.classList.add('bg-slate-100', 'cursor-not-allowed');
+        }
+
+        // ─── HELPERS ───
+        function isAssemblyProcess() {
+            return currentProcess === 'Assembling' || currentProcess === 'FastenersAssembly';
+        }
+
+        function getPartListFilters() {
+            const client = document.getElementById('extra_Customer_Name')?.value?.trim() || '';
+            const title = document.getElementById('extra_Project_Name')?.value?.trim() || '';
+            const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
+            const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
+            return { client, title, subtitle, subSub };
+        }
+
+        function findMatchingParts(filters) {
+            const { client, title, subtitle, subSub } = filters;
+            const partsSet = new Set();
+            if (!client && !title) return [];
+            for (const insp of g_allInspections) {
+                const extra = insp.extra_fields || {};
+                const inspClient = (extra['Customer Name'] || '').trim();
+                const inspTitle = (extra['Project Name'] || '').trim();
+                const inspSubtitle = (extra['Subtitle'] || '').trim();
+                const inspSubSub = (extra['Sub Sub Assembly'] || '').trim();
+                const inspPart = (extra['Part Name'] || '').trim();
+                if (!inspPart) continue;
+                let match = true;
+                if (client && inspClient !== client) match = false;
+                if (match && title && inspTitle !== title) match = false;
+                if (match && subtitle && inspSubtitle !== subtitle) match = false;
+                if (match && subSub && inspSubSub !== subSub) match = false;
+                if (match) partsSet.add(inspPart);
+            }
+            return Array.from(partsSet);
+        }
+
+        function computeHistoricalQuantities() {
+            historicalPartQtyMap.clear();
+            for (const insp of g_allInspections) {
+                const extra = insp.extra_fields || {};
+                const part = (extra['Part Name'] || '').trim();
+                if (!part) continue;
+                const accepted = insp.accepted_qty || 0;
+                const conditional = insp.conditional_accept_qty || 0;
+                const total = accepted + conditional;
+                if (total > 0) {
+                    const current = historicalPartQtyMap.get(part) || 0;
+                    historicalPartQtyMap.set(part, current + total);
+                }
+            }
+        }
+
+        function getDefaultQtyForPart(partName) {
+            const hist = historicalPartQtyMap.get(partName);
+            return (hist !== undefined && hist > 0) ? hist : 1;
+        }
+
+        function populatePartListMultiSelect() {
+            const selectEl = document.getElementById('extra_Tag_No_');
+            if (!selectEl || !isAssemblyProcess()) return;
+
+            const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
+            const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
+
+            const filters = getPartListFilters();
+            let parts = findMatchingParts(filters);
+
+            if (subtitle || subSub) {
+                const lowerSubtitle = subtitle.toLowerCase();
+                const lowerSubSub = subSub.toLowerCase();
+                parts = parts.filter(p => {
+                    const lowerP = p.toLowerCase();
+                    return !(lowerSubtitle.includes(lowerP) || lowerSubSub.includes(lowerP));
+                });
+            }
+
+            selectedParts = selectedParts.filter(sp => parts.includes(sp.name));
+
+            selectEl.innerHTML = '<option value="">-- Select Parts --</option>';
+            if (parts.length === 0) {
                 const opt = document.createElement('option');
-                opt.value = p;
-                opt.textContent = p;
+                opt.value = '';
+                opt.textContent = '⏳ No parts available (filtered)';
+                opt.disabled = true;
                 selectEl.appendChild(opt);
-            });
-        }
-        const selectedNames = selectedParts.map(p => p.name);
-        Array.from(selectEl.options).forEach(opt => {
-            if (opt.value && selectedNames.includes(opt.value)) {
-                opt.selected = true;
+            } else {
+                parts.sort((a, b) => a.localeCompare(b));
+                parts.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    opt.textContent = p;
+                    selectEl.appendChild(opt);
+                });
             }
-        });
+            const selectedNames = selectedParts.map(p => p.name);
+            Array.from(selectEl.options).forEach(opt => {
+                if (opt.value && selectedNames.includes(opt.value)) {
+                    opt.selected = true;
+                }
+            });
 
-        renderSelectedPartsTable();
-        updateAssemblyProgress();
-    }
-
-    function renderSelectedPartsTable() {
-        const container = document.getElementById('selectedPartsContainer');
-        if (!container) return;
-        if (!isAssemblyProcess()) { container.innerHTML = ''; return; }
-        if (selectedParts.length === 0) {
-            container.innerHTML = `<div class="text-slate-500 text-sm italic py-2">No parts selected</div>`;
-            return;
+            renderSelectedPartsTable();
+            updateAssemblyProgress();
         }
-        let html = `<table class="part-qty-table w-full"><tbody>`;
-        selectedParts.forEach((part, index) => {
-            html += `<tr>
+
+        function renderSelectedPartsTable() {
+            const container = document.getElementById('selectedPartsContainer');
+            if (!container) return;
+            if (!isAssemblyProcess()) { container.innerHTML = ''; return; }
+            if (selectedParts.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 text-sm italic py-2">No parts selected</div>`;
+                return;
+            }
+            let html = `<table class="part-qty-table w-full"><tbody>`;
+            selectedParts.forEach((part, index) => {
+                html += `<tr>
                             <td class="text-slate-700 font-medium text-sm">${escapeHtml(part.name)}</td>
                             <td><input type="number" min="0" step="1" value="${part.qty || 1}" class="part-qty-input" data-index="${index}" /></td>
                             <td><span class="remove-part-btn" data-index="${index}"><i class="fa-regular fa-trash-can"></i></span></td>
                         </tr>`;
-        });
-        html += `</tbody></table>`;
-        container.innerHTML = html;
-        container.querySelectorAll('.part-qty-input').forEach(input => {
-            input.addEventListener('input', function() {
-                const idx = parseInt(this.dataset.index);
-                const val = parseInt(this.value) || 0;
-                selectedParts[idx].qty = val;
-                updateAssemblyProgress();
             });
-        });
-        container.querySelectorAll('.remove-part-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const idx = parseInt(this.dataset.index);
-                selectedParts.splice(idx, 1);
-                const selectEl = document.getElementById('extra_Tag_No_');
-                if (selectEl) {
-                    const names = selectedParts.map(p => p.name);
-                    Array.from(selectEl.options).forEach(opt => {
-                        opt.selected = opt.value && names.includes(opt.value);
-                    });
-                }
-                renderSelectedPartsTable();
-                updateAssemblyProgress();
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+            container.querySelectorAll('.part-qty-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const idx = parseInt(this.dataset.index);
+                    const val = parseInt(this.value) || 0;
+                    selectedParts[idx].qty = val;
+                    updateAssemblyProgress();
+                });
             });
-        });
-        updateAssemblyProgress();
-    }
+            container.querySelectorAll('.remove-part-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index);
+                    selectedParts.splice(idx, 1);
+                    const selectEl = document.getElementById('extra_Tag_No_');
+                    if (selectEl) {
+                        const names = selectedParts.map(p => p.name);
+                        Array.from(selectEl.options).forEach(opt => {
+                            opt.selected = opt.value && names.includes(opt.value);
+                        });
+                    }
+                    renderSelectedPartsTable();
+                    updateAssemblyProgress();
+                });
+            });
+            updateAssemblyProgress();
+        }
 
-    function updateAssemblyProgress() {
-        if (!isAssemblyProcess()) return;
-        const filters = getPartListFilters();
-        const allParts = findMatchingParts(filters);
-        const totalParts = allParts.length;
-        const assembledParts = selectedParts.length;
-        const pct = totalParts > 0 ? Math.round((assembledParts / totalParts) * 100) : 0;
-        document.getElementById('totalDeliveredQty').value = assembledParts;
-        document.getElementById('totalPartsCountDisplay').textContent = totalParts;
-        const displayEl = document.getElementById('assemblyProgressDisplay');
-        displayEl.textContent = pct + '%';
-        displayEl.style.color = pct >= 100 ? '#15803d' : pct >= 50 ? '#a16207' : '#b91c1c';
-        document.getElementById('assemblyProgressDetail').textContent = `${assembledParts} / ${totalParts} delivered`;
-    }
+        function updateAssemblyProgress() {
+            if (!isAssemblyProcess()) return;
+            const filters = getPartListFilters();
+            const allParts = findMatchingParts(filters);
+            const totalParts = allParts.length;
+            const assembledParts = selectedParts.length;
+            const pct = totalParts > 0 ? Math.round((assembledParts / totalParts) * 100) : 0;
+            document.getElementById('totalDeliveredQty').value = assembledParts;
+            document.getElementById('totalPartsCountDisplay').textContent = totalParts;
+            const displayEl = document.getElementById('assemblyProgressDisplay');
+            displayEl.textContent = pct + '%';
+            displayEl.style.color = pct >= 100 ? '#15803d' : pct >= 50 ? '#a16207' : '#b91c1c';
+            document.getElementById('assemblyProgressDetail').textContent = `${assembledParts} / ${totalParts} delivered`;
+        }
 
-    function onPartListSelectChange() {
-        const selectEl = document.getElementById('extra_Tag_No_');
-        if (!selectEl || !isAssemblyProcess()) return;
-        const selectedValues = Array.from(selectEl.selectedOptions).map(opt => opt.value).filter(v => v !== '');
-        const existingMap = {};
-        selectedParts.forEach(p => { existingMap[p.name] = p.qty; });
-        const newParts = selectedValues.map(name => ({
-            name,
-            qty: existingMap[name] !== undefined ? existingMap[name] : getDefaultQtyForPart(name)
-        }));
-        selectedParts = newParts;
-        renderSelectedPartsTable();
-        updateAssemblyProgress();
-    }
+        function onPartListSelectChange() {
+            const selectEl = document.getElementById('extra_Tag_No_');
+            if (!selectEl || !isAssemblyProcess()) return;
+            const selectedValues = Array.from(selectEl.selectedOptions).map(opt => opt.value).filter(v => v !== '');
+            const existingMap = {};
+            selectedParts.forEach(p => { existingMap[p.name] = p.qty; });
+            const newParts = selectedValues.map(name => ({
+                name,
+                qty: existingMap[name] !== undefined ? existingMap[name] : getDefaultQtyForPart(name)
+            }));
+            selectedParts = newParts;
+            renderSelectedPartsTable();
+            updateAssemblyProgress();
+        }
 
-    // ─── CASCADING SUGGESTIONS ───
-    function updateSuggestionsFromInspections(inspections) {
-        // Clear all sets and maps
-        allClientNames.clear();
-        allProjectTitles.clear();
-        allSubtitles.clear();
-        allSubSubAssemblies.clear();
-        allPartNames.clear();
-        allDrawingNos.clear();
-        clientTitleMap.clear();
-        titleSubtitleMap.clear();
-        subtitleSubSubMap.clear();
-        subSubDrawingMap.clear();
-        subSubPartMap.clear();
-        lastUsedMap.client.clear();
-        lastUsedMap.title.clear();
-        lastUsedMap.subtitle.clear();
-        lastUsedMap.subSub.clear();
-        lastUsedMap.part.clear();
-        lastUsedMap.drawing.clear();
+        // ─── CASCADING SUGGESTIONS ───
+        function updateSuggestionsFromInspections(inspections) {
+            // Clear all sets and maps
+            allClientNames.clear();
+            allProjectTitles.clear();
+            allSubtitles.clear();
+            allSubSubAssemblies.clear();
+            allPartNames.clear();
+            allDrawingNos.clear();
+            clientTitleMap.clear();
+            titleSubtitleMap.clear();
+            subtitleSubSubMap.clear();
+            subSubDrawingMap.clear();
+            subSubPartMap.clear();
+            lastUsedMap.client.clear();
+            lastUsedMap.title.clear();
+            lastUsedMap.subtitle.clear();
+            lastUsedMap.subSub.clear();
+            lastUsedMap.part.clear();
+            lastUsedMap.drawing.clear();
 
-        for (const insp of inspections) {
-            const extra = insp.extra_fields || {};
-            const client = (extra['Customer Name'] || '').trim();
-            const title = (extra['Project Name'] || '').trim();
-            const subtitle = (extra['Subtitle'] || '').trim();
-            const subSub = (extra['Sub Sub Assembly'] || '').trim();
-            const drawing = (extra['Drawing No.'] || '').trim();
-            const part = (extra['Part Name'] || '').trim();
-            const ts = new Date(insp.submitted_at || insp.created_at || Date.now()).getTime();
+            for (const insp of inspections) {
+                const extra = insp.extra_fields || {};
+                const client = (extra['Customer Name'] || '').trim();
+                const title = (extra['Project Name'] || '').trim();
+                const subtitle = (extra['Subtitle'] || '').trim();
+                const subSub = (extra['Sub Sub Assembly'] || '').trim();
+                const drawing = (extra['Drawing No.'] || '').trim();
+                const part = (extra['Part Name'] || '').trim();
+                const ts = new Date(insp.submitted_at || insp.created_at || Date.now()).getTime();
 
-            if (client) {
-                allClientNames.add(client);
-                if (!lastUsedMap.client.has(client) || ts > lastUsedMap.client.get(client))
-                    lastUsedMap.client.set(client, ts);
+                if (client) {
+                    allClientNames.add(client);
+                    if (!lastUsedMap.client.has(client) || ts > lastUsedMap.client.get(client))
+                        lastUsedMap.client.set(client, ts);
 
-                if (title) {
-                    allProjectTitles.add(title);
-                    if (!lastUsedMap.title.has(title) || ts > lastUsedMap.title.get(title))
-                        lastUsedMap.title.set(title, ts);
-                    if (!clientTitleMap.has(client)) clientTitleMap.set(client, new Set());
-                    clientTitleMap.get(client).add(title);
+                    if (title) {
+                        allProjectTitles.add(title);
+                        if (!lastUsedMap.title.has(title) || ts > lastUsedMap.title.get(title))
+                            lastUsedMap.title.set(title, ts);
+                        if (!clientTitleMap.has(client)) clientTitleMap.set(client, new Set());
+                        clientTitleMap.get(client).add(title);
 
-                    const key1 = client + '|' + title;
-                    if (subtitle) {
-                        allSubtitles.add(subtitle);
-                        if (!lastUsedMap.subtitle.has(subtitle) || ts > lastUsedMap.subtitle.get(subtitle))
-                            lastUsedMap.subtitle.set(subtitle, ts);
-                        if (!titleSubtitleMap.has(key1)) titleSubtitleMap.set(key1, new Set());
-                        titleSubtitleMap.get(key1).add(subtitle);
+                        const key1 = client + '|' + title;
+                        if (subtitle) {
+                            allSubtitles.add(subtitle);
+                            if (!lastUsedMap.subtitle.has(subtitle) || ts > lastUsedMap.subtitle.get(subtitle))
+                                lastUsedMap.subtitle.set(subtitle, ts);
+                            if (!titleSubtitleMap.has(key1)) titleSubtitleMap.set(key1, new Set());
+                            titleSubtitleMap.get(key1).add(subtitle);
 
-                        const key2 = key1 + '|' + subtitle;
-                        if (subSub) {
-                            allSubSubAssemblies.add(subSub);
-                            if (!lastUsedMap.subSub.has(subSub) || ts > lastUsedMap.subSub.get(subSub))
-                                lastUsedMap.subSub.set(subSub, ts);
-                            if (!subtitleSubSubMap.has(key2)) subtitleSubSubMap.set(key2, new Set());
-                            subtitleSubSubMap.get(key2).add(subSub);
+                            const key2 = key1 + '|' + subtitle;
+                            if (subSub) {
+                                allSubSubAssemblies.add(subSub);
+                                if (!lastUsedMap.subSub.has(subSub) || ts > lastUsedMap.subSub.get(subSub))
+                                    lastUsedMap.subSub.set(subSub, ts);
+                                if (!subtitleSubSubMap.has(key2)) subtitleSubSubMap.set(key2, new Set());
+                                subtitleSubSubMap.get(key2).add(subSub);
 
-                            const key3 = key2 + '|' + subSub;
-                            if (drawing) {
-                                allDrawingNos.add(drawing);
-                                if (!lastUsedMap.drawing.has(drawing) || ts > lastUsedMap.drawing.get(drawing))
-                                    lastUsedMap.drawing.set(drawing, ts);
-                                if (!subSubDrawingMap.has(key3)) subSubDrawingMap.set(key3, new Set());
-                                subSubDrawingMap.get(key3).add(drawing);
-                            }
-                            if (part) {
-                                allPartNames.add(part);
-                                if (!lastUsedMap.part.has(part) || ts > lastUsedMap.part.get(part))
-                                    lastUsedMap.part.set(part, ts);
-                                if (!subSubPartMap.has(key3)) subSubPartMap.set(key3, new Set());
-                                subSubPartMap.get(key3).add(part);
+                                const key3 = key2 + '|' + subSub;
+                                if (drawing) {
+                                    allDrawingNos.add(drawing);
+                                    if (!lastUsedMap.drawing.has(drawing) || ts > lastUsedMap.drawing.get(drawing))
+                                        lastUsedMap.drawing.set(drawing, ts);
+                                    if (!subSubDrawingMap.has(key3)) subSubDrawingMap.set(key3, new Set());
+                                    subSubDrawingMap.get(key3).add(drawing);
+                                }
+                                if (part) {
+                                    allPartNames.add(part);
+                                    if (!lastUsedMap.part.has(part) || ts > lastUsedMap.part.get(part))
+                                        lastUsedMap.part.set(part, ts);
+                                    if (!subSubPartMap.has(key3)) subSubPartMap.set(key3, new Set());
+                                    subSubPartMap.get(key3).add(part);
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        refreshAllDatalists();
-    }
-
-    function getSortedValues(set, map) {
-        const arr = Array.from(set);
-        arr.sort((a, b) => (map.get(b) || 0) - (map.get(a) || 0));
-        return arr;
-    }
-
-    function refreshAllDatalists() {
-        const client = document.getElementById('extra_Customer_Name')?.value?.trim() || '';
-        const title = document.getElementById('extra_Project_Name')?.value?.trim() || '';
-        const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
-        const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
-
-        // Client datalist (always all)
-        const clientDL = document.getElementById("customerNameDatalist");
-        if (clientDL) {
-            clientDL.innerHTML = "";
-            getSortedValues(allClientNames, lastUsedMap.client).forEach(n => {
-                const o = document.createElement("option");
-                o.value = n;
-                clientDL.appendChild(o);
-            });
+            refreshAllDatalists();
         }
 
-        // Title: filter by client if exists
-        const titleDL = document.getElementById("projectNameDatalist");
-        if (titleDL) {
-            titleDL.innerHTML = "";
-            let titles = allProjectTitles;
-            if (client) {
-                titles = clientTitleMap.has(client) ? clientTitleMap.get(client) : new Set();
+        function getSortedValues(set, map) {
+            const arr = Array.from(set);
+            arr.sort((a, b) => (map.get(b) || 0) - (map.get(a) || 0));
+            return arr;
+        }
+
+        function refreshAllDatalists() {
+            const client = document.getElementById('extra_Customer_Name')?.value?.trim() || '';
+            const title = document.getElementById('extra_Project_Name')?.value?.trim() || '';
+            const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
+            const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
+
+            // Client datalist (always all)
+            const clientDL = document.getElementById("customerNameDatalist");
+            if (clientDL) {
+                clientDL.innerHTML = "";
+                getSortedValues(allClientNames, lastUsedMap.client).forEach(n => {
+                    const o = document.createElement("option");
+                    o.value = n;
+                    clientDL.appendChild(o);
+                });
             }
-            getSortedValues(titles, lastUsedMap.title).forEach(n => {
-                const o = document.createElement("option");
-                o.value = n;
-                titleDL.appendChild(o);
-            });
-        }
 
-        // Subtitle: filter by client+title if both exist
-        const subtitleDL = document.getElementById("subtitleDatalist");
-        if (subtitleDL) {
-            subtitleDL.innerHTML = "";
-            let subtitles = allSubtitles;
-            if (client && title) {
-                const key = client + '|' + title;
-                subtitles = titleSubtitleMap.has(key) ? titleSubtitleMap.get(key) : new Set();
-            }
-            getSortedValues(subtitles, lastUsedMap.subtitle).forEach(n => {
-                const o = document.createElement("option");
-                o.value = n;
-                subtitleDL.appendChild(o);
-            });
-        }
-
-        // Sub Sub: filter by client+title+subtitle
-        const subSubDL = document.getElementById("subSubDatalist");
-        if (subSubDL) {
-            subSubDL.innerHTML = "";
-            let subSubs = allSubSubAssemblies;
-            if (client && title && subtitle) {
-                const key = client + '|' + title + '|' + subtitle;
-                subSubs = subtitleSubSubMap.has(key) ? subtitleSubSubMap.get(key) : new Set();
-            }
-            getSortedValues(subSubs, lastUsedMap.subSub).forEach(n => {
-                const o = document.createElement("option");
-                o.value = n;
-                subSubDL.appendChild(o);
-            });
-        }
-
-        // Drawing No.: filter by client+title+subtitle+subSub
-        const drawingDL = document.getElementById("drawingNoDatalist");
-        if (drawingDL) {
-            drawingDL.innerHTML = "";
-            let drawings = allDrawingNos;
-            if (client && title && subtitle && subSub) {
-                const key = client + '|' + title + '|' + subtitle + '|' + subSub;
-                drawings = subSubDrawingMap.has(key) ? subSubDrawingMap.get(key) : new Set();
-            }
-            getSortedValues(drawings, lastUsedMap.drawing).forEach(n => {
-                const o = document.createElement("option");
-                o.value = n;
-                drawingDL.appendChild(o);
-            });
-        }
-
-        // Part Name: filter by client+title+subtitle+subSub
-        const partDL = document.getElementById("partNameDatalist");
-        if (partDL) {
-            partDL.innerHTML = "";
-            let parts = allPartNames;
-            if (client && title && subtitle && subSub) {
-                const key = client + '|' + title + '|' + subtitle + '|' + subSub;
-                parts = subSubPartMap.has(key) ? subSubPartMap.get(key) : new Set();
-            }
-            getSortedValues(parts, lastUsedMap.part).forEach(n => {
-                const o = document.createElement("option");
-                o.value = n;
-                partDL.appendChild(o);
-            });
-        }
-    }
-
-    // ─── ATTACH EVENT LISTENERS FOR CASCADING ───
-    function attachCascadingListeners() {
-        const fields = ['extra_Customer_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly'];
-        fields.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('input', refreshAllDatalists);
-                el.addEventListener('change', refreshAllDatalists);
-            }
-        });
-    }
-
-    // ─── SCAN ───
-    async function scanDocumentAndFill() {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.capture = 'environment';
-        fileInput.style.display = 'none';
-        document.body.appendChild(fileInput);
-        fileInput.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) { document.body.removeChild(fileInput); return; }
-            showToast('📸 Scanning document with OCR…', 'info');
-            try {
-                const { data: { text } } = await Tesseract.recognize(file, 'eng', { logger: m => console.log(m) });
-                const extracted = parseFieldsFromText(text);
-                const clientInput = document.getElementById("extra_Customer_Name");
-                const titleInput = document.getElementById("extra_Project_Name");
-                const drawingInput = document.getElementById("extra_Drawing_No_");
-                const partInput = document.getElementById("extra_Part_Name");
-                if (clientInput && extracted.clientName) { clientInput.value = extracted.clientName;
-                    refreshAllDatalists(); }
-                if (titleInput && extracted.projectTitle) titleInput.value = extracted.projectTitle;
-                if (drawingInput && extracted.drawingNo) drawingInput.value = extracted.drawingNo;
-                if (partInput && extracted.partName) partInput.value = extracted.partName;
-                showToast('✅ Document scanned and fields auto-filled!', 'success');
-                if (isAssemblyProcess()) {
-                    setTimeout(() => { populatePartListMultiSelect();
-                        renderSelectedPartsTable();
-                        updateAssemblyProgress(); }, 300);
+            // Title: filter by client if exists
+            const titleDL = document.getElementById("projectNameDatalist");
+            if (titleDL) {
+                titleDL.innerHTML = "";
+                let titles = allProjectTitles;
+                if (client) {
+                    titles = clientTitleMap.has(client) ? clientTitleMap.get(client) : new Set();
                 }
-            } catch (err) {
-                showToast('❌ OCR failed. Please fill manually.', 'error');
-            } finally { document.body.removeChild(fileInput); }
-        };
-        fileInput.click();
-    }
+                getSortedValues(titles, lastUsedMap.title).forEach(n => {
+                    const o = document.createElement("option");
+                    o.value = n;
+                    titleDL.appendChild(o);
+                });
+            }
 
-    function parseFieldsFromText(fullText) {
-        const result = { clientName: '', projectTitle: '', drawingNo: '', partName: '' };
-        const lines = fullText.split(/\r?\n/);
-        const patterns = {
-            clientName: [/Client\s*Name\s*[:;]\s*(.+)/i, /Customer\s*Name\s*[:;]\s*(.+)/i, /Client\s*[:;]\s*(.+)/i],
-            projectTitle: [/Title\s*[:;]\s*(.+)/i, /Project\s*Title\s*[:;]\s*(.+)/i, /Project\s*Name\s*[:;]\s*(.+)/i,
-                /Project\s*[:;]\s*(.+)/i
-            ],
-            drawingNo: [/DWG\s*No\.?\s*[:;]\s*(.+)/i, /Drawing\s*No\.?\s*[:;]\s*(.+)/i, /Drawing\s*Number\s*[:;]\s*(.+)/i,
-                /Drawing\s*[:;]\s*(.+)/i
-            ],
-            partName: [/Part\s*Name\s*[:;]\s*(.+)/i, /Part\s*[:;]\s*(.+)/i, /Part\s*No\.?\s*[:;]\s*(.+)/i]
-        };
-        for (const line of lines) {
-            const trimmed = line.trim();
-            for (const [key, regexes] of Object.entries(patterns)) {
-                if (result[key]) continue;
-                for (const regex of regexes) {
-                    const match = trimmed.match(regex);
-                    if (match && match[1]) { result[key] = match[1].trim(); break; }
+            // Subtitle: filter by client+title if both exist
+            const subtitleDL = document.getElementById("subtitleDatalist");
+            if (subtitleDL) {
+                subtitleDL.innerHTML = "";
+                let subtitles = allSubtitles;
+                if (client && title) {
+                    const key = client + '|' + title;
+                    subtitles = titleSubtitleMap.has(key) ? titleSubtitleMap.get(key) : new Set();
                 }
+                getSortedValues(subtitles, lastUsedMap.subtitle).forEach(n => {
+                    const o = document.createElement("option");
+                    o.value = n;
+                    subtitleDL.appendChild(o);
+                });
+            }
+
+            // Sub Sub: filter by client+title+subtitle
+            const subSubDL = document.getElementById("subSubDatalist");
+            if (subSubDL) {
+                subSubDL.innerHTML = "";
+                let subSubs = allSubSubAssemblies;
+                if (client && title && subtitle) {
+                    const key = client + '|' + title + '|' + subtitle;
+                    subSubs = subtitleSubSubMap.has(key) ? subtitleSubSubMap.get(key) : new Set();
+                }
+                getSortedValues(subSubs, lastUsedMap.subSub).forEach(n => {
+                    const o = document.createElement("option");
+                    o.value = n;
+                    subSubDL.appendChild(o);
+                });
+            }
+
+            // Drawing No.: filter by client+title+subtitle+subSub
+            const drawingDL = document.getElementById("drawingNoDatalist");
+            if (drawingDL) {
+                drawingDL.innerHTML = "";
+                let drawings = allDrawingNos;
+                if (client && title && subtitle && subSub) {
+                    const key = client + '|' + title + '|' + subtitle + '|' + subSub;
+                    drawings = subSubDrawingMap.has(key) ? subSubDrawingMap.get(key) : new Set();
+                }
+                getSortedValues(drawings, lastUsedMap.drawing).forEach(n => {
+                    const o = document.createElement("option");
+                    o.value = n;
+                    drawingDL.appendChild(o);
+                });
+            }
+
+            // Part Name: filter by client+title+subtitle+subSub
+            const partDL = document.getElementById("partNameDatalist");
+            if (partDL) {
+                partDL.innerHTML = "";
+                let parts = allPartNames;
+                if (client && title && subtitle && subSub) {
+                    const key = client + '|' + title + '|' + subtitle + '|' + subSub;
+                    parts = subSubPartMap.has(key) ? subSubPartMap.get(key) : new Set();
+                }
+                getSortedValues(parts, lastUsedMap.part).forEach(n => {
+                    const o = document.createElement("option");
+                    o.value = n;
+                    partDL.appendChild(o);
+                });
             }
         }
-        return result;
-    }
 
-    // ─── MACHINERY ───
-    const machineryMaster = [
-        { desc: "Power hack saw", rate: (1693.44 + 24876.46) / 1767 },
-        { desc: "Medium duty lathe machine, Conventional", rate: (13539.12 + 52982.93) / 1767 },
-        { desc: "CNC precision lathe machine", rate: (26705.6 + 73136.89) / 1767 },
-        { desc: "CNC heavy duty precision lathe machine", rate: (78431.06 + 171904.99) / 1767 },
-        { desc: "Double column VTC", rate: (89255.26 + 223282.18) / 1522 },
-        { desc: "Universal milling machine, conventional", rate: (7718.89 + 34658.23) / 1522 },
-        { desc: "CNC universal milling machine", rate: (43119.34 + 77600.85) / 1522 },
-        { desc: "Hydraulic vertical slotting machine", rate: (43917.85 + 78121.05) / 1522 },
-        { desc: "NC Horizontal milling machine", rate: (62954.94 + 91573.22) / 1522 },
-        { desc: "Electrical discharge machine EDM", rate: (17389.69 + 24547.62) / 736 },
-        { desc: "CNC wire cutting EDM Machine", rate: (13308.44 + 22588.04) / 736 },
-        { desc: "Pedestal grinding machine", rate: (310.53 + 7844.46) / 1227 },
-        { desc: "Universal cylindrical grinding m/c", rate: (17922.03 + 44474.64) / 1522 },
-        { desc: "Surface grinding machine", rate: (12070.58 + 37225.39) / 1522 },
-        { desc: "CNC horizontal surface grinder", rate: (33714.71 + 53078.12) / 1522 },
-        { desc: "CNC external grinder machine", rate: (41522.33 + 48115.07) / 1522 },
-        { desc: "CNC Cylindrical inside grinder machine", rate: (50572.06 + 84805.11) / 1522 },
-        { desc: "5-axis CNC tool grinding machine", rate: (102031.36 + 124842.37) / 1522 },
-        { desc: "Radial drilling machine", rate: (24842.42 + 63559.86) / 1620 },
-        { desc: "Deep hole drilling & boring", rate: (90980.03 + 278946.66) / 1620 },
-        { desc: "Three axis gun and BTA drilling", rate: (208498.86 + 473226.13) / 1620 },
-        { desc: "Deep hole honing", rate: (54249.66 + 106996.73) / 1620 },
-        { desc: "Vertical honing machine", rate: (5305.63 + 25910.68) / 1620 },
-        { desc: "Pneumatic spot welding machine", rate: (5850.57 + 71953.92) / 1424 },
-        { desc: "MIG welding machine (CEMONT)", rate: (360.04 + 44543.16) / 1816 },
-        { desc: "TIG welding machine (KLYUE)", rate: (360.04 + 36391.32) / 1816 },
-        { desc: "Arc welding machine (CEMONT)", rate: (360.04 + 70974.89) / 1816 },
-        { desc: "Submerged arc welding machine", rate: (6075.59 + 144254.31) / 1816 },
-        { desc: "Heavy duty hydraulic shear machine", rate: (11977.59 + 40764.97) / 1669 },
-        { desc: "Hydraulic sheet metal bending machine", rate: (55249.54 + 165016.83) / 1620 },
-        { desc: "CNC Hydraulic four roller Plate rolling", rate: (35773.08 + 47918.73) / 1620 },
-        { desc: "Hydraulic combination shearing and punching machine", rate: (5678.27 + 14469.1) / 1424 },
-        { desc: "Automatic pipe bending machine", rate: (60615.5 + 80514.84) / 1620 },
-        { desc: "Automatic profile bending machine", rate: (25140.53 + 36569.87) / 1424 },
-        { desc: "Automatic tube pipe hole flame cutter", rate: (1987.39 + 17146.02) / 1424 },
-        { desc: "Gantry type CNC plasma metal cutting machine", rate: (95394.88 + 275812.66) / 1424 },
-        { desc: "Hydraulic plate bending machine", rate: (109704.12 + 321687.29) / 1620 },
-        { desc: "CNC laser cutting machine", rate: (113494.36 + 86076.62) / 1227 },
-        { desc: "Hydraulic CNC turret punch machine", rate: (65822.47 + 90240.45) / 1227 },
-        { desc: "Pneumatic forging hammer machine", rate: (15615.23 + 71572.02) / 1620 },
-        { desc: "Forging hydraulic press machine", rate: (37164.26 + 56125.88) / 1424 },
-        { desc: "Portable polishing machine", rate: (39.93 + 4618.04) / 491 },
-        { desc: "Hydraulic press", rate: (2040.63 + 7884.41) / 491 },
-        { desc: "High pressure water jet cleaning machine", rate: (621.06 + 9713.98) / 491 },
-        { desc: "Automatic hose crimping machine", rate: (3482.2 + 5093.5) / 491 },
-        { desc: "Name plate printing machine", rate: (6558.4 + 6206.5) / 491 },
-        { desc: "Floor drilling machine", rate: (4400.66 + 14162.03) / 1227 },
-        { desc: "CNC hydraulic Guillotine shear", rate: (6444.75 + 88123.03) / 1620 },
-        { desc: "100T Punching Machine", rate: (3069.23 + 30869.16) / 1473 },
-        { desc: "160T punching Machine", rate: (5780.15 + 39306.75) / 1375 },
-        { desc: "Electrical Furnace and Annealing", rate: (54733.08 + 2398165.57) / 1767 },
-        { desc: "80T punching Machine", rate: (1732.78 + 21649.59) / 1473 },
-        { desc: "400T four column hydraulic press", rate: (4220.52 + 45234.71) / 1080 },
-        { desc: "Blast and painting equipment", rate: (23020.03 + 228189) / 1620 },
-        { desc: "150kg pneumatic hammer", rate: (2250.24 + 47102.48) / 1473 },
-        { desc: "400kg pneumatic hammer", rate: (6812.61 + 88803.68) / 1375 },
-        { desc: "300T friction screw press", rate: (7379.28 + 40806.48) / 933 },
-        { desc: "630T forge rolling machine", rate: (44958.07 + 135050.87) / 933 },
-        { desc: "100T friction screw press", rate: (3560.69 + 18387.16) / 1080 },
-        { desc: "3m3 air press machine", rate: (2516.21 + 30506.58) / 835 },
-        { desc: "Polish machine", rate: (144.01 + 6236.55) / 1080 },
-        { desc: "Edging machine", rate: (144.01 + 7080.27) / 1227 },
-        { desc: "Ferrous sand casting plant", rate: (-707583.02 + 9712306.76) / 1767 },
-        { desc: "Non-ferrous sand casting plant", rate: (-640918.65 + 5694741.95) / 1767 },
-        { desc: "gear hobbing", rate: (27291.17 + 62811.27) / 1620 },
-        { desc: "CNC hand bench drill", rate: (11925.78 + 133416.96) / 1620 },
-        { desc: "Abrasive water jet cutting machine", rate: (38157.59 + 109927.35) / 1080 },
-        { desc: "Pantograph Engraving Machine", rate: (1658.05 + 5337.33) / 1227 },
-        { desc: "Tank End (dish head) Making Machine", rate: (74492.47 + 73296.73) / 1375 }
-    ];
+        // ─── ATTACH EVENT LISTENERS FOR CASCADING ───
+        function attachCascadingListeners() {
+            const fields = ['extra_Customer_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', refreshAllDatalists);
+                    el.addEventListener('change', refreshAllDatalists);
+                }
+            });
+        }
 
-    function getRelevantMachinesForProcess(processType) {
-        const keywords = {
-            "Lathe": ["lathe", "turning"],
-            "Milling": ["milling", "mill"],
-            "Drilling": ["drill", "drilling"],
-            "Grinding": ["grind", "grinding"],
-            "Punching": ["punch", "punching", "turret punch"],
-            "Shearing": ["shear", "shearing", "guillotine"],
-            "Bending": ["bend", "bending", "press brake"],
-            "Welding": ["weld", "welding", "mig", "tig", "arc", "spot"],
-            "Rolling": ["roll", "rolling", "plate roll"],
-            "Pressing": ["press", "hydraulic press", "friction screw"],
-            "Casting": ["casting", "furnace", "sand casting"],
-            "Forging": ["forge", "forging", "hammer"],
-            "Assembling": ["assembly", "crimping", "hose", "weld"],
-            "Testing": ["test", "measurement"],
-            "Painting": ["paint", "blast", "coating"],
-            "Packaging": ["pack", "label", "print"],
-            "Polishing": ["polish", "edging"],
-            "GasCutting": ["cut", "plasma", "laser", "water jet", "flame"],
-            "Hardening": ["furnace", "annealing", "heat treat"],
-            "Tempering": ["furnace", "annealing", "heat treat"],
-            "Coating": ["paint", "blast", "coating"],
-            "BoringHoning": ["bore", "hone", "deep hole"],
-            "PatternCore": ["pattern", "core"],
-            "Molding": ["mold", "casting"],
-            "FastenersAssembly": ["fastener", "crimp", "hose", "assembly"]
-        };
-        let kw = keywords[processType] || [];
-        if (kw.length === 0) return machineryMaster;
-        return machineryMaster.filter(m => kw.some(k => m.desc.toLowerCase().includes(k.toLowerCase())));
-    }
-
-    function populateMachineDropdown(selectedValue) {
-        const selectEl = document.getElementById("machineDescriptionSelect");
-        if (!selectEl) return;
-        const current = document.getElementById("processType").value;
-        let relevant = getRelevantMachinesForProcess(current);
-        if (relevant.length === 0) relevant = machineryMaster;
-        let options = '<option value="">-- Select Machine --</option>';
-        relevant.forEach(m => options += `<option value="${m.rate.toFixed(4)}">${escapeHtml(m.desc)}</option>`);
-        selectEl.innerHTML = options;
-        if (selectedValue !== undefined && selectedValue !== null) selectEl.value = selectedValue;
-        selectEl.onchange = function() {
-            const rate = parseFloat(this.value);
-            if (!isNaN(rate) && this.value) {
-                document.getElementById("machiningCostPerHr").value = rate.toFixed(2);
-                computeFailureCost();
-            }
-        };
-    }
-
-    function getWorkStationOptionsForProcess(processType) {
-        const map = {
-            "Lathe": ["machine shop"],
-            "Milling": ["machine shop"],
-            "Drilling": ["machine shop"],
-            "Grinding": ["machine shop"],
-            "BoringHoning": ["machine shop"],
-            "Turning": ["machine shop"],
-            "Punching": ["fabrication"],
-            "Shearing": ["fabrication"],
-            "Bending": ["fabrication"],
-            "Welding": ["fabrication"],
-            "Rolling": ["fabrication"],
-            "Pressing": ["fabrication"],
-            "GasCutting": ["fabrication"],
-            "Assembling": ["assembling"],
-            "FastenersAssembly": ["assembling"],
-            "Forging": ["forging"],
-            "Casting": ["foundry"],
-            "PatternCore": ["foundry"],
-            "Molding": ["foundry"],
-            "Polishing": ["finishing"],
-            "Painting": ["finishing"],
-            "Coating": ["finishing"],
-            "Hardening": ["heat treatment"],
-            "Tempering": ["heat treatment"],
-            "Testing": ["testing lab"],
-            "Packaging": ["packaging"]
-        };
-        return map[processType] || ["general"];
-    }
-
-    function getWorkStationHtml(currentProcess, savedValue) {
-        const opts = getWorkStationOptionsForProcess(currentProcess);
-        const all = [...opts, "other"];
-        let html =
-            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Work Station</label><select id="extra_Work_Station" class="select-field">`;
-        all.forEach(opt => {
-            const sel = (savedValue === opt) ? 'selected' : '';
-            html += `<option value="${opt}" ${sel}>${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`;
-        });
-        html += `</select></div>`;
-        return html;
-    }
-
-    const baseExtraFields = ["Customer Name", "Project Name", "Subtitle", "Sub Sub Assembly", "Drawing No.", "Part Name",
-        "Tag No.", "Work Station", "Location"
-    ];
-    const ratingOpts = ["Accepted", "Conditional Accept", "Rework", "Reject"];
-    const causeFields = ["Machine", "Design", "Operator", "Methods", "Material"];
-
-    const processDefinitions = {
-        Punching: { parameters: ["Material as Per Design", "Condition of Cracking", "Surface uniformity",
-                "Dimensional accuracy as per Design", "Condition of Wrinkle", "Finishing Appearance without Burs"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Rolling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design",
-                "Sharpness as per Design", "Shining of the work piece"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Bending: { parameters: ["Material as per Design", "Surface uniformity", "Condition of Cracking",
-                "Condition of Wrinkle", "Dimensional Accuracy as per design"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Welding: { parameters: ["Material used as Per Design", "Condition of weld overlap",
-                "Condition of weld crack & Under Cut", "Lack of welding bead uniformity", "Condition of Slag inclusion",
-                "Condition of thermal distortion"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Pressing: { parameters: ["Material used as per Design", "wrinkling", "Earing", "Tearing", "surface Scratches",
-                "Dimensional accuracy as per Design"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Milling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design",
-                "Exact Sharpens of the Corners", "Shining of the work piece", "Finishing Appearance without Burs"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Casting: { parameters: ["Material used as Per Design", "Blow Hole & warpage", "Sand fusion",
-                "Shrinkage porosity", "Misrun & Cold Shut", "Metal Penetration", "Slage Inclusion",
-                "Hot Tear & Flashes", "Cut and washes"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        PatternCore: { parameters: ["Material", "Condition of surface & color coding", "Removal of Sharping Edge"],
-            ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Assembling: { parameters: ["Material used as Per Design", "All assembly dimensions as per design",
-                "Rigidity of welding assembly", "alignment for all part components", "Condition of ergonomics",
-                "Availability of name plating"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Testing: { parameters: ["Condition of all parts assembled & alignments", "Function ability of the technology",
-                "condition of test with & without load", "condition of Safety and hazardous"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Painting: { parameters: ["Condition of surface finish before painting", "Selection of Color Paint as per Design",
-                "layer of painting as per design", "Bleeding & Blistering", "Lifting & Running", "Water Spotting",
-                "Flaking & Crawling", "Wrinkling"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Packaging: { parameters: ["Condition and types of packaging systems",
-                "Writing of Name, logo, Address of the Manufacturer & Brand",
-                "Writing of Overall Size of the product and Package",
-                "Writing Risky & hazardous Symbols", "Writing Qty, Net & gross weight of the product on packaging"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Shearing: { parameters: ["Material as per Design", "Dimensional accuracy as per Design",
-                "Edge condition (no burrs)"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Lathe: { parameters: ["Material as per Design", "Dimensional accuracy (diameter, length)", "Surface finish",
-                "Concentricity / roundness"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Drilling: { parameters: ["Material used as Per Design", "Proper drilling sequence",
-                "Dimensional accuracy as per Design", "Finishing Appearance without Burs"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        BoringHoning: { parameters: ["Material as per Design", "Internal diameter accuracy", "Surface finish (bore)",
-                "Roundness / cylindricity"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Grinding: { parameters: ["Material as per Design", "Surface finish (Ra value)", "Dimensional accuracy",
-                "Absence of burn marks"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Forging: { parameters: ["Material grade as per Design", "Dimensional accuracy (length, width, height)",
-                "Surface condition (no cracks or scale)", "Grain flow direction"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Molding: { parameters: ["Material mix as per specification", "Dimensional accuracy of mould",
-                "Surface smoothness", "No porosity / voids"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Polishing: { parameters: ["Surface roughness (Ra) before polishing", "Final surface gloss / mirror finish",
-                "No scratches / pitting", "Consistency over whole surface"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        GasCutting: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design",
-                "Finishing Appearance without slag"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        FastenersAssembly: { parameters: ["Condition of part dimensions as per design",
-                "Condition of sub & Overall assembly dimensions as per design", "Condition of fit & tolerance",
-                "Condition proper electrical installation", "Condition inspect & test electrical equipment",
-                "Condition of Rigidity & vibration", "Condition of availability of Name plating",
-                "Condition of ergonomics"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Hardening: { parameters: ["Material grade", "Heating temperature uniformity", "Soaking time",
-                "Hardness after quenching", "Decarburization layer"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Tempering: { parameters: ["Tempering temperature", "Holding time", "Final hardness", "Toughness", "Distortion"],
-            ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
-        Coating: { parameters: ["Surface cleanliness before coating", "Coating thickness uniformity",
-                "Adhesion strength", "Corrosion resistance", "Appearance (color, gloss)"
-            ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields }
-    };
-
-    function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
-
-    // ─── DYNAMIC FIELDS ───
-    function renderDynamicFields() {
-        const container = document.getElementById("dynamicFieldsContainer");
-        if (!container) return;
-        const def = getCurrentDef();
-        let html =
-            `<div class="mb-3"><button type="button" class="btn-secondary text-sm" onclick="scanDocumentAndFill()" title="Scan document with OCR to auto-fill client, title, DWG and part"><i class="fa-solid fa-camera mr-2"></i> Scan Document</button></div>`;
-        if (def.extraFields && def.extraFields.length) {
-            html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-200 pb-5 mb-5">`;
-            def.extraFields.forEach(field => {
-                const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
-                if (field === "Work Station") {
-                    html += getWorkStationHtml(currentProcess, "");
-                } else if (field === "Location") {
-                    html +=
-                        `<div><label class="block text-xs font-medium text-slate-500 mb-1">Location</label><select id="${safeId}" class="select-field"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
-                } else if (field === "Customer Name") {
-                    html +=
-                        `<div><label class="block text-xs font-medium text-slate-500 mb-1">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
-                } else if (field === "Project Name") {
-                    html +=
-                        `<div><label class="block text-xs font-medium text-slate-500 mb-1">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
-                } else if (field === "Subtitle") {
-                    html +=
-                        `<div><label class="block text-xs font-medium text-slate-500 mb-1">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="input-field" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
-                } else if (field === "Sub Sub Assembly") {
-                    html +=
-                        `<div><label class="block text-xs font-medium text-slate-500 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="input-field" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
-                } else if (field === "Drawing No.") {
-                    html +=
-                        `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" list="drawingNoDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="drawingNoDatalist"></datalist></div>`;
-                } else if (field === "Part Name") {
-                    const labelText = isAssemblyProcess() ? 'Assembly Name' : 'Part Name';
-                    const placeholderText = isAssemblyProcess() ? 'Assembly name' : 'Auto-filled after scan';
-                    html +=
-                        `<div><label class="block text-xs font-medium text-slate-500 mb-1">${labelText}</label><input type="text" id="${safeId}" list="partNameDatalist" class="input-field" placeholder="${placeholderText}" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
-                } else if (field === "Tag No.") {
+        // ─── SCAN ───
+        async function scanDocumentAndFill() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.capture = 'environment';
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+            fileInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) { document.body.removeChild(fileInput); return; }
+                showToast('📸 Scanning document with OCR…', 'info');
+                try {
+                    const { data: { text } } = await Tesseract.recognize(file, 'eng', { logger: m => console.log(m) });
+                    const extracted = parseFieldsFromText(text);
+                    const clientInput = document.getElementById("extra_Customer_Name");
+                    const titleInput = document.getElementById("extra_Project_Name");
+                    const drawingInput = document.getElementById("extra_Drawing_No_");
+                    const partInput = document.getElementById("extra_Part_Name");
+                    if (clientInput && extracted.clientName) { clientInput.value = extracted.clientName;
+                        refreshAllDatalists(); }
+                    if (titleInput && extracted.projectTitle) titleInput.value = extracted.projectTitle;
+                    if (drawingInput && extracted.drawingNo) drawingInput.value = extracted.drawingNo;
+                    if (partInput && extracted.partName) partInput.value = extracted.partName;
+                    showToast('✅ Document scanned and fields auto-filled!', 'success');
                     if (isAssemblyProcess()) {
-                        html += `
+                        setTimeout(() => { populatePartListMultiSelect();
+                            renderSelectedPartsTable();
+                            updateAssemblyProgress(); }, 300);
+                    }
+                } catch (err) {
+                    showToast('❌ OCR failed. Please fill manually.', 'error');
+                } finally { document.body.removeChild(fileInput); }
+            };
+            fileInput.click();
+        }
+
+        function parseFieldsFromText(fullText) {
+            const result = { clientName: '', projectTitle: '', drawingNo: '', partName: '' };
+            const lines = fullText.split(/\r?\n/);
+            const patterns = {
+                clientName: [/Client\s*Name\s*[:;]\s*(.+)/i, /Customer\s*Name\s*[:;]\s*(.+)/i, /Client\s*[:;]\s*(.+)/i],
+                projectTitle: [/Title\s*[:;]\s*(.+)/i, /Project\s*Title\s*[:;]\s*(.+)/i, /Project\s*Name\s*[:;]\s*(.+)/i,
+                    /Project\s*[:;]\s*(.+)/i
+                ],
+                drawingNo: [/DWG\s*No\.?\s*[:;]\s*(.+)/i, /Drawing\s*No\.?\s*[:;]\s*(.+)/i, /Drawing\s*Number\s*[:;]\s*(.+)/i,
+                    /Drawing\s*[:;]\s*(.+)/i
+                ],
+                partName: [/Part\s*Name\s*[:;]\s*(.+)/i, /Part\s*[:;]\s*(.+)/i, /Part\s*No\.?\s*[:;]\s*(.+)/i]
+            };
+            for (const line of lines) {
+                const trimmed = line.trim();
+                for (const [key, regexes] of Object.entries(patterns)) {
+                    if (result[key]) continue;
+                    for (const regex of regexes) {
+                        const match = trimmed.match(regex);
+                        if (match && match[1]) { result[key] = match[1].trim(); break; }
+                    }
+                }
+            }
+            return result;
+        }
+
+        // ─── MACHINERY ───
+        const machineryMaster = [
+            { desc: "Power hack saw", rate: (1693.44 + 24876.46) / 1767 },
+            { desc: "Medium duty lathe machine, Conventional", rate: (13539.12 + 52982.93) / 1767 },
+            { desc: "CNC precision lathe machine", rate: (26705.6 + 73136.89) / 1767 },
+            { desc: "CNC heavy duty precision lathe machine", rate: (78431.06 + 171904.99) / 1767 },
+            { desc: "Double column VTC", rate: (89255.26 + 223282.18) / 1522 },
+            { desc: "Universal milling machine, conventional", rate: (7718.89 + 34658.23) / 1522 },
+            { desc: "CNC universal milling machine", rate: (43119.34 + 77600.85) / 1522 },
+            { desc: "Hydraulic vertical slotting machine", rate: (43917.85 + 78121.05) / 1522 },
+            { desc: "NC Horizontal milling machine", rate: (62954.94 + 91573.22) / 1522 },
+            { desc: "Electrical discharge machine EDM", rate: (17389.69 + 24547.62) / 736 },
+            { desc: "CNC wire cutting EDM Machine", rate: (13308.44 + 22588.04) / 736 },
+            { desc: "Pedestal grinding machine", rate: (310.53 + 7844.46) / 1227 },
+            { desc: "Universal cylindrical grinding m/c", rate: (17922.03 + 44474.64) / 1522 },
+            { desc: "Surface grinding machine", rate: (12070.58 + 37225.39) / 1522 },
+            { desc: "CNC horizontal surface grinder", rate: (33714.71 + 53078.12) / 1522 },
+            { desc: "CNC external grinder machine", rate: (41522.33 + 48115.07) / 1522 },
+            { desc: "CNC Cylindrical inside grinder machine", rate: (50572.06 + 84805.11) / 1522 },
+            { desc: "5-axis CNC tool grinding machine", rate: (102031.36 + 124842.37) / 1522 },
+            { desc: "Radial drilling machine", rate: (24842.42 + 63559.86) / 1620 },
+            { desc: "Deep hole drilling & boring", rate: (90980.03 + 278946.66) / 1620 },
+            { desc: "Three axis gun and BTA drilling", rate: (208498.86 + 473226.13) / 1620 },
+            { desc: "Deep hole honing", rate: (54249.66 + 106996.73) / 1620 },
+            { desc: "Vertical honing machine", rate: (5305.63 + 25910.68) / 1620 },
+            { desc: "Pneumatic spot welding machine", rate: (5850.57 + 71953.92) / 1424 },
+            { desc: "MIG welding machine (CEMONT)", rate: (360.04 + 44543.16) / 1816 },
+            { desc: "TIG welding machine (KLYUE)", rate: (360.04 + 36391.32) / 1816 },
+            { desc: "Arc welding machine (CEMONT)", rate: (360.04 + 70974.89) / 1816 },
+            { desc: "Submerged arc welding machine", rate: (6075.59 + 144254.31) / 1816 },
+            { desc: "Heavy duty hydraulic shear machine", rate: (11977.59 + 40764.97) / 1669 },
+            { desc: "Hydraulic sheet metal bending machine", rate: (55249.54 + 165016.83) / 1620 },
+            { desc: "CNC Hydraulic four roller Plate rolling", rate: (35773.08 + 47918.73) / 1620 },
+            { desc: "Hydraulic combination shearing and punching machine", rate: (5678.27 + 14469.1) / 1424 },
+            { desc: "Automatic pipe bending machine", rate: (60615.5 + 80514.84) / 1620 },
+            { desc: "Automatic profile bending machine", rate: (25140.53 + 36569.87) / 1424 },
+            { desc: "Automatic tube pipe hole flame cutter", rate: (1987.39 + 17146.02) / 1424 },
+            { desc: "Gantry type CNC plasma metal cutting machine", rate: (95394.88 + 275812.66) / 1424 },
+            { desc: "Hydraulic plate bending machine", rate: (109704.12 + 321687.29) / 1620 },
+            { desc: "CNC laser cutting machine", rate: (113494.36 + 86076.62) / 1227 },
+            { desc: "Hydraulic CNC turret punch machine", rate: (65822.47 + 90240.45) / 1227 },
+            { desc: "Pneumatic forging hammer machine", rate: (15615.23 + 71572.02) / 1620 },
+            { desc: "Forging hydraulic press machine", rate: (37164.26 + 56125.88) / 1424 },
+            { desc: "Portable polishing machine", rate: (39.93 + 4618.04) / 491 },
+            { desc: "Hydraulic press", rate: (2040.63 + 7884.41) / 491 },
+            { desc: "High pressure water jet cleaning machine", rate: (621.06 + 9713.98) / 491 },
+            { desc: "Automatic hose crimping machine", rate: (3482.2 + 5093.5) / 491 },
+            { desc: "Name plate printing machine", rate: (6558.4 + 6206.5) / 491 },
+            { desc: "Floor drilling machine", rate: (4400.66 + 14162.03) / 1227 },
+            { desc: "CNC hydraulic Guillotine shear", rate: (6444.75 + 88123.03) / 1620 },
+            { desc: "100T Punching Machine", rate: (3069.23 + 30869.16) / 1473 },
+            { desc: "160T punching Machine", rate: (5780.15 + 39306.75) / 1375 },
+            { desc: "Electrical Furnace and Annealing", rate: (54733.08 + 2398165.57) / 1767 },
+            { desc: "80T punching Machine", rate: (1732.78 + 21649.59) / 1473 },
+            { desc: "400T four column hydraulic press", rate: (4220.52 + 45234.71) / 1080 },
+            { desc: "Blast and painting equipment", rate: (23020.03 + 228189) / 1620 },
+            { desc: "150kg pneumatic hammer", rate: (2250.24 + 47102.48) / 1473 },
+            { desc: "400kg pneumatic hammer", rate: (6812.61 + 88803.68) / 1375 },
+            { desc: "300T friction screw press", rate: (7379.28 + 40806.48) / 933 },
+            { desc: "630T forge rolling machine", rate: (44958.07 + 135050.87) / 933 },
+            { desc: "100T friction screw press", rate: (3560.69 + 18387.16) / 1080 },
+            { desc: "3m3 air press machine", rate: (2516.21 + 30506.58) / 835 },
+            { desc: "Polish machine", rate: (144.01 + 6236.55) / 1080 },
+            { desc: "Edging machine", rate: (144.01 + 7080.27) / 1227 },
+            { desc: "Ferrous sand casting plant", rate: (-707583.02 + 9712306.76) / 1767 },
+            { desc: "Non-ferrous sand casting plant", rate: (-640918.65 + 5694741.95) / 1767 },
+            { desc: "gear hobbing", rate: (27291.17 + 62811.27) / 1620 },
+            { desc: "CNC hand bench drill", rate: (11925.78 + 133416.96) / 1620 },
+            { desc: "Abrasive water jet cutting machine", rate: (38157.59 + 109927.35) / 1080 },
+            { desc: "Pantograph Engraving Machine", rate: (1658.05 + 5337.33) / 1227 },
+            { desc: "Tank End (dish head) Making Machine", rate: (74492.47 + 73296.73) / 1375 }
+        ];
+
+        function getRelevantMachinesForProcess(processType) {
+            const keywords = {
+                "Lathe": ["lathe", "turning"],
+                "Milling": ["milling", "mill"],
+                "Drilling": ["drill", "drilling"],
+                "Grinding": ["grind", "grinding"],
+                "Punching": ["punch", "punching", "turret punch"],
+                "Shearing": ["shear", "shearing", "guillotine"],
+                "Bending": ["bend", "bending", "press brake"],
+                "Welding": ["weld", "welding", "mig", "tig", "arc", "spot"],
+                "Rolling": ["roll", "rolling", "plate roll"],
+                "Pressing": ["press", "hydraulic press", "friction screw"],
+                "Casting": ["casting", "furnace", "sand casting"],
+                "Forging": ["forge", "forging", "hammer"],
+                "Assembling": ["assembly", "crimping", "hose", "weld"],
+                "Testing": ["test", "measurement"],
+                "Painting": ["paint", "blast", "coating"],
+                "Packaging": ["pack", "label", "print"],
+                "Polishing": ["polish", "edging"],
+                "GasCutting": ["cut", "plasma", "laser", "water jet", "flame"],
+                "Hardening": ["furnace", "annealing", "heat treat"],
+                "Tempering": ["furnace", "annealing", "heat treat"],
+                "Coating": ["paint", "blast", "coating"],
+                "BoringHoning": ["bore", "hone", "deep hole"],
+                "PatternCore": ["pattern", "core"],
+                "Molding": ["mold", "casting"],
+                "FastenersAssembly": ["fastener", "crimp", "hose", "assembly"]
+            };
+            let kw = keywords[processType] || [];
+            if (kw.length === 0) return machineryMaster;
+            return machineryMaster.filter(m => kw.some(k => m.desc.toLowerCase().includes(k.toLowerCase())));
+        }
+
+        function populateMachineDropdown(selectedValue) {
+            const selectEl = document.getElementById("machineDescriptionSelect");
+            if (!selectEl) return;
+            const current = document.getElementById("processType").value;
+            let relevant = getRelevantMachinesForProcess(current);
+            if (relevant.length === 0) relevant = machineryMaster;
+            let options = '<option value="">-- Select Machine --</option>';
+            relevant.forEach(m => options += `<option value="${m.rate.toFixed(4)}">${escapeHtml(m.desc)}</option>`);
+            selectEl.innerHTML = options;
+            if (selectedValue !== undefined && selectedValue !== null) selectEl.value = selectedValue;
+            selectEl.onchange = function() {
+                const rate = parseFloat(this.value);
+                if (!isNaN(rate) && this.value) {
+                    document.getElementById("machiningCostPerHr").value = rate.toFixed(2);
+                    computeFailureCost();
+                }
+            };
+        }
+
+        function getWorkStationOptionsForProcess(processType) {
+            const map = {
+                "Lathe": ["machine shop"],
+                "Milling": ["machine shop"],
+                "Drilling": ["machine shop"],
+                "Grinding": ["machine shop"],
+                "BoringHoning": ["machine shop"],
+                "Turning": ["machine shop"],
+                "Punching": ["fabrication"],
+                "Shearing": ["fabrication"],
+                "Bending": ["fabrication"],
+                "Welding": ["fabrication"],
+                "Rolling": ["fabrication"],
+                "Pressing": ["fabrication"],
+                "GasCutting": ["fabrication"],
+                "Assembling": ["assembling"],
+                "FastenersAssembly": ["assembling"],
+                "Forging": ["forging"],
+                "Casting": ["foundry"],
+                "PatternCore": ["foundry"],
+                "Molding": ["foundry"],
+                "Polishing": ["finishing"],
+                "Painting": ["finishing"],
+                "Coating": ["finishing"],
+                "Hardening": ["heat treatment"],
+                "Tempering": ["heat treatment"],
+                "Testing": ["testing lab"],
+                "Packaging": ["packaging"]
+            };
+            return map[processType] || ["general"];
+        }
+
+        function getWorkStationHtml(currentProcess, savedValue) {
+            const opts = getWorkStationOptionsForProcess(currentProcess);
+            const all = [...opts, "other"];
+            let html =
+                `<div><label class="block text-xs font-medium text-slate-500 mb-1">Work Station</label><select id="extra_Work_Station" class="select-field">`;
+            all.forEach(opt => {
+                const sel = (savedValue === opt) ? 'selected' : '';
+                html += `<option value="${opt}" ${sel}>${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`;
+            });
+            html += `</select></div>`;
+            return html;
+        }
+
+        const baseExtraFields = ["Customer Name", "Project Name", "Subtitle", "Sub Sub Assembly", "Drawing No.", "Part Name",
+            "Tag No.", "Work Station", "Location"
+        ];
+        const ratingOpts = ["Accepted", "Conditional Accept", "Rework", "Reject"];
+        const causeFields = ["Machine", "Design", "Operator", "Methods", "Material"];
+
+        const processDefinitions = {
+            Punching: { parameters: ["Material as Per Design", "Condition of Cracking", "Surface uniformity",
+                    "Dimensional accuracy as per Design", "Condition of Wrinkle", "Finishing Appearance without Burs"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Rolling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design",
+                    "Sharpness as per Design", "Shining of the work piece"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Bending: { parameters: ["Material as per Design", "Surface uniformity", "Condition of Cracking",
+                    "Condition of Wrinkle", "Dimensional Accuracy as per design"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Welding: { parameters: ["Material used as Per Design", "Condition of weld overlap",
+                    "Condition of weld crack & Under Cut", "Lack of welding bead uniformity", "Condition of Slag inclusion",
+                    "Condition of thermal distortion"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Pressing: { parameters: ["Material used as per Design", "wrinkling", "Earing", "Tearing", "surface Scratches",
+                    "Dimensional accuracy as per Design"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Milling: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design",
+                    "Exact Sharpens of the Corners", "Shining of the work piece", "Finishing Appearance without Burs"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Casting: { parameters: ["Material used as Per Design", "Blow Hole & warpage", "Sand fusion",
+                    "Shrinkage porosity", "Misrun & Cold Shut", "Metal Penetration", "Slage Inclusion",
+                    "Hot Tear & Flashes", "Cut and washes"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            PatternCore: { parameters: ["Material", "Condition of surface & color coding", "Removal of Sharping Edge"],
+                ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Assembling: { parameters: ["Material used as Per Design", "All assembly dimensions as per design",
+                    "Rigidity of welding assembly", "alignment for all part components", "Condition of ergonomics",
+                    "Availability of name plating"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Testing: { parameters: ["Condition of all parts assembled & alignments", "Function ability of the technology",
+                    "condition of test with & without load", "condition of Safety and hazardous"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Painting: { parameters: ["Condition of surface finish before painting", "Selection of Color Paint as per Design",
+                    "layer of painting as per design", "Bleeding & Blistering", "Lifting & Running", "Water Spotting",
+                    "Flaking & Crawling", "Wrinkling"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Packaging: { parameters: ["Condition and types of packaging systems",
+                    "Writing of Name, logo, Address of the Manufacturer & Brand",
+                    "Writing of Overall Size of the product and Package",
+                    "Writing Risky & hazardous Symbols", "Writing Qty, Net & gross weight of the product on packaging"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Shearing: { parameters: ["Material as per Design", "Dimensional accuracy as per Design",
+                    "Edge condition (no burrs)"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Lathe: { parameters: ["Material as per Design", "Dimensional accuracy (diameter, length)", "Surface finish",
+                    "Concentricity / roundness"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Drilling: { parameters: ["Material used as Per Design", "Proper drilling sequence",
+                    "Dimensional accuracy as per Design", "Finishing Appearance without Burs"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            BoringHoning: { parameters: ["Material as per Design", "Internal diameter accuracy", "Surface finish (bore)",
+                    "Roundness / cylindricity"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Grinding: { parameters: ["Material as per Design", "Surface finish (Ra value)", "Dimensional accuracy",
+                    "Absence of burn marks"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Forging: { parameters: ["Material grade as per Design", "Dimensional accuracy (length, width, height)",
+                    "Surface condition (no cracks or scale)", "Grain flow direction"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Molding: { parameters: ["Material mix as per specification", "Dimensional accuracy of mould",
+                    "Surface smoothness", "No porosity / voids"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Polishing: { parameters: ["Surface roughness (Ra) before polishing", "Final surface gloss / mirror finish",
+                    "No scratches / pitting", "Consistency over whole surface"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            GasCutting: { parameters: ["Material used as Per Design", "Dimensional accuracy as per Design",
+                    "Finishing Appearance without slag"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            FastenersAssembly: { parameters: ["Condition of part dimensions as per design",
+                    "Condition of sub & Overall assembly dimensions as per design", "Condition of fit & tolerance",
+                    "Condition proper electrical installation", "Condition inspect & test electrical equipment",
+                    "Condition of Rigidity & vibration", "Condition of availability of Name plating",
+                    "Condition of ergonomics"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Hardening: { parameters: ["Material grade", "Heating temperature uniformity", "Soaking time",
+                    "Hardness after quenching", "Decarburization layer"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Tempering: { parameters: ["Tempering temperature", "Holding time", "Final hardness", "Toughness", "Distortion"],
+                ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields },
+            Coating: { parameters: ["Surface cleanliness before coating", "Coating thickness uniformity",
+                    "Adhesion strength", "Corrosion resistance", "Appearance (color, gloss)"
+                ], ratingOptions: ratingOpts, causeFields: causeFields, extraFields: baseExtraFields }
+        };
+
+        function getCurrentDef() { return processDefinitions[currentProcess] || processDefinitions.Rolling; }
+
+        // ─── DYNAMIC FIELDS ───
+        function renderDynamicFields() {
+            const container = document.getElementById("dynamicFieldsContainer");
+            if (!container) return;
+            const def = getCurrentDef();
+            let html =
+                `<div class="mb-3"><button type="button" class="btn-secondary text-sm" onclick="scanDocumentAndFill()" title="Scan document with OCR to auto-fill client, title, DWG and part"><i class="fa-solid fa-camera mr-2"></i> Scan Document</button></div>`;
+            if (def.extraFields && def.extraFields.length) {
+                html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-200 pb-5 mb-5">`;
+                def.extraFields.forEach(field => {
+                    const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                    if (field === "Work Station") {
+                        html += getWorkStationHtml(currentProcess, "");
+                    } else if (field === "Location") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Location</label><select id="${safeId}" class="select-field"><option value="">-- Select Location --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
+                    } else if (field === "Customer Name") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
+                    } else if (field === "Project Name") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
+                    } else if (field === "Subtitle") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="input-field" placeholder="e.g. Phase 1, Revision A" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
+                    } else if (field === "Sub Sub Assembly") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="input-field" placeholder="e.g. Sub-assembly 1.1" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
+                    } else if (field === "Drawing No.") {
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" list="drawingNoDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="drawingNoDatalist"></datalist></div>`;
+                    } else if (field === "Part Name") {
+                        const labelText = isAssemblyProcess() ? 'Assembly Name' : 'Part Name';
+                        const placeholderText = isAssemblyProcess() ? 'Assembly name' : 'Auto-filled after scan';
+                        html +=
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">${labelText}</label><input type="text" id="${safeId}" list="partNameDatalist" class="input-field" placeholder="${placeholderText}" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
+                    } else if (field === "Tag No.") {
+                        if (isAssemblyProcess()) {
+                            html += `
                                         <div class="part-list-container">
                                           <label class="block text-xs font-medium text-slate-500 mb-1">Part List <span class="text-slate-400 text-xs">(select parts, then enter qty)</span></label>
                                           <select id="${safeId}" multiple size="4" class="part-list-multi w-full">
@@ -1612,386 +1613,386 @@
                                           </div>
                                         </div>
                                       `;
-                    } else {
+                        } else {
+                            html +=
+                                `<div><label class="block text-xs font-medium text-slate-500 mb-1">Tag No.</label><input type="text" id="${safeId}" class="input-field" placeholder="Tag number"></div>`;
+                        }
+                    } else if (field !== "Work Station") {
                         html +=
-                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">Tag No.</label><input type="text" id="${safeId}" class="input-field" placeholder="Tag number"></div>`;
+                            `<div><label class="block text-xs font-medium text-slate-500 mb-1">${field}</label><input type="text" id="${safeId}" class="input-field"></div>`;
                     }
-                } else if (field !== "Work Station") {
-                    html +=
-                        `<div><label class="block text-xs font-medium text-slate-500 mb-1">${field}</label><input type="text" id="${safeId}" class="input-field"></div>`;
-                }
-            });
-            html += `</div>`;
-        }
-        html +=
-            `<div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-sm border-collapse"><thead><tr class="bg-slate-50"><th class="p-3 text-left font-semibold text-slate-600 border-b border-slate-200">Inspection Parameters</th><th class="p-3 text-left font-semibold text-slate-600 border-b border-slate-200">Acceptance Conditions</th><th class="p-3 text-left font-semibold text-slate-600 border-b border-slate-200">Cause of Defects</th></tr></thead><tbody>`;
-        def.parameters.forEach((param, idx) => {
-            const paramId = `p_${idx}`;
-            html +=
-                `<tr><td class="p-3 font-medium text-slate-700 border-b border-slate-100">${param}</td><td class="p-3 border-b border-slate-100"><select id="rating_${paramId}" class="select-field py-1.5">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="p-3 border-b border-slate-100"><div class="flex flex-wrap gap-3">${causeFields.map(cause => `<label class="text-sm text-slate-700 flex items-center gap-1.5"><input type="checkbox" class="cause-check accent-blue-600" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
-        });
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
-
-        // Attach cascading listeners to the newly created fields
-        attachCascadingListeners();
-        // Also refresh suggestions now
-        refreshAllDatalists();
-
-        // Additional listeners for part list and others
-        attachPartListListeners();
-
-        if (isAssemblyProcess()) {
-            document.getElementById('quantitySummary').style.display = 'none';
-            document.getElementById('assemblyProgressContainer').classList.remove('hidden');
-            if (!isEditMode) { selectedParts = [];
-                document.getElementById('totalDeliveredQty').value = 0; }
-            setTimeout(() => { populatePartListMultiSelect();
-                renderSelectedPartsTable();
-                updateAssemblyProgress(); }, 200);
-        } else {
-            document.getElementById('quantitySummary').style.display = 'grid';
-            document.getElementById('assemblyProgressContainer').classList.add('hidden');
-        }
-        attachQuantityListeners();
-        updateDeliveredQty();
-    }
-
-    function switchProcess() {
-        currentProcess = document.getElementById("processType").value;
-        renderDynamicFields();
-        populateMachineDropdown();
-        populateSuggestedNextOps();
-        updateVisibility();
-        if (isAssemblyProcess()) {
-            document.getElementById('assemblyProgressContainer').classList.remove('hidden');
-            setTimeout(() => { populatePartListMultiSelect();
-                renderSelectedPartsTable();
-                updateAssemblyProgress(); }, 300);
-        } else {
-            document.getElementById('assemblyProgressContainer').classList.add('hidden');
-        }
-    }
-
-    // ─── GET / SET EXTRA FIELDS ───
-    function getExtraFields() {
-        const def = getCurrentDef();
-        const extra = {};
-        let partsObj = null;
-        if (isAssemblyProcess()) {
-            partsObj = {};
-            selectedParts.forEach(p => { partsObj[p.name] = p.qty || 0; });
-            extra['selectedParts'] = partsObj;
-            extra['totalDeliveredQty'] = selectedParts.length;
-            extra['selectedPartNames'] = selectedParts.map(p => p.name);
-        }
-        if (def.extraFields) {
-            def.extraFields.forEach(field => {
-                const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
-                const el = document.getElementById(id);
-                if (el) {
-                    if (field === "Tag No." && isAssemblyProcess() && partsObj) {
-                        extra[field] = JSON.stringify(partsObj);
-                    } else {
-                        extra[field] = el.value;
-                    }
-                }
-            });
-        }
-        return extra;
-    }
-
-    function setExtraFields(extra) {
-        const def = getCurrentDef();
-        if (isAssemblyProcess()) {
-            let partsObj = {};
-            if (extra['selectedParts']) partsObj = extra['selectedParts'];
-            else if (extra['Tag No.']) {
-                try { const parsed = JSON.parse(extra['Tag No.']); if (typeof parsed === 'object' && !Array.isArray(
-                        parsed)) partsObj = parsed; } catch (e) {}
+                });
+                html += `</div>`;
             }
-            selectedParts = Object.keys(partsObj).map(name => ({ name, qty: partsObj[name] || 0 }));
-            if (extra['totalDeliveredQty'] !== undefined) document.getElementById('totalDeliveredQty').value = extra[
-                'totalDeliveredQty'];
-        }
-        if (def.extraFields) {
-            def.extraFields.forEach(field => {
-                const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
-                const el = document.getElementById(id);
-                if (el && extra[field] !== undefined) {
-                    if (field === "Tag No." && isAssemblyProcess()) {} else el.value = extra[field];
-                }
+            html +=
+                `<div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-sm border-collapse"><thead><tr class="bg-slate-50"><th class="p-3 text-left font-semibold text-slate-600 border-b border-slate-200">Inspection Parameters</th><th class="p-3 text-left font-semibold text-slate-600 border-b border-slate-200">Acceptance Conditions</th><th class="p-3 text-left font-semibold text-slate-600 border-b border-slate-200">Cause of Defects</th></tr></thead><tbody>`;
+            def.parameters.forEach((param, idx) => {
+                const paramId = `p_${idx}`;
+                html +=
+                    `<tr><td class="p-3 font-medium text-slate-700 border-b border-slate-100">${param}</td><td class="p-3 border-b border-slate-100"><select id="rating_${paramId}" class="select-field py-1.5">${def.ratingOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select></td><td class="p-3 border-b border-slate-100"><div class="flex flex-wrap gap-3">${causeFields.map(cause => `<label class="text-sm text-slate-700 flex items-center gap-1.5"><input type="checkbox" class="cause-check accent-blue-600" data-param="${paramId}" value="${cause}"> ${cause}</label>`).join('')}</div></td></tr>`;
             });
-        }
-        // Refresh suggestions after setting
-        refreshAllDatalists();
-        if (isAssemblyProcess()) {
-            setTimeout(() => { populatePartListMultiSelect();
-                renderSelectedPartsTable();
-                updateAssemblyProgress(); }, 200);
-        }
-    }
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
 
-    function getAcceptanceData() {
-        const def = getCurrentDef();
-        const data = {};
-        for (let i = 0; i < def.parameters.length; i++) {
-            const paramId = `p_${i}`;
-            const rating = document.getElementById(`rating_${paramId}`)?.value || '';
-            const causes = Array.from(document.querySelectorAll(`.cause-check[data-param="${paramId}"]:checked`))
-                .map(cb => cb.value);
-            data[paramId] = { parameter: def.parameters[i], rating, causes };
-        }
-        return data;
-    }
+            // Attach cascading listeners to the newly created fields
+            attachCascadingListeners();
+            // Also refresh suggestions now
+            refreshAllDatalists();
 
-    function setAcceptanceData(acceptance) {
-        const def = getCurrentDef();
-        for (let i = 0; i < def.parameters.length; i++) {
-            const paramId = `p_${i}`;
-            const data = acceptance[paramId];
-            if (data) {
-                const ratingSelect = document.getElementById(`rating_${paramId}`);
-                if (ratingSelect) ratingSelect.value = data.rating;
-                document.querySelectorAll(`.cause-check[data-param="${paramId}"]`).forEach(cb => {
-                    cb.checked = data.causes && data.causes.includes(cb.value);
+            // Additional listeners for part list and others
+            attachPartListListeners();
+
+            if (isAssemblyProcess()) {
+                document.getElementById('quantitySummary').style.display = 'none';
+                document.getElementById('assemblyProgressContainer').classList.remove('hidden');
+                if (!isEditMode) { selectedParts = [];
+                    document.getElementById('totalDeliveredQty').value = 0; }
+                setTimeout(() => { populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                    updateAssemblyProgress(); }, 200);
+            } else {
+                document.getElementById('quantitySummary').style.display = 'grid';
+                document.getElementById('assemblyProgressContainer').classList.add('hidden');
+            }
+            attachQuantityListeners();
+            updateDeliveredQty();
+        }
+
+        function switchProcess() {
+            currentProcess = document.getElementById("processType").value;
+            renderDynamicFields();
+            populateMachineDropdown();
+            populateSuggestedNextOps();
+            updateVisibility();
+            if (isAssemblyProcess()) {
+                document.getElementById('assemblyProgressContainer').classList.remove('hidden');
+                setTimeout(() => { populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                    updateAssemblyProgress(); }, 300);
+            } else {
+                document.getElementById('assemblyProgressContainer').classList.add('hidden');
+            }
+        }
+
+        // ─── GET / SET EXTRA FIELDS ───
+        function getExtraFields() {
+            const def = getCurrentDef();
+            const extra = {};
+            let partsObj = null;
+            if (isAssemblyProcess()) {
+                partsObj = {};
+                selectedParts.forEach(p => { partsObj[p.name] = p.qty || 0; });
+                extra['selectedParts'] = partsObj;
+                extra['totalDeliveredQty'] = selectedParts.length;
+                extra['selectedPartNames'] = selectedParts.map(p => p.name);
+            }
+            if (def.extraFields) {
+                def.extraFields.forEach(field => {
+                    const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                    const el = document.getElementById(id);
+                    if (el) {
+                        if (field === "Tag No." && isAssemblyProcess() && partsObj) {
+                            extra[field] = JSON.stringify(partsObj);
+                        } else {
+                            extra[field] = el.value;
+                        }
+                    }
                 });
             }
+            return extra;
         }
-    }
 
-    // ─── COMPUTE FAILURE COST ───
-    function computeFailureCost() {
-        const mat = +document.getElementById("defectedMaterialCost").value || 0;
-        const lab = +document.getElementById("laborHours").value || 0;
-        const sal = +document.getElementById("salaryPerHour").value || 0;
-        const machH = +document.getElementById("machiningHours").value || 0;
-        const machR = +document.getElementById("machiningCostPerHr").value || 0;
-        const total = (mat + lab * sal + machH * machR);
-        document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
-        document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
-        return total;
-    }
+        function setExtraFields(extra) {
+            const def = getCurrentDef();
+            if (isAssemblyProcess()) {
+                let partsObj = {};
+                if (extra['selectedParts']) partsObj = extra['selectedParts'];
+                else if (extra['Tag No.']) {
+                    try { const parsed = JSON.parse(extra['Tag No.']); if (typeof parsed === 'object' && !Array.isArray(
+                            parsed)) partsObj = parsed; } catch (e) {}
+                }
+                selectedParts = Object.keys(partsObj).map(name => ({ name, qty: partsObj[name] || 0 }));
+                if (extra['totalDeliveredQty'] !== undefined) document.getElementById('totalDeliveredQty').value = extra[
+                    'totalDeliveredQty'];
+            }
+            if (def.extraFields) {
+                def.extraFields.forEach(field => {
+                    const id = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                    const el = document.getElementById(id);
+                    if (el && extra[field] !== undefined) {
+                        if (field === "Tag No." && isAssemblyProcess()) {} else el.value = extra[field];
+                    }
+                });
+            }
+            // Refresh suggestions after setting
+            refreshAllDatalists();
+            if (isAssemblyProcess()) {
+                setTimeout(() => { populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                    updateAssemblyProgress(); }, 200);
+            }
+        }
 
-    // ─── LAST OPERATION ───
-    async function fetchLastOperation() {
-        const partName = document.getElementById('extra_Part_Name')?.value?.trim();
-        const container = document.getElementById('lastOperationContainer');
-        const dataDiv = document.getElementById('lastOpData');
-        const noDataDiv = document.getElementById('lastOpNoData');
-        if (!partName) { container.classList.add('hidden'); return; }
-        container.classList.remove('hidden');
-        const projectName = document.getElementById('extra_Project_Name')?.value?.trim() || '';
-        const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
-        const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
-        const drawingNo = document.getElementById('extra_Drawing_No_')?.value?.trim() || '';
-        const tagNo = document.getElementById('extra_Tag_No_')?.value?.trim() || '';
-        const excludeId = document.getElementById('editId').value || null;
-        try {
-            const resp = await fetch('/api/inspections/last-operation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ part_name: partName, project_name: projectName, subtitle: subtitle,
-                    sub_sub_assembly: subSub, drawing_no: drawingNo, tag_no: tagNo, exclude_id: excludeId })
-            });
-            if (!resp.ok) throw new Error();
-            const data = await resp.json();
-            if (data.last_operation) {
-                const op = data.last_operation;
-                document.getElementById('lastOpProcess').textContent = op.process_type || '—';
-                document.getElementById('lastOpCondition').textContent = op.operation_status || '—';
-                document.getElementById('lastOpDate').textContent = op.submitted_at ? new Date(op.submitted_at)
-                    .toLocaleDateString() : '—';
-                document.getElementById('lastOpRating').textContent = op.acceptance_rating || '—';
-                document.getElementById('lastOpSuggested').textContent = op.suggested_next || '—';
-                dataDiv.classList.remove('hidden');
-                noDataDiv.classList.add('hidden');
-            } else {
+        function getAcceptanceData() {
+            const def = getCurrentDef();
+            const data = {};
+            for (let i = 0; i < def.parameters.length; i++) {
+                const paramId = `p_${i}`;
+                const rating = document.getElementById(`rating_${paramId}`)?.value || '';
+                const causes = Array.from(document.querySelectorAll(`.cause-check[data-param="${paramId}"]:checked`))
+                    .map(cb => cb.value);
+                data[paramId] = { parameter: def.parameters[i], rating, causes };
+            }
+            return data;
+        }
+
+        function setAcceptanceData(acceptance) {
+            const def = getCurrentDef();
+            for (let i = 0; i < def.parameters.length; i++) {
+                const paramId = `p_${i}`;
+                const data = acceptance[paramId];
+                if (data) {
+                    const ratingSelect = document.getElementById(`rating_${paramId}`);
+                    if (ratingSelect) ratingSelect.value = data.rating;
+                    document.querySelectorAll(`.cause-check[data-param="${paramId}"]`).forEach(cb => {
+                        cb.checked = data.causes && data.causes.includes(cb.value);
+                    });
+                }
+            }
+        }
+
+        // ─── COMPUTE FAILURE COST ───
+        function computeFailureCost() {
+            const mat = +document.getElementById("defectedMaterialCost").value || 0;
+            const lab = +document.getElementById("laborHours").value || 0;
+            const sal = +document.getElementById("salaryPerHour").value || 0;
+            const machH = +document.getElementById("machiningHours").value || 0;
+            const machR = +document.getElementById("machiningCostPerHr").value || 0;
+            const total = (mat + lab * sal + machH * machR);
+            document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
+            document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
+            return total;
+        }
+
+        // ─── LAST OPERATION ───
+        async function fetchLastOperation() {
+            const partName = document.getElementById('extra_Part_Name')?.value?.trim();
+            const container = document.getElementById('lastOperationContainer');
+            const dataDiv = document.getElementById('lastOpData');
+            const noDataDiv = document.getElementById('lastOpNoData');
+            if (!partName) { container.classList.add('hidden'); return; }
+            container.classList.remove('hidden');
+            const projectName = document.getElementById('extra_Project_Name')?.value?.trim() || '';
+            const subtitle = document.getElementById('extra_Subtitle')?.value?.trim() || '';
+            const subSub = document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || '';
+            const drawingNo = document.getElementById('extra_Drawing_No_')?.value?.trim() || '';
+            const tagNo = document.getElementById('extra_Tag_No_')?.value?.trim() || '';
+            const excludeId = document.getElementById('editId').value || null;
+            try {
+                const resp = await fetch('/api/inspections/last-operation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ part_name: partName, project_name: projectName, subtitle: subtitle,
+                        sub_sub_assembly: subSub, drawing_no: drawingNo, tag_no: tagNo, exclude_id: excludeId })
+                });
+                if (!resp.ok) throw new Error();
+                const data = await resp.json();
+                if (data.last_operation) {
+                    const op = data.last_operation;
+                    document.getElementById('lastOpProcess').textContent = op.process_type || '—';
+                    document.getElementById('lastOpCondition').textContent = op.operation_status || '—';
+                    document.getElementById('lastOpDate').textContent = op.submitted_at ? new Date(op.submitted_at)
+                        .toLocaleDateString() : '—';
+                    document.getElementById('lastOpRating').textContent = op.acceptance_rating || '—';
+                    document.getElementById('lastOpSuggested').textContent = op.suggested_next || '—';
+                    dataDiv.classList.remove('hidden');
+                    noDataDiv.classList.add('hidden');
+                } else {
+                    dataDiv.classList.add('hidden');
+                    noDataDiv.classList.remove('hidden');
+                }
+            } catch (err) {
                 dataDiv.classList.add('hidden');
                 noDataDiv.classList.remove('hidden');
+                noDataDiv.textContent = '❌ Could not load data.';
             }
-        } catch (err) {
-            dataDiv.classList.add('hidden');
-            noDataDiv.classList.remove('hidden');
-            noDataDiv.textContent = '❌ Could not load data.';
         }
-    }
 
-    function updateTotalTime() {
-        const s = document.getElementById("startTime").value,
-            e = document.getElementById("endTime").value;
-        if (s && e) {
-            let [sh, sm] = s.split(":").map(Number),
-                [eh, em] = e.split(":").map(Number);
-            let min = (eh * 60 + em) - (sh * 60 + sm);
-            if (min < 0) min += 1440;
-            document.getElementById("totalTimeDisplay").innerText = `Total: ${min} min (${(min/60).toFixed(1)} hr)`;
-            return min;
+        function updateTotalTime() {
+            const s = document.getElementById("startTime").value,
+                e = document.getElementById("endTime").value;
+            if (s && e) {
+                let [sh, sm] = s.split(":").map(Number),
+                    [eh, em] = e.split(":").map(Number);
+                let min = (eh * 60 + em) - (sh * 60 + sm);
+                if (min < 0) min += 1440;
+                document.getElementById("totalTimeDisplay").innerText = `Total: ${min} min (${(min/60).toFixed(1)} hr)`;
+                return min;
+            }
+            return 0;
         }
-        return 0;
-    }
 
-    // ─── RESET / CANCEL ───
-    function resetForm() {
-        document.getElementById("inspectionForm").reset();
-        selectedParts = [];
-        document.getElementById('totalDeliveredQty').value = 0;
-        renderDynamicFields();
-        computeFailureCost();
-        isEditMode = false;
-        editId = null;
-        document.getElementById("processType").disabled = false;
-        document.getElementById("saveBtn").innerHTML =
-            '<i class="fa-solid fa-cloud-upload-alt"></i> <span id="saveBtnText">Save to Cloud</span>';
-        document.getElementById("cancelEditBtn").classList.add("hidden");
-        if (engineerFromUrl) document.getElementById('qcEngineerName').value = currentEngineer;
-        populateMachineDropdown();
-        refreshAllDatalists();
-        populateSuggestedNextOps();
-        document.getElementById('suggestedNextOp').value = '';
-        document.getElementById('lastOperationContainer').classList.add('hidden');
-        updateVisibility();
-        if (isAssemblyProcess()) {
-            document.getElementById('assemblyProgressContainer').classList.remove('hidden');
-            setTimeout(() => { populatePartListMultiSelect();
-                renderSelectedPartsTable();
-                updateAssemblyProgress(); }, 300);
-        } else {
-            document.getElementById('assemblyProgressContainer').classList.add('hidden');
-        }
-        showToast('Form reset', 'info');
-    }
-
-    function cancelEdit() { resetForm();
-        loadHistory(); }
-
-    // ─── DELETE ───
-    async function deleteInspection(id) {
-        if (!confirm('⚠️ Are you sure you want to delete this inspection record? This action cannot be undone.'))
-            return;
-        try {
-            const resp = await fetch(`/api/inspections/${id}`, { method: 'DELETE' });
-            if (!resp.ok) throw new Error((await resp.text()) || 'Delete failed');
-            showToast('✅ Record deleted successfully.', 'success');
-            loadHistory();
-        } catch (err) {
-            showToast('❌ Error: ' + err.message, 'error');
-        }
-    }
-
-    // ─── SAVE ───
-    async function saveToBackend() {
-        const saveBtn = document.getElementById('saveBtn');
-        const saveText = document.getElementById('saveBtnText');
-        saveBtn.classList.add('btn-loading');
-        saveText.innerHTML = '<span class="btn-spinner"></span> Saving…';
-        try {
-            let engineerName = document.getElementById("qcEngineerName").value.trim();
-            if (!engineerName) { showToast('Please enter QC Engineer Name', 'error'); return; }
-            const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
-            if (!sourceType) { showToast('Please select Source', 'error'); return; }
-            const processTypeText = document.getElementById("processType").options[document.getElementById(
-                "processType").selectedIndex].text;
-            const acceptanceData = getAcceptanceData();
-            const extraFields = getExtraFields();
-
-            let delivered_qty, accepted_qty, rework_qty, reject_qty, conditional_accept_qty;
-            let total_delivered_qty, selected_parts_count, assembly_progress_pct;
-
+        // ─── RESET / CANCEL ───
+        function resetForm() {
+            document.getElementById("inspectionForm").reset();
+            selectedParts = [];
+            document.getElementById('totalDeliveredQty').value = 0;
+            renderDynamicFields();
+            computeFailureCost();
+            isEditMode = false;
+            editId = null;
+            document.getElementById("processType").disabled = false;
+            document.getElementById("saveBtn").innerHTML =
+                '<i class="fa-solid fa-cloud-upload-alt"></i> <span id="saveBtnText">Save to Cloud</span>';
+            document.getElementById("cancelEditBtn").classList.add("hidden");
+            if (engineerFromUrl) document.getElementById('qcEngineerName').value = currentEngineer;
+            populateMachineDropdown();
+            refreshAllDatalists();
+            populateSuggestedNextOps();
+            document.getElementById('suggestedNextOp').value = '';
+            document.getElementById('lastOperationContainer').classList.add('hidden');
+            updateVisibility();
             if (isAssemblyProcess()) {
-                const filters = getPartListFilters();
-                const allParts = findMatchingParts(filters);
-                const totalParts = allParts.length;
-                const assembledParts = selectedParts.length;
-                total_delivered_qty = assembledParts;
-                selected_parts_count = assembledParts;
-                assembly_progress_pct = totalParts > 0 ? Math.round((assembledParts / totalParts) * 100) : 0;
-                delivered_qty = assembledParts;
-                accepted_qty = assembledParts;
-                rework_qty = 0;
-                reject_qty = 0;
-                conditional_accept_qty = 0;
+                document.getElementById('assemblyProgressContainer').classList.remove('hidden');
+                setTimeout(() => { populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                    updateAssemblyProgress(); }, 300);
             } else {
-                delivered_qty = parseInt(document.getElementById('deliveredQty').value) || 0;
-                accepted_qty = parseInt(document.getElementById('acceptedQty').value) || 0;
-                rework_qty = parseInt(document.getElementById('reworkQty').value) || 0;
-                reject_qty = parseInt(document.getElementById('rejectQty').value) || 0;
-                conditional_accept_qty = parseInt(document.getElementById('conditionalAcceptQty').value) || 0;
-                total_delivered_qty = null;
-                selected_parts_count = null;
-                assembly_progress_pct = null;
+                document.getElementById('assemblyProgressContainer').classList.add('hidden');
             }
-
-            const payload = {
-                process_type: processTypeText,
-                username: engineerName,
-                source_type: sourceType,
-                outsource_institute: document.getElementById("outsourceInstitute").value,
-                design_available: document.getElementById("designAvail").checked,
-                mpp_available: document.getElementById("mppAvail").checked,
-                operation_status: document.getElementById("operationStatus").value,
-                shift: parseInt(document.querySelector('input[name="shift"]:checked')?.value) || null,
-                operator_name: document.getElementById("operatorName").value,
-                start_time: document.getElementById("startTime").value || null,
-                end_time: document.getElementById("endTime").value || null,
-                total_minutes: updateTotalTime(),
-                acceptance_data: acceptanceData,
-                extra_fields: extraFields,
-                defected_material_cost: +document.getElementById("defectedMaterialCost").value || 0,
-                labor_hours: +document.getElementById("laborHours").value || 0,
-                salary_per_hour: +document.getElementById("salaryPerHour").value || 0,
-                level: document.getElementById("levelSelect").value,
-                machining_hours: +document.getElementById("machiningHours").value || 0,
-                machining_cost_per_hr: +document.getElementById("machiningCostPerHr").value || 0,
-                total_internal_failure_cost: +document.getElementById("totalInternalFailureCost").value || 0,
-                delivered_qty: delivered_qty,
-                accepted_qty: accepted_qty,
-                rework_qty: rework_qty,
-                reject_qty: reject_qty,
-                conditional_accept_qty: conditional_accept_qty,
-                suggested_next_operation: document.getElementById("suggestedNextOp").value || null
-            };
-
-            if (isAssemblyProcess()) {
-                payload.total_delivered_qty = total_delivered_qty;
-                payload.selected_parts_count = selected_parts_count;
-                payload.assembly_progress_pct = assembly_progress_pct;
-            }
-
-            let url = '/api/inspections',
-                method = 'POST';
-            if (isEditMode && editId) { url = `/api/inspections/${editId}`;
-                method = 'PUT'; }
-            const resp = await fetch(url, { method, headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload) });
-            if (!resp.ok) throw new Error((await resp.json()).error || 'Unknown error');
-            showToast(`✓ Inspection ${isEditMode?'updated':'saved'} to cloud!`, 'success');
-            resetForm();
-            loadHistory();
-        } catch (err) {
-            showToast('❌ Error: ' + err.message, 'error');
-        } finally {
-            saveBtn.classList.remove('btn-loading');
-            saveText.innerHTML = 'Save to Cloud';
+            showToast('Form reset', 'info');
         }
-    }
 
-    // ─── HISTORY ───
-    async function loadHistory() {
-        try {
-            const resp = await fetch('/api/inspections');
-            if (!resp.ok) throw new Error();
-            let allData = await resp.json();
-            g_allInspections = allData;
-            computeHistoricalQuantities();
-            updateSuggestionsFromInspections(allData);
-            let displayData = allData;
-            if (engineerFromUrl) displayData = displayData.filter(row => row.username === currentEngineer);
-            const histDiv = document.getElementById("inspectionHistory");
-            if (!displayData.length) histDiv.innerHTML =
-                "<p class='text-slate-500 text-sm italic py-2'>No inspections found.</p>";
-            else histDiv.innerHTML = displayData.map(row =>
-                `<div class="history-item">
+        function cancelEdit() { resetForm();
+            loadHistory(); }
+
+        // ─── DELETE ───
+        async function deleteInspection(id) {
+            if (!confirm('⚠️ Are you sure you want to delete this inspection record? This action cannot be undone.'))
+                return;
+            try {
+                const resp = await fetch(`/api/inspections/${id}`, { method: 'DELETE' });
+                if (!resp.ok) throw new Error((await resp.text()) || 'Delete failed');
+                showToast('✅ Record deleted successfully.', 'success');
+                loadHistory();
+            } catch (err) {
+                showToast('❌ Error: ' + err.message, 'error');
+            }
+        }
+
+        // ─── SAVE ───
+        async function saveToBackend() {
+            const saveBtn = document.getElementById('saveBtn');
+            const saveText = document.getElementById('saveBtnText');
+            saveBtn.classList.add('btn-loading');
+            saveText.innerHTML = '<span class="btn-spinner"></span> Saving…';
+            try {
+                let engineerName = document.getElementById("qcEngineerName").value.trim();
+                if (!engineerName) { showToast('Please enter QC Engineer Name', 'error'); return; }
+                const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value;
+                if (!sourceType) { showToast('Please select Source', 'error'); return; }
+                const processTypeText = document.getElementById("processType").options[document.getElementById(
+                    "processType").selectedIndex].text;
+                const acceptanceData = getAcceptanceData();
+                const extraFields = getExtraFields();
+
+                let delivered_qty, accepted_qty, rework_qty, reject_qty, conditional_accept_qty;
+                let total_delivered_qty, selected_parts_count, assembly_progress_pct;
+
+                if (isAssemblyProcess()) {
+                    const filters = getPartListFilters();
+                    const allParts = findMatchingParts(filters);
+                    const totalParts = allParts.length;
+                    const assembledParts = selectedParts.length;
+                    total_delivered_qty = assembledParts;
+                    selected_parts_count = assembledParts;
+                    assembly_progress_pct = totalParts > 0 ? Math.round((assembledParts / totalParts) * 100) : 0;
+                    delivered_qty = assembledParts;
+                    accepted_qty = assembledParts;
+                    rework_qty = 0;
+                    reject_qty = 0;
+                    conditional_accept_qty = 0;
+                } else {
+                    delivered_qty = parseInt(document.getElementById('deliveredQty').value) || 0;
+                    accepted_qty = parseInt(document.getElementById('acceptedQty').value) || 0;
+                    rework_qty = parseInt(document.getElementById('reworkQty').value) || 0;
+                    reject_qty = parseInt(document.getElementById('rejectQty').value) || 0;
+                    conditional_accept_qty = parseInt(document.getElementById('conditionalAcceptQty').value) || 0;
+                    total_delivered_qty = null;
+                    selected_parts_count = null;
+                    assembly_progress_pct = null;
+                }
+
+                const payload = {
+                    process_type: processTypeText,
+                    username: engineerName,
+                    source_type: sourceType,
+                    outsource_institute: document.getElementById("outsourceInstitute").value,
+                    design_available: document.getElementById("designAvail").checked,
+                    mpp_available: document.getElementById("mppAvail").checked,
+                    operation_status: document.getElementById("operationStatus").value,
+                    shift: parseInt(document.querySelector('input[name="shift"]:checked')?.value) || null,
+                    operator_name: document.getElementById("operatorName").value,
+                    start_time: document.getElementById("startTime").value || null,
+                    end_time: document.getElementById("endTime").value || null,
+                    total_minutes: updateTotalTime(),
+                    acceptance_data: acceptanceData,
+                    extra_fields: extraFields,
+                    defected_material_cost: +document.getElementById("defectedMaterialCost").value || 0,
+                    labor_hours: +document.getElementById("laborHours").value || 0,
+                    salary_per_hour: +document.getElementById("salaryPerHour").value || 0,
+                    level: document.getElementById("levelSelect").value,
+                    machining_hours: +document.getElementById("machiningHours").value || 0,
+                    machining_cost_per_hr: +document.getElementById("machiningCostPerHr").value || 0,
+                    total_internal_failure_cost: +document.getElementById("totalInternalFailureCost").value || 0,
+                    delivered_qty: delivered_qty,
+                    accepted_qty: accepted_qty,
+                    rework_qty: rework_qty,
+                    reject_qty: reject_qty,
+                    conditional_accept_qty: conditional_accept_qty,
+                    suggested_next_operation: document.getElementById("suggestedNextOp").value || null
+                };
+
+                if (isAssemblyProcess()) {
+                    payload.total_delivered_qty = total_delivered_qty;
+                    payload.selected_parts_count = selected_parts_count;
+                    payload.assembly_progress_pct = assembly_progress_pct;
+                }
+
+                let url = '/api/inspections',
+                    method = 'POST';
+                if (isEditMode && editId) { url = `/api/inspections/${editId}`;
+                    method = 'PUT'; }
+                const resp = await fetch(url, { method, headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload) });
+                if (!resp.ok) throw new Error((await resp.json()).error || 'Unknown error');
+                showToast(`✓ Inspection ${isEditMode?'updated':'saved'} to cloud!`, 'success');
+                resetForm();
+                loadHistory();
+            } catch (err) {
+                showToast('❌ Error: ' + err.message, 'error');
+            } finally {
+                saveBtn.classList.remove('btn-loading');
+                saveText.innerHTML = 'Save to Cloud';
+            }
+        }
+
+        // ─── HISTORY ───
+        async function loadHistory() {
+            try {
+                const resp = await fetch('/api/inspections');
+                if (!resp.ok) throw new Error();
+                let allData = await resp.json();
+                g_allInspections = allData;
+                computeHistoricalQuantities();
+                updateSuggestionsFromInspections(allData);
+                let displayData = allData;
+                if (engineerFromUrl) displayData = displayData.filter(row => row.username === currentEngineer);
+                const histDiv = document.getElementById("inspectionHistory");
+                if (!displayData.length) histDiv.innerHTML =
+                    "<p class='text-slate-500 text-sm italic py-2'>No inspections found.</p>";
+                else histDiv.innerHTML = displayData.map(row =>
+                    `<div class="history-item">
                                 <div class="text-sm">
                                   <span class="text-slate-700 font-medium">${new Date(row.submitted_at).toLocaleString()}</span>
                                   <span class="text-slate-500 ml-3">${row.process_type||'Rolling'}</span>
@@ -2002,257 +2003,258 @@
                                   <button onclick="deleteInspection(${row.id})" class="text-rose-600/70 hover:text-rose-500 text-sm transition"><i class="fa-regular fa-trash-can"></i></button>
                                 </div>
                               </div>`
-            ).join("");
+                ).join("");
+                if (isAssemblyProcess()) {
+                    setTimeout(() => { populatePartListMultiSelect();
+                        renderSelectedPartsTable();
+                        updateAssemblyProgress(); }, 300);
+                }
+            } catch (err) { showToast('Error loading history', 'error'); }
+        }
+
+        // ─── EDIT ───
+        async function editInspection(id) {
+            try {
+                const resp = await fetch(`/api/inspections/${id}`);
+                if (!resp.ok) throw new Error();
+                const insp = await resp.json();
+                populateFormForEdit(insp);
+            } catch (err) { showToast('Error loading inspection', 'error'); }
+        }
+
+        // ─── CORRECTED populateFormForEdit ───────────────────────────────────────
+        function populateFormForEdit(inspection) {
+            // 1. Set edit flags BEFORE rendering dynamic fields
+            isEditMode = true;
+            editId = inspection.id;
+            document.getElementById("editId").value = inspection.id;
+            document.getElementById("isEditMode").value = "true";
+
+            // 2. Set process type and render dynamic fields
+            const opt = Array.from(document.getElementById("processType").options)
+                .find(o => o.text === inspection.process_type);
+            if (opt) {
+                document.getElementById("processType").value = opt.value;
+                switchProcess(); // ← renders all dynamic fields (now with isEditMode = true)
+            }
+            document.getElementById("processType").disabled = true;
+
+            // 3. Basic fields
+            document.getElementById("qcEngineerName").value = inspection.username || "";
+            document.getElementById("outsourceInstitute").value = inspection.outsource_institute || "";
+            document.getElementById("designAvail").checked = inspection.design_available || false;
+            document.getElementById("mppAvail").checked = inspection.mpp_available || false;
+            document.getElementById("operationStatus").value = inspection.operation_status || "Holdup";
+
+            const sourceRadio = document.querySelector(`input[name="sourceType"][value="${inspection.source_type}"]`);
+            if (sourceRadio) sourceRadio.checked = true;
+
+            const shiftRadio = document.querySelector(`input[name="shift"][value="${inspection.shift}"]`);
+            if (shiftRadio) shiftRadio.checked = true;
+
+            document.getElementById("operatorName").value = inspection.operator_name || "";
+            document.getElementById("startTime").value = inspection.start_time || "";
+            document.getElementById("endTime").value = inspection.end_time || "";
+            updateTotalTime();
+
+            // 4. Quantity fields
             if (isAssemblyProcess()) {
+                document.getElementById('totalDeliveredQty').value = inspection.total_delivered_qty || 0;
+                document.getElementById('acceptedQty').value = 0;
+                document.getElementById('reworkQty').value = 0;
+                document.getElementById('rejectQty').value = 0;
+                document.getElementById('conditionalAcceptQty').value = 0;
+                document.getElementById('deliveredQty').value = inspection.delivered_qty || 0;
+            } else {
+                document.getElementById('acceptedQty').value = inspection.accepted_qty || 0;
+                document.getElementById('reworkQty').value = inspection.rework_qty || 0;
+                document.getElementById('rejectQty').value = inspection.reject_qty || 0;
+                document.getElementById('conditionalAcceptQty').value = inspection.conditional_accept_qty || 0;
+                document.getElementById('deliveredQty').value = inspection.delivered_qty || 0;
+            }
+
+            // 5. Cost fields
+            document.getElementById("defectedMaterialCost").value = inspection.defected_material_cost ?? 0;
+            document.getElementById("laborHours").value = inspection.labor_hours ?? 0;
+            document.getElementById("salaryPerHour").value = inspection.salary_per_hour ?? 0;
+            document.getElementById("machiningHours").value = inspection.machining_hours ?? 0;
+            document.getElementById("machiningCostPerHr").value = inspection.machining_cost_per_hr ?? 0;
+            document.getElementById("levelSelect").value = inspection.level || "";
+            computeFailureCost();
+
+            // 6. Extra fields & acceptance data – now after switchProcess()
+            setExtraFields(inspection.extra_fields || {});
+            setAcceptanceData(inspection.acceptance_data || {});
+
+            // 7. Machine dropdown
+            const rateToRestore = inspection.machining_cost_per_hr ? inspection.machining_cost_per_hr.toFixed(4) : "";
+            populateMachineDropdown(rateToRestore);
+
+            // 8. Work station (if stored)
+            const savedWorkStation = inspection.extra_fields?.["Work Station"];
+            if (savedWorkStation) {
+                const wsSelect = document.getElementById("extra_Work_Station");
+                if (wsSelect) wsSelect.value = savedWorkStation;
+            }
+
+            // 9. Update UI buttons
+            document.getElementById("saveBtn").innerHTML =
+                '<i class="fa-solid fa-pen-to-square"></i> <span id="saveBtnText">Update to Cloud</span>';
+            document.getElementById("cancelEditBtn").classList.remove("hidden");
+
+            // 10. Suggestions and last operation
+            refreshAllDatalists();
+            const suggestedInput = document.getElementById('suggestedNextOp');
+            if (inspection.suggested_next_operation) {
+                suggestedInput.value = inspection.suggested_next_operation;
+            } else {
+                populateSuggestedNextOps();
+            }
+
+            const partName = document.getElementById('extra_Part_Name')?.value?.trim();
+            if (partName) fetchLastOperation();
+
+            // 11. Assembly progress (if applicable)
+            if (isAssemblyProcess()) {
+                setTimeout(() => {
+                    populatePartListMultiSelect();
+                    renderSelectedPartsTable();
+                    updateAssemblyProgress();
+                }, 300);
+            }
+
+            updateVisibility();
+        }
+        // ─── END CORRECTED FUNCTION ─────────────────────────────────────────────
+
+        // ─── SUGGESTED NEXT OPS ───
+        const PROCESS_ORDER = [
+            "Punching", "Rolling", "Bending", "Welding", "Pressing",
+            "Milling", "Casting", "PatternCore", "Assembling", "Testing",
+            "Painting", "Packaging", "Shearing", "Lathe", "Drilling",
+            "BoringHoning", "Grinding", "Forging", "Molding", "Polishing",
+            "GasCutting", "FastenersAssembly", "Hardening", "Tempering", "Coating"
+        ];
+
+        function populateSuggestedNextOps() {
+            const current = document.getElementById("processType").value;
+            const input = document.getElementById("suggestedNextOp");
+            const datalist = document.getElementById("suggestedNextList");
+            if (!datalist || !input) return;
+            datalist.innerHTML = '';
+            const idx = PROCESS_ORDER.indexOf(current);
+            if (idx === -1) return;
+            let firstSuggestion = null;
+            for (let i = idx + 1; i < PROCESS_ORDER.length; i++) {
+                const opt = document.createElement('option');
+                opt.value = PROCESS_ORDER[i];
+                datalist.appendChild(opt);
+                if (i === idx + 1) firstSuggestion = PROCESS_ORDER[i];
+            }
+            if (!input.value.trim() && firstSuggestion) input.value = firstSuggestion;
+        }
+
+        // ─── PART LIST LISTENERS ───
+        function attachPartListListeners() {
+            const selectEl = document.getElementById('extra_Tag_No_');
+            if (selectEl && isAssemblyProcess()) {
+                selectEl.removeEventListener('change', onPartListSelectChange);
+                selectEl.addEventListener('change', onPartListSelectChange);
+            }
+            const filterFields = ['extra_Customer_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly'];
+            filterFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.removeEventListener('change', onFilterChange);
+                    el.removeEventListener('input', onFilterChangeDebounced);
+                    el.addEventListener('change', onFilterChange);
+                    el.addEventListener('input', onFilterChangeDebounced);
+                }
+            });
+        }
+
+        let _filterTimer = null;
+
+        function onFilterChangeDebounced() { clearTimeout(_filterTimer);
+            _filterTimer = setTimeout(onFilterChange, 300); }
+
+        function onFilterChange() {
+            if (isAssemblyProcess()) {
+                populatePartListMultiSelect();
+                const selectEl = document.getElementById('extra_Tag_No_');
+                if (selectEl) {
+                    const availableOptions = Array.from(selectEl.options).map(o => o.value).filter(v => v !== '');
+                    selectedParts = selectedParts.filter(p => availableOptions.includes(p.name));
+                    Array.from(selectEl.options).forEach(opt => {
+                        opt.selected = opt.value && selectedParts.some(p => p.name === opt.value);
+                    });
+                    renderSelectedPartsTable();
+                    updateAssemblyProgress();
+                }
+            }
+        }
+
+        // ─── QUANTITY LISTENERS ───
+        function updateDeliveredQty() {
+            const accepted = parseFloat(document.getElementById('acceptedQty').value) || 0;
+            const rework = parseFloat(document.getElementById('reworkQty').value) || 0;
+            const reject = parseFloat(document.getElementById('rejectQty').value) || 0;
+            const conditional = parseFloat(document.getElementById('conditionalAcceptQty').value) || 0;
+            const total = accepted + rework + reject + conditional;
+            document.getElementById('deliveredQty').value = total;
+            return total;
+        }
+
+        function attachQuantityListeners() {
+            ['acceptedQty', 'reworkQty', 'rejectQty', 'conditionalAcceptQty'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.removeEventListener('input', updateDeliveredQty);
+                    el.addEventListener('input', updateDeliveredQty);
+                }
+            });
+        }
+
+        // ─── EVENT BINDINGS ───
+        document.getElementById("levelSelect").addEventListener("change", function(e) {
+            const lvl = e.target.value;
+            const salField = document.getElementById("salaryPerHour");
+            if (lvl === "12") salField.value = 87.125;
+            else if (lvl === "13") salField.value = 90.1;
+            else if (lvl === "14") salField.value = 96.6;
+            else if (lvl === "custom") salField.value = "";
+            else salField.value = "";
+            computeFailureCost();
+        });
+
+        ["defectedMaterialCost", "laborHours", "salaryPerHour", "machiningHours", "machiningCostPerHr"].forEach(id =>
+            document.getElementById(id)?.addEventListener("input", computeFailureCost)
+        );
+        document.getElementById("startTime")?.addEventListener("change", updateTotalTime);
+        document.getElementById("endTime")?.addEventListener("change", updateTotalTime);
+
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
+                '>': '&gt;' }[m])); }
+
+        // ─── INIT ───
+        function initApp() {
+            renderDynamicFields();
+            loadHistory();
+            populateMachineDropdown();
+            populateSuggestedNextOps();
+            attachPartListListeners();
+            updateVisibility();
+            if (isAssemblyProcess()) {
+                document.getElementById('assemblyProgressContainer').classList.remove('hidden');
                 setTimeout(() => { populatePartListMultiSelect();
                     renderSelectedPartsTable();
                     updateAssemblyProgress(); }, 300);
-            }
-        } catch (err) { showToast('Error loading history', 'error'); }
-    }
-
-    // ─── EDIT ───
-    async function editInspection(id) {
-        try {
-            const resp = await fetch(`/api/inspections/${id}`);
-            if (!resp.ok) throw new Error();
-            const insp = await resp.json();
-            populateFormForEdit(insp);
-        } catch (err) { showToast('Error loading inspection', 'error'); }
-    }
-
-    // ─── CORRECTED populateFormForEdit ───────────────────────────────────────
-    function populateFormForEdit(inspection) {
-        // 1. Set process type and render dynamic fields FIRST
-        const opt = Array.from(document.getElementById("processType").options)
-            .find(o => o.text === inspection.process_type);
-        if (opt) {
-            document.getElementById("processType").value = opt.value;
-            switchProcess(); // ← this renders all dynamic fields
-        }
-        document.getElementById("processType").disabled = true;
-
-        // 2. Basic fields
-        document.getElementById("qcEngineerName").value = inspection.username || "";
-        document.getElementById("outsourceInstitute").value = inspection.outsource_institute || "";
-        document.getElementById("designAvail").checked = inspection.design_available || false;
-        document.getElementById("mppAvail").checked = inspection.mpp_available || false;
-        document.getElementById("operationStatus").value = inspection.operation_status || "Holdup";
-
-        const sourceRadio = document.querySelector(`input[name="sourceType"][value="${inspection.source_type}"]`);
-        if (sourceRadio) sourceRadio.checked = true;
-
-        const shiftRadio = document.querySelector(`input[name="shift"][value="${inspection.shift}"]`);
-        if (shiftRadio) shiftRadio.checked = true;
-
-        document.getElementById("operatorName").value = inspection.operator_name || "";
-        document.getElementById("startTime").value = inspection.start_time || "";
-        document.getElementById("endTime").value = inspection.end_time || "";
-        updateTotalTime();
-
-        // 3. Quantity fields
-        if (isAssemblyProcess()) {
-            document.getElementById('totalDeliveredQty').value = inspection.total_delivered_qty || 0;
-            document.getElementById('acceptedQty').value = 0;
-            document.getElementById('reworkQty').value = 0;
-            document.getElementById('rejectQty').value = 0;
-            document.getElementById('conditionalAcceptQty').value = 0;
-            document.getElementById('deliveredQty').value = inspection.delivered_qty || 0;
-        } else {
-            document.getElementById('acceptedQty').value = inspection.accepted_qty || 0;
-            document.getElementById('reworkQty').value = inspection.rework_qty || 0;
-            document.getElementById('rejectQty').value = inspection.reject_qty || 0;
-            document.getElementById('conditionalAcceptQty').value = inspection.conditional_accept_qty || 0;
-            document.getElementById('deliveredQty').value = inspection.delivered_qty || 0;
-        }
-
-        // 4. Cost fields
-        document.getElementById("defectedMaterialCost").value = inspection.defected_material_cost ?? 0;
-        document.getElementById("laborHours").value = inspection.labor_hours ?? 0;
-        document.getElementById("salaryPerHour").value = inspection.salary_per_hour ?? 0;
-        document.getElementById("machiningHours").value = inspection.machining_hours ?? 0;
-        document.getElementById("machiningCostPerHr").value = inspection.machining_cost_per_hr ?? 0;
-        document.getElementById("levelSelect").value = inspection.level || "";
-        computeFailureCost();
-
-        // 5. Extra fields & acceptance data – now after switchProcess()
-        setExtraFields(inspection.extra_fields || {});
-        setAcceptanceData(inspection.acceptance_data || {});
-
-        // 6. Machine dropdown
-        const rateToRestore = inspection.machining_cost_per_hr ? inspection.machining_cost_per_hr.toFixed(4) : "";
-        populateMachineDropdown(rateToRestore);
-
-        // 7. Work station (if stored)
-        const savedWorkStation = inspection.extra_fields?.["Work Station"];
-        if (savedWorkStation) {
-            const wsSelect = document.getElementById("extra_Work_Station");
-            if (wsSelect) wsSelect.value = savedWorkStation;
-        }
-
-        // 8. Edit mode flags
-        isEditMode = true;
-        editId = inspection.id;
-        document.getElementById("editId").value = inspection.id;
-        document.getElementById("isEditMode").value = "true";
-        document.getElementById("saveBtn").innerHTML =
-            '<i class="fa-solid fa-pen-to-square"></i> <span id="saveBtnText">Update to Cloud</span>';
-        document.getElementById("cancelEditBtn").classList.remove("hidden");
-
-        // 9. Suggestions and last operation
-        refreshAllDatalists();
-        const suggestedInput = document.getElementById('suggestedNextOp');
-        if (inspection.suggested_next_operation) {
-            suggestedInput.value = inspection.suggested_next_operation;
-        } else {
-            populateSuggestedNextOps();
-        }
-
-        const partName = document.getElementById('extra_Part_Name')?.value?.trim();
-        if (partName) fetchLastOperation();
-
-        // 10. Assembly progress (if applicable)
-        if (isAssemblyProcess()) {
-            setTimeout(() => {
-                populatePartListMultiSelect();
-                renderSelectedPartsTable();
-                updateAssemblyProgress();
-            }, 300);
-        }
-
-        updateVisibility();
-    }
-    // ─── END CORRECTED FUNCTION ─────────────────────────────────────────────
-
-    // ─── SUGGESTED NEXT OPS ───
-    const PROCESS_ORDER = [
-        "Punching", "Rolling", "Bending", "Welding", "Pressing",
-        "Milling", "Casting", "PatternCore", "Assembling", "Testing",
-        "Painting", "Packaging", "Shearing", "Lathe", "Drilling",
-        "BoringHoning", "Grinding", "Forging", "Molding", "Polishing",
-        "GasCutting", "FastenersAssembly", "Hardening", "Tempering", "Coating"
-    ];
-
-    function populateSuggestedNextOps() {
-        const current = document.getElementById("processType").value;
-        const input = document.getElementById("suggestedNextOp");
-        const datalist = document.getElementById("suggestedNextList");
-        if (!datalist || !input) return;
-        datalist.innerHTML = '';
-        const idx = PROCESS_ORDER.indexOf(current);
-        if (idx === -1) return;
-        let firstSuggestion = null;
-        for (let i = idx + 1; i < PROCESS_ORDER.length; i++) {
-            const opt = document.createElement('option');
-            opt.value = PROCESS_ORDER[i];
-            datalist.appendChild(opt);
-            if (i === idx + 1) firstSuggestion = PROCESS_ORDER[i];
-        }
-        if (!input.value.trim() && firstSuggestion) input.value = firstSuggestion;
-    }
-
-    // ─── PART LIST LISTENERS ───
-    function attachPartListListeners() {
-        const selectEl = document.getElementById('extra_Tag_No_');
-        if (selectEl && isAssemblyProcess()) {
-            selectEl.removeEventListener('change', onPartListSelectChange);
-            selectEl.addEventListener('change', onPartListSelectChange);
-        }
-        const filterFields = ['extra_Customer_Name', 'extra_Project_Name', 'extra_Subtitle', 'extra_Sub_Sub_Assembly'];
-        filterFields.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.removeEventListener('change', onFilterChange);
-                el.removeEventListener('input', onFilterChangeDebounced);
-                el.addEventListener('change', onFilterChange);
-                el.addEventListener('input', onFilterChangeDebounced);
-            }
-        });
-    }
-
-    let _filterTimer = null;
-
-    function onFilterChangeDebounced() { clearTimeout(_filterTimer);
-        _filterTimer = setTimeout(onFilterChange, 300); }
-
-    function onFilterChange() {
-        if (isAssemblyProcess()) {
-            populatePartListMultiSelect();
-            const selectEl = document.getElementById('extra_Tag_No_');
-            if (selectEl) {
-                const availableOptions = Array.from(selectEl.options).map(o => o.value).filter(v => v !== '');
-                selectedParts = selectedParts.filter(p => availableOptions.includes(p.name));
-                Array.from(selectEl.options).forEach(opt => {
-                    opt.selected = opt.value && selectedParts.some(p => p.name === opt.value);
-                });
-                renderSelectedPartsTable();
-                updateAssemblyProgress();
+            } else {
+                document.getElementById('assemblyProgressContainer').classList.add('hidden');
             }
         }
-    }
 
-    // ─── QUANTITY LISTENERS ───
-    function updateDeliveredQty() {
-        const accepted = parseFloat(document.getElementById('acceptedQty').value) || 0;
-        const rework = parseFloat(document.getElementById('reworkQty').value) || 0;
-        const reject = parseFloat(document.getElementById('rejectQty').value) || 0;
-        const conditional = parseFloat(document.getElementById('conditionalAcceptQty').value) || 0;
-        const total = accepted + rework + reject + conditional;
-        document.getElementById('deliveredQty').value = total;
-        return total;
-    }
-
-    function attachQuantityListeners() {
-        ['acceptedQty', 'reworkQty', 'rejectQty', 'conditionalAcceptQty'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.removeEventListener('input', updateDeliveredQty);
-                el.addEventListener('input', updateDeliveredQty);
-            }
-        });
-    }
-
-    // ─── EVENT BINDINGS ───
-    document.getElementById("levelSelect").addEventListener("change", function(e) {
-        const lvl = e.target.value;
-        const salField = document.getElementById("salaryPerHour");
-        if (lvl === "12") salField.value = 87.125;
-        else if (lvl === "13") salField.value = 90.1;
-        else if (lvl === "14") salField.value = 96.6;
-        else if (lvl === "custom") salField.value = "";
-        else salField.value = "";
-        computeFailureCost();
-    });
-
-    ["defectedMaterialCost", "laborHours", "salaryPerHour", "machiningHours", "machiningCostPerHr"].forEach(id =>
-        document.getElementById(id)?.addEventListener("input", computeFailureCost)
-    );
-    document.getElementById("startTime")?.addEventListener("change", updateTotalTime);
-    document.getElementById("endTime")?.addEventListener("change", updateTotalTime);
-
-    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;',
-            '>': '&gt;' }[m])); }
-
-    // ─── INIT ───
-    function initApp() {
-        renderDynamicFields();
-        loadHistory();
-        populateMachineDropdown();
-        populateSuggestedNextOps();
-        attachPartListListeners();
-        updateVisibility();
-        if (isAssemblyProcess()) {
-            document.getElementById('assemblyProgressContainer').classList.remove('hidden');
-            setTimeout(() => { populatePartListMultiSelect();
-                renderSelectedPartsTable();
-                updateAssemblyProgress(); }, 300);
-        } else {
-            document.getElementById('assemblyProgressContainer').classList.add('hidden');
-        }
-    }
-
-    console.log('✅ QC Inspection ready – cascading suggestions active (Client → Title → Subtitle → Sub Sub → DWG / Part).');
-</script>
-    
+        console.log('✅ QC Inspection ready – cascading suggestions active (Client → Title → Subtitle → Sub Sub → DWG / Part).');
+    </script>
 </body>
 </html>
