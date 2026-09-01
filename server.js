@@ -53,7 +53,6 @@ app.get('/dash', (req, res) => res.sendFile(path.join(__dirname, 'dash.html')));
 // ─── GET /api/inspections (fetch from BOTH tables and merge) ───
 app.get('/api/inspections', async (req, res) => {
   try {
-    // Fetch from both tables
     const [rollingRes, assemblyRes] = await Promise.all([
       supabase.from('rolling_inspections').select('*').order('submitted_at', { ascending: false }),
       supabase.from('assembly_inspections').select('*').order('submitted_at', { ascending: false })
@@ -63,7 +62,6 @@ app.get('/api/inspections', async (req, res) => {
     if (assemblyRes.error) throw new Error(assemblyRes.error.message);
 
     const combined = [...(rollingRes.data || []), ...(assemblyRes.data || [])];
-    // Sort by submitted_at descending
     combined.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
     res.json(combined);
   } catch (err) {
@@ -74,7 +72,6 @@ app.get('/api/inspections', async (req, res) => {
 // ─── GET /api/inspections/:id ───
 app.get('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
-  // Try rolling first, then assembly
   let { data, error } = await supabase.from('rolling_inspections').select('*').eq('id', id).single();
   if (error && error.code !== 'PGRST116') return res.status(404).json({ error: error.message });
   if (data) return res.json(data);
@@ -138,7 +135,6 @@ app.put('/api/inspections/:id', async (req, res) => {
 // ─── DELETE /api/inspections/:id (delete from both tables) ───
 app.delete('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
-  // Try rolling first, then assembly
   let { error: rollingError } = await supabase.from('rolling_inspections').delete().eq('id', id);
   if (rollingError && rollingError.code !== 'PGRST116') return res.status(400).json({ error: rollingError.message });
 
@@ -154,7 +150,6 @@ app.post('/api/inspections/last-operation', async (req, res) => {
   if (!part_name) return res.json({ last_operation: null });
 
   try {
-    // Query both tables in parallel
     const [rollingQuery, assemblyQuery] = await Promise.all([
       buildLastOpQuery(supabase.from('rolling_inspections'), part_name, project_name, subtitle, sub_sub_assembly, drawing_no, tag_no, exclude_id),
       buildLastOpQuery(supabase.from('assembly_inspections'), part_name, project_name, subtitle, sub_sub_assembly, drawing_no, tag_no, exclude_id)
@@ -163,7 +158,6 @@ app.post('/api/inspections/last-operation', async (req, res) => {
     const allResults = [...(rollingQuery.data || []), ...(assemblyQuery.data || [])];
     if (allResults.length === 0) return res.json({ last_operation: null });
 
-    // Get the most recent one
     const sorted = allResults.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
     const record = sorted[0];
 
@@ -185,7 +179,6 @@ app.post('/api/inspections/last-operation', async (req, res) => {
   }
 });
 
-// Helper for last-operation queries
 async function buildLastOpQuery(query, part_name, project_name, subtitle, sub_sub_assembly, drawing_no, tag_no, exclude_id) {
   let q = query.select('*').eq('part_name', part_name).order('submitted_at', { ascending: false }).limit(1);
   if (project_name) q = q.eq('project_name', project_name);
