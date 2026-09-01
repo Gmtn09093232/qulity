@@ -1026,6 +1026,14 @@
             document.getElementById('assemblyProgressDetail').textContent = `${assembledParts} / ${totalParts} delivered`;
         }
 
+        // ─── UPDATE VISIBILITY (MISSING FUNCTION – NOW ADDED) ───
+        function updateVisibility() {
+            const isAssembly = isAssemblyProcess();
+            document.getElementById('quantitySummary').style.display = isAssembly ? 'none' : 'grid';
+            document.getElementById('assemblyProgressContainer').style.display = isAssembly ? 'block' : 'none';
+            // Also toggle the part list container if needed – already handled in renderDynamicFields.
+        }
+
         function onPartListSelectChange() {
             const selectEl = document.getElementById('extra_Tag_No_');
             if (!selectEl || !isAssemblyProcess()) return;
@@ -1641,6 +1649,9 @@
 
             // Additional listeners for part list and others
             attachPartListListeners();
+
+            // Update visibility for quantity/assembly sections
+            updateVisibility();
 
             if (isAssemblyProcess()) {
                 document.getElementById('quantitySummary').style.display = 'none';
