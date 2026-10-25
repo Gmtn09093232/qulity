@@ -4,10 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
     <title>Project Follow‑Up</title>
-    <script src="https://cdn.tailwindcss.com">
-    </script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js">
-    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
         body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
@@ -91,18 +89,14 @@
                 </select>
             </div>
             <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Status</label><select id="filterStatus" class="filter-select w-full"><option value="">All Status</option><option value="needs_action">Needs Action</option><option value="on_track">On Track</option><option value="critical">Critical</option></select></div>
-            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Suggested Next Operation</label>
-                <select id="filterSuggestedNext" class="filter-select w-full">
-                    <option value="">All</option>
-                </select>
-            </div>
+            <div class="flex-1 min-w-[150px]"><label class="text-xs font-medium text-slate-500">Suggested Next Operation</label><select id="filterSuggestedNext" class="filter-select w-full"><option value="">All</option></select></div>
             <div><button onclick="clearFilters()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl text-sm">Clear Filters</button></div>
         </div>
 
         <div class="grid grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-diagram-project"></i> Active Projects</div><p class="text-2xl font-bold" id="totalProjects">—</p></div>
             <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Need Follow‑up</div><p class="text-2xl font-bold text-amber-600" id="needFollowup">—</p></div>
-            <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-chart-line"></i> Avg. Acceptance</div><p class="text-2xl font-bold text-emerald-600" id="avgAcceptance">—%</p></div>
+            <div class="bg-white rounded-xl p-4"><div class="text-slate-500 text-sm"><i class="fa-solid fa-chart-line"></i> Avg. First‑Pass Yield</div><p class="text-2xl font-bold text-emerald-600" id="avgAcceptance">—%</p></div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
@@ -127,7 +121,7 @@
                             <th class="text-center">Rework Qty</th>
                             <th class="text-center">Reject Qty</th>
                             <th class="text-center">Conditional Accept</th>
-                            <th class="text-center">Accept%</th>
+                            <th class="text-center">FPY %</th>
                             <th class="text-center">Last Insp.</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Details</th>
@@ -185,18 +179,15 @@
             toast.innerHTML = `<div class="toast-content"><span class="toast-icon"><i class="fa-solid ${icon}"></i></span><span>${message}</span></div>`;
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.add('show'));
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }, 4000);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
         }
 
         function getExtraField(insp, field) {
             if (field === 'Operation Condition') {
-                const raw = insp.operation_status?.trim() || '';
-                const lower = raw.toLowerCase();
-                if (lower === 'continue') return 'continuous';
-                return lower;
+                // Prefer server-side canonical column, else fall back to raw with normalisation
+                if (insp.normalised_operation) return insp.normalised_operation;
+                const raw = (insp.operation_status || '').trim().toLowerCase();
+                return raw === 'continue' ? 'continuous' : raw;
             }
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
@@ -216,10 +207,7 @@
                 const res = await fetch('/api/inspections');
                 if (!res.ok) throw new Error();
                 return await res.json();
-            } catch (err) {
-                showToast('Failed to load inspections', 'error');
-                return [];
-            }
+            } catch { showToast('Failed to load inspections', 'error'); return []; }
         }
 
         function computeDelivered(insp) {
@@ -227,13 +215,20 @@
         }
 
         function aggregateInspectionsForProject(inspections) {
+            // Extract project-level identifiers once — all insp here belong to the same project
+            const __client = inspections.length ? (getExtraField(inspections[0], 'Customer Name') || 'Unknown') : 'Unknown';
+            const __title  = inspections.length ? (getExtraField(inspections[0], 'Project Name')  || 'Untitled') : 'Untitled';
+
             const partFirstOp = new Map();
             for (const insp of inspections) {
                 const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
+                const subtitle = getExtraField(insp, 'Subtitle') || '';
+                const subSub   = getExtraField(insp, 'Sub Sub Assembly') || '';
+                const partKey  = `${__client}||${__title}||${subtitle}||${subSub}||${partName}`;
                 const inspDate = new Date(insp.submitted_at);
                 const delivered = computeDelivered(insp);
-                if (!partFirstOp.has(partName) || inspDate < partFirstOp.get(partName).date) {
-                    partFirstOp.set(partName, {
+                if (!partFirstOp.has(partKey) || inspDate < partFirstOp.get(partKey).date) {
+                    partFirstOp.set(partKey, {
                         date: inspDate,
                         delivered: delivered,
                         accepted: insp.accepted_qty || 0,
@@ -266,6 +261,7 @@
                 const processType = insp.process_type || 'Unknown Process';
                 const opCondition = getExtraField(insp, 'Operation Condition') || '—';
                 const opDesc = `${processType} (${opCondition})`;
+                const partKey = `${__client}||${__title}||${subtitle}||${subSub}||${partName}`;
 
                 totalInspections++;
                 totalAcceptedAll += (insp.accepted_qty || 0);
@@ -276,8 +272,8 @@
                 const inspDate = new Date(insp.submitted_at);
                 if (!lastDate || inspDate > lastDate) lastDate = inspDate;
 
-                if (!partLastInsp.has(partName) || inspDate > partLastInsp.get(partName).date) {
-                    partLastInsp.set(partName, {
+                if (!partLastInsp.has(partKey) || inspDate > partLastInsp.get(partKey).date) {
+                    partLastInsp.set(partKey, {
                         process_type: processType,
                         date: inspDate,
                         suggested_next: getSuggestedNext(insp)
@@ -286,14 +282,9 @@
 
                 if (!subtitlesMap.has(subtitle)) {
                     subtitlesMap.set(subtitle, {
-                        name: subtitle,
-                        subSub: subSub,
-                        totalInspections: 0,
-                        sumDelivered: 0,
-                        sumAcceptedFirst: 0,
-                        sumReworkFirst: 0,
-                        sumRejectFirst: 0,
-                        sumConditionalFirst: 0,
+                        name: subtitle, subSub: subSub,
+                        totalInspections: 0, sumDelivered: 0, sumAcceptedFirst: 0,
+                        sumReworkFirst: 0, sumRejectFirst: 0, sumConditionalFirst: 0,
                         partsMap: new Map()
                     });
                 }
@@ -302,16 +293,9 @@
 
                 if (!sub.partsMap.has(partName)) {
                     sub.partsMap.set(partName, {
-                        quantity: 0,
-                        dwgSet: new Set(),
-                        tagSet: new Set(),
-                        operationsSet: new Set(),
-                        subSub: subSub,
-                        rejectCount: 0,
-                        reworkCount: 0,
-                        conditionalCount: 0,
-                        acceptedCount: 0,
-                        firstOpBreakdown: null
+                        quantity: 0, dwgSet: new Set(), tagSet: new Set(), operationsSet: new Set(),
+                        subSub: subSub, rejectCount: 0, reworkCount: 0, conditionalCount: 0,
+                        acceptedCount: 0, firstOpBreakdown: null
                     });
                 }
                 const partData = sub.partsMap.get(partName);
@@ -326,17 +310,15 @@
             }
 
             for (const [subtitle, sub] of subtitlesMap) {
-                let subDelivered = 0;
-                let subAccFirst = 0, subRwkFirst = 0, subRejFirst = 0, subCndFirst = 0;
+                let subDelivered = 0, subAccFirst = 0, subRwkFirst = 0, subRejFirst = 0, subCndFirst = 0;
                 for (const [partName, partData] of sub.partsMap) {
-                    const firstOp = partFirstOp.get(partName);
+                    const pk = `${__client}||${__title}||${sub.name || ''}||${partData.subSub || ''}||${partName}`;
+                    const firstOp = partFirstOp.get(pk);
                     if (firstOp) {
                         partData.quantity = firstOp.delivered;
                         partData.firstOpBreakdown = {
-                            accepted: firstOp.accepted,
-                            rework: firstOp.rework,
-                            reject: firstOp.reject,
-                            conditional: firstOp.conditional,
+                            accepted: firstOp.accepted, rework: firstOp.rework,
+                            reject: firstOp.reject, conditional: firstOp.conditional,
                             delivered: firstOp.delivered
                         };
                         subDelivered += firstOp.delivered;
@@ -361,14 +343,12 @@
             const suggestedNextOpsSet = new Set();
             const subtitlesArray = Array.from(subtitlesMap.values()).map(sub => {
                 const partsList = Array.from(sub.partsMap.entries()).map(([partName, data]) => {
-                    const lastInfo = partLastInsp.get(partName);
+                    const pk = `${__client}||${__title}||${sub.name || ''}||${data.subSub || ''}||${partName}`;
+                    const lastInfo = partLastInsp.get(pk);
                     const suggested = lastInfo ? lastInfo.suggested_next : null;
-                    if (suggested && suggested.trim() !== '') {
-                        suggestedNextOpsSet.add(suggested);
-                    }
+                    if (suggested && suggested.trim() !== '') suggestedNextOpsSet.add(suggested);
                     return {
-                        part_name: partName,
-                        quantity: data.quantity,
+                        part_name: partName, quantity: data.quantity,
                         dwgList: Array.from(data.dwgSet).join(', '),
                         tagList: Array.from(data.tagSet).join(', '),
                         operations: Array.from(data.operationsSet).join(', '),
@@ -382,13 +362,10 @@
                     };
                 });
                 return {
-                    name: sub.name,
-                    subSub: sub.subSub || '—',
+                    name: sub.name, subSub: sub.subSub || '—',
                     totalInspections: sub.totalInspections,
-                    sumDelivered: sub.sumDelivered,
-                    sumAccepted: sub.sumAcceptedFirst,
-                    sumRework: sub.sumReworkFirst,
-                    sumReject: sub.sumRejectFirst,
+                    sumDelivered: sub.sumDelivered, sumAccepted: sub.sumAcceptedFirst,
+                    sumRework: sub.sumReworkFirst, sumReject: sub.sumRejectFirst,
                     sumConditional: sub.sumConditionalFirst,
                     acceptRate: sub.sumDelivered ? (sub.sumAcceptedFirst / sub.sumDelivered) * 100 : 0,
                     partsList: partsList
@@ -402,15 +379,9 @@
             else if (totalReworkAll + totalRejectAll > 0) followStatus = 'needs_action';
 
             return {
-                totalDelivered: totalDeliveredAll,
-                totalAccepted: totalAcceptedAll,
-                totalRework: totalReworkAll,
-                totalReject: totalRejectAll,
-                totalConditional: totalConditionalAll,
-                totalInspections,
-                lastDate,
-                acceptanceRate: acceptanceRate.toFixed(1),
-                followStatus,
+                totalDelivered: totalDeliveredAll, totalAccepted: totalAcceptedAll,
+                totalRework: totalReworkAll, totalReject: totalRejectAll, totalConditional: totalConditionalAll,
+                totalInspections, lastDate, acceptanceRate: acceptanceRate.toFixed(1), followStatus,
                 lastDateStr: lastDate ? lastDate.toLocaleDateString() : '—',
                 subtitlesArray,
                 suggestedNextOps: Array.from(suggestedNextOpsSet),
@@ -434,16 +405,13 @@
                          acceptanceRate: agg.acceptanceRate, followStatus: agg.followStatus,
                          suggestedNextOps: agg.suggestedNextOps || [], subSubAssemblyList: agg.subSubAssemblyList || [] };
             });
-            projects.sort((a,b) => (b.lastDate||0) - (a.lastDate||0));
+            projects.sort((a, b) => (b.lastDate || 0) - (a.lastDate || 0));
             return projects;
         }
 
         function getAllSubtitles(inspections) {
             const subs = new Set();
-            for (const insp of inspections) {
-                const s = getExtraField(insp, 'Subtitle');
-                if (s) subs.add(s);
-            }
+            for (const insp of inspections) { const s = getExtraField(insp, 'Subtitle'); if (s) subs.add(s); }
             return Array.from(subs).sort();
         }
 
@@ -463,7 +431,7 @@
         function renderProjects(projects) {
             currentFilteredProjects = projects;
             const tbody = document.getElementById('projectsTableBody');
-            if (!projects.length) { tbody.innerHTML = '<tr><td colspan="14" class="text-center py-10">No projects found</td>'; return; }
+            if (!projects.length) { tbody.innerHTML = '<tr><td colspan="14" class="text-center py-10">No projects found</td></tr>'; return; }
             tbody.innerHTML = projects.map(p => {
                 const barWidth = Math.min(100, parseFloat(p.acceptanceRate));
                 let statusBadge = p.followStatus === 'critical' ? 'bg-red-100 text-red-700' :
@@ -487,17 +455,17 @@
             document.getElementById('totalProjects').innerText = projects.length;
             const need = projects.filter(p => p.followStatus === 'needs_action' || p.followStatus === 'critical').length;
             document.getElementById('needFollowup').innerText = need;
-            const avg = projects.reduce((s,p) => s + parseFloat(p.acceptanceRate), 0) / (projects.length || 1);
+            const avg = projects.reduce((s, p) => s + parseFloat(p.acceptanceRate), 0) / (projects.length || 1);
             document.getElementById('avgAcceptance').innerText = avg.toFixed(1) + '%';
             document.getElementById('recordCount').innerText = `${projects.length} project(s)`;
         }
 
         function exportGlobalToExcel() {
             if (!currentFilteredProjects.length) { showToast('No data to export', 'error'); return; }
-            const rows = [['Client','Project Title','Sub‑assemblies','Sub Sub Assembly (first)','Inspections','Delivered Qty (total sum)','Accepted Qty','Rework Qty','Reject Qty','Conditional Accept','Accept %','Last Inspection','Status']];
+            const rows = [['Client','Project Title','Sub‑assemblies','Sub Sub Assembly (first)','Inspections','Delivered Qty (total sum)','Accepted Qty','Rework Qty','Reject Qty','Conditional Accept','FPY %','Last Inspection','Status']];
             for (const p of currentFilteredProjects) {
                 const firstSubSub = (p.subSubAssemblyList && p.subSubAssemblyList.length) ? p.subSubAssemblyList[0] : '';
-                rows.push([p.client, p.title, p.subtitlesArray.length, firstSubSub, p.totalInspections, p.totalDelivered, p.totalAccepted, p.totalRework, p.totalReject, p.totalConditional, p.acceptanceRate+'%', p.lastDateStr, p.followStatus==='critical'?'Critical':(p.followStatus==='needs_action'?'Needs Action':'On Track')]);
+                rows.push([p.client, p.title, p.subtitlesArray.length, firstSubSub, p.totalInspections, p.totalDelivered, p.totalAccepted, p.totalRework, p.totalReject, p.totalConditional, p.acceptanceRate + '%', p.lastDateStr, p.followStatus === 'critical' ? 'Critical' : (p.followStatus === 'needs_action' ? 'Needs Action' : 'On Track')]);
             }
             const ws = XLSX.utils.aoa_to_sheet(rows);
             ws['!cols'] = [{wch:20},{wch:25},{wch:12},{wch:20},{wch:12},{wch:16},{wch:14},{wch:12},{wch:12},{wch:18},{wch:10},{wch:14},{wch:14}];
@@ -522,9 +490,9 @@
             if (dateFrom) { const from = new Date(dateFrom); from.setHours(0,0,0,0); filtered = filtered.filter(insp => new Date(insp.submitted_at) >= from); }
             if (dateTo) { const to = new Date(dateTo); to.setHours(23,59,59,999); filtered = filtered.filter(insp => new Date(insp.submitted_at) <= to); }
             const aggregated = aggregateInspectionsForProject(filtered);
-            let rows = [['Sub‑assembly','Sub Sub Assembly','Inspections','Delivered (first op)','Accepted (first op)','Rework (first op)','Reject (first op)','Conditional (first op)','Accept %']];
+            let rows = [['Sub‑assembly','Sub Sub Assembly','Inspections','Delivered (first op)','Accepted (first op)','Rework (first op)','Reject (first op)','Conditional (first op)','FPY %']];
             for (const sub of aggregated.subtitlesArray) {
-                rows.push([sub.name, sub.subSub, sub.totalInspections, sub.sumDelivered, sub.sumAccepted, sub.sumRework, sub.sumReject, sub.sumConditional, sub.acceptRate.toFixed(1)+'%']);
+                rows.push([sub.name, sub.subSub, sub.totalInspections, sub.sumDelivered, sub.sumAccepted, sub.sumRework, sub.sumReject, sub.sumConditional, sub.acceptRate.toFixed(1) + '%']);
                 const grouped = {};
                 for (const part of sub.partsList) {
                     const key = part.subSub || '—';
@@ -535,10 +503,10 @@
                     for (const [ss, parts] of Object.entries(grouped)) {
                         rows.push([`  └─ Sub Sub: ${ss}`]);
                         for (const part of parts) {
-                            rows.push(['    '+part.part_name, '', '', part.quantity, '', '', '', '', '']);
-                            if (part.dwgList || part.tagList) rows.push(['      DWG: '+part.dwgList, 'Tag: '+part.tagList, '', '', '', '', '', '', '']);
-                            if (part.operations) rows.push(['      Operations: '+part.operations, '', '', '', '', '', '', '', '']);
-                            if (part.suggestedNext && part.suggestedNext !== '—') rows.push(['      Suggested Next Operation: '+part.suggestedNext, '', '', '', '', '', '', '', '']);
+                            rows.push(['    ' + part.part_name, '', '', part.quantity, '', '', '', '', '']);
+                            if (part.dwgList || part.tagList) rows.push(['      DWG: ' + part.dwgList, 'Tag: ' + part.tagList, '', '', '', '', '', '', '']);
+                            if (part.operations) rows.push(['      Operations: ' + part.operations, '', '', '', '', '', '', '', '']);
+                            if (part.suggestedNext && part.suggestedNext !== '—') rows.push(['      Suggested Next Operation: ' + part.suggestedNext, '', '', '', '', '', '', '', '']);
                         }
                     }
                 } else {
@@ -563,9 +531,9 @@
             document.getElementById('partModalTitle').innerText = `History for: ${escapeHtml(partName)}`;
             const body = document.getElementById('partModalBody');
 
-            partInspections.sort((a,b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+            partInspections.sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
             const firstInsp = partInspections[0];
-            const lastInsp = partInspections[partInspections.length-1];
+            const lastInsp = partInspections[partInspections.length - 1];
             const firstDelivered = computeDelivered(firstInsp);
             const firstAcc = firstInsp.accepted_qty || 0;
             const firstRwk = firstInsp.rework_qty || 0;
@@ -573,9 +541,7 @@
             const firstCnd = firstInsp.conditional_accept_qty || 0;
 
             let totalAllDelivered = 0;
-            for (const insp of partInspections) {
-                totalAllDelivered += computeDelivered(insp);
-            }
+            for (const insp of partInspections) totalAllDelivered += computeDelivered(insp);
 
             let suggestionHtml = `
                 <table class="suggestion-table">
@@ -588,12 +554,10 @@
                         <td class="suggestion-value">${lastInsp ? (getSuggestedNext(lastInsp) || '—') : '—'}</td></tr>
                     <tr><td class="suggestion-label">Total Delivered (all ops) for this part:</td>
                         <td class="suggestion-value"><strong>${totalAllDelivered}</strong> (for reference)</td></tr>
-                </table>
-            `;
+                </table>`;
 
             let tableHtml = `
                 <div class="overflow-x-auto">
-                    
                     <table class="min-w-full text-sm border">
                         <thead class="bg-slate-50"><tr>
                             <th class="p-2 text-left">Date</th><th class="p-2 text-left">Process Type</th><th class="p-2 text-left">Operation Condition</th>
@@ -620,7 +584,7 @@
                     <td class="p-2 text-center text-amber-600">${rwk}</td>
                     <td class="p-2 text-center text-red-600">${rej}</td>
                     <td class="p-2 text-center text-blue-600">${cnd}</td>
-                    <td class="p-2 text-center">${escapeHtml(insp.acceptance_data?.p0?.rating || '—')}</td>
+                    <td class="p-2 text-center">${escapeHtml(insp.derived_result || insp.acceptance_data?.p0?.rating || '—')}</td>
                 </tr>`;
                 isFirst = false;
             }
@@ -702,13 +666,12 @@
                 let html = '';
                 if (aggregated.subtitlesArray.length) {
                     html = `<div class="flex flex-wrap gap-3 text-xs mb-3 p-2 bg-slate-50 rounded-lg border">
-                                <span class="font-medium text-slate-600 mr-1">Status legend:</span>
-                                <span><span class="status-dot status-dot-reject inline-block"></span> Reject</span>
-                                <span><span class="status-dot status-dot-rework inline-block"></span> Rework</span>
-                                <span><span class="status-dot status-dot-conditional inline-block"></span> Conditional</span>
-                                <span><span class="status-dot status-dot-accept inline-block"></span> Accepted</span>
-                               
-                            </div>`;
+                        <span class="font-medium text-slate-600 mr-1">Status legend:</span>
+                        <span><span class="status-dot status-dot-reject inline-block"></span> Reject</span>
+                        <span><span class="status-dot status-dot-rework inline-block"></span> Rework</span>
+                        <span><span class="status-dot status-dot-conditional inline-block"></span> Conditional</span>
+                        <span><span class="status-dot status-dot-accept inline-block"></span> Accepted</span>
+                    </div>`;
                     html += aggregated.subtitlesArray.map(sub => {
                         const grouped = {};
                         for (const part of sub.partsList) {
@@ -751,7 +714,7 @@
                                 <div><span class="text-gray-500">Rework</span><br><span class="text-amber-600">${sub.sumRework.toLocaleString()}</span></div>
                                 <div><span class="text-gray-500">Reject</span><br><span class="text-red-600">${sub.sumReject.toLocaleString()}</span></div>
                                 <div><span class="text-gray-500">Conditional</span><br><span class="text-blue-600">${sub.sumConditional.toLocaleString()}</span></div>
-                                <div><span class="text-gray-500">Accept %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
+                                <div><span class="text-gray-500">FPY %</span><br><span>${sub.acceptRate.toFixed(1)}%</span></div>
                             </div>
                             ${partsTableHtml}
                         </div>`;
