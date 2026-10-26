@@ -30,7 +30,7 @@
         .rating-pill.reject { background: #fee2e2; color: #b91c1c; }
         .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
         .table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .table-wrap th { background: #f8fafc; padding: 10px 12px; text-align: left; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px; }
+        .table-wrap th { background: #f8fafc; padding: 10px 12px; text-align: left; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0; font-size: 0.75rem; text-transform: uppercase; }
         .table-wrap td { padding: 10px 12px; border-bottom: 1px solid #eef2f6; vertical-align: middle; background: #fff; }
         .table-wrap tr:hover td { background: #fafbfc; }
         .part-qty-table td { padding: 4px 6px; border-bottom: 1px solid #eef2f6; }
@@ -38,7 +38,7 @@
         .part-list-multi { min-height: 80px; background: #fff; border-radius: 8px; border: 1px solid #d1d5db; padding: 4px; }
         .part-list-multi option { padding: 4px 8px; border-radius: 4px; }
         .part-list-multi option:checked { background: #dbeafe; color: #1e293b; }
-        .remove-part-btn { color: #b91c1c; cursor: pointer; font-size: 0.9rem; padding: 4px 8px; border-radius: 6px; background: #fef2f2; }
+        .remove-part-btn { color: #b91c1c; cursor: pointer; font-size: 0.9rem; padding: 4px 8px; border-radius: 6px; background: #fef2f2; border: none; }
         .remove-part-btn:hover { background: #fee2e2; }
         .assembly-progress { background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 14px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
         .assembly-progress .progress-value { font-size: 2rem; font-weight: 700; color: #1e40af; line-height: 1.2; }
@@ -75,8 +75,6 @@
         @media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
         #mainContent { display: none; padding: 16px 16px 32px; max-width: 1400px; margin: 0 auto; }
         #mainContent.visible { display: block; }
-        .clickable-part { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; color: #2563eb; }
-        .clickable-part:hover { opacity: 0.8; }
         .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
         .scrollbar-thin::-webkit-scrollbar-track { background: #eef2f6; border-radius: 8px; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
@@ -85,8 +83,6 @@
         .nav-bar a:hover { background: #f1f5f9; }
         .nav-bar a.active { background: #eef2ff; color: #4338ca; font-weight: 600; }
         .nav-brand { font-weight: 700; color: #1e293b; margin-right: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
-        .process-group { margin-bottom: 6px; }
-        .process-group-label { font-size: 0.6rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 8px 2px; }
         @media (max-width: 700px) {
             #secretOverlay .card { padding: 28px 18px; }
             #mainContent { padding: 10px 6px 24px; }
@@ -1139,7 +1135,7 @@
             populateSuggestedNextOps();
             attachPartListListeners();
             updateVisibility();
-            if (isAssemblyProcess()) setTimeout(() => { populatePartListMultiSelect(); renderSelectedPartsTable(); updateAssemblyProgress(); }, 300);
+            if (isAssemblyProcess()) setTimeout(() => { populatePartListMultiList(); renderSelectedPartsTable(); updateAssemblyProgress(); }, 300);
         }
     </script>
 </body>
