@@ -8,35 +8,30 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        .card-hover:hover { transform: translateY(-2px); transition: 0.2s; }
         .chart-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
         @media (min-width: 640px) { .chart-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (min-width: 1024px) { .chart-grid { grid-template-columns: repeat(3, 1fr); } }
-        .chart-box { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); padding: 1rem; transition: 0.2s; border: 1px solid #f1f5f9; }
-        .chart-box:hover { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); }
+        .chart-box { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1rem; border: 1px solid #f1f5f9; }
         .chart-box h3 { font-size: 0.9rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px; }
         .chart-box h3 i { color: #3b82f6; width: 20px; text-align: center; }
         .chart-container { position: relative; height: 200px; width: 100%; }
         @media (min-width: 640px) { .chart-container { height: 220px; } }
-        @media (min-width: 1024px) { .chart-container { height: 250px; } }
         .chart-container canvas { display: block; width: 100% !important; height: 100% !important; }
-        .table-responsive { overflow-x: auto; }
         .empty-chart-msg { display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8; font-size: 0.85rem; flex-direction: column; gap: 4px; }
         .empty-chart-msg i { font-size: 1.5rem; opacity: 0.4; }
         .tab-btn { transition: all 0.2s; font-weight: 500; padding: 0.5rem 1.25rem; border-radius: 8px 8px 0 0; border: none; cursor: pointer; font-size: 0.9rem; }
-        .tab-btn.active { background: white; color: #1e293b; box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04); border-top: 3px solid #3b82f6; }
+        .tab-btn.active { background: white; color: #1e293b; box-shadow: 0 -2px 8px rgba(0,0,0,0.04); border-top: 3px solid #3b82f6; }
         .tab-btn.inactive { background: #f1f5f9; color: #64748b; }
-        .tab-btn.inactive:hover { background: #e2e8f0; }
         .view-panel { display: none; }
         .view-panel.active { display: block; }
-        .badge-assembly { background: #dbeafe; color: #1e40af; font-size: 0.7rem; padding: 0.15rem 0.6rem; border-radius: 999px; font-weight: 600; margin-left: 6px; }
         tr.assembly-row td:first-child { border-left: 4px solid #f59e0b; }
         tr.assembly-row { background-color: #fffbeb; }
         tr.assembly-row:hover { background-color: #fef3c7 !important; }
-        .assembly-badge { background: #f59e0b; color: white; font-size: 0.6rem; padding: 0.1rem 0.5rem; border-radius: 999px; font-weight: 600; margin-left: 4px; vertical-align: middle; }
+        .assembly-badge { background: #f59e0b; color: white; font-size: 0.6rem; padding: 0.1rem 0.5rem; border-radius: 999px; font-weight: 600; margin-left: 4px; }
         .filter-label { font-size: 0.8rem; font-weight: 500; color: #374151; margin-bottom: 2px; display: block; }
         .filter-select, .filter-input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.4rem 0.5rem; background: white; font-size: 0.85rem; }
         .filter-select:focus, .filter-input:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+        .ci-tag { display: inline-block; font-size: 0.65rem; color: #64748b; background: #f1f5f9; padding: 1px 6px; border-radius: 999px; margin-left: 4px; font-weight: 500; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -44,13 +39,9 @@
     <div class="max-w-7xl mx-auto p-4 md:p-6">
 
         <div class="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap justify-between items-center gap-3">
-            <div>
-                <h1 class="text-2xl font-bold text-blue-900 flex items-center gap-2">
-                    <i class="fas fa-chart-pie text-blue-600"></i> Quality Control Dashboard
-                </h1>
-            </div>
+            <div><h1 class="text-2xl font-bold text-blue-900 flex items-center gap-2"><i class="fas fa-chart-pie text-blue-600"></i> Quality Control Dashboard</h1></div>
             <div class="flex flex-wrap gap-2">
-                <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-md transition"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-md"><i class="fas fa-sync-alt"></i> Refresh</button>
             </div>
         </div>
 
@@ -63,34 +54,52 @@
             <div class="bg-white rounded-b-lg shadow p-4 mb-6">
                 <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-sliders-h text-gray-600"></i> Filters</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                    <div><label class="filter-label">Process Type</label><select id="filterProcess" class="filter-select"><option value="">All Processes</option></select></div>
-                    <div><label class="filter-label">Engineer Name</label><select id="filterEngineer" class="filter-select"><option value="">All Engineers</option></select></div>
-                    <div><label class="filter-label">Project Name</label><select id="filterProjectName" class="filter-select"><option value="">All Projects</option></select></div>
-                    <div><label class="filter-label">Workstation</label><select id="filterWorkstation" class="filter-select"><option value="">All Workstations</option><option value="machine shop">Machine Shop</option><option value="fabrication">Fabrication</option><option value="assembling">Assembling</option><option value="forging">Forging</option><option value="foundry">Foundry</option><option value="wood shop">Wood Shop</option></select></div>
-                    <div><label class="filter-label">Location</label><select id="filterLocation" class="filter-select"><option value="">All Locations</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>
-                    <div><label class="filter-label">Date From</label><input type="date" id="filterDateFrom" class="filter-input"></div>
-                    <div><label class="filter-label">Date To</label><input type="date" id="filterDateTo" class="filter-input"></div>
+                    <div><label class="filter-label">Process</label><select id="filterProcess" class="filter-select"><option value="">All</option></select></div>
+                    <div><label class="filter-label">Engineer</label><select id="filterEngineer" class="filter-select"><option value="">All</option></select></div>
+                    <div><label class="filter-label">Project</label><select id="filterProjectName" class="filter-select"><option value="">All</option></select></div>
+                    <div><label class="filter-label">Workstation</label><select id="filterWorkstation" class="filter-select"><option value="">All</option><option value="machine shop">Machine Shop</option><option value="fabrication">Fabrication</option><option value="assembling">Assembling</option><option value="forging">Forging</option><option value="foundry">Foundry</option><option value="wood shop">Wood Shop</option></select></div>
+                    <div><label class="filter-label">Location</label><select id="filterLocation" class="filter-select"><option value="">All</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>
+                    <div><label class="filter-label">From</label><input type="date" id="filterDateFrom" class="filter-input"></div>
+                    <div><label class="filter-label">To</label><input type="date" id="filterDateTo" class="filter-input"></div>
                 </div>
                 <div class="mt-4 flex flex-wrap justify-end gap-2">
-                    <button onclick="applyFilters()" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-2 rounded-lg transition flex items-center gap-2"><i class="fas fa-filter"></i> Apply Filters</button>
-                    <button onclick="resetFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition flex items-center gap-2"><i class="fas fa-undo"></i> Reset</button>
+                    <button onclick="applyFilters()" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-filter"></i> Apply</button>
+                    <button onclick="resetFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-undo"></i> Reset</button>
+                </div>
+            </div>
+
+            <!-- FPY / EPY / COQ KPI CARDS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500">
+                    <div class="text-xs font-semibold text-gray-500 uppercase">First-Pass Yield (FPY)</div>
+                    <div class="text-3xl font-bold text-emerald-700 mt-1" id="kpiFPY">—</div>
+                    <div class="text-xs text-gray-500 mt-1" id="kpiFPYCI"></div>
+                    <div class="text-xs text-gray-400 mt-1">Accepted first time / Delivered (first op)</div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                    <div class="text-xs font-semibold text-gray-500 uppercase">End-of-Pipeline Yield (EPY)</div>
+                    <div class="text-3xl font-bold text-blue-700 mt-1" id="kpiEPY">—</div>
+                    <div class="text-xs text-gray-500 mt-1" id="kpiEPYCI"></div>
+                    <div class="text-xs text-gray-400 mt-1">Accepted after all ops / Delivered (first op)</div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
+                    <div class="text-xs font-semibold text-gray-500 uppercase">Cost of Quality</div>
+                    <div class="text-3xl font-bold text-amber-700 mt-1" id="kpiCOQ">—</div>
+                    <div class="text-xs text-gray-500 mt-1">Failure + Appraisal (this view)</div>
                 </div>
             </div>
 
             <div class="bg-white rounded-lg shadow p-4 mb-6">
                 <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-cubes text-blue-600"></i> Total Quantities (Sum of all inspections)</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm border-collapse">
-                        <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Delivered Qty</th><th class="p-2 border text-left">Accepted Qty</th><th class="p-2 border text-left">Rework Qty</th><th class="p-2 border text-left">Reject Qty</th><th class="p-2 border text-left">Conditional Accept Qty</th></tr></thead>
-                        <tbody id="quantitySummaryBody"><tr><td colspan="5" class="text-center p-4 text-gray-400">-</td></tr></tbody>
-                    </table>
-                </div>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse">
+                    <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Delivered</th><th class="p-2 border text-left">Accepted</th><th class="p-2 border text-left">Rework</th><th class="p-2 border text-left">Reject</th><th class="p-2 border text-left">Conditional</th></tr></thead>
+                    <tbody id="quantitySummaryBody"><tr><td colspan="5" class="text-center p-4 text-gray-400">-</td></tr></tbody>
+                </table></div>
             </div>
 
             <div class="bg-white rounded-lg shadow p-4 mb-6">
                 <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-                    <h2 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-chart-pie text-blue-600"></i> Outcome Quantity Distribution — all operations (rolling only, excludes assemblies)</h2>
-                    <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">hover for details</span>
+                    <h2 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-chart-pie text-blue-600"></i> Outcome Distribution — quantity-weighted (rolling only)</h2>
                 </div>
                 <div class="chart-grid" id="chartGrid">
                     <div class="chart-box"><h3><i class="fas fa-chart-bar"></i> Bar</h3><div class="chart-container"><canvas id="chartBar"></canvas></div></div>
@@ -100,30 +109,26 @@
                     <div class="chart-box"><h3><i class="fas fa-chart-area"></i> Polar</h3><div class="chart-container"><canvas id="chartPolar"></canvas></div></div>
                     <div class="chart-box"><h3><i class="fas fa-chart-line"></i> Radar</h3><div class="chart-container"><canvas id="chartRadar"></canvas></div></div>
                 </div>
-                <div class="mt-6 border-t pt-4">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm border-collapse">
-                            <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Result</th><th class="p-2 border text-left">Total Quantity</th><th class="p-2 border text-left">Percentage (%)</th></tr></thead>
-                            <tbody id="resultsTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="mt-6 border-t pt-4"><div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse">
+                    <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Result</th><th class="p-2 border text-left">Total Quantity</th><th class="p-2 border text-left">Percentage (%)</th></tr></thead>
+                    <tbody id="resultsTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody>
+                </table></div></div>
             </div>
 
             <div class="bg-white rounded-lg shadow p-4 mb-6">
-                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-industry text-red-600"></i> Internal Failure Cost by Process Type</h2>
-                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Process Type</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr></thead><tbody id="failureCostTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-industry text-red-600"></i> Failure Cost by Process</h2>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Process</th><th class="p-2 border text-right">Total ETB</th><th class="p-2 border text-right">%</th></tr></thead><tbody id="failureCostTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
                 <div class="mt-3 text-sm text-gray-600 border-t pt-2"><span class="font-semibold">Grand Total: </span><span id="failureCostGrandTotal" class="font-bold text-red-700">0.00</span> ETB</div>
             </div>
 
             <div class="bg-white rounded-lg shadow p-4 mb-6">
-                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-folder-open text-red-600"></i> Internal Failure Cost by Title (Project)</h2>
-                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Project Title</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr></thead><tbody id="failureCostTitleTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-folder-open text-red-600"></i> Failure Cost by Project</h2>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Project</th><th class="p-2 border text-right">Total ETB</th><th class="p-2 border text-right">%</th></tr></thead><tbody id="failureCostTitleTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
                 <div class="mt-3 text-sm text-gray-600 border-t pt-2"><span class="font-semibold">Grand Total: </span><span id="failureCostTitleGrandTotal" class="font-bold text-red-700">0.00</span> ETB</div>
             </div>
 
             <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="p-3 text-left">Date &amp; Time</th><th class="p-3 text-left">Process</th><th class="p-3 text-left">Project Name</th><th class="p-3 text-left">Engineer</th><th class="p-3 text-left">Result</th><th class="p-3 text-left">Points</th><th class="p-3 text-left">Operator</th></tr></thead><tbody id="inspectionTableBody"><tr><td colspan="7" class="text-center p-4 text-gray-400">Loading data...</td></tr></tbody></table></div>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="p-3 text-left">Date</th><th class="p-3 text-left">Process</th><th class="p-3 text-left">Project</th><th class="p-3 text-left">Engineer</th><th class="p-3 text-left">Result</th><th class="p-3 text-left">Points</th><th class="p-3 text-left">Operator</th></tr></thead><tbody id="inspectionTableBody"><tr><td colspan="7" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
                 <div id="tableInfo" class="p-3 text-sm text-gray-500 border-t"></div>
             </div>
         </div>
@@ -137,35 +142,30 @@
             <div class="bg-white rounded-lg shadow p-4 mb-6">
                 <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-sliders-h text-gray-600"></i> Assembly Filters</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                    <div><label class="filter-label">Process Type</label><select id="assemblyFilterProcess" class="filter-select"><option value="">All Processes</option></select></div>
-                    <div><label class="filter-label">Engineer Name</label><select id="assemblyFilterEngineer" class="filter-select"><option value="">All Engineers</option></select></div>
-                    <div><label class="filter-label">Project Name</label><select id="assemblyFilterProjectName" class="filter-select"><option value="">All Projects</option></select></div>
-                    <div><label class="filter-label">Workstation</label><select id="assemblyFilterWorkstation" class="filter-select"><option value="">All Workstations</option><option value="machine shop">Machine Shop</option><option value="fabrication">Fabrication</option><option value="assembling">Assembling</option><option value="forging">Forging</option><option value="foundry">Foundry</option><option value="wood shop">Wood Shop</option></select></div>
-                    <div><label class="filter-label">Location</label><select id="assemblyFilterLocation" class="filter-select"><option value="">All Locations</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>
-                    <div><label class="filter-label">Date From</label><input type="date" id="assemblyFilterDateFrom" class="filter-input"></div>
-                    <div><label class="filter-label">Date To</label><input type="date" id="assemblyFilterDateTo" class="filter-input"></div>
+                    <div><label class="filter-label">Process</label><select id="assemblyFilterProcess" class="filter-select"><option value="">All</option></select></div>
+                    <div><label class="filter-label">Engineer</label><select id="assemblyFilterEngineer" class="filter-select"><option value="">All</option></select></div>
+                    <div><label class="filter-label">Project</label><select id="assemblyFilterProjectName" class="filter-select"><option value="">All</option></select></div>
+                    <div><label class="filter-label">Workstation</label><select id="assemblyFilterWorkstation" class="filter-select"><option value="">All</option><option value="machine shop">Machine Shop</option><option value="fabrication">Fabrication</option><option value="assembling">Assembling</option><option value="forging">Forging</option><option value="foundry">Foundry</option><option value="wood shop">Wood Shop</option></select></div>
+                    <div><label class="filter-label">Location</label><select id="assemblyFilterLocation" class="filter-select"><option value="">All</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>
+                    <div><label class="filter-label">From</label><input type="date" id="assemblyFilterDateFrom" class="filter-input"></div>
+                    <div><label class="filter-label">To</label><input type="date" id="assemblyFilterDateTo" class="filter-input"></div>
                 </div>
                 <div class="mt-4 flex flex-wrap justify-end gap-2">
-                    <button onclick="applyAssemblyFilters()" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-2 rounded-lg transition flex items-center gap-2"><i class="fas fa-filter"></i> Apply Filters</button>
-                    <button onclick="resetAssemblyFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition flex items-center gap-2"><i class="fas fa-undo"></i> Reset</button>
+                    <button onclick="applyAssemblyFilters()" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-filter"></i> Apply</button>
+                    <button onclick="resetAssemblyFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg flex items-center gap-2"><i class="fas fa-undo"></i> Reset</button>
                 </div>
             </div>
 
             <div class="bg-white rounded-lg shadow p-4 mb-6">
                 <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-cubes text-blue-600"></i> Total Quantities (Assembly only)</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm border-collapse">
-                        <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Delivered Qty</th><th class="p-2 border text-left">Accepted Qty</th><th class="p-2 border text-left">Rework Qty</th><th class="p-2 border text-left">Reject Qty</th><th class="p-2 border text-left">Conditional Accept Qty</th></tr></thead>
-                        <tbody id="assemblyQuantityBody"><tr><td colspan="5" class="text-center p-4 text-gray-400">-</td></tr></tbody>
-                    </table>
-                </div>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse">
+                    <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Delivered</th><th class="p-2 border text-left">Accepted</th><th class="p-2 border text-left">Rework</th><th class="p-2 border text-left">Reject</th><th class="p-2 border text-left">Conditional</th></tr></thead>
+                    <tbody id="assemblyQuantityBody"><tr><td colspan="5" class="text-center p-4 text-gray-400">-</td></tr></tbody>
+                </table></div>
             </div>
 
             <div class="bg-white rounded-lg shadow p-4 mb-6">
-                <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-                    <h2 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-chart-pie text-orange-600"></i> Assembly Outcome Distribution (parameter outcomes only — quantity fields are 0 by design)</h2>
-                    <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">hover for details</span>
-                </div>
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-chart-pie text-orange-600"></i> Assembly Outcome Distribution (parameter outcomes only)</h2>
                 <div class="chart-grid">
                     <div class="chart-box"><h3><i class="fas fa-chart-bar"></i> Bar</h3><div class="chart-container"><canvas id="assemblyChartBar"></canvas></div></div>
                     <div class="chart-box"><h3><i class="fas fa-chart-pie"></i> Pie</h3><div class="chart-container"><canvas id="assemblyChartPie"></canvas></div></div>
@@ -174,30 +174,20 @@
                     <div class="chart-box"><h3><i class="fas fa-chart-area"></i> Polar</h3><div class="chart-container"><canvas id="assemblyChartPolar"></canvas></div></div>
                     <div class="chart-box"><h3><i class="fas fa-chart-line"></i> Radar</h3><div class="chart-container"><canvas id="assemblyChartRadar"></canvas></div></div>
                 </div>
-                <div class="mt-6 border-t pt-4">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm border-collapse">
-                            <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Result</th><th class="p-2 border text-left">Total Quantity</th><th class="p-2 border text-left">Percentage (%)</th></tr></thead>
-                            <tbody id="assemblyResultsTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="mt-6 border-t pt-4"><div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse">
+                    <thead class="bg-gray-100"><tr><th class="p-2 border text-left">Result</th><th class="p-2 border text-left">Total Quantity</th><th class="p-2 border text-left">%</th></tr></thead>
+                    <tbody id="assemblyResultsTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody>
+                </table></div></div>
             </div>
 
             <div class="bg-white rounded-lg shadow p-4 mb-6">
-                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-industry text-red-600"></i> Internal Failure Cost by Process (Assembly)</h2>
-                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Process Type</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr></thead><tbody id="assemblyFailureCostTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-industry text-red-600"></i> Failure Cost by Process (Assembly)</h2>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Process</th><th class="p-2 border text-right">Total ETB</th><th class="p-2 border text-right">%</th></tr></thead><tbody id="assemblyFailureCostTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
                 <div class="mt-3 text-sm text-gray-600 border-t pt-2"><span class="font-semibold">Grand Total: </span><span id="assemblyFailureCostGrandTotal" class="font-bold text-red-700">0.00</span> ETB</div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-4 mb-6">
-                <h2 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fas fa-folder-open text-red-600"></i> Internal Failure Cost by Title (Assembly)</h2>
-                <div class="overflow-x-auto"><table class="min-w-full text-sm border-collapse"><thead class="bg-gray-100"><tr><th class="p-2 border text-left">Project Title</th><th class="p-2 border text-right">Total Cost (ETB)</th><th class="p-2 border text-right">Percentage (%)</th></tr></thead><tbody id="assemblyFailureCostTitleTableBody"><tr><td colspan="3" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
-                <div class="mt-3 text-sm text-gray-600 border-t pt-2"><span class="font-semibold">Grand Total: </span><span id="assemblyFailureCostTitleGrandTotal" class="font-bold text-red-700">0.00</span> ETB</div>
-            </div>
-
             <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="p-3 text-left">Date &amp; Time</th><th class="p-3 text-left">Process</th><th class="p-3 text-left">Project Name</th><th class="p-3 text-left">Engineer</th><th class="p-3 text-left">Result</th><th class="p-3 text-left">Points</th><th class="p-3 text-left">Operator</th></tr></thead><tbody id="assemblyTableBody"><tr><td colspan="7" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+                <div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="p-3 text-left">Date</th><th class="p-3 text-left">Process</th><th class="p-3 text-left">Project</th><th class="p-3 text-left">Engineer</th><th class="p-3 text-left">Result</th><th class="p-3 text-left">Points</th><th class="p-3 text-left">Operator</th></tr></thead><tbody id="assemblyTableBody"><tr><td colspan="7" class="text-center p-4 text-gray-400">Loading...</td></tr></tbody></table></div>
                 <div id="assemblyTableInfo" class="p-3 text-sm text-gray-500 border-t"></div>
             </div>
         </div>
@@ -205,58 +195,74 @@
 
     <script>
         let allInspections = [];
-        let mainChartInstances = {};
-        let assemblyChartInstances = {};
-        let currentMainData = [];
-        let currentAssemblyData = [];
+        let mainChartInstances = {}, assemblyChartInstances = {};
+        let currentMainData = [], currentAssemblyData = [];
 
-        const RESULT_COLORS = { 'Accepted': '#22c55e', 'Rework': '#eab308', 'Reject': '#ef4444', 'Conditional Accept': '#3b82f6' };
+        function isAssemblyType(pt) {
+            if (!pt) return false;
+            const p = pt.trim().toLowerCase();
+            return p === 'assembly (welding)' || p === 'assembly (fastener)' || p === 'assembling (welding)' || p === 'assembling (fastener)';
+        }
+        function getProjectName(i) {
+            if (i.project_name && i.project_name.trim()) return i.project_name.trim();
+            return i.extra_fields?.['Project Name']?.trim() || '';
+        }
+        function getWorkstation(i) { return (i.extra_fields?.['Work Station'] || '').trim().toLowerCase(); }
+        function getLocation(i) { return (i.extra_fields?.['Location'] || '').trim().toLowerCase(); }
+        function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+        function safeNum(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
 
-        function isAssemblyType(processType) {
-            if (!processType) return false;
-            const p = processType.trim().toLowerCase();
-            return p === 'assembly (welding)' || p === 'assembly (fastener)' ||
-                p === 'assembling (welding)' || p === 'assembling (fastener)';
+        function wilsonCI(successes, n, z = 1.96) {
+            if (n === 0) return { p: 0, lo: 0, hi: 0 };
+            const p = successes / n;
+            const denom = 1 + (z * z) / n;
+            const center = (p + (z * z) / (2 * n)) / denom;
+            const half = z * Math.sqrt(p * (1 - p) / n + (z * z) / (4 * n * n)) / denom;
+            return { p, lo: Math.max(0, center - half), hi: Math.min(1, center + half) };
         }
 
-        function getProjectName(insp) {
-            let name = '';
-            if (insp.project_name) name = insp.project_name;
-            else if (insp.extra_fields && insp.extra_fields['Project Name']) name = insp.extra_fields['Project Name'];
-            return name ? name.trim() : '';
-        }
-        function getWorkstation(insp) {
-            let ws = insp.extra_fields && insp.extra_fields['Work Station'] ? insp.extra_fields['Work Station'] : '';
-            return ws ? ws.trim().toLowerCase() : '';
-        }
-        function getLocation(insp) {
-            let loc = insp.extra_fields && insp.extra_fields['Location'] ? insp.extra_fields['Location'] : '';
-            return loc ? loc.trim().toLowerCase() : '';
-        }
-        function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } [m])); }
-        function getResultColor(result) {
-            switch (result) {
-                case 'Accepted':             return 'bg-green-100 text-green-800';
-                case 'Rework':               return 'bg-yellow-100 text-yellow-800';
-                case 'Reject':               return 'bg-red-100 text-red-800';
-                case 'Conditional Accept':
-                case 'Conditional Accepted': return 'bg-blue-100 text-blue-800';
-                default:                     return 'bg-gray-100 text-gray-800';
+        function computeQualityKPIs(data) {
+            const parts = {};
+            for (const insp of data) {
+                const key = [
+                    getProjectName(insp),
+                    insp.extra_fields?.['Subtitle'] || '',
+                    insp.extra_fields?.['Sub Sub Assembly'] || '',
+                    insp.part_name || insp.extra_fields?.['Part Name'] || ''
+                ].join('|');
+                if (!parts[key]) parts[key] = { firstOp: null, lastOp: null };
+                const ts = new Date(insp.submitted_at).getTime();
+                if (!parts[key].firstOp || ts < new Date(parts[key].firstOp.submitted_at).getTime()) parts[key].firstOp = insp;
+                if (!parts[key].lastOp || ts > new Date(parts[key].lastOp.submitted_at).getTime()) parts[key].lastOp = insp;
             }
+            let totalDel = 0, totalFirstAcc = 0, totalFinalAcc = 0, totalAppraisal = 0, totalFailure = 0;
+            for (const p of Object.values(parts)) {
+                if (!p.firstOp) continue;
+                const del = safeNum(p.firstOp.delivered_qty) || (safeNum(p.firstOp.accepted_qty) + safeNum(p.firstOp.rework_qty) + safeNum(p.firstOp.reject_qty) + safeNum(p.firstOp.conditional_accept_qty));
+                totalDel += del;
+                totalFirstAcc += safeNum(p.firstOp.accepted_qty);
+                if (p.lastOp) totalFinalAcc += safeNum(p.lastOp.accepted_qty) + safeNum(p.lastOp.conditional_accept_qty);
+            }
+            for (const insp of data) {
+                totalAppraisal += safeNum(insp.labor_hours) * safeNum(insp.salary_per_hour);
+                totalFailure += safeNum(insp.total_internal_failure_cost);
+            }
+            return {
+                fpy: totalDel > 0 ? totalFirstAcc / totalDel : 0,
+                fpyCI: wilsonCI(totalFirstAcc, totalDel),
+                epy: totalDel > 0 ? totalFinalAcc / totalDel : 0,
+                epyCI: wilsonCI(totalFinalAcc, totalDel),
+                coq: totalFailure + totalAppraisal,
+                nDelivered: totalDel
+            };
         }
-        function getResultDisplay(result) {
-            if (result === 'Conditional Accepted') return 'Conditional Accept';
-            return result || 'N/A';
-        }
-        function safeNum(val) { const n = parseFloat(val); return isNaN(n) ? 0 : n; }
 
-        // ─── DERIVATION FALLBACKS ───
         function deriveResult(insp) {
             if (insp.derived_result) return insp.derived_result;
             const ratings = Object.values(insp.acceptance_data || {}).map(p => (p && p.rating) || '').filter(Boolean);
             if (ratings.length === 0) return 'N/A';
-            if (ratings.includes('Reject'))             return 'Reject';
-            if (ratings.includes('Rework'))             return 'Rework';
+            if (ratings.includes('Reject')) return 'Reject';
+            if (ratings.includes('Rework')) return 'Rework';
             if (ratings.includes('Conditional Accept')) return 'Conditional Accept';
             return 'Accepted';
         }
@@ -265,369 +271,217 @@
             const ratings = Object.values(insp.acceptance_data || {}).map(p => (p && p.rating) || '').filter(Boolean);
             if (ratings.length === 0) return 0;
             const scoreMap = { 'Accepted': 1, 'Conditional Accept': 0.5, 'Rework': 0.25, 'Reject': 0 };
-            const total = ratings.reduce((s, r) => s + (scoreMap[r] ?? 0), 0);
-            return +(total / ratings.length).toFixed(3);
+            return +(ratings.reduce((s, r) => s + (scoreMap[r] ?? 0), 0) / ratings.length).toFixed(3);
         }
+        function getResultColor(r) {
+            switch (r) {
+                case 'Accepted': return 'bg-green-100 text-green-800';
+                case 'Rework': return 'bg-yellow-100 text-yellow-800';
+                case 'Reject': return 'bg-red-100 text-red-800';
+                case 'Conditional Accept':
+                case 'Conditional Accepted': return 'bg-blue-100 text-blue-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+        function getResultDisplay(r) { return r === 'Conditional Accepted' ? 'Conditional Accept' : (r || 'N/A'); }
 
         async function fetchData() {
             try {
                 const res = await fetch('/api/inspections');
-                if (!res.ok) throw new Error('Network response was not ok');
+                if (!res.ok) throw new Error();
                 allInspections = await res.json();
-                populateDropdowns();
-                populateAssemblyDropdowns();
-                applyFilters();
-                applyAssemblyFilters();
-            } catch (err) {
-                console.error(err);
-                document.getElementById('inspectionTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-red-500">⚠️ Error loading data. Please try again.</td></tr>';
-                document.getElementById('assemblyTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-red-500">⚠️ Error loading data. Please try again.</td></tr>';
+                populateDropdowns(); populateAssemblyDropdowns();
+                applyFilters(); applyAssemblyFilters();
+            } catch {
+                document.getElementById('inspectionTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-red-500">⚠️ Error loading</td></tr>';
+                document.getElementById('assemblyTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-red-500">⚠️ Error loading</td></tr>';
             }
         }
 
         function populateDropdowns() {
-            const processSet = new Set(), engineerSet = new Set(), projectSet = new Set();
+            const p = new Set(), e = new Set(), pr = new Set();
             allInspections.forEach(i => {
-                if (i.process_type && !isAssemblyType(i.process_type)) processSet.add(i.process_type);
-                if (i.username) engineerSet.add(i.username);
-                const proj = getProjectName(i);
-                if (proj) projectSet.add(proj);
+                if (i.process_type && !isAssemblyType(i.process_type)) p.add(i.process_type);
+                if (i.username) e.add(i.username);
+                const pn = getProjectName(i); if (pn) pr.add(pn);
             });
-            const ps = document.getElementById('filterProcess');
-            ps.innerHTML = '<option value="">All Processes</option>';
-            [...processSet].sort().forEach(p => { ps.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`; });
-            const es = document.getElementById('filterEngineer');
-            es.innerHTML = '<option value="">All Engineers</option>';
-            [...engineerSet].sort().forEach(e => { es.innerHTML += `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`; });
-            const prs = document.getElementById('filterProjectName');
-            prs.innerHTML = '<option value="">All Projects</option>';
-            [...projectSet].sort().forEach(p => { prs.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`; });
+            document.getElementById('filterProcess').innerHTML = '<option value="">All</option>' + [...p].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+            document.getElementById('filterEngineer').innerHTML = '<option value="">All</option>' + [...e].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+            document.getElementById('filterProjectName').innerHTML = '<option value="">All</option>' + [...pr].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
         }
-
         function populateAssemblyDropdowns() {
-            const processSet = new Set(), engineerSet = new Set(), projectSet = new Set();
-            const assemblyData = allInspections.filter(i => isAssemblyType(i.process_type));
-            assemblyData.forEach(i => {
-                if (i.process_type) processSet.add(i.process_type);
-                if (i.username) engineerSet.add(i.username);
-                const proj = getProjectName(i);
-                if (proj) projectSet.add(proj);
+            const p = new Set(), e = new Set(), pr = new Set();
+            allInspections.filter(i => isAssemblyType(i.process_type)).forEach(i => {
+                if (i.process_type) p.add(i.process_type);
+                if (i.username) e.add(i.username);
+                const pn = getProjectName(i); if (pn) pr.add(pn);
             });
-            const ps = document.getElementById('assemblyFilterProcess');
-            ps.innerHTML = '<option value="">All Processes</option>';
-            [...processSet].sort().forEach(p => { ps.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`; });
-            const es = document.getElementById('assemblyFilterEngineer');
-            es.innerHTML = '<option value="">All Engineers</option>';
-            [...engineerSet].sort().forEach(e => { es.innerHTML += `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`; });
-            const prs = document.getElementById('assemblyFilterProjectName');
-            prs.innerHTML = '<option value="">All Projects</option>';
-            [...projectSet].sort().forEach(p => { prs.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`; });
+            document.getElementById('assemblyFilterProcess').innerHTML = '<option value="">All</option>' + [...p].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+            document.getElementById('assemblyFilterEngineer').innerHTML = '<option value="">All</option>' + [...e].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+            document.getElementById('assemblyFilterProjectName').innerHTML = '<option value="">All</option>' + [...pr].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
         }
 
         function applyFilters() {
-            const processFilter = document.getElementById('filterProcess').value;
-            const engineerFilter = document.getElementById('filterEngineer').value;
-            const projectFilter = document.getElementById('filterProjectName').value;
-            const workstationFilter = document.getElementById('filterWorkstation').value;
-            const locationFilter = document.getElementById('filterLocation').value;
-            const dateFrom = document.getElementById('filterDateFrom').value;
-            const dateTo = document.getElementById('filterDateTo').value;
-
-            let filtered = allInspections.filter(i => !isAssemblyType(i.process_type));
-            if (processFilter) filtered = filtered.filter(i => i.process_type === processFilter);
-            if (engineerFilter) filtered = filtered.filter(i => i.username === engineerFilter);
-            if (projectFilter) filtered = filtered.filter(i => getProjectName(i) === projectFilter);
-            if (workstationFilter) filtered = filtered.filter(i => getWorkstation(i) === workstationFilter.toLowerCase());
-            if (locationFilter) filtered = filtered.filter(i => getLocation(i) === locationFilter.toLowerCase());
-            if (dateFrom) { const from = new Date(dateFrom); from.setHours(0, 0, 0, 0); filtered = filtered.filter(i => new Date(i.submitted_at) >= from); }
-            if (dateTo) { const to = new Date(dateTo); to.setHours(23, 59, 59, 999); filtered = filtered.filter(i => new Date(i.submitted_at) <= to); }
-
-            currentMainData = filtered;
-            updateQuantitySummary(filtered, 'quantitySummaryBody');
-            updateResultsByQuantity(filtered, 'resultsTableBody', mainChartInstances, 'chart');
-            updateFailureCostByProcess(filtered, 'failureCostTableBody', 'failureCostGrandTotal');
-            updateFailureCostByTitle(filtered, 'failureCostTitleTableBody', 'failureCostTitleGrandTotal');
-            updateTable(filtered, 'inspectionTableBody', 'tableInfo');
+            const proc = document.getElementById('filterProcess').value;
+            const eng = document.getElementById('filterEngineer').value;
+            const proj = document.getElementById('filterProjectName').value;
+            const ws = document.getElementById('filterWorkstation').value;
+            const loc = document.getElementById('filterLocation').value;
+            const df = document.getElementById('filterDateFrom').value;
+            const dt = document.getElementById('filterDateTo').value;
+            let f = allInspections.filter(i => !isAssemblyType(i.process_type));
+            if (proc) f = f.filter(i => i.process_type === proc);
+            if (eng) f = f.filter(i => i.username === eng);
+            if (proj) f = f.filter(i => getProjectName(i) === proj);
+            if (ws) f = f.filter(i => getWorkstation(i) === ws.toLowerCase());
+            if (loc) f = f.filter(i => getLocation(i) === loc.toLowerCase());
+            if (df) { const d = new Date(df); d.setHours(0,0,0,0); f = f.filter(i => new Date(i.submitted_at) >= d); }
+            if (dt) { const d = new Date(dt); d.setHours(23,59,59,999); f = f.filter(i => new Date(i.submitted_at) <= d); }
+            currentMainData = f;
+            const k = computeQualityKPIs(f);
+            document.getElementById('kpiFPY').textContent = (k.fpy * 100).toFixed(1) + '%';
+            document.getElementById('kpiFPYCI').innerHTML = `n=${k.nDelivered} · 95% CI ${(k.fpyCI.lo*100).toFixed(0)}–${(k.fpyCI.hi*100).toFixed(0)}%`;
+            document.getElementById('kpiEPY').textContent = (k.epy * 100).toFixed(1) + '%';
+            document.getElementById('kpiEPYCI').innerHTML = `n=${k.nDelivered} · 95% CI ${(k.epyCI.lo*100).toFixed(0)}–${(k.epyCI.hi*100).toFixed(0)}%`;
+            document.getElementById('kpiCOQ').textContent = 'ETB ' + k.coq.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            updateQuantitySummary(f, 'quantitySummaryBody');
+            updateResultsByQuantity(f, 'resultsTableBody', mainChartInstances, 'chart');
+            updateFailureCostByProcess(f, 'failureCostTableBody', 'failureCostGrandTotal');
+            updateFailureCostByTitle(f, 'failureCostTitleTableBody', 'failureCostTitleGrandTotal');
+            updateTable(f, 'inspectionTableBody', 'tableInfo');
         }
-
-        function resetFilters() {
-            ['filterProcess','filterEngineer','filterProjectName','filterWorkstation','filterLocation','filterDateFrom','filterDateTo'].forEach(id => document.getElementById(id).value = '');
-            applyFilters();
-        }
+        function resetFilters() { ['filterProcess','filterEngineer','filterProjectName','filterWorkstation','filterLocation','filterDateFrom','filterDateTo'].forEach(id => document.getElementById(id).value = ''); applyFilters(); }
 
         function applyAssemblyFilters() {
-            const processFilter = document.getElementById('assemblyFilterProcess').value;
-            const engineerFilter = document.getElementById('assemblyFilterEngineer').value;
-            const projectFilter = document.getElementById('assemblyFilterProjectName').value;
-            const workstationFilter = document.getElementById('assemblyFilterWorkstation').value;
-            const locationFilter = document.getElementById('assemblyFilterLocation').value;
-            const dateFrom = document.getElementById('assemblyFilterDateFrom').value;
-            const dateTo = document.getElementById('assemblyFilterDateTo').value;
-
-            let filtered = allInspections.filter(i => isAssemblyType(i.process_type));
-            if (processFilter) filtered = filtered.filter(i => i.process_type === processFilter);
-            if (engineerFilter) filtered = filtered.filter(i => i.username === engineerFilter);
-            if (projectFilter) filtered = filtered.filter(i => getProjectName(i) === projectFilter);
-            if (workstationFilter) filtered = filtered.filter(i => getWorkstation(i) === workstationFilter.toLowerCase());
-            if (locationFilter) filtered = filtered.filter(i => getLocation(i) === locationFilter.toLowerCase());
-            if (dateFrom) { const from = new Date(dateFrom); from.setHours(0, 0, 0, 0); filtered = filtered.filter(i => new Date(i.submitted_at) >= from); }
-            if (dateTo) { const to = new Date(dateTo); to.setHours(23, 59, 59, 999); filtered = filtered.filter(i => new Date(i.submitted_at) <= to); }
-
-            currentAssemblyData = filtered;
-            updateQuantitySummary(filtered, 'assemblyQuantityBody');
-            updateResultsByQuantity(filtered, 'assemblyResultsTableBody', assemblyChartInstances, 'assemblyChart');
-            updateFailureCostByProcess(filtered, 'assemblyFailureCostTableBody', 'assemblyFailureCostGrandTotal');
-            updateFailureCostByTitle(filtered, 'assemblyFailureCostTitleTableBody', 'assemblyFailureCostTitleGrandTotal');
-            updateTable(filtered, 'assemblyTableBody', 'assemblyTableInfo');
+            const proc = document.getElementById('assemblyFilterProcess').value;
+            const eng = document.getElementById('assemblyFilterEngineer').value;
+            const proj = document.getElementById('assemblyFilterProjectName').value;
+            const ws = document.getElementById('assemblyFilterWorkstation').value;
+            const loc = document.getElementById('assemblyFilterLocation').value;
+            const df = document.getElementById('assemblyFilterDateFrom').value;
+            const dt = document.getElementById('assemblyFilterDateTo').value;
+            let f = allInspections.filter(i => isAssemblyType(i.process_type));
+            if (proc) f = f.filter(i => i.process_type === proc);
+            if (eng) f = f.filter(i => i.username === eng);
+            if (proj) f = f.filter(i => getProjectName(i) === proj);
+            if (ws) f = f.filter(i => getWorkstation(i) === ws.toLowerCase());
+            if (loc) f = f.filter(i => getLocation(i) === loc.toLowerCase());
+            if (df) { const d = new Date(df); d.setHours(0,0,0,0); f = f.filter(i => new Date(i.submitted_at) >= d); }
+            if (dt) { const d = new Date(dt); d.setHours(23,59,59,999); f = f.filter(i => new Date(i.submitted_at) <= d); }
+            currentAssemblyData = f;
+            const k = computeQualityKPIs(f);
+            document.getElementById('kpiFPY').textContent = (k.fpy * 100).toFixed(1) + '%';
+            document.getElementById('kpiFPYCI').innerHTML = `n=${k.nDelivered} · 95% CI ${(k.fpyCI.lo*100).toFixed(0)}–${(k.fpyCI.hi*100).toFixed(0)}%`;
+            document.getElementById('kpiEPY').textContent = (k.epy * 100).toFixed(1) + '%';
+            document.getElementById('kpiEPYCI').innerHTML = `n=${k.nDelivered} · 95% CI ${(k.epyCI.lo*100).toFixed(0)}–${(k.epyCI.hi*100).toFixed(0)}%`;
+            document.getElementById('kpiCOQ').textContent = 'ETB ' + k.coq.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            updateQuantitySummary(f, 'assemblyQuantityBody');
+            updateResultsByQuantity(f, 'assemblyResultsTableBody', assemblyChartInstances, 'assemblyChart');
+            updateFailureCostByProcess(f, 'assemblyFailureCostTableBody', 'assemblyFailureCostGrandTotal');
+            updateFailureCostByTitle(f, 'assemblyFailureCostTitleTableBody', 'assemblyFailureCostTitleGrandTotal');
+            updateTable(f, 'assemblyTableBody', 'assemblyTableInfo');
         }
+        function resetAssemblyFilters() { ['assemblyFilterProcess','assemblyFilterEngineer','assemblyFilterProjectName','assemblyFilterWorkstation','assemblyFilterLocation','assemblyFilterDateFrom','assemblyFilterDateTo'].forEach(id => document.getElementById(id).value = ''); applyAssemblyFilters(); }
 
-        function resetAssemblyFilters() {
-            ['assemblyFilterProcess','assemblyFilterEngineer','assemblyFilterProjectName','assemblyFilterWorkstation','assemblyFilterLocation','assemblyFilterDateFrom','assemblyFilterDateTo'].forEach(id => document.getElementById(id).value = '');
-            applyAssemblyFilters();
-        }
-
-        function updateQuantitySummary(data, tbodyId) {
-            let sumDelivered = 0, sumAccepted = 0, sumRework = 0, sumReject = 0, sumConditional = 0;
-            data.forEach(insp => {
-                sumDelivered += safeNum(insp.delivered_qty);
-                sumAccepted += safeNum(insp.accepted_qty);
-                sumRework += safeNum(insp.rework_qty);
-                sumReject += safeNum(insp.reject_qty);
-                sumConditional += safeNum(insp.conditional_accept_qty);
-            });
-            document.getElementById(tbodyId).innerHTML = `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-2 border font-semibold">${sumDelivered.toLocaleString()}</td>
-                    <td class="p-2 border font-semibold text-green-700">${sumAccepted.toLocaleString()}</td>
-                    <td class="p-2 border font-semibold text-yellow-700">${sumRework.toLocaleString()}</td>
-                    <td class="p-2 border font-semibold text-red-700">${sumReject.toLocaleString()}</td>
-                    <td class="p-2 border font-semibold text-blue-700">${sumConditional.toLocaleString()}</td>
-                </tr>`;
+        function updateQuantitySummary(data, tid) {
+            let d = 0, a = 0, r = 0, rej = 0, c = 0;
+            data.forEach(i => { d += safeNum(i.delivered_qty); a += safeNum(i.accepted_qty); r += safeNum(i.rework_qty); rej += safeNum(i.reject_qty); c += safeNum(i.conditional_accept_qty); });
+            document.getElementById(tid).innerHTML = `<tr class="border-b hover:bg-gray-50"><td class="p-2 border font-semibold">${d.toLocaleString()}</td><td class="p-2 border font-semibold text-green-700">${a.toLocaleString()}</td><td class="p-2 border font-semibold text-yellow-700">${r.toLocaleString()}</td><td class="p-2 border font-semibold text-red-700">${rej.toLocaleString()}</td><td class="p-2 border font-semibold text-blue-700">${c.toLocaleString()}</td></tr>`;
         }
 
         function getResultTotals(data) {
-            let accepted = 0, rework = 0, reject = 0, conditional = 0;
-            data.forEach(insp => {
-                accepted += safeNum(insp.accepted_qty);
-                rework += safeNum(insp.rework_qty);
-                reject += safeNum(insp.reject_qty);
-                conditional += safeNum(insp.conditional_accept_qty);
-            });
-            return { accepted, rework, reject, conditional };
+            let a = 0, r = 0, rej = 0, c = 0;
+            data.forEach(i => { a += safeNum(i.accepted_qty); r += safeNum(i.rework_qty); rej += safeNum(i.reject_qty); c += safeNum(i.conditional_accept_qty); });
+            return { accepted: a, rework: r, reject: rej, conditional: c };
         }
-
-        function updateResultsByQuantity(data, tbodyId, chartStore, chartPrefix) {
+        function updateResultsByQuantity(data, tid, store, prefix) {
             const { accepted, rework, reject, conditional } = getResultTotals(data);
-            const totalQuantity = accepted + rework + reject + conditional;
-            const tbody = document.getElementById(tbodyId);
-            if (totalQuantity === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No quantity data available</td></tr>';
-                destroyCharts(chartStore);
-                showEmptyChartMessages(chartPrefix);
-                return;
-            }
+            const total = accepted + rework + reject + conditional;
+            const tbody = document.getElementById(tid);
+            if (total === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No data</td></tr>'; destroyCharts(store); showEmpty(prefix); return; }
             const items = [
-                { label: 'Accepted Qty', value: accepted, color: '#22c55e' },
-                { label: 'Rework Qty', value: rework, color: '#eab308' },
-                { label: 'Reject Qty', value: reject, color: '#ef4444' },
-                { label: 'Conditional Accept Qty', value: conditional, color: '#3b82f6' }
+                { label: 'Accepted', value: accepted, color: '#22c55e' },
+                { label: 'Rework', value: rework, color: '#eab308' },
+                { label: 'Reject', value: reject, color: '#ef4444' },
+                { label: 'Conditional', value: conditional, color: '#3b82f6' }
             ];
-            tbody.innerHTML = items.map(item => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-2 border">${item.label}</td>
-                    <td class="p-2 border">${item.value.toLocaleString()}</td>
-                    <td class="p-2 border">${((item.value / totalQuantity) * 100).toFixed(1)}%</td>
-                </tr>`).join('');
-            renderAllCharts(items, totalQuantity, chartStore, chartPrefix);
+            tbody.innerHTML = items.map(x => `<tr class="border-b hover:bg-gray-50"><td class="p-2 border">${x.label}</td><td class="p-2 border">${x.value.toLocaleString()}</td><td class="p-2 border">${((x.value / total) * 100).toFixed(1)}%</td></tr>`).join('');
+            renderCharts(items, total, store, prefix);
         }
-
-        function renderAllCharts(items, totalQuantity, chartStore, prefix) {
-            destroyCharts(chartStore);
-            clearEmptyMessages(prefix);
-            const chartConfigs = [
-                { id: prefix + 'Bar', type: 'bar' },
-                { id: prefix + 'Pie', type: 'pie' },
-                { id: prefix + 'Doughnut', type: 'doughnut' },
-                { id: prefix + 'Horizontal', type: 'horizontalBar' },
-                { id: prefix + 'Polar', type: 'polarArea' },
-                { id: prefix + 'Radar', type: 'radar' }
+        function renderCharts(items, total, store, prefix) {
+            destroyCharts(store); clearEmpty(prefix);
+            const cfgs = [
+                { id: prefix + 'Bar', type: 'bar' }, { id: prefix + 'Pie', type: 'pie' },
+                { id: prefix + 'Doughnut', type: 'doughnut' }, { id: prefix + 'Horizontal', type: 'horizontalBar' },
+                { id: prefix + 'Polar', type: 'polarArea' }, { id: prefix + 'Radar', type: 'radar' }
             ];
-            chartConfigs.forEach(cfg => {
-                const canvas = document.getElementById(cfg.id);
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                try {
-                    const chartData = buildChartData(items, cfg.type, totalQuantity);
-                    if (!chartData) { showEmptyOnCanvas(canvas); return; }
-                    chartStore[cfg.id] = new Chart(ctx, chartData);
-                } catch (err) {
-                    console.error('Error creating chart', cfg.id, err);
-                    showEmptyOnCanvas(canvas);
-                }
+            cfgs.forEach(c => {
+                const cv = document.getElementById(c.id); if (!cv) return;
+                const ctx = cv.getContext('2d');
+                try { const cd = buildChartData(items, c.type, total); if (!cd) { showEmptyOn(cv); return; } store[c.id] = new Chart(ctx, cd); } catch { showEmptyOn(cv); }
             });
         }
-
         function buildChartData(items, type, total) {
-            const labels = items.map(d => d.label);
-            const values = items.map(d => d.value);
-            const colors = items.map(d => d.color);
-            const totalVal = values.reduce((a, b) => a + b, 0);
-            if (totalVal === 0) return null;
-            let config = {
-                type, data: {},
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8, usePointStyle: true, pointStyle: 'circle', boxWidth: 10 } },
-                        tooltip: { callbacks: { label: function(context) { const raw = context.raw; const pct = totalVal > 0 ? ((raw / totalVal) * 100).toFixed(1) : 0; return `${context.label}: ${raw.toLocaleString()} (${pct}%)`; } } }
-                    },
-                    scales: {}
-                }
-            };
-            if (type === 'bar') {
-                config.data = { labels, datasets: [{ label: 'Total Quantity', data: values, backgroundColor: colors.map(c => c + 'CC'), borderColor: colors, borderWidth: 2, borderRadius: 4, barPercentage: 0.6 }] };
-                config.options.scales = { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() }, grid: { color: '#e9ecef' } }, x: { grid: { display: false } } };
-            } else if (type === 'horizontalBar') {
-                config.type = 'bar';
-                config.data = { labels, datasets: [{ label: 'Total Quantity', data: values, backgroundColor: colors.map(c => c + 'CC'), borderColor: colors, borderWidth: 2, borderRadius: 4, barPercentage: 0.6 }] };
-                config.options.indexAxis = 'y';
-                config.options.scales = { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() }, grid: { color: '#e9ecef' } }, y: { grid: { display: false } } };
-            } else if (type === 'pie') {
-                config.data = { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#ffffff', borderWidth: 2, hoverOffset: 8 }] };
-                config.options.plugins.legend.position = 'right';
-                config.options.scales = {};
-            } else if (type === 'doughnut') {
-                config.data = { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#ffffff', borderWidth: 2, hoverOffset: 8, cutout: '55%' }] };
-                config.options.plugins.legend.position = 'right';
-                config.options.scales = {};
-            } else if (type === 'polarArea') {
-                config.data = { labels, datasets: [{ data: values, backgroundColor: colors.map(c => c + 'CC'), borderColor: colors, borderWidth: 2, hoverOffset: 8 }] };
-                config.options.plugins.legend.position = 'right';
-                config.options.scales = { r: { beginAtZero: true, ticks: { stepSize: Math.ceil(Math.max(...values) / 5) || 1 } } };
-            } else if (type === 'radar') {
-                config.data = { labels, datasets: [{ label: 'Quantity', data: values, backgroundColor: 'rgba(59, 130, 246, 0.15)', borderColor: '#3b82f6', borderWidth: 2, pointBackgroundColor: colors, pointBorderColor: '#ffffff', pointBorderWidth: 2, pointRadius: 4, fill: true, tension: 0.1 }] };
-                config.options.scales = { r: { beginAtZero: true, ticks: { stepSize: Math.ceil(Math.max(...values) / 5) || 1 } } };
-                config.options.plugins.legend.position = 'bottom';
-            }
+            const labels = items.map(d => d.label), values = items.map(d => d.value), colors = items.map(d => d.color);
+            const tv = values.reduce((a, b) => a + b, 0); if (tv === 0) return null;
+            let config = { type, data: {}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8, usePointStyle: true, pointStyle: 'circle', boxWidth: 10 } }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw.toLocaleString()} (${((ctx.raw / tv) * 100).toFixed(1)}%)` } } }, scales: {} } };
+            if (type === 'bar') { config.data = { labels, datasets: [{ label: 'Qty', data: values, backgroundColor: colors.map(c => c + 'CC'), borderColor: colors, borderWidth: 2, borderRadius: 4, barPercentage: 0.6 }] }; config.options.scales = { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() } }, x: { grid: { display: false } } }; }
+            else if (type === 'horizontalBar') { config.type = 'bar'; config.data = { labels, datasets: [{ label: 'Qty', data: values, backgroundColor: colors.map(c => c + 'CC'), borderColor: colors, borderWidth: 2, borderRadius: 4, barPercentage: 0.6 }] }; config.options.indexAxis = 'y'; config.options.scales = { x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() } }, y: { grid: { display: false } } }; }
+            else if (type === 'pie') { config.data = { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#fff', borderWidth: 2, hoverOffset: 8 }] }; config.options.plugins.legend.position = 'right'; config.options.scales = {}; }
+            else if (type === 'doughnut') { config.data = { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#fff', borderWidth: 2, hoverOffset: 8, cutout: '55%' }] }; config.options.plugins.legend.position = 'right'; config.options.scales = {}; }
+            else if (type === 'polarArea') { config.data = { labels, datasets: [{ data: values, backgroundColor: colors.map(c => c + 'CC'), borderColor: colors, borderWidth: 2, hoverOffset: 8 }] }; config.options.plugins.legend.position = 'right'; config.options.scales = { r: { beginAtZero: true } }; }
+            else if (type === 'radar') { config.data = { labels, datasets: [{ label: 'Qty', data: values, backgroundColor: 'rgba(59,130,246,0.15)', borderColor: '#3b82f6', borderWidth: 2, pointBackgroundColor: colors, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, fill: true }] }; config.options.scales = { r: { beginAtZero: true } }; }
             return config;
         }
-
-        function destroyCharts(store) {
-            Object.keys(store).forEach(key => { try { if (store[key]) store[key].destroy(); } catch (e) {} delete store[key]; });
-        }
-        function clearEmptyMessages(prefix) {
-            ['Bar','Pie','Doughnut','Horizontal','Polar','Radar'].forEach(s => {
-                const canvas = document.getElementById(prefix + s);
-                if (canvas) { const parent = canvas.parentElement; if (parent) { const msg = parent.querySelector('.empty-chart-msg'); if (msg) msg.remove(); canvas.style.display = 'block'; } }
-            });
-        }
-        function showEmptyChartMessages(prefix) {
-            ['Bar','Pie','Doughnut','Horizontal','Polar','Radar'].forEach(s => { const canvas = document.getElementById(prefix + s); if (canvas) showEmptyOnCanvas(canvas); });
-        }
-        function showEmptyOnCanvas(canvas) {
-            const parent = canvas.parentElement;
-            if (!parent) return;
-            let existing = parent.querySelector('.empty-chart-msg');
-            if (existing) existing.remove();
-            const div = document.createElement('div');
-            div.className = 'empty-chart-msg';
-            div.innerHTML = `<i class="fas fa-chart-simple"></i><span>No data</span>`;
-            parent.style.position = 'relative';
-            parent.appendChild(div);
-            canvas.style.display = 'none';
+        function destroyCharts(s) { Object.keys(s).forEach(k => { try { if (s[k]) s[k].destroy(); } catch {} delete s[k]; }); }
+        function clearEmpty(p) { ['Bar','Pie','Doughnut','Horizontal','Polar','Radar'].forEach(x => { const c = document.getElementById(p + x); if (c) { const pa = c.parentElement; if (pa) { const m = pa.querySelector('.empty-chart-msg'); if (m) m.remove(); c.style.display = 'block'; } } }); }
+        function showEmpty(p) { ['Bar','Pie','Doughnut','Horizontal','Polar','Radar'].forEach(x => { const c = document.getElementById(p + x); if (c) showEmptyOn(c); }); }
+        function showEmptyOn(c) {
+            const pa = c.parentElement; if (!pa) return;
+            const ex = pa.querySelector('.empty-chart-msg'); if (ex) ex.remove();
+            const d = document.createElement('div'); d.className = 'empty-chart-msg'; d.innerHTML = '<i class="fas fa-chart-simple"></i><span>No data</span>';
+            pa.style.position = 'relative'; pa.appendChild(d); c.style.display = 'none';
         }
 
-        function updateFailureCostByProcess(data, tbodyId, grandTotalId) {
-            const costMap = new Map();
-            let grandTotal = 0;
-            data.forEach(insp => {
-                const cost = safeNum(insp.total_internal_failure_cost);
-                if (cost === 0) return;
-                const process = insp.process_type || 'Uncategorized';
-                costMap.set(process, (costMap.get(process) || 0) + cost);
-                grandTotal += cost;
-            });
-            const tbody = document.getElementById(tbodyId);
-            const grandSpan = document.getElementById(grandTotalId);
-            if (grandTotal === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No failure cost data</td></tr>'; grandSpan.innerText = '0.00'; return; }
-            const sorted = Array.from(costMap.entries()).sort((a, b) => b[1] - a[1]);
-            tbody.innerHTML = sorted.map(([process, cost]) => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-2 border font-medium">${escapeHtml(process)}</td>
-                    <td class="p-2 border text-right font-semibold">${cost.toFixed(2)}</td>
-                    <td class="p-2 border text-right">${((cost / grandTotal) * 100).toFixed(1)}%</td>
-                </tr>`).join('');
-            grandSpan.innerText = grandTotal.toFixed(2);
+        function updateFailureCostByProcess(data, tid, gid) {
+            const m = new Map(); let gt = 0;
+            data.forEach(i => { const c = safeNum(i.total_internal_failure_cost); if (!c) return; const p = i.process_type || 'Uncategorized'; m.set(p, (m.get(p) || 0) + c); gt += c; });
+            const tb = document.getElementById(tid), gs = document.getElementById(gid);
+            if (!gt) { tb.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No data</td></tr>'; gs.innerText = '0.00'; return; }
+            tb.innerHTML = [...m.entries()].sort((a, b) => b[1] - a[1]).map(([p, c]) => `<tr class="border-b hover:bg-gray-50"><td class="p-2 border font-medium">${escapeHtml(p)}</td><td class="p-2 border text-right font-semibold">${c.toFixed(2)}</td><td class="p-2 border text-right">${((c / gt) * 100).toFixed(1)}%</td></tr>`).join('');
+            gs.innerText = gt.toFixed(2);
+        }
+        function updateFailureCostByTitle(data, tid, gid) {
+            const m = new Map(); let gt = 0;
+            data.forEach(i => { const c = safeNum(i.total_internal_failure_cost); if (!c) return; const t = getProjectName(i) || 'Untitled'; m.set(t, (m.get(t) || 0) + c); gt += c; });
+            const tb = document.getElementById(tid), gs = document.getElementById(gid);
+            if (!gt) { tb.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No data</td></tr>'; gs.innerText = '0.00'; return; }
+            tb.innerHTML = [...m.entries()].sort((a, b) => b[1] - a[1]).map(([t, c]) => `<tr class="border-b hover:bg-gray-50"><td class="p-2 border font-medium">${escapeHtml(t)}</td><td class="p-2 border text-right font-semibold">${c.toFixed(2)}</td><td class="p-2 border text-right">${((c / gt) * 100).toFixed(1)}%</td></tr>`).join('');
+            gs.innerText = gt.toFixed(2);
         }
 
-        function updateFailureCostByTitle(data, tbodyId, grandTotalId) {
-            const costMap = new Map();
-            let grandTotal = 0;
-            data.forEach(insp => {
-                const cost = safeNum(insp.total_internal_failure_cost);
-                if (cost === 0) return;
-                const title = getProjectName(insp) || 'Untitled Project';
-                costMap.set(title, (costMap.get(title) || 0) + cost);
-                grandTotal += cost;
-            });
-            const tbody = document.getElementById(tbodyId);
-            const grandSpan = document.getElementById(grandTotalId);
-            if (grandTotal === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">No failure cost data</td></tr>'; grandSpan.innerText = '0.00'; return; }
-            const sorted = Array.from(costMap.entries()).sort((a, b) => b[1] - a[1]);
-            tbody.innerHTML = sorted.map(([title, cost]) => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-2 border font-medium">${escapeHtml(title)}</td>
-                    <td class="p-2 border text-right font-semibold">${cost.toFixed(2)}</td>
-                    <td class="p-2 border text-right">${((cost / grandTotal) * 100).toFixed(1)}%</td>
-                </tr>`).join('');
-            grandSpan.innerText = grandTotal.toFixed(2);
-        }
-
-        function updateTable(data, tbodyId, infoId) {
-            const tbody = document.getElementById(tbodyId);
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">No inspections match filters</td></tr>';
-                document.getElementById(infoId).innerText = 'Showing 0 records';
-                return;
-            }
-            tbody.innerHTML = data.map(i => {
-                const isAssembly = isAssemblyType(i.process_type);
-                const rowClass = isAssembly ? 'class="assembly-row"' : '';
-                const processDisplay = escapeHtml(i.process_type || '-');
-                const badge = isAssembly ? `<span class="assembly-badge">🔧</span>` : '';
-                const result = deriveResult(i);
-                const points = deriveCumulativePoints(i);
-                return `
-                    <tr ${rowClass} class="border-b hover:bg-gray-50">
-                        <td class="p-3 whitespace-nowrap">${new Date(i.submitted_at).toLocaleString()}</td>
-                        <td class="p-3">${processDisplay} ${badge}</td>
-                        <td class="p-3">${escapeHtml(getProjectName(i)) || '-'}</td>
-                        <td class="p-3">${escapeHtml(i.username) || '-'}</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(result)}">${getResultDisplay(result)}</span></td>
-                        <td class="p-3">${points ?? '-'}</td>
-                        <td class="p-3">${escapeHtml(i.operator_name) || '-'}</td>
-                    </tr>`;
+        function updateTable(data, tid, iid) {
+            const tb = document.getElementById(tid);
+            if (!data.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">No data</td></tr>'; document.getElementById(iid).innerText = '0'; return; }
+            tb.innerHTML = data.map(i => {
+                const asm = isAssemblyType(i.process_type);
+                const rc = asm ? 'class="assembly-row"' : '';
+                const badge = asm ? '<span class="assembly-badge">🔧</span>' : '';
+                const res = deriveResult(i);
+                const pts = deriveCumulativePoints(i);
+                return `<tr ${rc} class="border-b hover:bg-gray-50"><td class="p-3 whitespace-nowrap">${new Date(i.submitted_at).toLocaleString()}</td><td class="p-3">${escapeHtml(i.process_type || '-')} ${badge}</td><td class="p-3">${escapeHtml(getProjectName(i)) || '-'}</td><td class="p-3">${escapeHtml(i.username) || '-'}</td><td class="p-3"><span class="px-2 py-1 rounded-full text-xs font-semibold ${getResultColor(res)}">${getResultDisplay(res)}</span></td><td class="p-3">${pts ?? '-'}</td><td class="p-3">${escapeHtml(i.operator_name) || '-'}</td></tr>`;
             }).join('');
-            document.getElementById(infoId).innerText = `Showing ${data.length} of ${allInspections.length} inspections`;
+            document.getElementById(iid).innerText = `Showing ${data.length} of ${allInspections.length}`;
         }
 
-        function switchView(view) {
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'inactive');
-                if (btn.dataset.view === view) btn.classList.add('active');
-                else btn.classList.add('inactive');
-            });
-            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
-            document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
-            if (view === 'assembly') applyAssemblyFilters();
+        function switchView(v) {
+            document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active', 'inactive'); b.classList.add(b.dataset.view === v ? 'active' : 'inactive'); });
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1)).classList.add('active');
+            if (v === 'assembly') applyAssemblyFilters();
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'inactive');
-                if (btn.dataset.view === 'main') btn.classList.add('active');
-                else btn.classList.add('inactive');
-            });
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active', 'inactive'); b.classList.add(b.dataset.view === 'main' ? 'active' : 'inactive'); });
             document.getElementById('viewMain').classList.add('active');
             document.getElementById('viewAssembly').classList.remove('active');
             fetchData();
