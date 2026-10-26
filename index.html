@@ -14,15 +14,14 @@
         .card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
         .card-header { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 16px 24px; border-radius: 16px 16px 0 0; }
         .card-body { padding: 20px 24px; }
-        .input-field { background: #fff; border: 1px solid #d1d5db; border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; width: 100%; color: #1e293b; }
+        .input-field { background: #fff; border: 1px solid #d1d5db; border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; width: 100%; color: #1e293b; transition: all 0.15s; }
         .input-field:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
         .input-field:disabled, .input-field[readonly] { background: #f1f5f9; cursor: not-allowed; }
         .select-field { background: #fff; border: 1px solid #d1d5db; border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; width: 100%; color: #1e293b; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
         .select-field:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
-        .btn-primary { background: #2563eb; border: none; color: #fff; font-weight: 600; padding: 10px 28px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .btn-primary { background: #2563eb; border: none; color: #fff; font-weight: 600; padding: 10px 28px; border-radius: 10px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
         .btn-primary:hover { background: #1d4ed8; }
-        .btn-primary:active { transform: scale(0.97); }
-        .btn-secondary { background: #f1f5f9; border: 1px solid #e2e8f0; color: #1e293b; padding: 10px 22px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+        .btn-secondary { background: #f1f5f9; border: 1px solid #e2e8f0; color: #1e293b; padding: 10px 22px; border-radius: 10px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; }
         .btn-secondary:hover { background: #e2e8f0; }
         .rating-pill { display: inline-block; padding: 2px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
         .rating-pill.accepted { background: #dcfce7; color: #15803d; }
@@ -31,56 +30,71 @@
         .rating-pill.reject { background: #fee2e2; color: #b91c1c; }
         .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
         .table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .table-wrap th { background: #f8fafc; padding: 10px 12px; text-align: left; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0; font-size: 0.75rem; text-transform: uppercase; }
+        .table-wrap th { background: #f8fafc; padding: 10px 12px; text-align: left; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px; }
         .table-wrap td { padding: 10px 12px; border-bottom: 1px solid #eef2f6; vertical-align: middle; background: #fff; }
         .table-wrap tr:hover td { background: #fafbfc; }
         .part-qty-table td { padding: 4px 6px; border-bottom: 1px solid #eef2f6; }
         .part-qty-table input[type="number"] { width: 70px; padding: 4px 6px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font-size: 0.85rem; }
         .part-list-multi { min-height: 80px; background: #fff; border-radius: 8px; border: 1px solid #d1d5db; padding: 4px; }
+        .part-list-multi option { padding: 4px 8px; border-radius: 4px; }
         .part-list-multi option:checked { background: #dbeafe; color: #1e293b; }
-        .remove-part-btn { color: #b91c1c; cursor: pointer; font-size: 0.9rem; padding: 0 4px; opacity: 0.6; }
-        .remove-part-btn:hover { opacity: 1; }
+        .remove-part-btn { color: #b91c1c; cursor: pointer; font-size: 0.9rem; padding: 4px 8px; border-radius: 6px; background: #fef2f2; }
+        .remove-part-btn:hover { background: #fee2e2; }
         .assembly-progress { background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 14px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
         .assembly-progress .progress-value { font-size: 2rem; font-weight: 700; color: #1e40af; line-height: 1.2; }
         .assembly-progress .progress-label { font-weight: 600; color: #1e40af; font-size: 0.85rem; }
         .assembly-progress .progress-detail { color: #475569; font-size: 0.85rem; }
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: 400px; width: 90%; }
-        .toast { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 18px; color: #0f172a; font-size: 0.9rem; box-shadow: 0 8px 24px rgba(0,0,0,0.06); border-left: 4px solid #2563eb; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); pointer-events: auto; }
+        .toast { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 18px; color: #0f172a; font-size: 0.9rem; box-shadow: 0 8px 24px rgba(0,0,0,0.06); border-left: 4px solid #2563eb; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); pointer-events: auto; position: relative; }
         .toast.show { transform: translateX(0); }
+        .toast.success { border-left-color: #059669; }
         .toast.error { border-left-color: #b91c1c; }
         .toast.info { border-left-color: #2563eb; }
+        .toast.sticky { padding-right: 40px; }
         .toast .toast-content { display: flex; align-items: center; gap: 10px; }
+        .toast .close-btn { position: absolute; top: 8px; right: 10px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 4px; border-radius: 4px; }
+        .toast .close-btn:hover { color: #0f172a; background: #f1f5f9; }
         .btn-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .btn-loading { opacity: 0.7; pointer-events: none; }
-        .history-item { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eef2f6; border-radius: 8px; }
+        .history-item { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eef2f6; border-radius: 8px; transition: background 0.1s; }
         .history-item:hover { background: #f8fafc; }
-        #secretOverlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 999; background: #f1f5f9; transition: opacity 0.5s, visibility 0.5s; }
+        #secretOverlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 999; background: #f1f5f9; transition: opacity 0.5s ease, visibility 0.5s ease; }
         #secretOverlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        #secretOverlay .card { background: #fff; border-radius: 24px; padding: 40px 36px; max-width: 400px; width: 92%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.06); }
+        #secretOverlay .card { background: #fff; border-radius: 24px; padding: 40px 36px; max-width: 400px; width: 92%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
         #secretOverlay .gear-icon { font-size: 2.8rem; display: block; color: #2563eb; opacity: 0.3; margin-bottom: 8px; }
         #secretOverlay h2 { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
         #secretOverlay .sub { color: #64748b; font-size: 0.9rem; margin-bottom: 24px; }
-        #secretOverlay input { width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid #d1d5db; color: #0f172a; font-size: 1.2rem; text-align: center; letter-spacing: 6px; outline: none; background: #fff; }
+        #secretOverlay input { width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid #d1d5db; color: #0f172a; font-size: 1.2rem; text-align: center; letter-spacing: 6px; outline: none; transition: border-color 0.15s; background: #fff; }
         #secretOverlay input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
-        #secretOverlay .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 12px; background: #2563eb; color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
+        #secretOverlay .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 12px; background: #2563eb; color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
         #secretOverlay .btn-submit:hover { background: #1d4ed8; }
         #secretOverlay .error { color: #b91c1c; font-size: 0.85rem; min-height: 28px; margin-top: 10px; }
         .shake { animation: shake 0.4s ease; }
-        @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        @media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
         #mainContent { display: none; padding: 16px 16px 32px; max-width: 1400px; margin: 0 auto; }
         #mainContent.visible { display: block; }
         .clickable-part { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; color: #2563eb; }
+        .clickable-part:hover { opacity: 0.8; }
         .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
         .scrollbar-thin::-webkit-scrollbar-track { background: #eef2f6; border-radius: 8px; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .nav-bar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 10px 24px; display: flex; align-items: center; gap: 4px; overflow-x: auto; }
+        .nav-bar a { padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; color: #475569; white-space: nowrap; text-decoration: none; transition: all 0.15s; }
+        .nav-bar a:hover { background: #f1f5f9; }
+        .nav-bar a.active { background: #eef2ff; color: #4338ca; font-weight: 600; }
+        .nav-brand { font-weight: 700; color: #1e293b; margin-right: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .process-group { margin-bottom: 6px; }
+        .process-group-label { font-size: 0.6rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 8px 2px; }
         @media (max-width: 700px) {
             #secretOverlay .card { padding: 28px 18px; }
             #mainContent { padding: 10px 6px 24px; }
             .card-body { padding: 14px 12px; }
             .btn-primary { padding: 8px 18px; font-size: 0.85rem; }
-            .assembly-progress { flex-direction: column; gap: 12px; }
+            .assembly-progress { flex-direction: column; align-items: stretch; gap: 12px; }
             .toast-container { top: 12px; right: 12px; width: calc(100% - 24px); }
+            .nav-bar { padding: 8px 12px; }
         }
         @media print {
             body * { visibility: hidden; }
@@ -88,6 +102,7 @@
             #inspectionForm { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 20px; background: #fff; color: #000; }
             .no-print { display: none !important; }
             .btn-primary, .btn-secondary { display: none !important; }
+            .nav-bar { display: none !important; }
         }
     </style>
 </head>
@@ -97,8 +112,8 @@
 
     <div id="secretOverlay">
         <div class="card">
-            <span class="gear-icon">⚙️</span>
-            <h2>🔐 Secure Access</h2>
+            <span class="gear-icon"><i class="fa-solid fa-gear"></i></span>
+            <h2>Secure Access</h2>
             <p class="sub">Enter the secret code to continue</p>
             <input type="password" id="secretInput" placeholder="•••••" autofocus />
             <button class="btn-submit" onclick="checkSecret()"><span>Unlock</span> <i class="fa-solid fa-arrow-right"></i></button>
@@ -107,14 +122,24 @@
     </div>
 
     <div id="mainContent">
+
+        <div class="nav-bar no-print">
+            <div class="nav-brand"><i class="fa-solid fa-industry"></i> AMIMTDE</div>
+            <a href="/" class="active">Inspection</a>
+            <a href="/list">Report</a>
+            <a href="/up">Follow-Up</a>
+            <a href="/dash">Assembly</a>
+            <a href="/tools">QC Tools</a>
+            <a href="/admin">Dashboard</a>
+        </div>
+
         <div class="card mb-5">
             <div class="card-header flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-800">Amhara Metal Industry &amp; Machine Technology Development Enterprise</h1>
-                    <p class="text-sm text-slate-500 font-medium mt-0.5"><i class="fa-regular fa-clipboard mr-2"></i>Quality Assurance Directorate – Inspection Checklist</p>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-800">Quality Assurance · Inspection Checklist</h1>
+                    <p class="text-sm text-slate-500 font-medium mt-0.5"><i class="fa-regular fa-clipboard mr-2"></i>Record inspection results for any process</p>
                 </div>
                 <div class="flex items-center gap-3 text-sm text-slate-500">
-                    <span class="hidden sm:inline"><i class="fa-regular fa-clock mr-1"></i><span id="liveClock">--:--</span></span>
                     <span class="px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium"><i class="fa-solid fa-cloud-upload-alt mr-1"></i> Live</span>
                 </div>
             </div>
@@ -129,31 +154,45 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Process Type <span class="text-rose-600">*</span></label>
                         <select id="processType" class="select-field" onchange="switchProcess()">
-                            <option value="Punching">Punching Process</option>
-                            <option value="Rolling">Rolling Process</option>
-                            <option value="Bending">Bending Process</option>
-                            <option value="Welding">Welding Process</option>
-                            <option value="Pressing">Pressing Process</option>
-                            <option value="Milling">Milling Process</option>
-                            <option value="Casting">Casting Process</option>
-                            <option value="PatternCore">Pattern &amp; Core Making</option>
-                            <option value="Assembling">Assembling (welding)</option>
-                            <option value="Testing">Testing Process</option>
-                            <option value="Painting">Painting Process</option>
-                            <option value="Packaging">Packaging Process</option>
-                            <option value="Shearing">Shearing Operation</option>
-                            <option value="Lathe">Lathe Operation</option>
-                            <option value="Drilling">Drilling Process</option>
-                            <option value="BoringHoning">Boring &amp; Honing</option>
-                            <option value="Grinding">Grinding Process</option>
-                            <option value="Forging">Forging Process</option>
-                            <option value="Molding">Molding Process</option>
-                            <option value="Polishing">Polishing &amp; Finishing</option>
-                            <option value="GasCutting">Gas Cutting Process</option>
-                            <option value="FastenersAssembly">Assembling (Fastener)</option>
-                            <option value="Hardening">Hardening Process</option>
-                            <option value="Tempering">Tempering Process</option>
-                            <option value="Coating">Coating Process</option>
+                            <optgroup label="Forming">
+                                <option value="Punching">Punching Process</option>
+                                <option value="Rolling">Rolling Process</option>
+                                <option value="Bending">Bending Process</option>
+                                <option value="Pressing">Pressing Process</option>
+                                <option value="Forging">Forging Process</option>
+                                <option value="Shearing">Shearing Operation</option>
+                            </optgroup>
+                            <optgroup label="Machining">
+                                <option value="Lathe">Lathe Operation</option>
+                                <option value="Milling">Milling Process</option>
+                                <option value="Drilling">Drilling Process</option>
+                                <option value="BoringHoning">Boring &amp; Honing</option>
+                                <option value="Grinding">Grinding Process</option>
+                                <option value="GasCutting">Gas Cutting Process</option>
+                            </optgroup>
+                            <optgroup label="Joining">
+                                <option value="Welding">Welding Process</option>
+                                <option value="Assembling">Assembling (welding)</option>
+                                <option value="FastenersAssembly">Assembling (Fastener)</option>
+                            </optgroup>
+                            <optgroup label="Casting & Molding">
+                                <option value="Casting">Casting Process</option>
+                                <option value="PatternCore">Pattern &amp; Core Making</option>
+                                <option value="Molding">Molding Process</option>
+                            </optgroup>
+                            <optgroup label="Heat Treatment">
+                                <option value="Hardening">Hardening Process</option>
+                                <option value="Tempering">Tempering Process</option>
+                            </optgroup>
+                            <optgroup label="Finishing">
+                                <option value="Painting">Painting Process</option>
+                                <option value="Coating">Coating Process</option>
+                                <option value="Polishing">Polishing &amp; Finishing</option>
+                                <option value="Packaging">Packaging Process</option>
+                            </optgroup>
+                            <optgroup label="Testing">
+                                <option value="Testing">Testing Process</option>
+                            </optgroup>
                         </select>
                     </div>
                     <div>
@@ -164,7 +203,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Source of Process Inspection</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Source of Process Inspection <span class="text-rose-600">*</span></label>
                         <div class="flex flex-wrap gap-4 mt-1">
                             <label class="flex items-center gap-2 text-sm"><input type="radio" name="sourceType" value="Outsource" required class="accent-blue-600" /> Outsource</label>
                             <label class="flex items-center gap-2 text-sm"><input type="radio" name="sourceType" value="Insource" class="accent-blue-600" /> Insource</label>
@@ -172,7 +211,7 @@
                         <input type="text" id="outsourceInstitute" placeholder="Outsource Institute name" class="input-field mt-2" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Document Availability</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Document Availability <span class="text-xs text-slate-400 font-normal">(optional)</span></label>
                         <div class="flex gap-6">
                             <label class="text-sm flex items-center gap-2"><input type="checkbox" id="designAvail" class="accent-blue-600" /> Design</label>
                             <label class="text-sm flex items-center gap-2"><input type="checkbox" id="mppAvail" class="accent-blue-600" /> MPP</label>
@@ -188,14 +227,14 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Shift Number</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Shift <span class="text-xs text-slate-400 font-normal">(optional)</span></label>
                         <div class="flex gap-3">
-                            <label class="text-sm flex items-center gap-1.5"><input type="radio" name="shift" value="1" class="accent-blue-600" /> Shift 1</label>
-                            <label class="text-sm flex items-center gap-1.5"><input type="radio" name="shift" value="2" class="accent-blue-600" /> Shift 2</label>
-                            <label class="text-sm flex items-center gap-1.5"><input type="radio" name="shift" value="3" class="accent-blue-600" /> Shift 3</label>
+                            <label class="text-sm flex items-center gap-1.5"><input type="radio" name="shift" value="1" class="accent-blue-600" /> 1</label>
+                            <label class="text-sm flex items-center gap-1.5"><input type="radio" name="shift" value="2" class="accent-blue-600" /> 2</label>
+                            <label class="text-sm flex items-center gap-1.5"><input type="radio" name="shift" value="3" class="accent-blue-600" /> 3</label>
                         </div>
                     </div>
-                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Operator Name</label><input type="text" id="operatorName" class="input-field" /></div>
+                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Operator <span class="text-xs text-slate-400 font-normal">(optional)</span></label><input type="text" id="operatorName" class="input-field" /></div>
                     <div><label class="block text-sm font-medium text-slate-700 mb-1">Labor Hours</label><input type="number" step="0.5" id="laborHours" class="input-field" /></div>
                     <div><label class="block text-sm font-medium text-slate-700 mb-1">Machining Hours</label><input type="number" step="0.5" id="machiningHours" class="input-field" /></div>
                     <div>
@@ -205,7 +244,12 @@
                     </div>
                 </div>
 
-                <div id="dynamicFieldsContainer"><div class="text-slate-500 text-center py-6 text-sm">Loading inspection table…</div></div>
+                <div class="border-t border-slate-200 pt-4 flex flex-wrap items-center justify-between gap-3">
+                    <div class="text-sm text-slate-600"><i class="fa-solid fa-camera text-blue-600 mr-1"></i> Auto-fill fields from a photo of the work order</div>
+                    <button type="button" class="btn-secondary text-sm" onclick="scanDocumentAndFill()"><i class="fa-solid fa-camera-retro mr-2"></i> Scan Document</button>
+                </div>
+
+                <div id="dynamicFieldsContainer"><div class="text-slate-500 text-center py-6 text-sm"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading inspection table…</div></div>
 
                 <div id="lastOperationContainer" class="mt-2 hidden">
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -260,7 +304,7 @@
                 </div>
 
                 <div class="flex flex-wrap justify-end gap-3 no-print pt-3 border-t border-slate-200">
-                    <button type="button" onclick="resetForm()" class="btn-secondary text-sm"><i class="fa-regular fa-arrow-rotate-left"></i> Reset</button>
+                    <button type="button" onclick="resetForm()" class="btn-secondary text-sm"><i class="fa-solid fa-rotate-left"></i> Reset</button>
                     <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="btn-secondary text-sm hidden"><i class="fa-regular fa-pen-to-square"></i> Cancel Edit</button>
                     <button type="button" id="saveBtn" onclick="saveToBackend()" class="btn-primary text-sm"><i class="fa-solid fa-cloud-upload-alt"></i> <span id="saveBtnText">Save to Cloud</span></button>
                 </div>
@@ -275,7 +319,7 @@
             <div class="card-body"><div id="inspectionHistory" class="max-h-72 overflow-y-auto scrollbar-thin text-sm space-y-1"></div></div>
         </div>
 
-        <div class="text-center text-xs text-slate-400 mt-6 no-print">AMIMTDE · Quality Assurance Directorate v3.0</div>
+        <div class="text-center text-xs text-slate-400 mt-6 no-print">AMIMTDE · Quality Assurance Directorate v3.1</div>
     </div>
 
     <script>
@@ -301,25 +345,26 @@
             }
         }
         document.getElementById('secretInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkSecret(); });
-        function updateClock() { document.getElementById('liveClock').textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
-        updateClock(); setInterval(updateClock, 10000);
-        function showToast(msg, type = 'success') {
+
+        function showToast(msg, type = 'success', sticky = false) {
             const c = document.getElementById('toastContainer');
             const t = document.createElement('div');
-            t.className = `toast ${type}`;
-            const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
-            t.innerHTML = `<div class="toast-content"><span><i class="fa-solid ${iconMap[type] || 'fa-info-circle'}"></i></span><span>${msg}</span></div>`;
+            t.className = `toast ${type}${sticky ? ' sticky' : ''}`;
+            const iconMap = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-info-circle' };
+            t.innerHTML = `<div class="toast-content"><span><i class="fa-solid ${iconMap[type] || 'fa-info-circle'}"></i></span><span>${msg}</span></div>${sticky ? '<button class="close-btn" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' : ''}`;
             c.appendChild(t);
             requestAnimationFrame(() => t.classList.add('show'));
-            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 4000);
+            if (!sticky) {
+                setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 4000);
+            }
         }
 
-        function isAssemblyProcess(processType) {
-            if (processType === undefined) processType = currentProcess;
-            if (!processType) return false;
-            const p = processType.trim().toLowerCase();
+        function isAssemblyProcess(pt) {
+            if (pt === undefined) pt = currentProcess;
+            if (!pt) return false;
+            const p = pt.trim().toLowerCase();
             return p === 'assembling (welding)' || p === 'assembling (fastener)' ||
-                   p === 'assembly (welding)'   || p === 'assembly (fastener)' ||
+                   p === 'assembly (welding)' || p === 'assembly (fastener)' ||
                    p.includes('assembling (welding)') || p.includes('assembling (fastener)');
         }
 
@@ -338,10 +383,10 @@
 
         function getPartListFilters() {
             return {
-                client:   document.getElementById('extra_Customer_Name')?.value?.trim() || '',
-                title:    document.getElementById('extra_Project_Name')?.value?.trim() || '',
+                client: document.getElementById('extra_Customer_Name')?.value?.trim() || '',
+                title: document.getElementById('extra_Project_Name')?.value?.trim() || '',
                 subtitle: document.getElementById('extra_Subtitle')?.value?.trim() || '',
-                subSub:   document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || ''
+                subSub: document.getElementById('extra_Sub_Sub_Assembly')?.value?.trim() || ''
             };
         }
         function findMatchingParts(filters) {
@@ -351,18 +396,18 @@
             for (const insp of g_allInspections) {
                 if (isAssemblyProcess(insp.process_type)) continue;
                 const extra = insp.extra_fields || {};
-                const inspClient = (extra['Customer Name'] || '').trim();
-                const inspTitle = (extra['Project Name'] || '').trim();
-                const inspSubtitle = (extra['Subtitle'] || '').trim();
-                const inspSubSub = (extra['Sub Sub Assembly'] || '').trim();
-                const inspPart = (extra['Part Name'] || '').trim();
-                if (!inspPart) continue;
+                const ic = (extra['Customer Name'] || '').trim();
+                const it = (extra['Project Name'] || '').trim();
+                const isub = (extra['Subtitle'] || '').trim();
+                const iss = (extra['Sub Sub Assembly'] || '').trim();
+                const ip = (extra['Part Name'] || '').trim();
+                if (!ip) continue;
                 let match = true;
-                if (client && inspClient !== client) match = false;
-                if (match && title && inspTitle !== title) match = false;
-                if (match && subtitle && inspSubtitle !== subtitle) match = false;
-                if (match && subSub && inspSubSub !== subSub) match = false;
-                if (match) partsSet.add(inspPart);
+                if (client && ic !== client) match = false;
+                if (match && title && it !== title) match = false;
+                if (match && subtitle && isub !== subtitle) match = false;
+                if (match && subSub && iss !== subSub) match = false;
+                if (match) partsSet.add(ip);
             }
             return Array.from(partsSet);
         }
@@ -390,7 +435,7 @@
             selectedParts = selectedParts.filter(sp => parts.includes(sp.name));
             selectEl.innerHTML = '<option value="">-- Select Parts --</option>';
             if (parts.length === 0) {
-                const opt = document.createElement('option'); opt.value = ''; opt.textContent = '⏳ No parts available (filtered)'; opt.disabled = true; selectEl.appendChild(opt);
+                const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'No parts available (filtered)'; opt.disabled = true; selectEl.appendChild(opt);
             } else {
                 parts.sort((a, b) => a.localeCompare(b));
                 parts.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; selectEl.appendChild(o); });
@@ -406,7 +451,7 @@
             if (selectedParts.length === 0) { container.innerHTML = `<div class="text-slate-500 text-sm italic py-2">No parts selected</div>`; return; }
             let html = `<table class="part-qty-table w-full"><tbody>`;
             selectedParts.forEach((part, i) => {
-                html += `<tr><td class="text-slate-700 font-medium text-sm">${escapeHtml(part.name)}</td><td><input type="number" min="0" step="1" value="${part.qty || 1}" class="part-qty-input" data-index="${i}" /></td><td><span class="remove-part-btn" data-index="${i}"><i class="fa-regular fa-trash-can"></i></span></td></tr>`;
+                html += `<tr><td class="text-slate-700 font-medium text-sm">${escapeHtml(part.name)}</td><td><input type="number" min="0" step="1" value="${part.qty || 1}" class="part-qty-input" data-index="${i}" /></td><td><button type="button" class="remove-part-btn" data-index="${i}" title="Remove"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
             });
             html += `</tbody></table>`;
             container.innerHTML = html;
@@ -572,42 +617,38 @@
             { desc: "Tank End (dish head) Making Machine", rate: (74492.47 + 73296.73) / 1375 }
         ];
         function getRelevantMachinesForProcess(pt) {
-            const kw = {
-                Lathe: ['lathe','turning'], Milling: ['milling','mill'], Drilling: ['drill','drilling'], Grinding: ['grind','grinding'],
+            const kw = { Lathe: ['lathe','turning'], Milling: ['milling','mill'], Drilling: ['drill','drilling'], Grinding: ['grind','grinding'],
                 Punching: ['punch','punching','turret punch'], Shearing: ['shear','shearing','guillotine'], Bending: ['bend','bending','press brake'],
                 Welding: ['weld','welding','mig','tig','arc','spot'], Rolling: ['roll','rolling','plate roll'], Pressing: ['press','hydraulic press','friction screw'],
                 Casting: ['casting','furnace','sand casting'], Forging: ['forge','forging','hammer'], Assembling: ['assembly','crimping','hose','weld'],
                 Testing: ['test','measurement'], Painting: ['paint','blast','coating'], Packaging: ['pack','label','print'], Polishing: ['polish','edging'],
                 GasCutting: ['cut','plasma','laser','water jet','flame'], Hardening: ['furnace','annealing','heat treat'], Tempering: ['furnace','annealing','heat treat'],
                 Coating: ['paint','blast','coating'], BoringHoning: ['bore','hone','deep hole'], PatternCore: ['pattern','core'], Molding: ['mold','casting'],
-                FastenersAssembly: ['fastener','crimp','hose','assembly']
-            }[pt] || [];
+                FastenersAssembly: ['fastener','crimp','hose','assembly'] }[pt] || [];
             if (kw.length === 0) return machineryMaster;
             return machineryMaster.filter(m => kw.some(k => m.desc.toLowerCase().includes(k.toLowerCase())));
         }
         function populateMachineDropdown(sel) {
-            const selectEl = document.getElementById('machineDescriptionSelect'); if (!selectEl) return;
-            const current = document.getElementById('processType').value;
-            let rel = getRelevantMachinesForProcess(current); if (rel.length === 0) rel = machineryMaster;
-            let opts = '<option value="">-- Select Machine --</option>';
-            rel.forEach(m => opts += `<option value="${m.rate.toFixed(4)}">${escapeHtml(m.desc)}</option>`);
-            selectEl.innerHTML = opts;
-            if (sel !== undefined && sel !== null) selectEl.value = sel;
-            selectEl.onchange = function() { const r = parseFloat(this.value); if (!isNaN(r) && this.value) { document.getElementById('machiningCostPerHr').value = r.toFixed(2); computeFailureCost(); } };
+            const el = document.getElementById('machineDescriptionSelect'); if (!el) return;
+            let rel = getRelevantMachinesForProcess(document.getElementById('processType').value);
+            if (rel.length === 0) rel = machineryMaster;
+            let o = '<option value="">-- Select Machine --</option>';
+            rel.forEach(m => o += `<option value="${m.rate.toFixed(4)}">${escapeHtml(m.desc)}</option>`);
+            el.innerHTML = o;
+            if (sel !== undefined && sel !== null) el.value = sel;
+            el.onchange = function() { const r = parseFloat(this.value); if (!isNaN(r) && this.value) { document.getElementById('machiningCostPerHr').value = r.toFixed(2); computeFailureCost(); } };
         }
         function getWorkStationOptionsForProcess(pt) {
-            return { Lathe:['machine shop'], Milling:['machine shop'], Drilling:['machine shop'], Grinding:['machine shop'], BoringHoning:['machine shop'], Turning:['machine shop'],
-                Punching:['fabrication'], Shearing:['fabrication'], Bending:['fabrication'], Welding:['fabrication'], Rolling:['fabrication'], Pressing:['fabrication'], GasCutting:['fabrication'],
-                Assembling:['assembling'], FastenersAssembly:['assembling'], Forging:['forging'], Casting:['foundry'], PatternCore:['foundry'], Molding:['foundry'],
-                Polishing:['finishing'], Painting:['finishing'], Coating:['finishing'], Hardening:['heat treatment'], Tempering:['heat treatment'], Testing:['testing lab'], Packaging:['packaging']
-            }[pt] || ['general'];
+            return { Lathe:['machine shop'],Milling:['machine shop'],Drilling:['machine shop'],Grinding:['machine shop'],BoringHoning:['machine shop'],
+                Punching:['fabrication'],Shearing:['fabrication'],Bending:['fabrication'],Welding:['fabrication'],Rolling:['fabrication'],Pressing:['fabrication'],GasCutting:['fabrication'],
+                Assembling:['assembling'],FastenersAssembly:['assembling'],Forging:['forging'],Casting:['foundry'],PatternCore:['foundry'],Molding:['foundry'],
+                Polishing:['finishing'],Painting:['finishing'],Coating:['finishing'],Hardening:['heat treatment'],Tempering:['heat treatment'],Testing:['testing lab'],Packaging:['packaging'] }[pt] || ['general'];
         }
         function getWorkStationHtml(pt, savedValue) {
             const all = [...getWorkStationOptionsForProcess(pt), 'other'];
-            let html = `<div><label class="block text-xs font-medium text-slate-500 mb-1">Work Station</label><select id="extra_Work_Station" class="select-field">`;
-            all.forEach(o => { html += `<option value="${o}" ${savedValue === o ? 'selected' : ''}>${o.charAt(0).toUpperCase() + o.slice(1)}</option>`; });
-            html += `</select></div>`;
-            return html;
+            let h = `<div><label class="block text-xs font-medium text-slate-500 mb-1">Work Station</label><select id="extra_Work_Station" class="select-field">`;
+            all.forEach(o => { h += `<option value="${o}" ${savedValue === o ? 'selected' : ''}>${o.charAt(0).toUpperCase() + o.slice(1)}</option>`; });
+            return h + `</select></div>`;
         }
 
         const baseExtraFields = ["Customer Name","Project Name","Subtitle","Sub Sub Assembly","Drawing No.","Part Name","Tag No.","Work Station","Location"];
@@ -646,36 +687,36 @@
             const container = document.getElementById("dynamicFieldsContainer");
             if (!container) return;
             const def = getCurrentDef();
-            let html = `<div class="mb-3"><button type="button" class="btn-secondary text-sm" onclick="scanDocumentAndFill()"><i class="fa-solid fa-camera mr-2"></i> Scan Document</button></div>`;
+            let html = ``;
             if (def.extraFields?.length) {
                 html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-slate-200 pb-5 mb-5">`;
                 def.extraFields.forEach(field => {
-                    const safeId = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
+                    const sid = "extra_" + field.replace(/[^a-zA-Z0-9]/g, '_');
                     if (field === "Work Station") html += getWorkStationHtml(currentProcess, "");
-                    else if (field === "Location") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Location</label><select id="${safeId}" class="select-field"><option value="">-- Select --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
-                    else if (field === "Customer Name") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Client Name</label><input type="text" id="${safeId}" list="customerNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
-                    else if (field === "Project Name") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Title</label><input type="text" id="${safeId}" list="projectNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
-                    else if (field === "Subtitle") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Subtitle</label><input type="text" id="${safeId}" list="subtitleDatalist" class="input-field" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
-                    else if (field === "Sub Sub Assembly") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Sub Sub Assembly</label><input type="text" id="${safeId}" list="subSubDatalist" class="input-field" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
-                    else if (field === "Drawing No.") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${safeId}" list="drawingNoDatalist" class="input-field" autocomplete="off"><datalist id="drawingNoDatalist"></datalist></div>`;
+                    else if (field === "Location") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Location</label><select id="${sid}" class="select-field"><option value="">-- Select --</option><option value="bahir dar flexible">Bahir Dar Flexible</option><option value="kombolcha">Kombolcha</option><option value="transformer">Transformer</option><option value="other">Other</option></select></div>`;
+                    else if (field === "Customer Name") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Client Name</label><input type="text" id="${sid}" list="customerNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="customerNameDatalist"></datalist></div>`;
+                    else if (field === "Project Name") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Title</label><input type="text" id="${sid}" list="projectNameDatalist" class="input-field" placeholder="Auto-filled after scan" autocomplete="off"><datalist id="projectNameDatalist"></datalist></div>`;
+                    else if (field === "Subtitle") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Subtitle</label><input type="text" id="${sid}" list="subtitleDatalist" class="input-field" autocomplete="off"><datalist id="subtitleDatalist"></datalist></div>`;
+                    else if (field === "Sub Sub Assembly") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Sub Sub Assembly</label><input type="text" id="${sid}" list="subSubDatalist" class="input-field" autocomplete="off"><datalist id="subSubDatalist"></datalist></div>`;
+                    else if (field === "Drawing No.") html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">DWG No.</label><input type="text" id="${sid}" list="drawingNoDatalist" class="input-field" autocomplete="off"><datalist id="drawingNoDatalist"></datalist></div>`;
                     else if (field === "Part Name") {
                         const lbl = isAssemblyProcess() ? 'Assembly Name' : 'Part Name';
                         const ph = isAssemblyProcess() ? 'Assembly name' : 'Auto-filled after scan';
-                        html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">${lbl}</label><input type="text" id="${safeId}" list="partNameDatalist" class="input-field" placeholder="${ph}" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
+                        html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">${lbl}</label><input type="text" id="${sid}" list="partNameDatalist" class="input-field" placeholder="${ph}" autocomplete="off"><datalist id="partNameDatalist"></datalist></div>`;
                     } else if (field === "Tag No.") {
                         if (isAssemblyProcess()) {
-                            html += `<div class="part-list-container"><label class="block text-xs font-medium text-slate-500 mb-1">Part List <span class="text-slate-400 text-xs">(select parts, enter qty)</span></label><select id="${safeId}" multiple size="4" class="part-list-multi w-full"><option value="">-- Select Parts --</option></select><div id="selectedPartsContainer" class="mt-2 bg-slate-50 rounded-lg p-2 max-h-48 overflow-y-auto scrollbar-thin border border-slate-200"><div class="text-slate-500 text-sm italic py-1">No parts selected</div></div></div>`;
+                            html += `<div class="part-list-container"><label class="block text-xs font-medium text-slate-500 mb-1">Part List <span class="text-slate-400 text-xs">(select parts, enter qty)</span></label><select id="${sid}" multiple size="4" class="part-list-multi w-full"><option value="">-- Select Parts --</option></select><div id="selectedPartsContainer" class="mt-2 bg-slate-50 rounded-lg p-2 max-h-48 overflow-y-auto scrollbar-thin border border-slate-200"><div class="text-slate-500 text-sm italic py-1">No parts selected</div></div></div>`;
                         } else {
-                            html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Tag No.</label><input type="text" id="${safeId}" class="input-field"></div>`;
+                            html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">Tag No.</label><input type="text" id="${sid}" class="input-field"></div>`;
                         }
-                    } else html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">${field}</label><input type="text" id="${safeId}" class="input-field"></div>`;
+                    } else html += `<div><label class="block text-xs font-medium text-slate-500 mb-1">${field}</label><input type="text" id="${sid}" class="input-field"></div>`;
                 });
                 html += `</div>`;
             }
             html += `<div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-sm border-collapse"><thead><tr class="bg-slate-50"><th class="p-3 text-left font-semibold text-slate-600 border-b">Inspection Parameters</th><th class="p-3 text-left font-semibold text-slate-600 border-b">Acceptance</th><th class="p-3 text-left font-semibold text-slate-600 border-b">Causes</th></tr></thead><tbody>`;
             def.parameters.forEach((param, idx) => {
-                const paramId = `p_${idx}`;
-                html += `<tr><td class="p-3 font-medium text-slate-700 border-b border-slate-100">${param}</td><td class="p-3 border-b border-slate-100"><select id="rating_${paramId}" class="select-field py-1.5">${def.ratingOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td class="p-3 border-b border-slate-100"><div class="flex flex-wrap gap-3">${causeFields.map(c => `<label class="text-sm flex items-center gap-1.5"><input type="checkbox" class="cause-check accent-blue-600" data-param="${paramId}" value="${c}"> ${c}</label>`).join('')}</div></td></tr>`;
+                const pid = `p_${idx}`;
+                html += `<tr><td class="p-3 font-medium text-slate-700 border-b border-slate-100">${param}</td><td class="p-3 border-b border-slate-100"><select id="rating_${pid}" class="select-field py-1.5">${def.ratingOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td class="p-3 border-b border-slate-100"><div class="flex flex-wrap gap-3">${causeFields.map(c => `<label class="text-sm flex items-center gap-1.5"><input type="checkbox" class="cause-check accent-blue-600" data-param="${pid}" value="${c}"> ${c}</label>`).join('')}</div></td></tr>`;
             });
             html += `</tbody></table></div>`;
             container.innerHTML = html;
@@ -752,22 +793,22 @@
             const def = getCurrentDef();
             const data = {};
             for (let i = 0; i < def.parameters.length; i++) {
-                const paramId = `p_${i}`;
-                const rating = document.getElementById(`rating_${paramId}`)?.value || '';
-                const causes = Array.from(document.querySelectorAll(`.cause-check[data-param="${paramId}"]:checked`)).map(cb => cb.value);
-                data[paramId] = { parameter: def.parameters[i], rating, causes };
+                const pid = `p_${i}`;
+                const rating = document.getElementById(`rating_${pid}`)?.value || '';
+                const causes = Array.from(document.querySelectorAll(`.cause-check[data-param="${pid}"]:checked`)).map(cb => cb.value);
+                data[pid] = { parameter: def.parameters[i], rating, causes };
             }
             return data;
         }
-        function setAcceptanceData(acceptance) {
+        function setAcceptanceData(acc) {
             const def = getCurrentDef();
             for (let i = 0; i < def.parameters.length; i++) {
-                const paramId = `p_${i}`;
-                const d = acceptance[paramId];
+                const pid = `p_${i}`;
+                const d = acc[pid];
                 if (d) {
-                    const sel = document.getElementById(`rating_${paramId}`);
+                    const sel = document.getElementById(`rating_${pid}`);
                     if (sel) sel.value = d.rating;
-                    document.querySelectorAll(`.cause-check[data-param="${paramId}"]`).forEach(cb => { cb.checked = d.causes && d.causes.includes(cb.value); });
+                    document.querySelectorAll(`.cause-check[data-param="${pid}"]`).forEach(cb => { cb.checked = d.causes && d.causes.includes(cb.value); });
                 }
             }
         }
@@ -775,9 +816,9 @@
             const mat = +document.getElementById("defectedMaterialCost").value || 0;
             const lab = +document.getElementById("laborHours").value || 0;
             const sal = +document.getElementById("salaryPerHour").value || 0;
-            const machH = +document.getElementById("machiningHours").value || 0;
-            const machR = +document.getElementById("machiningCostPerHr").value || 0;
-            const total = mat + lab * sal + machH * machR;
+            const mh = +document.getElementById("machiningHours").value || 0;
+            const mr = +document.getElementById("machiningCostPerHr").value || 0;
+            const total = mat + lab * sal + mh * mr;
             document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
             document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
             return total;
@@ -794,14 +835,10 @@
             const tagNo = document.getElementById('extra_Tag_No_')?.value?.trim() || '';
             const excludeId = document.getElementById('editId').value || null;
             try {
-                const resp = await fetch('/api/inspections/last-operation', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ part_name: partName, project_name: projectName, subtitle, sub_sub_assembly: subSub, drawing_no: drawingNo, tag_no: tagNo, exclude_id: excludeId })
-                });
+                const resp = await fetch('/api/inspections/last-operation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ part_name: partName, project_name: projectName, subtitle, sub_sub_assembly: subSub, drawing_no: drawingNo, tag_no: tagNo, exclude_id: excludeId }) });
                 if (!resp.ok) throw new Error();
                 const data = await resp.json();
-                const dataDiv = document.getElementById('lastOpData');
-                const noDiv = document.getElementById('lastOpNoData');
+                const dd = document.getElementById('lastOpData'), nd = document.getElementById('lastOpNoData');
                 if (data.last_operation) {
                     const op = data.last_operation;
                     document.getElementById('lastOpProcess').textContent = op.process_type || '—';
@@ -809,8 +846,8 @@
                     document.getElementById('lastOpDate').textContent = op.submitted_at ? new Date(op.submitted_at).toLocaleDateString() : '—';
                     document.getElementById('lastOpRating').textContent = op.acceptance_rating || '—';
                     document.getElementById('lastOpSuggested').textContent = op.suggested_next || '—';
-                    dataDiv.classList.remove('hidden'); noDiv.classList.add('hidden');
-                } else { dataDiv.classList.add('hidden'); noDiv.classList.remove('hidden'); }
+                    dd.classList.remove('hidden'); nd.classList.add('hidden');
+                } else { dd.classList.add('hidden'); nd.classList.remove('hidden'); }
             } catch { document.getElementById('lastOpData').classList.add('hidden'); document.getElementById('lastOpNoData').classList.remove('hidden'); }
         }
         function updateTotalTime() {
@@ -842,17 +879,16 @@
             document.getElementById('lastOperationContainer').classList.add('hidden');
             updateVisibility();
             if (isAssemblyProcess()) setTimeout(() => { populatePartListMultiSelect(); renderSelectedPartsTable(); updateAssemblyProgress(); }, 300);
-            showToast('Form reset', 'info');
         }
-        function cancelEdit() { resetForm(); loadHistory(); }
+        function cancelEdit() { resetForm(); loadHistory(); showToast('Edit cancelled', 'info'); }
         async function deleteInspection(id) {
-            if (!confirm('⚠️ Delete this inspection? Cannot be undone.')) return;
+            if (!confirm('Delete this inspection? This cannot be undone.')) return;
             try {
-                const resp = await fetch(`/api/inspections/${id}`, { method: 'DELETE' });
-                if (!resp.ok) throw new Error((await resp.text()) || 'Unknown error');
-                showToast('✅ Deleted.', 'success');
+                const r = await fetch(`/api/inspections/${id}`, { method: 'DELETE' });
+                if (!r.ok) throw new Error(await r.text() || 'Unknown error');
+                showToast('Record deleted', 'success');
                 loadHistory();
-            } catch (err) { showToast('❌ Error: ' + err.message, 'error'); }
+            } catch (err) { showToast('Error: ' + err.message, 'error'); }
         }
         async function saveToBackend() {
             const saveBtn = document.getElementById('saveBtn');
@@ -867,10 +903,8 @@
                 const processTypeText = document.getElementById("processType").options[document.getElementById("processType").selectedIndex].text;
                 const acceptanceData = getAcceptanceData();
                 const extraFields = getExtraFields();
-
                 let delivered_qty, accepted_qty, rework_qty, reject_qty, conditional_accept_qty;
                 let total_delivered_qty, selected_parts_count, assembly_progress_pct;
-
                 if (isAssemblyProcess()) {
                     const allParts = findMatchingParts(getPartListFilters());
                     const totalParts = allParts.length;
@@ -891,7 +925,6 @@
                     conditional_accept_qty = parseInt(document.getElementById('conditionalAcceptQty').value) || 0;
                     total_delivered_qty = null; selected_parts_count = null; assembly_progress_pct = null;
                 }
-
                 const payload = {
                     process_type: processTypeText, username: engineerName, source_type: sourceType,
                     outsource_institute: document.getElementById("outsourceInstitute").value,
@@ -915,15 +948,14 @@
                     suggested_next_operation: document.getElementById("suggestedNextOp").value || null
                 };
                 if (isAssemblyProcess()) { payload.total_delivered_qty = total_delivered_qty; payload.selected_parts_count = selected_parts_count; payload.assembly_progress_pct = assembly_progress_pct; }
-
                 let url = '/api/inspections', method = 'POST';
                 if (isEditMode && editId) { url = `/api/inspections/${editId}`; method = 'PUT'; }
                 const resp = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (!resp.ok) throw new Error((await resp.json()).error || 'Unknown error');
-                showToast(`✓ Inspection ${isEditMode ? 'updated' : 'saved'}!`, 'success');
+                showToast(`${isEditMode ? 'Inspection updated' : 'Inspection saved'} successfully`, 'success', true);
                 resetForm();
                 loadHistory();
-            } catch (err) { showToast('❌ Error: ' + err.message, 'error'); }
+            } catch (err) { showToast('Error: ' + err.message, 'error'); }
             finally { saveBtn.classList.remove('btn-loading'); saveText.innerHTML = 'Save to Cloud'; }
         }
         async function loadHistory() {
@@ -936,9 +968,9 @@
                 updateSuggestionsFromInspections(allData);
                 let displayData = engineerFromUrl ? allData.filter(r => r.username === currentEngineer) : allData;
                 const histDiv = document.getElementById("inspectionHistory");
-                if (!displayData.length) histDiv.innerHTML = "<p class='text-slate-500 text-sm italic py-2'>No inspections found.</p>";
+                if (!displayData.length) histDiv.innerHTML = "<p class='text-slate-500 text-sm italic py-2'>No inspections recorded yet.</p>";
                 else histDiv.innerHTML = displayData.map(row =>
-                    `<div class="history-item"><div class="text-sm"><span class="text-slate-700 font-medium">${new Date(row.submitted_at).toLocaleString()}</span><span class="text-slate-500 ml-3">${row.process_type || 'Rolling'}</span>${row.derived_result ? `<span class="ml-2 rating-pill ${row.derived_result.toLowerCase().replace(' ','-')}">${row.derived_result}</span>` : ''}</div><div class="flex gap-2"><button onclick="editInspection(${row.id})" class="text-blue-600 hover:text-blue-800 text-sm"><i class="fa-regular fa-pen-to-square"></i></button><button onclick="deleteInspection(${row.id})" class="text-rose-600/70 hover:text-rose-500 text-sm"><i class="fa-regular fa-trash-can"></i></button></div></div>`
+                    `<div class="history-item"><div class="text-sm"><span class="text-slate-700 font-medium">${new Date(row.submitted_at).toLocaleString()}</span><span class="text-slate-500 ml-3">${row.process_type || 'Rolling'}</span>${row.derived_result ? `<span class="ml-2 rating-pill ${row.derived_result.toLowerCase().replace(' ','-')}">${row.derived_result}</span>` : ''}</div><div class="flex gap-2"><button onclick="editInspection(${row.id})" class="text-blue-600 hover:text-blue-800 text-sm px-2" title="Edit"><i class="fa-regular fa-pen-to-square"></i></button><button onclick="deleteInspection(${row.id})" class="text-rose-600/70 hover:text-rose-500 text-sm px-2" title="Delete"><i class="fa-regular fa-trash-can"></i></button></div></div>`
                 ).join("");
                 if (isAssemblyProcess()) setTimeout(() => { populatePartListMultiSelect(); renderSelectedPartsTable(); updateAssemblyProgress(); }, 300);
             } catch { showToast('Error loading history', 'error'); }
@@ -946,7 +978,7 @@
         async function editInspection(id) {
             try {
                 const resp = await fetch(`/api/inspections/${id}`);
-                if (!resp.ok) throw new Error((await resp.text()) || 'Unknown');
+                if (!resp.ok) throw new Error(await resp.text() || 'Unknown');
                 populateFormForEdit(await resp.json());
             } catch (err) { showToast('Error: ' + err.message, 'error'); }
         }
@@ -1063,9 +1095,9 @@
             fi.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (!file) { document.body.removeChild(fi); return; }
-                showToast('📸 Scanning…', 'info');
+                showToast('Scanning document…', 'info');
                 try {
-                    if (typeof Tesseract === 'undefined') { showToast('OCR engine not loaded.', 'error'); document.body.removeChild(fi); return; }
+                    if (typeof Tesseract === 'undefined') { showToast('OCR not loaded. Please fill manually.', 'error'); document.body.removeChild(fi); return; }
                     const { data: { text } } = await Tesseract.recognize(file, 'eng');
                     const ext = parseFieldsFromText(text);
                     const ci = document.getElementById("extra_Customer_Name");
@@ -1076,9 +1108,9 @@
                     if (ti && ext.projectTitle) ti.value = ext.projectTitle;
                     if (di && ext.drawingNo) di.value = ext.drawingNo;
                     if (pi && ext.partName) pi.value = ext.partName;
-                    showToast('✅ Scanned!', 'success');
+                    showToast('Document scanned successfully', 'success');
                     if (isAssemblyProcess()) setTimeout(() => { populatePartListMultiSelect(); renderSelectedPartsTable(); updateAssemblyProgress(); }, 300);
-                } catch { showToast('❌ OCR failed.', 'error'); }
+                } catch { showToast('OCR failed. Please fill manually.', 'error'); }
                 finally { document.body.removeChild(fi); }
             };
             fi.click();
@@ -1087,7 +1119,7 @@
             const r = { clientName: '', projectTitle: '', drawingNo: '', partName: '' };
             const patterns = {
                 clientName: [/Client\s*Name\s*[:;]\s*(.+)/i, /Customer\s*Name\s*[:;]\s*(.+)/i, /Client\s*[:;]\s*(.+)/i],
-                projectTitle: [/Title\s*[:;]\s*(.+)/i, /Project\s*Title\s*[:;]\s*(.+)/i, /Project\s*Name\s*[:;]\s*(.+)/i, /Project\s*[:;]\s*(.+)/i],
+                projectTitle: [/Title\s*[:;]\s*(.+)/i, /Project\s*Title\s*[:;]\s*(.+)/i, /Project\s*Name\s*[:;]\s*(.+)/i],
                 drawingNo: [/DWG\s*No\.?\s*[:;]\s*(.+)/i, /Drawing\s*No\.?\s*[:;]\s*(.+)/i, /Drawing\s*Number\s*[:;]\s*(.+)/i],
                 partName: [/Part\s*Name\s*[:;]\s*(.+)/i, /Part\s*[:;]\s*(.+)/i, /Part\s*No\.?\s*[:;]\s*(.+)/i]
             };
@@ -1109,7 +1141,6 @@
             updateVisibility();
             if (isAssemblyProcess()) setTimeout(() => { populatePartListMultiSelect(); renderSelectedPartsTable(); updateAssemblyProgress(); }, 300);
         }
-        console.log('✅ QC Inspection v3.0 — canonical metrics');
     </script>
 </body>
 </html>
