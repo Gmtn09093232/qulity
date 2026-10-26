@@ -119,14 +119,10 @@
 
     <div id="mainContent">
 
+        <!-- NAVIGATION BAR: Only Inspection tab remains -->
         <div class="nav-bar no-print">
             <div class="nav-brand"><i class="fa-solid fa-industry"></i> AMIMTDE</div>
             <a href="/" class="active">Inspection</a>
-            <a href="/list">Report</a>
-            <a href="/up">Follow-Up</a>
-            <a href="/dash">Assembly</a>
-            <a href="/tools">QC Tools</a>
-            <a href="/admin">Dashboard</a>
         </div>
 
         <div class="card mb-5">
@@ -1135,7 +1131,7 @@
             populateSuggestedNextOps();
             attachPartListListeners();
             updateVisibility();
-            if (isAssemblyProcess()) setTimeout(() => { populatePartListMultiList(); renderSelectedPartsTable(); updateAssemblyProgress(); }, 300);
+            if (isAssemblyProcess()) setTimeout(() => { populatePartListMultiSelect(); renderSelectedPartsTable(); updateAssemblyProgress(); }, 300);
         }
     </script>
 </body>
