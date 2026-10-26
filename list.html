@@ -3,68 +3,68 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-    <title>Inspection Report | Amhara Metal Industry</title>
+    <title>Inspection Report | AMIMTDE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
     <style>
         @media print {
             body * { visibility: hidden; }
             .report-container, .report-container * { visibility: visible; }
             .report-container { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
             .no-print { display: none !important; }
-            .filter-bar, .action-buttons, .summary-cards { display: none !important; }
+            .nav-bar, .filter-bar, .action-buttons, .summary-cards { display: none !important; }
             table th, table td { padding: 4px 6px !important; font-size: 0.7rem !important; border: 1px solid #b0b0b0 !important; }
             .table-wrapper { border-radius: 0 !important; }
             .manual-edit-btn { display: none !important; }
         }
         body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
-        .table-wrapper { overflow-x: auto; border-radius: 1rem; scroll-behavior: smooth; }
+        .nav-bar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 10px 24px; display: flex; align-items: center; gap: 4px; overflow-x: auto; }
+        .nav-bar a { padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; color: #475569; white-space: nowrap; text-decoration: none; transition: all 0.15s; }
+        .nav-bar a:hover { background: #f1f5f9; }
+        .nav-bar a.active { background: #eef2ff; color: #4338ca; font-weight: 600; }
+        .nav-brand { font-weight: 700; color: #1e293b; margin-right: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .table-wrapper { overflow-x: auto; border-radius: 1rem; position: relative; }
+        .table-wrapper::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 24px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.05)); pointer-events: none; border-radius: 0 1rem 1rem 0; }
         .table-wrapper::-webkit-scrollbar { height: 6px; }
-        .table-wrapper::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 999px; }
         .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.82rem; border: 1px solid #d1d5db; }
-        th { background: #f8fafc; position: sticky; top: 0; z-index: 10; padding: 12px 10px; font-weight: 600; border: 1px solid #d1d5db; border-bottom: 2px solid #b0b8c4; white-space: nowrap; font-size: 0.7rem; letter-spacing: 0.02em; text-transform: uppercase; color: #475569; }
-        th i { margin-right: 4px; color: #64748b; font-size: 0.7rem; }
+        th { background: #f8fafc; position: sticky; top: 0; z-index: 10; padding: 12px 10px; font-weight: 600; border: 1px solid #d1d5db; border-bottom: 2px solid #b0b8c4; white-space: nowrap; font-size: 0.7rem; text-transform: uppercase; color: #475569; }
         td { padding: 8px 6px; border: 1px solid #d1d5db; vertical-align: middle; font-size: 0.8rem; }
-        tr:hover td { background-color: #f8fafc; }
-        .summary-card { transition: all 0.2s ease; border-radius: 1rem; border: 1px solid #eef2f6; background: white; padding: 1.25rem 1.5rem; }
-        .summary-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07); }
-        .summary-card .icon-wrap { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .summary-card .stat-value { font-size: 1.75rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em; line-height: 1.2; }
-        .summary-card .stat-label { font-size: 0.7rem; font-weight: 500; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+        .summary-ribbon { background: white; border-radius: 1rem; border: 1px solid #eef2f6; padding: 1rem 1.5rem; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; justify-content: center; }
+        .summary-ribbon .metric { text-align: center; }
+        .summary-ribbon .metric .label { font-size: 0.65rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+        .summary-ribbon .metric .value { font-size: 1.35rem; font-weight: 700; color: #0f172a; line-height: 1.2; }
+        .summary-ribbon .divider { width: 1px; height: 40px; background: #e2e8f0; }
         .filter-bar { background: white; border-radius: 1rem; padding: 1rem 1.25rem; border: 1px solid #eef2f6; }
-        .filter-bar label { display: block; font-size: 0.65rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+        .filter-bar label { display: block; font-size: 0.65rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
         .filter-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.6rem 0.9rem; font-size: 0.8rem; background: #fafbfc; color: #0f172a; }
         .filter-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); background: white; }
         .badge { display: inline-block; padding: 0.1rem 0.7rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 600; }
         .badge-accepted { background: #dcfce7; color: #166534; }
-        .badge-conditional { background: #f3e8ff; color: #6b21a8; }
         .col-delivered { background: #eff6ff; font-weight: 700; color: #1e40af; }
         .col-accepted { color: #166534; font-weight: 600; }
         .col-conditional { color: #6b21a8; font-weight: 600; }
         .cell-nowrap { white-space: nowrap; }
-        .cell-drawing { white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; display: inline-block; font-size: 0.7rem; font-family: 'SF Mono','Fira Code',monospace; color: #475569; background: #f8fafc; padding: 1px 8px; border-radius: 999px; border: 1px solid #eef2f6; }
+        .cell-drawing { white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; display: inline-block; font-size: 0.7rem; font-family: 'SF Mono', monospace; color: #475569; background: #f8fafc; padding: 1px 8px; border-radius: 999px; border: 1px solid #eef2f6; }
         .title-name { font-weight: 600; color: #0f172a; display: block; line-height: 1.3; margin-bottom: 4px; font-size: 0.85rem; }
         .sub-assembly-tag { font-size: 0.65rem; background: #eef2ff; color: #4338ca; padding: 0.1rem 0.7rem; border-radius: 9999px; display: inline-block; font-weight: 500; }
         .badge-card { background: #fafbfc; border-radius: 0.5rem; border: 1px solid #eef2f6; padding: 4px 10px 6px; display: inline-block; min-width: 130px; width: 100%; }
-        .badge-card .stat-row { display: flex; justify-content: space-between; font-size: 0.6rem; line-height: 1.5; }
+        .badge-card .stat-row { display: flex; justify-content: space-between; font-size: 0.65rem; line-height: 1.6; }
         .badge-card .stat-label { color: #94a3b8; font-weight: 500; }
         .badge-card .stat-value { font-weight: 700; color: #0f172a; }
-        .badge-card .progress-bar { width: 100%; height: 3px; background: #e2e8f0; border-radius: 999px; margin: 3px 0 2px; overflow: hidden; }
-        .badge-card .progress-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
-        .badge-card .footer-row { display: flex; justify-content: space-between; align-items: center; min-height: 16px; gap: 4px; }
-        .badge-card .manual-tag { font-size: 0.55rem; font-weight: 700; color: #b45309; background: #fef3c7; padding: 0 6px; border-radius: 999px; border: 1px solid #fcd34d; text-transform: uppercase; }
-        .badge-card .actual-pct { font-size: 0.55rem; color: #94a3b8; }
+        .badge-card .manual-tag { font-size: 0.55rem; font-weight: 700; color: #b45309; background: #fef3c7; padding: 0 6px; border-radius: 999px; border: 1px solid #fcd34d; text-transform: uppercase; margin-left: 4px; }
         .manual-edit-btn { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 2px 4px; font-size: 0.65rem; border-radius: 6px; }
         .manual-edit-btn:hover { color: #2563eb; background: #eef2ff; }
+        .manual-edit-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 998; }
+        .manual-edit-overlay.active { display: block; }
         .manual-edit-popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 1.25rem; padding: 1.75rem 2rem 1.5rem; box-shadow: 0 24px 80px rgba(0,0,0,0.25); z-index: 999; min-width: 300px; max-width: 94vw; border: 1px solid #e2e8f0; }
         .manual-edit-popup.active { display: block; }
         .manual-edit-popup .popup-title { font-weight: 700; font-size: 1rem; color: #0f172a; margin-bottom: 2px; }
         .manual-edit-popup .popup-sub { font-size: 0.7rem; color: #94a3b8; word-break: break-all; margin-bottom: 1rem; padding: 4px 8px; background: #f8fafc; border-radius: 6px; }
         .manual-edit-popup label { font-size: 0.65rem; font-weight: 600; color: #475569; display: block; margin-top: 10px; text-transform: uppercase; }
         .manual-edit-popup input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.6rem; padding: 8px 12px; font-size: 0.9rem; margin-top: 2px; background: #fafbfc; }
-        .manual-edit-popup input:focus { outline: none; border-color: #3b82f6; background: white; }
         .manual-edit-popup .popup-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
         .manual-edit-popup .popup-actions button { padding: 7px 18px; border-radius: 0.6rem; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; }
         .manual-edit-popup .btn-cancel { background: #f1f5f9; color: #475569; }
@@ -73,36 +73,61 @@
         .loader { border: 3px solid #e2e8f0; border-top: 3px solid #3b82f6; border-radius: 50%; width: 32px; height: 32px; animation: spin 0.7s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .btn-icon { display: inline-flex; align-items: center; gap: 6px; }
-        @media (max-width: 640px) {
-            .summary-card .stat-value { font-size: 1.25rem; }
-            .summary-card { padding: 0.75rem 1rem; }
-            table { font-size: 0.7rem; }
-            th, td { padding: 4px 4px; }
+        @media (max-width: 768px) {
+            th, td { padding: 4px 4px; font-size: 0.7rem; }
+            .col-hide-mobile { display: none; }
             .badge-card { min-width: 100px; }
             .cell-drawing { max-width: 100px; font-size: 0.6rem; }
         }
     </style>
 </head>
 <body>
+
+    <div class="nav-bar no-print">
+        <div class="nav-brand"><i class="fa-solid fa-industry"></i> AMIMTDE</div>
+        <a href="/">Inspection</a>
+        <a href="/list" class="active">Report</a>
+        <a href="/up">Follow-Up</a>
+        <a href="/dash">Assembly</a>
+        <a href="/tools">QC Tools</a>
+        <a href="/admin">Dashboard</a>
+    </div>
+
     <div class="max-w-7xl mx-auto p-3 md:p-6">
+
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-5 mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
             <div class="flex items-center gap-3">
                 <div class="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600"><i class="fa-solid fa-clipboard-list text-xl"></i></div>
-                <div><h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">Inspection Report</h1><p class="text-xs text-gray-400 mt-0.5">First-op quantities per part · excl. assemblies</p></div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-800">Inspection Report</h1>
+                    <p class="text-xs text-gray-400 mt-0.5">First-op quantities per part · Assemblies excluded</p>
+                </div>
             </div>
             <div class="flex flex-wrap gap-2">
                 <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-file-excel"></i> Excel</button>
                 <button onclick="copyTableToClipboard()" class="bg-gray-600 hover:bg-gray-700 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-copy"></i> Copy</button>
                 <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-print"></i> Print</button>
                 <button onclick="fetchReportData()" class="bg-slate-700 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-sync-alt"></i> Refresh</button>
-                <button onclick="clearAllManualOverrides()" class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-undo-alt"></i> Reset Overrides</button>
+                <div class="relative">
+                    <button onclick="document.getElementById('moreMenu').classList.toggle('hidden')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm"><i class="fas fa-ellipsis-h"></i></button>
+                    <div id="moreMenu" class="hidden absolute right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 py-1 w-48 z-50">
+                        <button onclick="clearAllManualOverrides(); document.getElementById('moreMenu').classList.add('hidden')" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-undo-alt mr-2"></i> Reset all overrides</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 no-print summary-cards">
-            <div class="summary-card flex items-center gap-4"><div class="icon-wrap bg-blue-50 text-blue-600"><i class="fa-solid fa-boxes-stacked"></i></div><div><div class="stat-value" id="totalDeliveredSum">0</div><div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Delivered (first op)</div></div></div>
-            <div class="summary-card flex items-center gap-4"><div class="icon-wrap bg-emerald-50 text-emerald-600"><i class="fa-solid fa-circle-check"></i></div><div><div class="stat-value" id="totalAcceptedSum">0</div><div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Accepted (first op)</div></div></div>
-            <div class="summary-card flex items-center gap-4"><div class="icon-wrap bg-purple-50 text-purple-600"><i class="fa-solid fa-flag"></i></div><div><div class="stat-value" id="totalConditionalSum">0</div><div class="stat-label"><i class="fa-regular fa-flag mr-1"></i> Conditional (first op)</div></div></div>
+        <!-- Summary ribbon with all 5 metrics -->
+        <div class="summary-ribbon mb-6 no-print">
+            <div class="metric"><div class="label">Delivered</div><div class="value text-blue-700" id="totalDeliveredSum">0</div></div>
+            <div class="divider"></div>
+            <div class="metric"><div class="label">Accepted</div><div class="value text-emerald-700" id="totalAcceptedSum">0</div></div>
+            <div class="divider"></div>
+            <div class="metric"><div class="label">Rework</div><div class="value text-amber-600" id="totalReworkSum">0</div></div>
+            <div class="divider"></div>
+            <div class="metric"><div class="label">Reject</div><div class="value text-red-600" id="totalRejectSum">0</div></div>
+            <div class="divider"></div>
+            <div class="metric"><div class="label">Conditional</div><div class="value text-purple-600" id="totalConditionalSum">0</div></div>
         </div>
 
         <div class="filter-bar no-print mb-5">
@@ -110,7 +135,7 @@
                 <div><label><i class="fa-regular fa-folder-open"></i> Title</label><select id="projectFilterSelect" class="filter-input"><option value="">All Titles</option></select></div>
                 <div><label><i class="fa-solid fa-gears"></i> Process</label><select id="processFilterSelect" class="filter-input"><option value="">All Processes</option></select></div>
                 <div><label><i class="fa-solid fa-user"></i> QC Engineer</label><select id="engineerFilterSelect" class="filter-input"><option value="">All Engineers</option></select></div>
-                <div><label><i class="fa-regular fa-magnifying-glass"></i> Search</label><input type="text" id="searchInput" placeholder="Part, drawing, client…" class="filter-input" /></div>
+                <div><label><i class="fa-regular fa-magnifying-glass"></i> Search</label><input type="text" id="searchInput" placeholder="Parts, drawings, engineers…" class="filter-input" /></div>
                 <div><button id="clearFiltersBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium btn-icon w-full justify-center"><i class="fas fa-eraser"></i> Clear</button></div>
             </div>
         </div>
@@ -124,10 +149,10 @@
                         <th class="text-left" style="min-width:170px;"><i class="fa-regular fa-tag"></i> Subtitle</th>
                         <th class="text-left" style="min-width:170px;"><i class="fa-regular fa-cubes"></i> Sub Sub Assembly</th>
                         <th class="text-left cell-nowrap"><i class="fa-regular fa-cog"></i> Part</th>
-                        <th class="text-left cell-nowrap"><i class="fa-regular fa-file-lines"></i> Drawing</th>
+                        <th class="text-left cell-nowrap col-hide-mobile"><i class="fa-regular fa-file-lines"></i> Drawing</th>
                         <th class="text-right bg-blue-50/60"><i class="fa-regular fa-box"></i> Delivered</th>
-                        <th class="text-right"><i class="fa-regular fa-circle-check"></i> Accepted</th>
-                        <th class="text-right"><i class="fa-regular fa-flag"></i> Conditional</th>
+                        <th class="text-right col-hide-mobile"><i class="fa-regular fa-circle-check"></i> Accepted</th>
+                        <th class="text-right col-hide-mobile"><i class="fa-regular fa-flag"></i> Conditional</th>
                     </tr></thead>
                     <tbody id="reportTableBody"><tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-400 text-sm mt-2">Loading…</p></td></tr></tbody>
                 </table>
@@ -139,6 +164,9 @@
         </div>
     </div>
 
+    <div class="manual-edit-overlay" id="manualEditOverlay" onclick="closeManualEdit()"></div>
+    <div class="manual-edit-popup" id="manualEditPopup"></div>
+
     <script>
         const TITLE_KEY = 'manualTitleOverrides';
         const SUBTITLE_KEY = 'manualSubtitleOverrides';
@@ -148,8 +176,7 @@
         function isExcluded(p) {
             if (!p) return false;
             const l = p.trim().toLowerCase();
-            return l.includes('assembling (welding)') || l.includes('assembling (fastener)') ||
-                   l.includes('assembling(welding)') || l.includes('assembling(fastener)');
+            return l.includes('assembling (welding)') || l.includes('assembling (fastener)') || l.includes('assembling(welding)') || l.includes('assembling(fastener)');
         }
 
         let serverOverrides = {};
@@ -167,14 +194,14 @@
         async function saveOverride(level, id, parts, deliv) {
             const key = level === 'title' ? TITLE_KEY : level === 'subtitle' ? SUBTITLE_KEY : ASSEMBLY_KEY;
             if (!key) return;
-            const fullKey = `${key}|${id}`;
+            const fk = `${key}|${id}`;
             if (parts === undefined || deliv === undefined) {
-                delete serverOverrides[fullKey];
+                delete serverOverrides[fk];
                 fetch('/api/overrides', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: key, id, parts: null, delivered: null }) }).catch(() => {});
                 const o = (() => { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; } })();
                 delete o[id]; localStorage.setItem(key, JSON.stringify(o));
             } else {
-                serverOverrides[fullKey] = { parts: +parts, delivered: +deliv };
+                serverOverrides[fk] = { parts: +parts, delivered: +deliv };
                 fetch('/api/overrides', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: key, id, parts: +parts, delivered: +deliv }) }).catch(() => {});
                 const o = (() => { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; } })();
                 o[id] = { parts: +parts, delivered: +deliv }; localStorage.setItem(key, JSON.stringify(o));
@@ -182,7 +209,7 @@
             applyFilters();
         }
         async function clearAllManualOverrides() {
-            if (!confirm('Clear ALL manual overrides for every user?')) return;
+            if (!confirm('Clear ALL manual overrides for every user? This cannot be undone.')) return;
             serverOverrides = {};
             localStorage.removeItem(TITLE_KEY); localStorage.removeItem(SUBTITLE_KEY); localStorage.removeItem(ASSEMBLY_KEY);
             await Promise.all([TITLE_KEY, SUBTITLE_KEY, ASSEMBLY_KEY].map(level => Promise.all(
@@ -197,7 +224,7 @@
         function clientName(insp) { return (insp.customer_name && insp.customer_name.trim()) ? insp.customer_name.trim() : extra(insp, 'Customer Name'); }
         function projectName(insp) { return (insp.project_name && insp.project_name.trim()) ? insp.project_name.trim() : extra(insp, 'Project Name'); }
         function subtitle(insp) { return extra(insp, 'Subtitle'); }
-        function subAssembly(insp) { return extra(insp, 'Sub Sub Assembly') || extra(insp, 'SubAssembly') || extra(insp, 'Sub-Assembly') || ''; }
+        function subAssembly(insp) { return extra(insp, 'Sub Sub Assembly') || ''; }
         function fmt(v) { if (v === undefined || v === null || v === '') return '-'; const n = Number(v); return isNaN(n) ? '-' : n.toLocaleString(); }
         function num(v) { if (v === undefined || v === null || v === '') return 0; const n = Number(v); return isNaN(n) ? 0 : n; }
         function esc(s) { if (!s) return ''; return s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
@@ -207,17 +234,16 @@
 
         async function fetchReportData() {
             const tbody = document.getElementById('reportTableBody');
-            const status = document.getElementById('recordStatus');
             try {
                 await loadServerOverrides();
                 tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-400 text-sm mt-2">Fetching…</p></td></tr>`;
-                status.innerText = 'Loading…';
+                document.getElementById('recordStatus').innerText = 'Loading…';
                 const resp = await fetch('/api/inspections');
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const data = await resp.json();
                 const rows = [];
                 projSet.clear(); procSet.clear(); engSet.clear();
-                let sumD = 0, sumA = 0, sumC = 0;
+                let sumD = 0, sumA = 0, sumRw = 0, sumRej = 0, sumC = 0;
                 const seenParts = new Set();
                 for (const insp of data) {
                     const proc = insp.process_type || '';
@@ -230,16 +256,20 @@
                     const draw = extra(insp, 'Drawing No.') || '-';
                     const part = extra(insp, 'Part Name') || '-';
                     const acc = num(insp.accepted_qty);
+                    const rw = num(insp.rework_qty);
+                    const rej = num(insp.reject_qty);
                     const cond = num(insp.conditional_accept_qty);
-                    const del = acc + cond;
+                    const del = acc + rw + rej + cond;
                     const partKey = `${cl}|${pr}|${st}|${sa}|${part}`;
                     const isFirst = !seenParts.has(partKey);
-                    if (isFirst) { seenParts.add(partKey); sumD += del; sumA += acc; sumC += cond; }
+                    if (isFirst) { seenParts.add(partKey); sumD += del; sumA += acc; sumRw += rw; sumRej += rej; sumC += cond; }
                     if (pr) projSet.add(pr); if (proc) procSet.add(proc); if (eng) engSet.add(eng);
-                    rows.push({ client: cl, project: pr, subtitle: st, subAssembly: sa, drawing: draw, part, delivered: fmt(del), deliveredRaw: del, accepted: fmt(acc), acceptedRaw: acc, conditional: fmt(cond), conditionalRaw: cond, process: proc, engineer: eng, search: `${cl} ${pr} ${st} ${sa} ${draw} ${part} ${del} ${acc} ${cond} ${proc} ${eng}`.toLowerCase(), isFirstOp: isFirst });
+                    rows.push({ client: cl, project: pr, subtitle: st, subAssembly: sa, drawing: draw, part, delivered: fmt(del), deliveredRaw: del, accepted: fmt(acc), acceptedRaw: acc, reworkRaw: rw, rejectRaw: rej, conditional: fmt(cond), conditionalRaw: cond, process: proc, engineer: eng, search: `${cl} ${pr} ${st} ${sa} ${draw} ${part} ${del} ${acc} ${cond} ${proc} ${eng}`.toLowerCase(), isFirstOp: isFirst });
                 }
                 document.getElementById('totalDeliveredSum').innerText = sumD.toLocaleString();
                 document.getElementById('totalAcceptedSum').innerText = sumA.toLocaleString();
+                document.getElementById('totalReworkSum').innerText = sumRw.toLocaleString();
+                document.getElementById('totalRejectSum').innerText = sumRej.toLocaleString();
                 document.getElementById('totalConditionalSum').innerText = sumC.toLocaleString();
                 const pSel = document.getElementById('projectFilterSelect');
                 pSel.innerHTML = '<option value="">All Titles</option>';
@@ -252,10 +282,10 @@
                 [...engSet].sort().forEach(v => { eSel.innerHTML += `<option value="${esc(v)}">${esc(v)}</option>`; });
                 allRows = rows;
                 applyFilters();
-                status.innerText = `✅ ${rows.length} records · excl. ${EXCLUDED.join(', ')}`;
+                document.getElementById('recordStatus').innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> ${rows.length} records · assemblies excluded`;
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-red-500"><i class="fa-regular fa-circle-exclamation text-2xl"></i><p class="mt-2 text-sm">Error: ${err.message}</p></td></tr>`;
-                status.innerText = '❌ Error';
+                document.getElementById('recordStatus').innerText = 'Error';
             }
         }
 
@@ -272,30 +302,26 @@
             renderAggregated(filtered);
         }
 
-        // Corrected KPI: average units per part (NOT a percentage)
         function metaBadge(parts, deliv, isManual, origParts, origDeliv) {
             const avgUnits = parts > 0 ? (deliv / parts) : 0;
             const actualAvg = origParts > 0 ? (origDeliv / origParts) : 0;
-            const visual = Math.min(100, (avgUnits / 10) * 100);
             const manualTag = isManual ? `<span class="manual-tag">manual</span>` : '';
-            const actualHtml = isManual ? `<span class="actual-pct">actual ${actualAvg.toFixed(1)} u/p</span>` : '';
+            const actual = isManual ? `<div class="text-[0.55rem] text-slate-400 mt-1">actual: ${actualAvg.toFixed(1)} u/p</div>` : '';
             return `<div class="badge-card">
                 <div class="stat-row"><span class="stat-label">Parts</span><span class="stat-value">${parts}</span></div>
-                <div class="stat-row"><span class="stat-label">Deliv</span><span class="stat-value">${fmt(deliv)}</span></div>
+                <div class="stat-row"><span class="stat-label">Delivered</span><span class="stat-value">${fmt(deliv)}</span></div>
                 <div class="stat-row"><span class="stat-label">Avg/part</span><span class="stat-value">${avgUnits.toFixed(1)}</span></div>
-                <div class="progress-bar"><div class="progress-fill bg-blue-500" style="width:${visual}%"></div></div>
-                <div class="footer-row">${manualTag}${actualHtml}</div>
+                ${actual}${manualTag}
             </div>`;
         }
 
         function renderAggregated(rows) {
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-smile text-2xl"></i><p class="mt-2 text-sm">No matching records</p></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-gray-400"><div class="text-4xl mb-2"><i class="fa-regular fa-face-smile"></i></div><p class="text-sm mb-1">No results for these filters.</p><p class="text-xs">Assemblies excluded by design.</p><button onclick="clearFilters()" class="mt-3 text-indigo-600 underline text-xs">Clear filters</button></td></tr>`;
                 document.getElementById('recordCount').innerText = '0 parts';
                 return;
             }
-
             const cm = new Map();
             for (const r of rows) {
                 const c = r.client;
@@ -311,54 +337,46 @@
                 if (!se.assemblies.has(a)) se.assemblies.set(a, { assembly: a, parts: new Map() });
                 const ae = se.assemblies.get(a);
                 const p = r.part;
-                if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, cond: 0, drawings: new Set(), firstSeen: false });
+                if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, rw: 0, rej: 0, cond: 0, drawings: new Set(), firstSeen: false });
                 const pe = ae.parts.get(p);
-                if (!pe.firstSeen) { pe.deliv += r.deliveredRaw; pe.acc += r.acceptedRaw; pe.cond += r.conditionalRaw; pe.firstSeen = true; }
+                if (!pe.firstSeen) { pe.deliv += r.deliveredRaw; pe.acc += r.acceptedRaw; pe.rw += r.reworkRaw; pe.rej += r.rejectRaw; pe.cond += r.conditionalRaw; pe.firstSeen = true; }
                 if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
-
-            for (const ce of cm.values()) {
-                for (const te of ce.titles.values()) {
-                    let tParts = new Set(), tDeliv = 0;
-                    for (const se of te.subtitles.values()) {
-                        let sParts = new Set(), sDeliv = 0;
-                        for (const ae of se.assemblies.values()) {
-                            let aParts = new Set(), aDeliv = 0;
-                            for (const pe of ae.parts.values()) if (pe.deliv > 0) { aParts.add(pe.part); aDeliv += pe.deliv; }
-                            ae.partsSet = aParts; ae.totalDeliv = aDeliv;
-                            sParts = new Set([...sParts, ...aParts]); sDeliv += aDeliv;
-                        }
-                        se.partsSet = sParts; se.totalDeliv = sDeliv;
-                        tParts = new Set([...tParts, ...sParts]); tDeliv += sDeliv;
+            for (const ce of cm.values()) for (const te of ce.titles.values()) {
+                let tP = new Set(), tD = 0;
+                for (const se of te.subtitles.values()) {
+                    let sP = new Set(), sD = 0;
+                    for (const ae of se.assemblies.values()) {
+                        let aP = new Set(), aD = 0;
+                        for (const pe of ae.parts.values()) if (pe.deliv > 0) { aP.add(pe.part); aD += pe.deliv; }
+                        ae.partsSet = aP; ae.totalDeliv = aD;
+                        sP = new Set([...sP, ...aP]); sD += aD;
                     }
-                    te.partsSet = tParts; te.totalDeliv = tDeliv;
+                    se.partsSet = sP; se.totalDeliv = sD;
+                    tP = new Set([...tP, ...sP]); tD += sD;
                 }
+                te.partsSet = tP; te.totalDeliv = tD;
             }
-
             const oT = getOverrides(TITLE_KEY), oS = getOverrides(SUBTITLE_KEY), oA = getOverrides(ASSEMBLY_KEY);
-            for (const ce of cm.values()) {
-                for (const te of ce.titles.values()) {
-                    const m = oT[te.title];
-                    if (m) { te.partsSet = new Set(Array(m.parts).fill('manual')); te.totalDeliv = m.delivered; }
-                    for (const se of te.subtitles.values()) {
-                        const id = `${ce.client}|${te.title}|${se.subtitle}`;
-                        const m2 = oS[id];
-                        if (m2) { se.partsSet = new Set(Array(m2.parts).fill('manual')); se.totalDeliv = m2.delivered; }
-                        for (const ae of se.assemblies.values()) {
-                            const id2 = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`;
-                            const m3 = oA[id2];
-                            if (m3) { ae.partsSet = new Set(Array(m3.parts).fill('manual')); ae.totalDeliv = m3.delivered; }
-                        }
+            for (const ce of cm.values()) for (const te of ce.titles.values()) {
+                const m = oT[te.title];
+                if (m) { te.partsSet = new Set(Array(m.parts).fill('manual')); te.totalDeliv = m.delivered; }
+                for (const se of te.subtitles.values()) {
+                    const sid = `${ce.client}|${te.title}|${se.subtitle}`;
+                    const m2 = oS[sid];
+                    if (m2) { se.partsSet = new Set(Array(m2.parts).fill('manual')); se.totalDeliv = m2.delivered; }
+                    for (const ae of se.assemblies.values()) {
+                        const aid = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`;
+                        const m3 = oA[aid];
+                        if (m3) { ae.partsSet = new Set(Array(m3.parts).fill('manual')); ae.totalDeliv = m3.delivered; }
                     }
                 }
             }
-
             const countParts = ae => { let c = 0; for (const pe of ae.parts.values()) if (pe.deliv > 0) c++; return c; };
-            const rowsAssembly = ae => countParts(ae);
-            const rowsSubtitle = se => { let s = 0; for (const ae of se.assemblies.values()) s += rowsAssembly(ae); return s; };
-            const rowsTitle = te => { let s = 0; for (const se of te.subtitles.values()) s += rowsSubtitle(se); return s; };
+            const rowsAsm = ae => countParts(ae);
+            const rowsSub = se => { let s = 0; for (const ae of se.assemblies.values()) s += rowsAsm(ae); return s; };
+            const rowsTitle = te => { let s = 0; for (const se of te.subtitles.values()) s += rowsSub(se); return s; };
             const rowsClient = ce => { let s = 0; for (const te of ce.titles.values()) s += rowsTitle(te); return s; };
-
             let html = '', totalParts = 0;
             for (const ce of cm.values()) {
                 const cTotal = rowsClient(ce);
@@ -366,56 +384,53 @@
                 for (const te of ce.titles.values()) {
                     const tTotal = rowsTitle(te);
                     let tPrinted = false;
-                    const rawTP = te.partsSet.size, rawTD = te.totalDeliv;
-                    let dispTP = rawTP, dispTD = rawTD, isTMan = false;
+                    const tP = te.partsSet.size, tD = te.totalDeliv;
+                    let dispTP = tP, dispTD = tD, isTM = false;
                     const tMan = oT[te.title];
-                    if (tMan) { dispTP = tMan.parts; dispTD = tMan.delivered; isTMan = true; }
-                    const tBadge = metaBadge(dispTP, dispTD, isTMan, rawTP, rawTD);
+                    if (tMan) { dispTP = tMan.parts; dispTD = tMan.delivered; isTM = true; }
+                    const tBadge = metaBadge(dispTP, dispTD, isTM, tP, tD);
                     for (const se of te.subtitles.values()) {
-                        const sTotal = rowsSubtitle(se);
+                        const sTotal = rowsSub(se);
                         let sPrinted = false;
-                        const rawSP = se.partsSet.size, rawSD = se.totalDeliv;
-                        let dispSP = rawSP, dispSD = rawSD, isSMan = false;
+                        const sP = se.partsSet.size, sD = se.totalDeliv;
+                        let dispSP = sP, dispSD = sD, isSM = false;
                         const sId = `${ce.client}|${te.title}|${se.subtitle}`;
                         const sMan = oS[sId];
-                        if (sMan) { dispSP = sMan.parts; dispSD = sMan.delivered; isSMan = true; }
-                        const sBadge = metaBadge(dispSP, dispSD, isSMan, rawSP, rawSD);
+                        if (sMan) { dispSP = sMan.parts; dispSD = sMan.delivered; isSM = true; }
+                        const sBadge = metaBadge(dispSP, dispSD, isSM, sP, sD);
                         for (const ae of se.assemblies.values()) {
-                            const aTotal = rowsAssembly(ae);
+                            const aTotal = rowsAsm(ae);
                             let aPrinted = false;
-                            const rawAP = ae.partsSet.size, rawAD = ae.totalDeliv;
-                            let dispAP = rawAP, dispAD = rawAD, isAMan = false;
+                            const aP = ae.partsSet.size, aD = ae.totalDeliv;
+                            let dispAP = aP, dispAD = aD, isAM = false;
                             const aId = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`;
                             const aMan = oA[aId];
-                            if (aMan) { dispAP = aMan.parts; dispAD = aMan.delivered; isAMan = true; }
-                            const aBadge = metaBadge(dispAP, dispAD, isAMan, rawAP, rawAD);
+                            if (aMan) { dispAP = aMan.parts; dispAD = aMan.delivered; isAM = true; }
+                            const aBadge = metaBadge(dispAP, dispAD, isAM, aP, aD);
                             for (const pe of ae.parts.values()) {
                                 if (pe.deliv === 0) continue;
                                 totalParts++;
                                 html += `<tr class="hover:bg-gray-50/70">`;
                                 if (!cPrinted) { html += `<td rowspan="${cTotal}" class="font-semibold align-middle text-slate-700">${esc(ce.client)}</td>`; cPrinted = true; }
-                                if (!tPrinted) { html += `<td rowspan="${tTotal}" class="align-top"><div class="title-name">${esc(te.title)}</div>${tBadge}<button class="manual-edit-btn" onclick="openManualEdit('title','${esc(te.title)}',${dispTP},${dispTD})"><i class="fa-regular fa-pen-to-square"></i></button></td>`; tPrinted = true; }
-                                if (!sPrinted) { html += `<td rowspan="${sTotal}" class="align-top"><div class="text-sm font-medium text-gray-600">${esc(se.subtitle) || '—'}</div>${sBadge}<button class="manual-edit-btn" onclick="openManualEdit('subtitle','${esc(sId)}',${dispSP},${dispSD})"><i class="fa-regular fa-pen-to-square"></i></button></td>`; sPrinted = true; }
-                                if (!aPrinted) { html += `<td rowspan="${aTotal}" class="align-top"><div class="sub-assembly-tag">${esc(ae.assembly) || '—'}</div>${aBadge}<button class="manual-edit-btn" onclick="openManualEdit('assembly','${esc(aId)}',${dispAP},${dispAD})"><i class="fa-regular fa-pen-to-square"></i></button></td>`; aPrinted = true; }
-                                const drawings = [...pe.drawings].sort().join(', ');
-                                html += `<td class="cell-nowrap font-medium">${esc(pe.part)}</td>`;
-                                html += `<td><span class="cell-drawing" title="${esc(drawings) || '—'}">${esc(drawings) || '—'}</span></td>`;
-                                html += `<td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${fmt(pe.deliv)}</td><td class="text-right tabular-nums col-accepted">${fmt(pe.acc)}</td><td class="text-right tabular-nums col-conditional">${fmt(pe.cond)}</td></tr>`;
+                                if (!tPrinted) { html += `<td rowspan="${tTotal}" class="align-top"><div class="title-name">${esc(te.title)}</div>${tBadge}<button class="manual-edit-btn" onclick="openManualEdit('title','${esc(te.title)}',${dispTP},${dispTD})" title="Override"><i class="fa-regular fa-pen-to-square"></i></button></td>`; tPrinted = true; }
+                                if (!sPrinted) { html += `<td rowspan="${sTotal}" class="align-top"><div class="text-sm font-medium text-gray-600">${esc(se.subtitle) || '—'}</div>${sBadge}<button class="manual-edit-btn" onclick="openManualEdit('subtitle','${esc(sId)}',${dispSP},${dispSD})" title="Override"><i class="fa-regular fa-pen-to-square"></i></button></td>`; sPrinted = true; }
+                                if (!aPrinted) { html += `<td rowspan="${aTotal}" class="align-top"><div class="sub-assembly-tag">${esc(ae.assembly) || '—'}</div>${aBadge}<button class="manual-edit-btn" onclick="openManualEdit('assembly','${esc(aId)}',${dispAP},${dispAD})" title="Override"><i class="fa-regular fa-pen-to-square"></i></button></td>`; aPrinted = true; }
+                                const draws = [...pe.drawings].sort().join(', ');
+                                html += `<td class="cell-nowrap font-medium">${esc(pe.part)}</td><td class="col-hide-mobile"><span class="cell-drawing" title="${esc(draws) || '—'}">${esc(draws) || '—'}</span></td><td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${fmt(pe.deliv)}</td><td class="text-right tabular-nums col-accepted col-hide-mobile">${fmt(pe.acc)}</td><td class="text-right tabular-nums col-conditional col-hide-mobile">${fmt(pe.cond)}</td></tr>`;
                             }
                         }
                     }
                 }
             }
-
-            if (totalParts === 0) { tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-gray-400">No parts with delivered quantity</td></tr>`; document.getElementById('recordCount').innerText = '0 parts'; }
-            else { tbody.innerHTML = html; document.getElementById('recordCount').innerText = `${totalParts} parts · ${rows.length} records · excl. ${EXCLUDED.join(', ')}`; }
+            if (totalParts === 0) { tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-gray-400">No parts with delivered quantity.</td></tr>`; document.getElementById('recordCount').innerText = '0 parts'; }
+            else { tbody.innerHTML = html; document.getElementById('recordCount').innerText = `${totalParts} parts · ${rows.length} records`; }
         }
 
         function openManualEdit(level, id, curParts, curDeliv) {
-            document.querySelectorAll('.manual-edit-popup').forEach(el => el.remove());
             const labels = { title: 'Title', subtitle: 'Subtitle', assembly: 'Sub Sub Assembly' };
-            const popup = document.createElement('div');
-            popup.className = 'manual-edit-popup active';
+            const popup = document.getElementById('manualEditPopup');
+            document.getElementById('manualEditOverlay').classList.add('active');
+            popup.classList.add('active');
             popup.innerHTML = `
                 <div class="popup-title"><i class="fa-regular fa-pen-to-square text-amber-500 mr-2"></i>Override — ${labels[level]}</div>
                 <div class="popup-sub">${esc(id)}</div>
@@ -424,13 +439,15 @@
                 <label><i class="fa-regular fa-box mr-1"></i> Delivered (total)</label>
                 <input type="number" id="manualDelivInput" value="${curDeliv}" min="0" step="1" />
                 <div class="popup-actions">
-                    <button class="btn-cancel" onclick="this.closest('.manual-edit-popup').remove()">Cancel</button>
-                    <button class="btn-reset" onclick="saveOverride('${level}','${esc(id)}',undefined,undefined); this.closest('.manual-edit-popup').remove();">Reset</button>
-                    <button class="btn-save" onclick="const p=parseInt(document.getElementById('manualPartsInput').value)||0;const d=parseInt(document.getElementById('manualDelivInput').value)||0;saveOverride('${level}','${esc(id)}',p,d);this.closest('.manual-edit-popup').remove();"><i class="fa-regular fa-floppy-disk mr-1"></i>Save</button>
+                    <button class="btn-cancel" onclick="closeManualEdit()">Cancel</button>
+                    <button class="btn-reset" onclick="saveOverride('${level}','${esc(id)}',undefined,undefined); closeManualEdit();">Reset</button>
+                    <button class="btn-save" onclick="saveOverride('${level}','${esc(id)}', parseInt(document.getElementById('manualPartsInput').value) || 0, parseInt(document.getElementById('manualDelivInput').value) || 0); closeManualEdit();"><i class="fa-regular fa-floppy-disk mr-1"></i>Save</button>
                 </div>`;
-            document.body.appendChild(popup);
-            popup.addEventListener('click', e => { if (e.target === popup) popup.remove(); });
             setTimeout(() => document.getElementById('manualPartsInput')?.focus(), 50);
+        }
+        function closeManualEdit() {
+            document.getElementById('manualEditOverlay').classList.remove('active');
+            document.getElementById('manualEditPopup').classList.remove('active');
         }
 
         function exportToExcelXLSX() {
@@ -443,7 +460,6 @@
             if (proc) filtered = filtered.filter(r => r.process === proc);
             if (eng) filtered = filtered.filter(r => r.engineer === eng);
             if (search) filtered = filtered.filter(r => r.search.includes(search));
-
             const cm = new Map();
             for (const r of filtered) {
                 const c = r.client;
@@ -459,112 +475,57 @@
                 if (!se.assemblies.has(a)) se.assemblies.set(a, { assembly: a, parts: new Map() });
                 const ae = se.assemblies.get(a);
                 const p = r.part;
-                if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, cond: 0, drawings: new Set(), firstSeen: false });
+                if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, rw: 0, rej: 0, cond: 0, drawings: new Set(), firstSeen: false });
                 const pe = ae.parts.get(p);
-                if (!pe.firstSeen) { pe.deliv += r.deliveredRaw; pe.acc += r.acceptedRaw; pe.cond += r.conditionalRaw; pe.firstSeen = true; }
+                if (!pe.firstSeen) { pe.deliv += r.deliveredRaw; pe.acc += r.acceptedRaw; pe.rw += r.reworkRaw; pe.rej += r.rejectRaw; pe.cond += r.conditionalRaw; pe.firstSeen = true; }
                 if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
-
             for (const ce of cm.values()) for (const te of ce.titles.values()) {
-                let tParts = new Set(), tDeliv = 0;
+                let tP = new Set(), tD = 0;
                 for (const se of te.subtitles.values()) {
-                    let sParts = new Set(), sDeliv = 0;
+                    let sP = new Set(), sD = 0;
                     for (const ae of se.assemblies.values()) {
-                        let aParts = new Set(), aDeliv = 0;
-                        for (const pe of ae.parts.values()) if (pe.deliv > 0) { aParts.add(pe.part); aDeliv += pe.deliv; }
-                        ae.partsSet = aParts; ae.totalDeliv = aDeliv;
-                        sParts = new Set([...sParts, ...aParts]); sDeliv += aDeliv;
+                        let aP = new Set(), aD = 0;
+                        for (const pe of ae.parts.values()) if (pe.deliv > 0) { aP.add(pe.part); aD += pe.deliv; }
+                        ae.partsSet = aP; ae.totalDeliv = aD;
+                        sP = new Set([...sP, ...aP]); sD += aD;
                     }
-                    se.partsSet = sParts; se.totalDeliv = sDeliv;
-                    tParts = new Set([...tParts, ...sParts]); tDeliv += sDeliv;
+                    se.partsSet = sP; se.totalDeliv = sD;
+                    tP = new Set([...tP, ...sP]); tD += sD;
                 }
-                te.partsSet = tParts; te.totalDeliv = tDeliv;
+                te.partsSet = tP; te.totalDeliv = tD;
             }
-
             const oT = getOverrides(TITLE_KEY), oS = getOverrides(SUBTITLE_KEY), oA = getOverrides(ASSEMBLY_KEY);
             for (const ce of cm.values()) for (const te of ce.titles.values()) {
                 const m = oT[te.title]; if (m) { te.partsSet = new Set(Array(m.parts).fill('manual')); te.totalDeliv = m.delivered; }
                 for (const se of te.subtitles.values()) {
-                    const id = `${ce.client}|${te.title}|${se.subtitle}`;
-                    const m2 = oS[id]; if (m2) { se.partsSet = new Set(Array(m2.parts).fill('manual')); se.totalDeliv = m2.delivered; }
+                    const sid = `${ce.client}|${te.title}|${se.subtitle}`; const m2 = oS[sid];
+                    if (m2) { se.partsSet = new Set(Array(m2.parts).fill('manual')); se.totalDeliv = m2.delivered; }
                     for (const ae of se.assemblies.values()) {
-                        const id2 = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`;
-                        const m3 = oA[id2]; if (m3) { ae.partsSet = new Set(Array(m3.parts).fill('manual')); ae.totalDeliv = m3.delivered; }
+                        const aid = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`; const m3 = oA[aid];
+                        if (m3) { ae.partsSet = new Set(Array(m3.parts).fill('manual')); ae.totalDeliv = m3.delivered; }
                     }
                 }
             }
-
-            const countParts = ae => { let c = 0; for (const pe of ae.parts.values()) if (pe.deliv > 0) c++; return c; };
-            const rowsAssembly = ae => countParts(ae);
-            const rowsSubtitle = se => { let s = 0; for (const ae of se.assemblies.values()) s += rowsAssembly(ae); return s; };
-            const rowsTitle = te => { let s = 0; for (const se of te.subtitles.values()) s += rowsSubtitle(se); return s; };
-            const rowsClient = ce => { let s = 0; for (const te of ce.titles.values()) s += rowsTitle(te); return s; };
-
-            const headers = ['Client','Title','Title #Parts','Title Total Deliv','Title Avg/part','Subtitle','Subtitle #Parts','Subtitle Total Deliv','Subtitle Avg/part','Sub Sub Assembly','Sub Sub #Parts','Sub Sub Total Deliv','Sub Sub Avg/part','Part Name','Drawing No.','Delivered','Accepted','Conditional'];
+            const headers = ['Client','Title','Title #Parts','Title Total','Title Avg/part','Subtitle','Sub #Parts','Sub Total','Sub Avg/part','Sub Sub Assembly','Sub Sub #Parts','Sub Sub Total','Sub Sub Avg/part','Part','Drawing','Delivered','Accepted','Rework','Reject','Conditional'];
             const data = [headers];
-            const merges = [];
-            let rowIdx = 1;
-            for (const ce of cm.values()) {
-                const cTotal = rowsClient(ce);
-                if (cTotal === 0) continue;
-                const cStart = rowIdx;
-                let firstC = true;
-                for (const te of ce.titles.values()) {
-                    const tTotal = rowsTitle(te);
-                    if (tTotal === 0) continue;
-                    const tStart = rowIdx;
-                    let firstT = true;
-                    const tP = te.partsSet.size, tD = te.totalDeliv, tAvg = tP > 0 ? (tD / tP) : 0;
-                    for (const se of te.subtitles.values()) {
-                        const sTotal = rowsSubtitle(se);
-                        if (sTotal === 0) continue;
-                        const sStart = rowIdx;
-                        let firstS = true;
-                        const sP = se.partsSet.size, sD = se.totalDeliv, sAvg = sP > 0 ? (sD / sP) : 0;
-                        for (const ae of se.assemblies.values()) {
-                            const aTotal = rowsAssembly(ae);
-                            if (aTotal === 0) continue;
-                            const aStart = rowIdx;
-                            let firstA = true;
-                            const aP = ae.partsSet.size, aD = ae.totalDeliv, aAvg = aP > 0 ? (aD / aP) : 0;
-                            for (const pe of ae.parts.values()) {
-                                if (pe.deliv === 0) continue;
-                                const draws = [...pe.drawings].sort().join(', ');
-                                const row = [];
-                                row.push(firstC ? ce.client : '');
-                                row.push(firstT ? te.title : '');
-                                row.push(firstT ? tP : '');
-                                row.push(firstT ? fmt(tD) : '');
-                                row.push(firstT ? tAvg.toFixed(1) : '');
-                                row.push(firstS ? se.subtitle : '');
-                                row.push(firstS ? sP : '');
-                                row.push(firstS ? fmt(sD) : '');
-                                row.push(firstS ? sAvg.toFixed(1) : '');
-                                row.push(firstA ? ae.assembly : '');
-                                row.push(firstA ? aP : '');
-                                row.push(firstA ? fmt(aD) : '');
-                                row.push(firstA ? aAvg.toFixed(1) : '');
-                                row.push(pe.part);
-                                row.push(draws || '—');
-                                row.push(fmt(pe.deliv));
-                                row.push(fmt(pe.acc));
-                                row.push(fmt(pe.cond));
-                                data.push(row);
-                                rowIdx++;
-                                firstC = firstT = firstS = firstA = false;
-                            }
-                            if (aTotal > 1) for (let c = 9; c <= 12; c++) merges.push({ s: { r: aStart, c }, e: { r: aStart + aTotal - 1, c } });
+            for (const ce of cm.values()) for (const te of ce.titles.values()) {
+                const tP = te.partsSet.size, tD = te.totalDeliv, tA = tP > 0 ? (tD / tP) : 0;
+                for (const se of te.subtitles.values()) {
+                    const sP = se.partsSet.size, sD = se.totalDeliv, sA = sP > 0 ? (sD / sP) : 0;
+                    for (const ae of se.assemblies.values()) {
+                        const aP = ae.partsSet.size, aD = ae.totalDeliv, aA = aP > 0 ? (aD / aP) : 0;
+                        for (const pe of ae.parts.values()) {
+                            if (pe.deliv === 0) continue;
+                            const d = [...pe.drawings].sort().join(', ');
+                            data.push([ce.client, te.title, tP, fmt(tD), tA.toFixed(1), se.subtitle, sP, fmt(sD), sA.toFixed(1), ae.assembly, aP, fmt(aD), aA.toFixed(1), pe.part, d || '—', fmt(pe.deliv), fmt(pe.acc), fmt(pe.rw), fmt(pe.rej), fmt(pe.cond)]);
                         }
-                        if (sTotal > 1) for (let c = 5; c <= 8; c++) merges.push({ s: { r: sStart, c }, e: { r: sStart + sTotal - 1, c } });
                     }
-                    if (tTotal > 1) for (let c = 1; c <= 4; c++) merges.push({ s: { r: tStart, c }, e: { r: tStart + tTotal - 1, c } });
                 }
-                if (cTotal > 1) merges.push({ s: { r: cStart, c: 0 }, e: { r: cStart + cTotal - 1, c: 0 } });
             }
             if (data.length === 1) { alert('No parts to export.'); return; }
             const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!merges'] = merges;
-            ws['!cols'] = [{wch:18},{wch:22},{wch:14},{wch:16},{wch:14},{wch:20},{wch:14},{wch:16},{wch:14},{wch:20},{wch:14},{wch:16},{wch:14},{wch:20},{wch:25},{wch:14},{wch:12},{wch:14}];
+            ws['!cols'] = [{wch:18},{wch:22},{wch:14},{wch:16},{wch:14},{wch:20},{wch:14},{wch:16},{wch:14},{wch:20},{wch:14},{wch:16},{wch:14},{wch:20},{wch:25},{wch:14},{wch:12},{wch:12},{wch:12},{wch:14}];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Inspection Report');
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
@@ -580,73 +541,11 @@
             if (proc) filtered = filtered.filter(r => r.process === proc);
             if (eng) filtered = filtered.filter(r => r.engineer === eng);
             if (search) filtered = filtered.filter(r => r.search.includes(search));
-
-            const cm = new Map();
+            let tsv = "Client\tTitle\tSubtitle\tSub-Sub\tPart\tDrawing\tDelivered\tAccepted\tRework\tReject\tConditional\n";
             for (const r of filtered) {
-                const c = r.client;
-                if (!cm.has(c)) cm.set(c, { client: c, titles: new Map() });
-                const ce = cm.get(c);
-                const t = r.project;
-                if (!ce.titles.has(t)) ce.titles.set(t, { title: t, subtitles: new Map(), parts: new Set(), deliv: 0 });
-                const te = ce.titles.get(t);
-                const s = r.subtitle || '';
-                if (!te.subtitles.has(s)) te.subtitles.set(s, { subtitle: s, assemblies: new Map() });
-                const se = te.subtitles.get(s);
-                const a = r.subAssembly || '';
-                if (!se.assemblies.has(a)) se.assemblies.set(a, { assembly: a, parts: new Map() });
-                const ae = se.assemblies.get(a);
-                const p = r.part;
-                if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, cond: 0, drawings: new Set(), firstSeen: false });
-                const pe = ae.parts.get(p);
-                if (!pe.firstSeen) { pe.deliv += r.deliveredRaw; pe.acc += r.acceptedRaw; pe.cond += r.conditionalRaw; pe.firstSeen = true; }
-                if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
+                if (r.isFirstOp) tsv += `${r.client}\t${r.project}\t${r.subtitle}\t${r.subAssembly}\t${r.part}\t${r.drawing}\t${r.delivered}\t${r.accepted}\t${r.reworkRaw}\t${r.rejectRaw}\t${r.conditional}\n`;
             }
-
-            for (const ce of cm.values()) for (const te of ce.titles.values()) {
-                let tParts = new Set(), tDeliv = 0;
-                for (const se of te.subtitles.values()) {
-                    let sParts = new Set(), sDeliv = 0;
-                    for (const ae of se.assemblies.values()) {
-                        let aParts = new Set(), aDeliv = 0;
-                        for (const pe of ae.parts.values()) if (pe.deliv > 0) { aParts.add(pe.part); aDeliv += pe.deliv; }
-                        ae.partsSet = aParts; ae.totalDeliv = aDeliv;
-                        sParts = new Set([...sParts, ...aParts]); sDeliv += aDeliv;
-                    }
-                    se.partsSet = sParts; se.totalDeliv = sDeliv;
-                    tParts = new Set([...tParts, ...sParts]); tDeliv += sDeliv;
-                }
-                te.partsSet = tParts; te.totalDeliv = tDeliv;
-            }
-
-            const oT = getOverrides(TITLE_KEY), oS = getOverrides(SUBTITLE_KEY), oA = getOverrides(ASSEMBLY_KEY);
-            for (const ce of cm.values()) for (const te of ce.titles.values()) {
-                const m = oT[te.title]; if (m) { te.partsSet = new Set(Array(m.parts).fill('manual')); te.totalDeliv = m.delivered; }
-                for (const se of te.subtitles.values()) {
-                    const id = `${ce.client}|${te.title}|${se.subtitle}`;
-                    const m2 = oS[id]; if (m2) { se.partsSet = new Set(Array(m2.parts).fill('manual')); se.totalDeliv = m2.delivered; }
-                    for (const ae of se.assemblies.values()) {
-                        const id2 = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`;
-                        const m3 = oA[id2]; if (m3) { ae.partsSet = new Set(Array(m3.parts).fill('manual')); ae.totalDeliv = m3.delivered; }
-                    }
-                }
-            }
-
-            let tsv = "Client\tTitle\tTitle #Parts\tTitle Total Deliv\tTitle Avg/part\tSubtitle\tSubtitle #Parts\tSubtitle Total Deliv\tSubtitle Avg/part\tSub Sub Assembly\tSub Sub #Parts\tSub Sub Total Deliv\tSub Sub Avg/part\tPart Name\tDrawing No.\tDelivered\tAccepted\tConditional\n";
-            for (const ce of cm.values()) for (const te of ce.titles.values()) {
-                const tP = te.partsSet.size, tD = te.totalDeliv, tAvg = tP > 0 ? (tD / tP) : 0;
-                for (const se of te.subtitles.values()) {
-                    const sP = se.partsSet.size, sD = se.totalDeliv, sAvg = sP > 0 ? (sD / sP) : 0;
-                    for (const ae of se.assemblies.values()) {
-                        const aP = ae.partsSet.size, aD = ae.totalDeliv, aAvg = aP > 0 ? (aD / aP) : 0;
-                        for (const pe of ae.parts.values()) {
-                            if (pe.deliv === 0) continue;
-                            const draws = [...pe.drawings].sort().join(', ');
-                            tsv += `${ce.client}\t${te.title}\t${tP}\t${fmt(tD)}\t${tAvg.toFixed(1)}\t${se.subtitle}\t${sP}\t${fmt(sD)}\t${sAvg.toFixed(1)}\t${ae.assembly}\t${aP}\t${fmt(aD)}\t${aAvg.toFixed(1)}\t${pe.part}\t${draws || '—'}\t${fmt(pe.deliv)}\t${fmt(pe.acc)}\t${fmt(pe.cond)}\n`;
-                        }
-                    }
-                }
-            }
-            try { await navigator.clipboard.writeText(tsv); alert('✅ Copied'); } catch (err) { alert('❌ Copy failed: ' + err); }
+            try { await navigator.clipboard.writeText(tsv); alert('Table copied'); } catch (err) { alert('Copy failed: ' + err); }
         }
 
         function clearFilters() {
@@ -661,6 +560,7 @@
         document.getElementById('processFilterSelect').addEventListener('change', () => { if (allRows.length) applyFilters(); });
         document.getElementById('engineerFilterSelect').addEventListener('change', () => { if (allRows.length) applyFilters(); });
         document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+        document.addEventListener('click', e => { if (!e.target.closest('.relative')) document.getElementById('moreMenu')?.classList.add('hidden'); });
         fetchReportData();
     </script>
 </body>
