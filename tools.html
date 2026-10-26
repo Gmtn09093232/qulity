@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>7 QC Tools | Quality Analysis Dashboard</title>
+    <title>7 QC Tools | AMIMTDE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
@@ -11,75 +11,99 @@
     <style>
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
         body { background: #f1f5f9; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #e9edf4; border-radius: 8px; }
-        ::-webkit-scrollbar-thumb { background: #b9c4d4; border-radius: 8px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .glass-card { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04); }
-        .tool-card { transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; background: white; border: 1px solid #eef2f6; border-radius: 1rem; padding: 1rem 0.5rem; text-align: center; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02); position: relative; overflow: hidden; }
+        .nav-bar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 10px 24px; display: flex; align-items: center; gap: 4px; overflow-x: auto; }
+        .nav-bar a { padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; color: #475569; white-space: nowrap; text-decoration: none; transition: all 0.15s; }
+        .nav-bar a:hover { background: #f1f5f9; }
+        .nav-bar a.active { background: #eef2ff; color: #4338ca; font-weight: 600; }
+        .nav-brand { font-weight: 700; color: #1e293b; margin-right: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .glass-card { background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 20px rgba(0,0,0,0.04); }
+        .tool-card { transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); cursor: pointer; background: white; border: 1px solid #eef2f6; border-radius: 1rem; padding: 1rem 0.5rem; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.02); position: relative; overflow: hidden; }
         .tool-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: transparent; transition: all 0.3s; border-radius: 0 0 1rem 1rem; }
-        .tool-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08); border-color: #cbd5e1; }
-        .tool-card.active { border-color: #3b82f6; box-shadow: 0 8px 28px rgba(59, 130, 246, 0.16); background: #f0f7ff; }
-        .tool-card.active::after { background: #3b82f6; }
+        .tool-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); border-color: #cbd5e1; }
+        .tool-card.active { border-color: #3b82f6; box-shadow: 0 8px 28px rgba(59,130,246,0.16); background: #f0f7ff; }
+        .tool-card.active::after { background: #3b82f6; height: 4px; }
         .tool-card .icon-wrapper { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 14px; margin: 0 auto 0.5rem; font-size: 1.2rem; transition: all 0.2s; }
-        .tool-card.active .icon-wrapper { background: white !important; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.2); }
-        .tool-card .label { font-weight: 600; font-size: 0.8rem; color: #0f172a; letter-spacing: -0.01em; }
-        .tool-card .sub-label { font-size: 0.6rem; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.1rem; }
+        .tool-card.active .icon-wrapper { background: white !important; box-shadow: 0 4px 14px rgba(59,130,246,0.2); }
+        .tool-card .label { font-weight: 600; font-size: 0.78rem; color: #0f172a; }
+        .tool-card .sub-label { font-size: 0.58rem; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.1rem; }
         .tool-panel { display: none; animation: fadeSlide 0.35s ease forwards; }
         .tool-panel.active { display: block; }
         @keyframes fadeSlide { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        .filter-select { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.55rem 0.9rem; width: 100%; font-size: 0.8rem; transition: all 0.15s; color: #0f172a; font-weight: 500; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.9rem center; padding-right: 2.2rem; }
-        .filter-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12); background-color: #ffffff; }
+        .filter-select { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.55rem 0.9rem; width: 100%; font-size: 0.8rem; color: #0f172a; font-weight: 500; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.9rem center; padding-right: 2.2rem; }
+        .filter-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); background-color: #fff; }
         .filter-label { display: block; font-size: 0.65rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
         .table-wrapper { overflow-x: auto; border-radius: 1rem; border: 1px solid #eef2f6; background: white; }
         .table-wrapper table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         .table-wrapper th { background: #f8fafc; padding: 0.7rem 1rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e9edf4; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; }
         .table-wrapper td { padding: 0.7rem 1rem; border-bottom: 1px solid #f1f4f9; vertical-align: middle; }
-        .table-wrapper tr:last-child td { border-bottom: none; }
         .table-wrapper tbody tr:hover td { background: #fafcff; }
-        .table-wrapper tbody tr:nth-child(even) td { background: #fafcfe; }
-        .table-wrapper tbody tr:nth-child(even):hover td { background: #f5f9ff; }
-        .badge { display: inline-block; padding: 0.1rem 0.7rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.02em; }
+        .badge { display: inline-block; padding: 0.1rem 0.7rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 600; }
         .badge-accepted { background: #dcfce7; color: #166534; }
         .badge-rework { background: #fef9c3; color: #854d0e; }
         .badge-reject { background: #fee2e2; color: #991b1b; }
         .badge-conditional { background: #dbeafe; color: #1e40af; }
         .badge-default { background: #f1f4f9; color: #475569; }
-        .chart-container { position: relative; height: 300px; width: 100%; }
-        .chart-container.tall { height: 340px; }
-        .fishbone-container { overflow-x: auto; padding: 1.5rem 0.5rem; background: #fafcfe; border-radius: 1rem; border: 1px solid #eef2f6; }
+        .chart-container { position: relative; height: 320px; width: 100%; }
+        .chart-container.tall { height: 380px; }
+        .chart-container.short { height: 180px; }
+        .fishbone-container { overflow-x: auto; padding: 1.5rem 0.5rem; background: #fafcfe; border-radius: 1rem; border: 1px solid #eef2f6; position: relative; }
+        .fishbone-container::after { content: 'Swipe →'; position: absolute; right: 12px; top: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 999px; font-size: 0.65rem; display: none; }
+        @media (max-width: 768px) { .fishbone-container::after { display: block; } }
         .fishbone-svg { min-width: 1000px; width: 100%; height: auto; display: block; }
         .btn-primary { background: #1e293b; color: white; padding: 0.5rem 1.2rem; border-radius: 10px; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
-        .btn-primary:hover { background: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12); }
+        .btn-primary:hover { background: #0f172a; }
         .btn-outline { background: transparent; color: #475569; padding: 0.5rem 1.2rem; border-radius: 10px; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; border: 1px solid #e2e8f0; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
         .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
         .btn-indigo { background: #4f46e5; color: white; padding: 0.5rem 1.2rem; border-radius: 10px; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
-        .btn-indigo:hover { background: #4338ca; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79, 70, 229, 0.25); }
-        .stat-mini { background: white; border-radius: 0.75rem; padding: 0.8rem 1rem; border: 1px solid #eef2f6; text-align: center; transition: all 0.2s; }
-        .stat-mini:hover { border-color: #cbd5e1; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
+        .btn-indigo:hover { background: #4338ca; }
+        .stat-mini { background: white; border-radius: 0.75rem; padding: 0.8rem 1rem; border: 1px solid #eef2f6; text-align: center; }
         .stat-mini .value { font-size: 1.3rem; font-weight: 700; color: #0f172a; line-height: 1.3; }
         .stat-mini .label { font-size: 0.6rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
         .header-gradient { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4f46e5 60%, #6366f1 100%); position: relative; overflow: hidden; }
-        .header-gradient::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.08) 0%, transparent 60%); pointer-events: none; }
+        .header-gradient::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.08) 0%, transparent 60%); pointer-events: none; }
         .header-gradient .glow-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.3; pointer-events: none; }
         .header-gradient .glow-orb.orb1 { width: 300px; height: 300px; background: #818cf8; top: -100px; right: -50px; }
         .header-gradient .glow-orb.orb2 { width: 200px; height: 200px; background: #a78bfa; bottom: -80px; left: -40px; }
         .panel-header { border-bottom: 1px solid #eef2f6; padding-bottom: 0.75rem; margin-bottom: 1.25rem; }
         .panel-header h2 { font-size: 1.15rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em; }
         .panel-header p { font-size: 0.8rem; color: #94a3b8; margin-top: 0.1rem; }
-        .flowchart-container { background: #fafcfe; border-radius: 1rem; padding: 1.5rem 0.5rem; border: 1px solid #eef2f6; }
-        .flowchart-svg { width: 100%; height: auto; display: block; }
+        .ci-tag { display: inline-block; font-size: 0.62rem; color: #64748b; background: #f1f5f9; padding: 1px 6px; border-radius: 999px; margin-left: 4px; font-weight: 500; }
+        .segmented { display: inline-flex; background: #f1f5f9; border-radius: 10px; padding: 3px; gap: 2px; }
+        .segmented button { padding: 0.35rem 0.8rem; border-radius: 8px; font-size: 0.72rem; font-weight: 600; border: none; background: transparent; color: #475569; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 4px; }
+        .segmented button.active { background: white; color: #4f46e5; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .segmented button:hover:not(.active) { color: #1e293b; }
+        .we-rule { display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+        .we-rule.triggered { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .we-rule.clear { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .topn-row { transition: background 0.15s; cursor: pointer; }
+        .topn-row:hover { background: #f0f7ff; }
+        .alert-banner { background: linear-gradient(90deg, #fef2f2, #fff1f2); border-left: 4px solid #ef4444; border-radius: 0.6rem; padding: 0.6rem 1rem; }
+        .info-banner { background: linear-gradient(90deg, #eff6ff, #f0f9ff); border-left: 4px solid #3b82f6; border-radius: 0.6rem; padding: 0.6rem 1rem; }
+        .download-btn { position: absolute; top: 8px; right: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px; font-size: 0.7rem; color: #64748b; cursor: pointer; z-index: 5; opacity: 0; transition: opacity 0.15s; }
+        .chart-box:hover .download-btn { opacity: 1; }
+        .filter-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .filter-panel.open { max-height: 400px; }
         @media (max-width: 640px) {
             .tool-card { padding: 0.7rem 0.3rem; }
             .tool-card .icon-wrapper { width: 38px; height: 38px; font-size: 1rem; }
-            .tool-card .label { font-size: 0.7rem; }
-            .tool-card .sub-label { font-size: 0.5rem; }
-            .panel-header h2 { font-size: 1rem; }
-            .chart-container { height: 220px; }
+            .tool-card .label { font-size: 0.68rem; }
+            .chart-container { height: 240px; }
+            .nav-bar { padding: 8px 12px; }
+            .download-btn { opacity: 1; }
         }
     </style>
 </head>
 <body>
+
+    <div class="nav-bar">
+        <div class="nav-brand"><i class="fa-solid fa-industry"></i> AMIMTDE</div>
+        <a href="/">Inspection</a>
+        <a href="/list">Report</a>
+        <a href="/up">Follow-Up</a>
+        <a href="/dash">Assembly</a>
+        <a href="/tools" class="active">QC Tools</a>
+        <a href="/admin">Dashboard</a>
+    </div>
 
     <div class="max-w-7xl mx-auto p-3 md:p-6">
 
@@ -91,716 +115,746 @@
                     <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-white text-xl shadow-lg"><i class="fas fa-chart-pie"></i></div>
                     <div>
                         <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight">7 QC Tools</h1>
-                        <p class="text-indigo-200 text-sm font-medium">Inspection data analysis · Quality control</p>
+                        <p class="text-indigo-200 text-sm font-medium">Statistical analysis · Quality control</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/15">
-                    <span id="dataStatus" class="text-sm text-white font-medium flex items-center gap-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
+                    <span id="dataStatus" class="text-sm text-white font-medium flex items-center gap-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading…</span>
                     <button onclick="fetchAndAnalyze()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-2 border border-white/10"><i class="fas fa-sync-alt"></i> Refresh</button>
                 </div>
             </div>
-            <div class="relative mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-white/90 text-sm">
-                <div class="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/5"><i class="fas fa-clipboard-list text-indigo-300"></i><span><span id="headerInspCount" class="font-bold">-</span> Inspections</span></div>
-                <div class="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/5"><i class="fas fa-sliders-h text-indigo-300"></i><span><span id="headerParamCount" class="font-bold">-</span> Parameters</span></div>
-                <div class="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/5"><i class="fas fa-check-circle text-emerald-300"></i><span><span id="headerAcceptRate" class="font-bold">-</span> Param. Accepted</span></div>
-                <div class="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/5"><i class="fas fa-exclamation-triangle text-amber-300"></i><span><span id="headerDefectRate" class="font-bold">-</span> Defect rate</span></div>
+            <div class="relative mt-5 grid grid-cols-2 sm:grid-cols-5 gap-3 text-white/90 text-sm">
+                <div class="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/5"><i class="fas fa-clipboard-list text-indigo-300"></i><span><span id="headerInspCount" class="font-bold">-</span> Insp.</span></div>
+                <div class="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/5"><i class="fas fa-sliders-h text-indigo-300"></i><span><span id="headerParamCount" class="font-bold">-</span> Params</span></div>
+                <div class="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/5"><i class="fas fa-check-circle text-emerald-300"></i><span><span id="headerAcceptRate" class="font-bold">-</span> Accepted</span></div>
+                <div class="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/5"><i class="fas fa-exclamation-triangle text-amber-300"></i><span><span id="headerDefectRate" class="font-bold">-</span> Defect</span></div>
+                <div class="flex items-center gap-2 bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/5"><i class="fas fa-coins text-yellow-300"></i><span><span id="headerCost" class="font-bold">-</span> ETB</span></div>
             </div>
         </div>
 
+        <!-- Filters -->
         <div class="glass-card rounded-xl p-4 md:p-5 mb-7 shadow-sm">
-            <div class="flex flex-wrap items-end gap-3">
-                <div class="flex-1 min-w-[140px]">
-                    <label class="filter-label"><i class="fas fa-user-cog mr-1.5 text-indigo-500"></i> QC Engineer</label>
-                    <select id="filterEngineer" class="filter-select"><option value="">All Engineers</option></select>
-                </div>
-                <div class="flex-1 min-w-[140px]">
-                    <label class="filter-label"><i class="fas fa-folder-open mr-1.5 text-indigo-500"></i> Project</label>
-                    <select id="filterProject" class="filter-select"><option value="">All Projects</option></select>
-                </div>
-                <div class="flex-1 min-w-[140px]">
-                    <label class="filter-label"><i class="fas fa-gears mr-1.5 text-indigo-500"></i> Process</label>
-                    <select id="filterProcess" class="filter-select"><option value="">All Processes</option></select>
-                </div>
-                <div class="flex items-center gap-2 pb-0.5">
-                    <button onclick="applyFilters()" class="btn-indigo"><i class="fas fa-filter"></i> Apply</button>
-                    <button onclick="clearFilters()" class="btn-outline"><i class="fas fa-undo-alt"></i> Clear</button>
+            <div class="flex items-center justify-between mb-2">
+                <button onclick="toggleFilters()" class="text-sm font-medium text-slate-700 flex items-center gap-2 hover:text-indigo-600">
+                    <i class="fa-solid fa-sliders"></i> Filters <span class="text-xs text-slate-400 font-normal" id="activeFilterCount"></span>
+                    <i class="fa-solid fa-chevron-down text-xs transition-transform" id="filterChevron"></i>
+                </button>
+                <button onclick="clearFilters()" class="text-xs text-slate-500 hover:text-slate-700"><i class="fas fa-undo-alt mr-1"></i> Clear</button>
+            </div>
+            <div class="filter-panel" id="filterPanel">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                    <div><label class="filter-label"><i class="fas fa-user-cog mr-1.5 text-indigo-500"></i> Engineer</label><select id="filterEngineer" class="filter-select"><option value="">All</option></select></div>
+                    <div><label class="filter-label"><i class="fas fa-folder-open mr-1.5 text-indigo-500"></i> Project</label><select id="filterProject" class="filter-select"><option value="">All</option></select></div>
+                    <div><label class="filter-label"><i class="fas fa-gears mr-1.5 text-indigo-500"></i> Process</label><select id="filterProcess" class="filter-select"><option value="">All</option></select></div>
+                    <div><label class="filter-label"><i class="fas fa-flag mr-1.5 text-indigo-500"></i> Severity</label><select id="filterSeverity" class="filter-select"><option value="">All</option><option value="critical">Critical</option><option value="major">Major</option><option value="minor">Minor</option></select></div>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5 md:gap-3 mb-7">
-            <div class="tool-card active" data-tool="0" onclick="switchTool(0)"><div class="icon-wrapper bg-blue-50 text-blue-600"><i class="fas fa-list-check"></i></div><div class="label">Check Sheet</div><div class="sub-label">Data collection</div></div>
-            <div class="tool-card" data-tool="1" onclick="switchTool(1)"><div class="icon-wrapper bg-rose-50 text-rose-500"><i class="fas fa-chart-bar"></i></div><div class="label">Pareto</div><div class="sub-label">80/20 analysis</div></div>
-            <div class="tool-card" data-tool="2" onclick="switchTool(2)"><div class="icon-wrapper bg-amber-50 text-amber-500"><i class="fas fa-fish"></i></div><div class="label">Fishbone</div><div class="sub-label">Cause &amp; effect</div></div>
-            <div class="tool-card" data-tool="3" onclick="switchTool(3)"><div class="icon-wrapper bg-emerald-50 text-emerald-500"><i class="fas fa-layer-group"></i></div><div class="label">Histogram</div><div class="sub-label">Distribution</div></div>
-            <div class="tool-card" data-tool="4" onclick="switchTool(4)"><div class="icon-wrapper bg-purple-50 text-purple-500"><i class="fas fa-chart-line"></i></div><div class="label">Control</div><div class="sub-label">Shewhart</div></div>
-            <div class="tool-card" data-tool="5" onclick="switchTool(5)"><div class="icon-wrapper bg-teal-50 text-teal-500"><i class="fas fa-dot-circle"></i></div><div class="label">Scatter</div><div class="sub-label">Correlation</div></div>
-            <div class="tool-card" data-tool="6" onclick="switchTool(6)"><div class="icon-wrapper bg-cyan-50 text-cyan-500"><i class="fas fa-sitemap"></i></div><div class="label">Flowchart</div><div class="sub-label">Process map</div></div>
+        <!-- Tool Nav -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-2.5 mb-7">
+            <div class="tool-card active" data-tool="0" onclick="switchTool(0)"><div class="icon-wrapper bg-blue-50 text-blue-600"><i class="fas fa-list-check"></i></div><div class="label">Check Sheet</div><div class="sub-label">Data</div></div>
+            <div class="tool-card" data-tool="1" onclick="switchTool(1)"><div class="icon-wrapper bg-rose-50 text-rose-500"><i class="fas fa-chart-bar"></i></div><div class="label">Pareto</div><div class="sub-label">Cost/Count</div></div>
+            <div class="tool-card" data-tool="2" onclick="switchTool(2)"><div class="icon-wrapper bg-amber-50 text-amber-500"><i class="fas fa-fish"></i></div><div class="label">Fishbone</div><div class="sub-label">7M</div></div>
+            <div class="tool-card" data-tool="3" onclick="switchTool(3)"><div class="icon-wrapper bg-emerald-50 text-emerald-500"><i class="fas fa-layer-group"></i></div><div class="label">Histogram</div><div class="sub-label">Dist.</div></div>
+            <div class="tool-card" data-tool="4" onclick="switchTool(4)"><div class="icon-wrapper bg-purple-50 text-purple-500"><i class="fas fa-chart-line"></i></div><div class="label">Control</div><div class="sub-label">p-chart</div></div>
+            <div class="tool-card" data-tool="5" onclick="switchTool(5)"><div class="icon-wrapper bg-teal-50 text-teal-500"><i class="fas fa-dot-circle"></i></div><div class="label">Scatter</div><div class="sub-label">Regression</div></div>
+            <div class="tool-card" data-tool="6" onclick="switchTool(6)"><div class="icon-wrapper bg-orange-50 text-orange-500"><i class="fas fa-calendar-week"></i></div><div class="label">Time Series</div><div class="sub-label">Trend</div></div>
+            <div class="tool-card" data-tool="7" onclick="switchTool(7)"><div class="icon-wrapper bg-red-50 text-red-500"><i class="fas fa-triangle-exclamation"></i></div><div class="label">Top-N</div><div class="sub-label">Worst</div></div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-md border border-white/60 p-4 md:p-6 card-shadow">
+        <div class="bg-white rounded-2xl shadow-md border border-white/60 p-4 md:p-6">
 
+            <!-- 0: Check Sheet -->
             <div class="tool-panel active" data-panel="0">
                 <div class="panel-header flex flex-wrap items-center justify-between gap-2">
                     <div><h2><i class="fas fa-list-check text-blue-600 mr-2"></i>Check Sheet</h2><p>Raw inspection data with parameter-level details</p></div>
-                    <span id="checkSheetStats" class="text-xs font-medium text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100"></span>
+                    <span id="checkSheetStats" class="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border"></span>
                 </div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>#</th><th>Date</th><th>Process</th><th>Client</th><th>Title</th><th>Parameter</th><th>Rating</th><th>Causes</th></tr></thead>
-                        <tbody id="checkSheetBody"><tr><td colspan="8" class="text-center py-12 text-gray-400">No data loaded</td></tr></tbody>
-                    </table>
-                </div>
+                <div class="table-wrapper"><table>
+                    <thead><tr><th>#</th><th>Date</th><th>Process</th><th>Client</th><th>Title</th><th>Parameter</th><th>Rating</th><th>Severity</th><th>Causes</th></tr></thead>
+                    <tbody id="checkSheetBody"><tr><td colspan="9" class="text-center py-12 text-gray-400">No data</td></tr></tbody>
+                </table></div>
             </div>
 
+            <!-- 1: Pareto -->
             <div class="tool-panel" data-panel="1">
-                <div class="panel-header"><h2><i class="fas fa-chart-bar text-rose-600 mr-2"></i>Pareto Chart</h2><p>Defect frequency · 80/20 rule</p></div>
+                <div class="panel-header flex flex-wrap items-center justify-between gap-2">
+                    <div><h2><i class="fas fa-chart-bar text-rose-600 mr-2"></i>Pareto Chart</h2><p>Which causes matter most — by count, parts, or cost</p></div>
+                    <div class="segmented">
+                        <button class="active" onclick="setParetoMode('cost', this)"><i class="fas fa-coins"></i> Cost</button>
+                        <button onclick="setParetoMode('defects', this)"><i class="fas fa-hashtag"></i> Defects</button>
+                        <button onclick="setParetoMode('parts', this)"><i class="fas fa-wrench"></i> Parts</button>
+                    </div>
+                </div>
+                <div id="paretoInsight" class="info-banner text-sm mb-4"></div>
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     <div class="lg:col-span-3 chart-container tall"><canvas id="paretoChart"></canvas></div>
                     <div class="lg:col-span-2">
-                        <div class="bg-gray-50 rounded-xl p-5 h-full border border-gray-100">
-                            <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-list text-rose-500"></i> Top Causes</h3>
+                        <div class="bg-gray-50 rounded-xl p-5 h-full border">
+                            <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-list text-rose-500"></i> <span id="paretoTopTitle">Top Causes</span></h3>
                             <div id="paretoTopList" class="space-y-1.5 text-sm"></div>
-                            <div class="mt-4 pt-3 border-t border-gray-200 text-sm flex justify-between">
-                                <span class="font-medium text-gray-600">80% threshold</span>
-                                <span id="paretoThreshold" class="text-rose-600 font-bold">-</span>
-                            </div>
+                            <div class="mt-4 pt-3 border-t text-sm flex justify-between"><span class="font-medium text-gray-600">80% threshold</span><span id="paretoThreshold" class="text-rose-600 font-bold">-</span></div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- 2: Fishbone -->
             <div class="tool-panel" data-panel="2">
-                <div class="panel-header"><h2><i class="fas fa-fish text-amber-600 mr-2"></i>Fishbone Diagram</h2><p>Cause &amp; effect analysis with defect counts and percentages</p></div>
-                <div class="fishbone-container"><svg id="fishboneSvg" class="fishbone-svg" viewBox="0 0 1100 460" preserveAspectRatio="xMidYMid meet"></svg></div>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4" id="fishboneStats"></div>
+                <div class="panel-header flex flex-wrap items-center justify-between gap-2">
+                    <div><h2><i class="fas fa-fish text-amber-600 mr-2"></i>Fishbone (7M)</h2><p>Cause categories with weighted impact</p></div>
+                    <div class="segmented">
+                        <button class="active" onclick="setFishboneMode('cost', this)"><i class="fas fa-coins"></i> Cost</button>
+                        <button onclick="setFishboneMode('defects', this)"><i class="fas fa-hashtag"></i> Defects</button>
+                    </div>
+                </div>
+                <div class="fishbone-container"><svg id="fishboneSvg" class="fishbone-svg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid meet"></svg></div>
+                <div class="grid grid-cols-2 md:grid-cols-7 gap-2 mt-4" id="fishboneStats"></div>
             </div>
 
+            <!-- 3: Histogram -->
             <div class="tool-panel" data-panel="3">
-                <div class="panel-header"><h2><i class="fas fa-layer-group text-emerald-600 mr-2"></i>Histogram</h2><p>Quantity distribution by rating (excludes assemblies — their quantity fields are part counts)</p></div>
+                <div class="panel-header flex flex-wrap items-center justify-between gap-2">
+                    <div><h2><i class="fas fa-layer-group text-emerald-600 mr-2"></i>Distribution</h2><p>Continuous variable distribution (10 bins)</p></div>
+                    <select id="histVar" class="filter-select w-auto text-sm" onchange="renderHistogram()">
+                        <option value="minutes">Inspection Duration (min)</option>
+                        <option value="cost">Failure Cost (ETB)</option>
+                        <option value="delivered">Delivered Qty</option>
+                        <option value="defectRate">Defect Rate (%)</option>
+                    </select>
+                </div>
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     <div class="lg:col-span-3 chart-container tall"><canvas id="histogramChart"></canvas></div>
-                    <div class="lg:col-span-2">
-                        <div class="bg-gray-50 rounded-xl p-5 h-full border border-gray-100">
-                            <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-calculator text-emerald-500"></i> Summary</h3>
-                            <div id="histogramStats" class="space-y-1.5 text-sm"></div>
-                        </div>
-                    </div>
+                    <div class="lg:col-span-2"><div class="bg-gray-50 rounded-xl p-5 h-full border">
+                        <h3 class="font-semibold text-sm text-gray-700 mb-3"><i class="fas fa-calculator text-emerald-500 mr-2"></i>Statistics</h3>
+                        <div id="histogramStats" class="space-y-1.5 text-sm"></div>
+                    </div></div>
                 </div>
             </div>
 
+            <!-- 4: Control -->
             <div class="tool-panel" data-panel="4">
-                <div class="panel-header"><h2><i class="fas fa-chart-line text-purple-600 mr-2"></i>Control Chart</h2><p>Process variation over time</p></div>
+                <div class="panel-header flex flex-wrap items-center justify-between gap-2">
+                    <div><h2><i class="fas fa-chart-line text-purple-600 mr-2"></i>p-Chart</h2><p>Variable control limits + 4 Western Electric rules</p></div>
+                    <div id="we-rules-indicator" class="flex flex-wrap gap-1.5"></div>
+                </div>
+                <div id="controlAlert" class="mb-3"></div>
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                    <div class="lg:col-span-4 chart-container tall"><canvas id="controlChart"></canvas></div>
-                    <div class="lg:col-span-1">
-                        <div class="bg-gray-50 rounded-xl p-5 h-full border border-gray-100">
-                            <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-arrows-up-down text-purple-500"></i> Limits</h3>
-                            <div id="controlStats" class="space-y-1.5 text-sm"></div>
-                            <div class="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
-                                <span class="font-medium text-gray-600">Status</span>
-                                <span id="controlStatus" class="px-3 py-0.5 rounded-full text-xs font-semibold">-</span>
-                            </div>
-                        </div>
+                    <div class="lg:col-span-4">
+                        <div class="chart-container tall"><canvas id="controlChart"></canvas></div>
+                        <div class="chart-container short mt-3"><canvas id="runChart"></canvas></div>
                     </div>
+                    <div class="lg:col-span-1"><div class="bg-gray-50 rounded-xl p-5 h-full border">
+                        <h3 class="font-semibold text-sm text-gray-700 mb-3"><i class="fas fa-arrows-up-down text-purple-500 mr-2"></i>Stats</h3>
+                        <div id="controlStats" class="space-y-1.5 text-sm"></div>
+                    </div></div>
                 </div>
             </div>
 
+            <!-- 5: Scatter -->
             <div class="tool-panel" data-panel="5">
-                <div class="panel-header"><h2><i class="fas fa-dot-circle text-teal-600 mr-2"></i>Scatter Diagram</h2><p>Correlation: Delivered Qty vs Defect Rate (excludes assemblies — their delivered_qty is a part count)</p></div>
+                <div class="panel-header"><h2><i class="fas fa-dot-circle text-teal-600 mr-2"></i>Scatter + Regression</h2><p>Delivered Qty vs Defect Rate — linear regression + 95% CI</p></div>
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     <div class="lg:col-span-4 chart-container tall"><canvas id="scatterChart"></canvas></div>
-                    <div class="lg:col-span-1">
-                        <div class="bg-gray-50 rounded-xl p-5 h-full border border-gray-100">
-                            <h3 class="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-link text-teal-500"></i> Correlation</h3>
-                            <div id="scatterStats" class="space-y-1.5 text-sm"></div>
-                        </div>
-                    </div>
+                    <div class="lg:col-span-1"><div class="bg-gray-50 rounded-xl p-5 h-full border">
+                        <h3 class="font-semibold text-sm text-gray-700 mb-3"><i class="fas fa-link text-teal-500 mr-2"></i>Regression</h3>
+                        <div id="scatterStats" class="space-y-1.5 text-sm"></div>
+                    </div></div>
                 </div>
             </div>
 
+            <!-- 6: Time Series -->
             <div class="tool-panel" data-panel="6">
-                <div class="panel-header"><h2><i class="fas fa-sitemap text-cyan-600 mr-2"></i>Flowchart</h2><p>Inspection process map with decision branches</p></div>
-                <div class="flowchart-container"><svg id="flowchartSvg" class="flowchart-svg" viewBox="0 0 1000 680" preserveAspectRatio="xMidYMid meet"></svg></div>
+                <div class="panel-header flex flex-wrap items-center justify-between gap-2">
+                    <div><h2><i class="fas fa-calendar-week text-orange-600 mr-2"></i>Time Series</h2><p>Weekly trends with control limits</p></div>
+                    <select id="tsMetric" class="filter-select w-auto text-sm" onchange="renderTimeSeries()">
+                        <option value="fpy">First-Pass Yield (%)</option>
+                        <option value="defectRate">Defect Rate (%)</option>
+                        <option value="cost">Failure Cost (ETB/week)</option>
+                        <option value="reworkRate">Rework Rate (%)</option>
+                    </select>
+                </div>
+                <div id="tsInsight" class="info-banner text-sm mb-4"></div>
+                <div class="chart-container tall"><canvas id="timeseriesChart"></canvas></div>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4" id="tsStats"></div>
+            </div>
+
+            <!-- 7: Top-N -->
+            <div class="tool-panel" data-panel="7">
+                <div class="panel-header"><h2><i class="fas fa-triangle-exclamation text-red-600 mr-2"></i>Top-N Worst Performers</h2><p>Where to focus this week</p></div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <div class="bg-rose-50/60 rounded-xl p-4 border border-rose-100"><h3 class="font-semibold text-sm text-rose-900 mb-2"><i class="fas fa-cog mr-1"></i> Worst Processes by FPY</h3><div id="topProcesses" class="text-sm space-y-1"></div></div>
+                    <div class="bg-amber-50/60 rounded-xl p-4 border border-amber-100"><h3 class="font-semibold text-sm text-amber-900 mb-2"><i class="fas fa-folder-open mr-1"></i> Highest-Cost Projects</h3><div id="topProjects" class="text-sm space-y-1"></div></div>
+                    <div class="bg-blue-50/60 rounded-xl p-4 border border-blue-100"><h3 class="font-semibold text-sm text-blue-900 mb-2"><i class="fas fa-microchip mr-1"></i> Worst Parts by FPY</h3><div id="topParts" class="text-sm space-y-1"></div></div>
+                </div>
             </div>
         </div>
 
-        <div class="mt-8 text-center text-xs text-gray-400 border-t border-gray-200/60 pt-5 flex flex-wrap justify-center gap-4">
-            <span><i class="fa-regular fa-copyright mr-1"></i> 7 QC Tools Dashboard</span>
-            <span class="text-gray-300">|</span>
-            <span>Amhara Metal Industry Inspection Data</span>
-            <span class="text-gray-300">|</span>
-            <span class="text-gray-300">v2.0</span>
-        </div>
+        <div class="mt-8 text-center text-xs text-gray-400 border-t pt-5">7 QC Tools · AMIMTDE · v3.1</div>
     </div>
 
     <script>
-        let allInspections = [];
-        let filteredInspections = [];
-        let allParamData = [];
-        let filteredParamData = [];
+        let allInspections = [], filteredInspections = [], filteredParamData = [];
         let charts = {};
+        let paretoMode = 'cost', fishboneMode = 'cost';
 
-        function isAssemblyProcess(processType) {
-            if (!processType) return false;
-            const p = processType.trim().toLowerCase();
-            return p === 'assembling (welding)' || p === 'assembling (fastener)' ||
-                   p === 'assembly (welding)'   || p === 'assembly (fastener)';
+        function toggleFilters() {
+            document.getElementById('filterPanel').classList.toggle('open');
+            document.getElementById('filterChevron').style.transform = document.getElementById('filterPanel').classList.contains('open') ? 'rotate(180deg)' : 'rotate(0)';
         }
 
-        function getProjectName(insp) {
-            let name = '';
-            if (insp.project_name) name = insp.project_name;
-            else if (insp.extra_fields && insp.extra_fields["Project Name"]) name = insp.extra_fields["Project Name"];
-            return name ? name.trim() : '';
+        function isAssemblyProcess(pt) {
+            if (!pt) return false;
+            const p = pt.trim().toLowerCase();
+            return p.includes('assembling (welding)') || p.includes('assembling (fastener)') || p.includes('assembling(welding)') || p.includes('assembling(fastener)');
         }
-        function getClientName(insp) {
-            if (insp.customer_name && insp.customer_name.trim()) return insp.customer_name.trim();
-            return insp.extra_fields?.["Customer Name"]?.trim() || '';
-        }
+        function getProjectName(i) { return i.project_name?.trim() || i.extra_fields?.['Project Name']?.trim() || ''; }
+        function getClientName(i) { return i.customer_name?.trim() || i.extra_fields?.['Customer Name']?.trim() || ''; }
+        function getPartName(i) { return i.part_name?.trim() || i.extra_fields?.['Part Name']?.trim() || ''; }
+        function getSeverity(p) { return (p.severity || 'major').toLowerCase(); }
 
         function parseAcceptanceData(insp) {
             const data = insp.acceptance_data || {};
             const params = [];
             for (const key in data) {
                 const item = data[key];
-                if (item && item.parameter) {
-                    params.push({
-                        parameter: item.parameter,
-                        rating: item.rating || 'N/A',
-                        causes: item.causes || [],
-                        process: insp.process_type || 'Unknown',
-                        date: insp.submitted_at,
-                        client: getClientName(insp),
-                        title: getProjectName(insp),
-                        inspectionId: insp.id,
-                        engineer: insp.username || '',
-                    });
-                }
+                if (item && item.parameter) params.push({
+                    parameter: item.parameter, rating: item.rating || 'N/A', causes: item.causes || [], severity: item.severity || 'major',
+                    process: insp.process_type || 'Unknown', date: insp.submitted_at, client: getClientName(insp), title: getProjectName(insp),
+                    part: getPartName(insp), cost: parseFloat(insp.total_internal_failure_cost) || 0, minutes: parseFloat(insp.total_minutes) || 0,
+                    delivered: parseFloat(insp.delivered_qty) || 0, inspectionId: insp.id, engineer: insp.username || ''
+                });
             }
             return params;
         }
 
+        function wilsonCI(successes, n, z = 1.96) {
+            if (n === 0) return { p: 0, lo: 0, hi: 0 };
+            const p = successes / n;
+            const denom = 1 + (z * z) / n;
+            const center = (p + (z * z) / (2 * n)) / denom;
+            const half = z * Math.sqrt(p * (1 - p) / n + (z * z) / (4 * n * n)) / denom;
+            return { p, lo: Math.max(0, center - half), hi: Math.min(1, center + half) };
+        }
+        function fisherCI(r, n, z = 1.96) {
+            if (n < 4 || Math.abs(r) >= 1) return { lo: r, hi: r };
+            const zr = 0.5 * Math.log((1 + r) / (1 - r));
+            const se = 1 / Math.sqrt(n - 3);
+            return { lo: Math.tanh(zr - z * se), hi: Math.tanh(zr + z * se) };
+        }
+        function linearRegression(points) {
+            const n = points.length;
+            if (n < 2) return null;
+            let sx = 0, sy = 0, sxy = 0, sxx = 0, syy = 0;
+            for (const p of points) { sx += p.x; sy += p.y; sxy += p.x * p.y; sxx += p.x * p.x; syy += p.y * p.y; }
+            const denom = n * sxx - sx * sx;
+            if (denom === 0) return null;
+            const m = (n * sxy - sx * sy) / denom;
+            const c = (sy - m * sx) / n;
+            const num = n * sxy - sx * sy;
+            const den = Math.sqrt((n * sxx - sx * sx) * (n * syy - sy * sy));
+            const r = den === 0 ? 0 : num / den;
+            return { m, c, r, r2: r * r, n };
+        }
+
         async function fetchAndAnalyze() {
-            const statusEl = document.getElementById('dataStatus');
             try {
-                statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading...';
+                document.getElementById('dataStatus').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading…';
                 const res = await fetch('/api/inspections');
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                if (!res.ok) throw new Error();
                 allInspections = await res.json();
                 populateFilterDropdowns();
                 applyFilters();
-                const count = allInspections.length;
-                statusEl.innerHTML = `<i class="fa-solid fa-check-circle text-white"></i> ${count} inspection${count !== 1 ? 's' : ''} loaded`;
-            } catch (err) {
-                console.error(err);
-                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-white"></i> Error loading data';
-                document.getElementById('checkSheetBody').innerHTML = `<tr><td colspan="8" class="text-center py-12 text-red-500">Failed to load data: ${err.message}</td></tr>`;
-            }
+                document.getElementById('dataStatus').innerHTML = `<i class="fa-solid fa-check-circle text-white"></i> ${allInspections.length} inspections`;
+            } catch { document.getElementById('dataStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-white"></i> Error'; }
         }
 
         function populateFilterDropdowns() {
-            const engineers = new Set(), projects = new Set(), processes = new Set();
-            for (const insp of allInspections) {
-                if (insp.username) engineers.add(insp.username);
-                const proj = getProjectName(insp);
-                if (proj) projects.add(proj);
-                if (insp.process_type) processes.add(insp.process_type);
+            const e = new Set(), p = new Set(), pr = new Set();
+            for (const i of allInspections) {
+                if (i.username) e.add(i.username);
+                if (i.process_type) p.add(i.process_type);
+                const pn = getProjectName(i); if (pn) pr.add(pn);
             }
-            const engineerSelect = document.getElementById('filterEngineer');
-            engineerSelect.innerHTML = '<option value="">All Engineers</option>';
-            [...engineers].sort().forEach(e => { engineerSelect.innerHTML += `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`; });
-            const projectSelect = document.getElementById('filterProject');
-            projectSelect.innerHTML = '<option value="">All Projects</option>';
-            [...projects].sort().forEach(p => { projectSelect.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`; });
-            const processSelect = document.getElementById('filterProcess');
-            processSelect.innerHTML = '<option value="">All Processes</option>';
-            [...processes].sort().forEach(p => { processSelect.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`; });
+            document.getElementById('filterEngineer').innerHTML = '<option value="">All</option>' + [...e].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+            document.getElementById('filterProject').innerHTML = '<option value="">All</option>' + [...pr].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+            document.getElementById('filterProcess').innerHTML = '<option value="">All</option>' + [...p].sort().map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
         }
 
         function applyFilters() {
-            const engineer = document.getElementById('filterEngineer').value;
-            const project = document.getElementById('filterProject').value;
-            const process = document.getElementById('filterProcess').value;
+            const eng = document.getElementById('filterEngineer').value;
+            const proj = document.getElementById('filterProject').value;
+            const proc = document.getElementById('filterProcess').value;
+            const sev = document.getElementById('filterSeverity').value;
             filteredInspections = allInspections.filter(insp => {
-                if (engineer && insp.username !== engineer) return false;
-                if (project && getProjectName(insp) !== project) return false;
-                if (process && insp.process_type !== process) return false;
+                if (eng && insp.username !== eng) return false;
+                if (proj && getProjectName(insp) !== proj) return false;
+                if (proc && insp.process_type !== proc) return false;
                 return true;
             });
             filteredParamData = [];
-            for (const insp of filteredInspections) filteredParamData.push(...parseAcceptanceData(insp));
-            document.getElementById('dataStatus').innerHTML = `<i class="fa-solid fa-filter text-white"></i> ${filteredInspections.length} of ${allInspections.length} inspections`;
+            for (const insp of filteredInspections) {
+                for (const p of parseAcceptanceData(insp)) {
+                    if (sev && getSeverity(p) !== sev) continue;
+                    filteredParamData.push(p);
+                }
+            }
+            const count = [eng, proj, proc, sev].filter(Boolean).length;
+            document.getElementById('activeFilterCount').textContent = count > 0 ? `(${count} active)` : '';
             updateHeaderStats();
             renderAllTools();
         }
 
         function clearFilters() {
-            document.getElementById('filterEngineer').value = '';
-            document.getElementById('filterProject').value = '';
-            document.getElementById('filterProcess').value = '';
+            ['filterEngineer','filterProject','filterProcess','filterSeverity'].forEach(id => document.getElementById(id).value = '');
             applyFilters();
         }
 
         function updateHeaderStats() {
             const totalParams = filteredParamData.length;
-            const totalInsp = filteredInspections.length;
-            document.getElementById('headerInspCount').textContent = totalInsp;
+            document.getElementById('headerInspCount').textContent = filteredInspections.length;
             document.getElementById('headerParamCount').textContent = totalParams;
-            let accepted = 0, rejected = 0, rework = 0;
-            for (const p of filteredParamData) {
-                if (p.rating === 'Accepted') accepted++;
-                else if (p.rating === 'Reject') rejected++;
-                else if (p.rating === 'Rework') rework++;
-            }
-            const acceptRate = totalParams > 0 ? (accepted / totalParams * 100).toFixed(1) : 0;
-            const defectRate = totalParams > 0 ? ((rejected + rework) / totalParams * 100).toFixed(1) : 0;
-            document.getElementById('headerAcceptRate').textContent = acceptRate + '%';
-            document.getElementById('headerDefectRate').textContent = defectRate + '%';
+            let a = 0, rej = 0, rw = 0, cost = 0;
+            for (const p of filteredParamData) { if (p.rating === 'Accepted') a++; else if (p.rating === 'Reject') rej++; else if (p.rating === 'Rework') rw++; }
+            for (const i of filteredInspections) cost += parseFloat(i.total_internal_failure_cost) || 0;
+            document.getElementById('headerAcceptRate').innerHTML = `${(wilsonCI(a, totalParams).p * 100).toFixed(1)}%`;
+            document.getElementById('headerDefectRate').innerHTML = `${(wilsonCI(rej + rw, totalParams).p * 100).toFixed(1)}%`;
+            document.getElementById('headerCost').textContent = 'ETB ' + cost.toLocaleString('en-US', { maximumFractionDigits: 0 });
         }
 
         function renderAllTools() {
-            renderCheckSheet();
-            renderPareto();
-            renderFishbone();
-            renderHistogram();
-            renderControlChart();
-            renderScatter();
-            renderFlowchart();
+            renderCheckSheet(); renderPareto(); renderFishbone(); renderHistogram();
+            renderControlChart(); renderScatter(); renderTimeSeries(); renderTopN();
         }
+
+        function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+        function getRatingClass(r) { return { 'Accepted': 'badge-accepted', 'Rework': 'badge-rework', 'Reject': 'badge-reject', 'Conditional Accept': 'badge-conditional' }[r] || 'badge-default'; }
 
         function renderCheckSheet() {
             const tbody = document.getElementById('checkSheetBody');
-            if (!filteredParamData.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-gray-400">No parameter data available</td></tr>';
-                document.getElementById('checkSheetStats').innerText = '0 params · 0 inspections';
-                return;
-            }
-            let html = '';
+            if (!filteredParamData.length) { tbody.innerHTML = '<tr><td colspan="9" class="text-center py-12 text-gray-400">No data</td></tr>'; document.getElementById('checkSheetStats').innerText = '0'; return; }
             const show = filteredParamData.slice(0, 100);
-            show.forEach((p, i) => {
-                const causes = p.causes.length ? p.causes.join(', ') : '-';
-                const date = p.date ? new Date(p.date).toLocaleDateString() : '-';
-                const ratingClass = getRatingClass(p.rating);
-                html += `<tr>
-                    <td class="font-mono text-gray-400 text-xs">${i + 1}</td>
-                    <td class="text-gray-600 text-xs">${date}</td>
-                    <td><span class="text-xs font-medium text-gray-700">${escapeHtml(p.process)}</span></td>
-                    <td class="text-xs text-gray-600">${escapeHtml(p.client)}</td>
-                    <td class="text-xs font-medium text-gray-700 max-w-[120px] truncate">${escapeHtml(p.title)}</td>
-                    <td class="text-xs text-gray-600 max-w-[150px] truncate">${escapeHtml(p.parameter)}</td>
-                    <td><span class="badge ${ratingClass}">${p.rating}</span></td>
-                    <td class="text-xs text-gray-500 max-w-[140px] truncate">${escapeHtml(causes)}</td>
-                </tr>`;
-            });
-            if (filteredParamData.length > 100) {
-                html += `<tr><td colspan="8" class="text-center text-gray-400 text-xs py-4">… and ${filteredParamData.length - 100} more parameters</td></tr>`;
-            }
-            tbody.innerHTML = html;
-            document.getElementById('checkSheetStats').innerText = `${Math.min(filteredParamData.length, 100)} of ${filteredParamData.length} params · ${filteredInspections.length} inspections`;
+            tbody.innerHTML = show.map((p, i) => `<tr>
+                <td class="font-mono text-gray-400 text-xs">${i + 1}</td>
+                <td class="text-gray-600 text-xs">${p.date ? new Date(p.date).toLocaleDateString() : '-'}</td>
+                <td class="text-xs font-medium text-gray-700">${escapeHtml(p.process)}</td>
+                <td class="text-xs text-gray-600">${escapeHtml(p.client)}</td>
+                <td class="text-xs font-medium text-gray-700 max-w-[120px] truncate">${escapeHtml(p.title)}</td>
+                <td class="text-xs text-gray-600 max-w-[150px] truncate">${escapeHtml(p.parameter)}</td>
+                <td><span class="badge ${getRatingClass(p.rating)}">${p.rating}</span></td>
+                <td><span class="badge ${p.severity === 'critical' ? 'badge-reject' : p.severity === 'major' ? 'badge-rework' : 'badge-default'}">${p.severity}</span></td>
+                <td class="text-xs text-gray-500 max-w-[140px] truncate">${escapeHtml(p.causes.join(', ') || '-')}</td>
+            </tr>`).join('');
+            document.getElementById('checkSheetStats').innerText = `${Math.min(filteredParamData.length, 100)} of ${filteredParamData.length}`;
         }
 
-        function getRatingClass(rating) {
-            const map = {
-                'Accepted': 'badge-accepted',
-                'Rework': 'badge-rework',
-                'Reject': 'badge-reject',
-                'Conditional Accept': 'badge-conditional',
-                'Conditional Accepted': 'badge-conditional',
-                'N/A': 'badge-default'
-            };
-            return map[rating] || 'badge-default';
+        function setParetoMode(m, btn) {
+            paretoMode = m;
+            btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderPareto();
         }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } [m]));
+        function setFishboneMode(m, btn) {
+            fishboneMode = m;
+            btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderFishbone();
         }
 
         function renderPareto() {
-            const causeCount = {};
-            for (const p of filteredParamData) for (const cause of p.causes) causeCount[cause] = (causeCount[cause] || 0) + 1;
-            const sorted = Object.entries(causeCount).sort((a, b) => b[1] - a[1]);
+            const allCauses = new Set();
+            for (const p of filteredParamData) for (const c of p.causes) allCauses.add(c);
+            const agg = {};
+            const partSets = {};
+            for (const c of allCauses) { agg[c] = { defects: 0, parts: 0, cost: 0 }; partSets[c] = new Set(); }
+            for (const p of filteredParamData) {
+                const isDef = ['Reject','Rework','Conditional Accept'].includes(p.rating);
+                if (!isDef || !p.causes.length) continue;
+                const perCost = p.cost / p.causes.length;
+                for (const c of p.causes) {
+                    agg[c].defects++;
+                    if (p.part) partSets[c].add(p.part + '|' + p.title);
+                    agg[c].cost += perCost;
+                }
+            }
+            for (const c of allCauses) agg[c].parts = partSets[c].size;
+            const sorted = Object.entries(agg).filter(([_, v]) => v[paretoMode] > 0).sort((a, b) => b[1][paretoMode] - a[1][paretoMode]);
+            if (!sorted.length) {
+                if (charts.pareto) charts.pareto.destroy();
+                document.getElementById('paretoTopList').innerHTML = '<div class="text-gray-400 text-sm">No data</div>';
+                document.getElementById('paretoThreshold').innerText = '-';
+                document.getElementById('paretoInsight').innerHTML = '<span class="text-gray-500">No defect-causing data.</span>';
+                return;
+            }
             const labels = sorted.map(([c]) => c);
-            const values = sorted.map(([, v]) => v);
+            const values = sorted.map(([_, v]) => v[paretoMode]);
             const total = values.reduce((s, v) => s + v, 0);
             let cum = 0;
             const cumPct = values.map(v => { cum += v; return +(cum / total * 100).toFixed(1); });
-            let thresholdIdx = cumPct.findIndex(p => p >= 80);
-            if (thresholdIdx === -1) thresholdIdx = cumPct.length - 1;
+            let ti = cumPct.findIndex(p => p >= 80);
+            if (ti === -1) ti = cumPct.length - 1;
+            const isCost = paretoMode === 'cost';
+            const fmtV = v => isCost ? 'ETB ' + Math.round(v).toLocaleString() : v.toLocaleString();
+            const title = isCost ? 'Cost (ETB)' : (paretoMode === 'defects' ? 'Defect Params' : 'Affected Parts');
             const ctx = document.getElementById('paretoChart').getContext('2d');
             if (charts.pareto) charts.pareto.destroy();
-            if (total === 0 || labels.length === 0) {
-                charts.pareto = new Chart(ctx, {
-                    type: 'bar',
-                    data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#e5e7eb' }] },
-                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-                });
-                document.getElementById('paretoTopList').innerHTML = '<div class="text-gray-400 text-sm">No defect data</div>';
-                document.getElementById('paretoThreshold').innerText = '-';
-                return;
-            }
-            charts.pareto = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Defect Frequency', data: values,
-                        backgroundColor: values.map((_, i) => i <= thresholdIdx ? '#ef4444' : '#94a3b8'),
-                        borderRadius: 4, order: 1
-                    }, {
-                        label: 'Cumulative %', type: 'line', data: cumPct,
-                        borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.06)',
-                        borderWidth: 3, tension: 0.2, pointRadius: 4,
-                        pointBackgroundColor: '#2563eb', yAxisID: 'y1', order: 0, fill: true
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, padding: 16, font: { size: 11 } } },
-                        tooltip: { callbacks: { label: function(context) { if (context.datasetIndex === 0) return `Count: ${context.parsed.y}`; return `Cumulative: ${context.parsed.y}%`; } } }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Frequency', font: { size: 10 } }, grid: { color: '#f1f4f9' } },
-                        y1: { beginAtZero: true, max: 100, position: 'right', title: { display: true, text: 'Cumulative %', font: { size: 10 } }, grid: { drawOnChartArea: false }, ticks: { callback: v => v + '%' } },
-                        x: { ticks: { maxRotation: 30, minRotation: 20, font: { size: 10 } }, grid: { display: false } }
-                    }
-                }
-            });
-            const listEl = document.getElementById('paretoTopList');
-            const top5 = sorted.slice(0, 5);
-            listEl.innerHTML = top5.map(([cause, count], i) => {
-                const pct = (count / total * 100).toFixed(1);
-                const is80 = i <= thresholdIdx;
-                return `<div class="flex justify-between items-center ${is80 ? 'text-rose-700 font-medium' : 'text-gray-500'} text-sm border-b border-gray-100 pb-1.5">
-                    <span class="flex items-center gap-2"><span class="text-xs text-gray-400 w-5">${i + 1}</span>${escapeHtml(cause)}</span>
-                    <span>${count} <span class="text-gray-400 text-xs">(${pct}%)</span></span>
-                </div>`;
-            }).join('');
-            document.getElementById('paretoThreshold').innerText = `${labels.slice(0, thresholdIdx + 1).join(', ')} — ${(cumPct[thresholdIdx])}% of total`;
+            charts.pareto = new Chart(ctx, { type: 'bar', data: { labels, datasets: [
+                { label: title, data: values, backgroundColor: values.map((_, i) => i <= ti ? '#ef4444' : '#94a3b8'), borderRadius: 4, order: 1 },
+                { label: 'Cumulative %', type: 'line', data: cumPct, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.06)', borderWidth: 3, tension: 0.2, pointRadius: 4, yAxisID: 'y1', order: 0, fill: true }
+            ]}, options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { usePointStyle: true, font: { size: 11 } } }, tooltip: { callbacks: { label: c => c.datasetIndex === 0 ? `${title}: ${fmtV(c.parsed.y)}` : `Cumulative: ${c.parsed.y}%` } } },
+                scales: { y: { beginAtZero: true, title: { display: true, text: title, font: { size: 10 } }, grid: { color: '#f1f4f9' }, ticks: { callback: v => isCost ? 'ETB ' + v.toLocaleString() : v } }, y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => v + '%' } }, x: { ticks: { maxRotation: 30, font: { size: 10 } }, grid: { display: false } } }
+            }});
+            const top = sorted.slice(0, 6);
+            document.getElementById('paretoTopTitle').textContent = `Top Causes (${title})`;
+            document.getElementById('paretoTopList').innerHTML = top.map(([c, v], i) => `<div class="flex justify-between items-center ${i <= ti ? 'text-rose-700 font-medium' : 'text-gray-500'} text-sm border-b border-gray-100 pb-1.5">
+                <span class="flex items-center gap-2"><span class="text-xs text-gray-400 w-5">${i + 1}</span>${escapeHtml(c)}</span>
+                <span>${fmtV(v[paretoMode])} <span class="text-gray-400 text-xs">(${(v[paretoMode] / total * 100).toFixed(1)}%)</span></span>
+            </div>`).join('');
+            document.getElementById('paretoThreshold').textContent = `${labels.slice(0, ti + 1).join(', ')} = ${cumPct[ti]}%`;
+            const top3 = sorted.slice(0, 3);
+            const top3Pct = ((top3.reduce((s, [_, v]) => s + v[paretoMode], 0) / total) * 100).toFixed(0);
+            document.getElementById('paretoInsight').innerHTML = `<i class="fas fa-lightbulb text-amber-500 mr-2"></i><strong>Top 3</strong> — <strong>${top3.map(([c]) => escapeHtml(c)).join(', ')}</strong> — account for <strong>${top3Pct}%</strong> of total ${isCost ? 'cost' : paretoMode === 'defects' ? 'defects' : 'parts'}.`;
         }
 
+        const FISH_CATS = [
+            { key: 'Machine', color: '#ef4444', angle: -32, icon: '⚙️' },
+            { key: 'Method', color: '#f59e0b', angle: -26, icon: '📋' },
+            { key: 'Material', color: '#10b981', angle: -18, icon: '🧱' },
+            { key: 'Man', color: '#3b82f6', angle: 22, icon: '👤' },
+            { key: 'Measurement', color: '#8b5cf6', angle: 28, icon: '📏' },
+            { key: 'Environment', color: '#06b6d4', angle: 34, icon: '🌡️' },
+            { key: 'Design', color: '#f97316', angle: 40, icon: '📐' }
+        ];
+        const CAUSE_ALIASES = { 'Machine':['Machine'], 'Method':['Method','Methods'], 'Material':['Material'], 'Man':['Man','Operator'], 'Measurement':['Measurement'], 'Environment':['Environment'], 'Design':['Design'] };
+
         function renderFishbone() {
-            const causeMap = { Machine: 0, Design: 0, Operator: 0, Methods: 0, Material: 0 };
-            for (const p of filteredParamData) for (const cause of p.causes) if (causeMap.hasOwnProperty(cause)) causeMap[cause]++;
-            const totalParams = filteredParamData.length;
-            const svg = document.getElementById('fishboneSvg');
-            const spineY = 230;
-            const startX = 80, endX = 1020;
-            let html = `
-                <defs>
-                    <filter id="shadow2" x="-5%" y="-5%" width="110%" height="110%"><feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.12"/></filter>
-                    <linearGradient id="spineGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1e293b" stop-opacity="0.8"/><stop offset="50%" stop-color="#0f172a" stop-opacity="1"/><stop offset="100%" stop-color="#1e293b" stop-opacity="0.8"/></linearGradient>
-                </defs>
-                <line x1="${startX}" y1="${spineY}" x2="${endX}" y2="${spineY}" stroke="url(#spineGrad)" stroke-width="5" stroke-linecap="round"/>
-                <polygon points="${endX},${spineY} ${endX-14},${spineY-10} ${endX-14},${spineY+10}" fill="#0f172a"/>
-                <text x="550" y="${spineY-55}" text-anchor="middle" font-size="26" font-weight="800" fill="#0f172a" letter-spacing="1">DEFECT</text>
-                <text x="550" y="${spineY-30}" text-anchor="middle" font-size="15" fill="#64748b" font-weight="600">(Reject / Rework)</text>
-                <text x="550" y="${spineY-10}" text-anchor="middle" font-size="12" fill="#94a3b8">${totalParams} parameters analyzed</text>`;
-            const categories = [
-                { key: 'Machine', x: 170, color: '#ef4444', angle: -32, icon: '⚙️' },
-                { key: 'Design', x: 345, color: '#f59e0b', angle: -26, icon: '📐' },
-                { key: 'Operator', x: 520, color: '#3b82f6', angle: 26, icon: '👤' },
-                { key: 'Methods', x: 695, color: '#8b5cf6', angle: 30, icon: '📋' },
-                { key: 'Material', x: 870, color: '#10b981', angle: 34, icon: '🧱' }
-            ];
-            for (const cat of categories) {
-                const count = causeMap[cat.key] || 0;
-                const pct = totalParams > 0 ? (count / totalParams * 100) : 0;
-                const barHeight = Math.max(8, pct * 0.8);
-                const tipY = spineY + (cat.angle < 0 ? -90 : 90);
-                const dx = cat.x + 70, dy = tipY;
-                html += `<line x1="${cat.x}" y1="${spineY}" x2="${dx}" y2="${dy}" stroke="${cat.color}" stroke-width="3.5" opacity="0.6" stroke-linecap="round"/>`;
-                html += `<circle cx="${dx}" cy="${dy}" r="12" fill="${cat.color}" stroke="white" stroke-width="3" filter="url(#shadow2)"/>`;
-                html += `<text x="${dx}" y="${dy+5}" text-anchor="middle" font-size="14" fill="white">${cat.icon}</text>`;
-                html += `<text x="${dx}" y="${dy + (cat.angle < 0 ? -22 : 32)}" text-anchor="middle" font-size="15" font-weight="700" fill="${cat.color}">${cat.key}</text>`;
-                const badgeY = dy + (cat.angle < 0 ? -44 : 48);
-                html += `<rect x="${dx-28}" y="${badgeY-10}" width="56" height="22" rx="11" fill="${cat.color}" opacity="0.15" stroke="${cat.color}" stroke-width="1.5"/>`;
-                html += `<text x="${dx}" y="${badgeY+6}" text-anchor="middle" font-size="14" font-weight="700" fill="${cat.color}">${count}</text>`;
-                const barX = cat.x - 50;
-                const barY = spineY + (cat.angle < 0 ? -44 - barHeight : 44);
-                const barWidth = Math.max(14, pct * 1.1);
-                html += `<rect x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" rx="5" fill="${cat.color}" opacity="0.35"/>`;
-                html += `<text x="${barX + barWidth + 10}" y="${barY + barHeight/2 + 4}" font-size="11" font-weight="600" fill="${cat.color}">${pct.toFixed(1)}%</text>`;
+            const agg = {};
+            for (const c of FISH_CATS) agg[c.key] = { count: 0, cost: 0, defects: 0 };
+            const isCost = fishboneMode === 'cost';
+            for (const p of filteredParamData) {
+                const isDef = ['Reject','Rework','Conditional Accept'].includes(p.rating);
+                if (!isDef || !p.causes.length) continue;
+                const perCost = p.cost / p.causes.length;
+                for (const raw of p.causes) {
+                    let mapped = null;
+                    for (const [k, als] of Object.entries(CAUSE_ALIASES)) { if (als.some(a => a.toLowerCase() === raw.toLowerCase())) { mapped = k; break; } }
+                    if (!mapped) continue;
+                    agg[mapped].count++; agg[mapped].cost += perCost;
+                    if (p.rating === 'Reject') agg[mapped].defects++;
+                }
             }
-            html += `<rect x="${startX+10}" y="${spineY+60}" width="180" height="50" rx="10" fill="white" opacity="0.8" stroke="#e2e8f0" stroke-width="1"/>
-                <text x="${startX+25}" y="${spineY+80}" font-size="11" fill="#64748b">⬤ Each rib = cause category</text>
-                <text x="${startX+25}" y="${spineY+98}" font-size="11" fill="#64748b">📊 Bar = % of total defects</text>`;
+            const total = Object.values(agg).reduce((s, v) => s + v[isCost ? 'cost' : 'count'], 0);
+            const svg = document.getElementById('fishboneSvg');
+            const spineY = 240, startX = 60, endX = 1140;
+            let html = `<defs>
+                <filter id="fs2"><feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.12"/></filter>
+                <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1e293b" stop-opacity="0.85"/><stop offset="50%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b" stop-opacity="0.85"/></linearGradient>
+            </defs>
+            <line x1="${startX}" y1="${spineY}" x2="${endX}" y2="${spineY}" stroke="url(#sg)" stroke-width="6" stroke-linecap="round"/>
+            <polygon points="${endX},${spineY} ${endX-16},${spineY-12} ${endX-16},${spineY+12}" fill="#0f172a"/>
+            <text x="600" y="${spineY - 60}" text-anchor="middle" font-size="28" font-weight="800" fill="#0f172a">DEFECT</text>
+            <text x="600" y="${spineY - 35}" text-anchor="middle" font-size="14" fill="#64748b" font-weight="600">${isCost ? 'Cost (ETB) weighted' : 'Defect count'}</text>
+            <text x="600" y="${spineY - 15}" text-anchor="middle" font-size="11" fill="#94a3b8">${filteredParamData.length} parameters</text>`;
+            FISH_CATS.forEach((cat, i) => {
+                const x = startX + 100 + (endX - startX - 200) * i / (FISH_CATS.length - 1);
+                const val = agg[cat.key][isCost ? 'cost' : 'count'];
+                const pct = total > 0 ? (val / total * 100) : 0;
+                const tipY = spineY + (cat.angle < 0 ? -110 : 110);
+                const dx = x + (cat.angle < 0 ? -50 : 50), dy = tipY;
+                html += `<line x1="${x}" y1="${spineY}" x2="${dx}" y2="${dy}" stroke="${cat.color}" stroke-width="3.5" opacity="0.65"/>`;
+                html += `<circle cx="${dx}" cy="${dy}" r="13" fill="${cat.color}" stroke="white" stroke-width="3" filter="url(#fs2)"/>`;
+                html += `<text x="${dx}" y="${dy + 5}" text-anchor="middle" font-size="14" fill="white">${cat.icon}</text>`;
+                html += `<text x="${dx}" y="${dy + (cat.angle < 0 ? -25 : 35)}" text-anchor="middle" font-size="13" font-weight="700" fill="${cat.color}">${cat.key}</text>`;
+                const badgeY = dy + (cat.angle < 0 ? -48 : 58);
+                const label = isCost ? 'ETB ' + Math.round(val).toLocaleString() : val + ' defects';
+                html += `<rect x="${dx - 55}" y="${badgeY - 12}" width="110" height="24" rx="12" fill="${cat.color}" opacity="0.15" stroke="${cat.color}" stroke-width="1.2"/>`;
+                html += `<text x="${dx}" y="${badgeY + 5}" text-anchor="middle" font-size="11" font-weight="700" fill="${cat.color}">${label}</text>`;
+            });
             svg.innerHTML = html;
-            const statsEl = document.getElementById('fishboneStats');
-            statsEl.innerHTML = Object.entries(causeMap).map(([key, count]) => {
-                const cat = categories.find(c => c.key === key);
-                const pct = totalParams > 0 ? (count / totalParams * 100).toFixed(1) : 0;
-                return `<div class="stat-mini" style="border-left: 4px solid ${cat?.color || '#94a3b8'}">
-                    <div class="label">${cat?.icon || ''} ${key}</div>
-                    <div class="value" style="color:${cat?.color || '#0f172a'}">${count}</div>
-                    <div class="text-xs text-gray-400">${pct}% of params</div>
+            document.getElementById('fishboneStats').innerHTML = FISH_CATS.map(cat => {
+                const val = agg[cat.key][isCost ? 'cost' : 'count'];
+                return `<div class="stat-mini" style="border-left: 4px solid ${cat.color}">
+                    <div class="label">${cat.icon} ${cat.key}</div>
+                    <div class="value" style="color: ${cat.color}; font-size: 1rem">${isCost ? Math.round(val).toLocaleString() : val}</div>
+                    <div class="text-xs text-gray-400">${(total > 0 ? val / total * 100 : 0).toFixed(1)}%</div>
                 </div>`;
             }).join('');
         }
 
         function renderHistogram() {
-            let sumAccepted = 0, sumRework = 0, sumReject = 0, sumConditional = 0;
+            const variable = document.getElementById('histVar')?.value || 'minutes';
+            const data = [];
             for (const insp of filteredInspections) {
-                if (isAssemblyProcess(insp.process_type)) continue;   // assemblies have 0 outcomes
-                sumAccepted += parseFloat(insp.accepted_qty) || 0;
-                sumRework += parseFloat(insp.rework_qty) || 0;
-                sumReject += parseFloat(insp.reject_qty) || 0;
-                sumConditional += parseFloat(insp.conditional_accept_qty) || 0;
+                if (isAssemblyProcess(insp.process_type)) continue;
+                let v = 0;
+                if (variable === 'minutes') v = parseFloat(insp.total_minutes) || 0;
+                if (variable === 'cost') v = parseFloat(insp.total_internal_failure_cost) || 0;
+                if (variable === 'delivered') v = parseFloat(insp.delivered_qty) || 0;
+                if (variable === 'defectRate') {
+                    const p = parseAcceptanceData(insp);
+                    const t = p.length, d = p.filter(x => x.rating === 'Reject' || x.rating === 'Rework').length;
+                    v = t > 0 ? (d / t * 100) : 0;
+                }
+                if (v > 0) data.push(v);
             }
-            const labels = ['Accepted', 'Rework', 'Reject', 'Conditional'];
-            const values = [sumAccepted, sumRework, sumReject, sumConditional];
-            const colors = ['#22c55e', '#eab308', '#ef4444', '#3b82f6'];
             const ctx = document.getElementById('histogramChart').getContext('2d');
             if (charts.histogram) charts.histogram.destroy();
+            if (!data.length) {
+                charts.histogram = new Chart(ctx, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#e5e7eb' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+                document.getElementById('histogramStats').innerHTML = '<div class="text-gray-400">No data</div>';
+                return;
+            }
+            data.sort((a, b) => a - b);
+            const min = data[0], max = data[data.length - 1];
+            const bins = 10, bw = (max - min) / bins || 1;
+            const counts = new Array(bins).fill(0);
+            for (const v of data) { let b = Math.floor((v - min) / bw); if (b >= bins) b = bins - 1; counts[b]++; }
+            const bl = counts.map((_, i) => `${(min + i * bw).toFixed(1)}–${(min + (i + 1) * bw).toFixed(1)}`);
+            const mean = data.reduce((s, v) => s + v, 0) / data.length;
+            const sd = Math.sqrt(data.reduce((s, v) => s + (v - mean) ** 2, 0) / data.length);
+            const med = data[Math.floor(data.length / 2)];
+            const q1 = data[Math.floor(data.length * 0.25)];
+            const q3 = data[Math.floor(data.length * 0.75)];
             charts.histogram = new Chart(ctx, {
-                type: 'bar',
-                data: { labels, datasets: [{ label: 'Total Quantity', data: values, backgroundColor: colors.map(c => c + 'CC'), borderColor: colors, borderWidth: 2, borderRadius: 6, barPercentage: 0.6 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { const total = values.reduce((s, v) => s + v, 0); const pct = total > 0 ? (context.parsed.y / total * 100).toFixed(1) : 0; return `${context.parsed.y.toLocaleString()} units (${pct}%)`; } } } },
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Total Quantity', font: { size: 10 } }, grid: { color: '#f1f4f9' }, ticks: { callback: function(value) { return value.toLocaleString(); } } },
-                        x: { grid: { display: false } }
-                    }
-                }
+                type: 'bar', data: { labels: bl, datasets: [{ label: 'Frequency', data: counts, backgroundColor: '#22c55eCC', borderColor: '#22c55e', borderWidth: 2, borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: `μ=${mean.toFixed(1)} σ=${sd.toFixed(1)} n=${data.length}`, font: { size: 11 }, color: '#64748b' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Freq', font: { size: 10 } } }, x: { ticks: { maxRotation: 60, font: { size: 9 } } } } }
             });
-            const total = values.reduce((s, v) => s + v, 0);
-            const acceptedPct = total > 0 ? (values[0] / total * 100).toFixed(1) : 0;
-            const rejectRework = values[1] + values[2];
-            const rejectReworkPct = total > 0 ? (rejectRework / total * 100).toFixed(1) : 0;
             document.getElementById('histogramStats').innerHTML = `
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">Total units</span><span class="font-semibold">${total.toLocaleString()}</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">✅ Accepted</span><span class="font-semibold text-emerald-600">${values[0].toLocaleString()} (${acceptedPct}%)</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">🔄 Rework</span><span class="font-semibold text-amber-600">${values[1].toLocaleString()}</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">❌ Reject</span><span class="font-semibold text-rose-600">${values[2].toLocaleString()}</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">⚠️ Conditional</span><span class="font-semibold text-blue-600">${values[3].toLocaleString()}</span></div>
-                <div class="flex justify-between pt-2 border-t border-gray-200"><span class="text-gray-700 font-medium">Non-conforming</span><span class="font-semibold text-rose-600">${rejectRework.toLocaleString()} (${rejectReworkPct}%)</span></div>`;
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">n</span><span class="font-semibold">${data.length}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">Mean (μ)</span><span class="font-semibold">${mean.toFixed(2)}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">Std (σ)</span><span class="font-semibold">${sd.toFixed(2)}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">Min/Max</span><span class="font-semibold">${min.toFixed(1)} / ${max.toFixed(1)}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">Q1/Med/Q3</span><span class="font-semibold">${q1.toFixed(1)}/${med.toFixed(1)}/${q3.toFixed(1)}</span></div>
+                <div class="flex justify-between py-1"><span class="text-gray-600">CV</span><span class="font-semibold">${(sd / mean * 100).toFixed(1)}%</span></div>`;
         }
 
         function renderControlChart() {
             const inspData = [];
             for (const insp of filteredInspections) {
-                const params = parseAcceptanceData(insp);
-                const total = params.length;
-                const defects = params.filter(p => p.rating === 'Reject' || p.rating === 'Rework').length;
-                const rate = total > 0 ? defects / total : 0;
-                inspData.push({ id: insp.id, date: new Date(insp.submitted_at), total, defects, rate, label: insp.process_type || 'Unknown' });
+                const p = parseAcceptanceData(insp);
+                const t = p.length;
+                if (t === 0) continue;
+                const d = p.filter(x => x.rating === 'Reject' || x.rating === 'Rework').length;
+                inspData.push({ date: new Date(insp.submitted_at), total: t, defects: d, p: d / t });
             }
             inspData.sort((a, b) => a.date - b.date);
-            const labels = inspData.map(d => d.date.toLocaleDateString());
-            const rates = inspData.map(d => +(d.rate * 100).toFixed(1));
-            const totalPoints = inspData.length;
             const ctx = document.getElementById('controlChart').getContext('2d');
+            const rctx = document.getElementById('runChart').getContext('2d');
             if (charts.control) charts.control.destroy();
-            if (totalPoints === 0) {
-                charts.control = new Chart(ctx, { type: 'line', data: { labels: ['No data'], datasets: [{ data: [0], borderColor: '#ccc' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } } });
-                document.getElementById('controlStats').innerHTML = 'No data available';
-                document.getElementById('controlStatus').innerText = '—';
-                document.getElementById('controlStatus').className = 'px-3 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500';
+            if (charts.run) charts.run.destroy();
+            if (inspData.length < 5) {
+                document.getElementById('controlStats').innerHTML = '<div class="text-gray-400 text-sm">Need ≥ 5 inspections</div>';
+                document.getElementById('we-rules-indicator').innerHTML = '';
+                document.getElementById('controlAlert').innerHTML = '';
                 return;
             }
-            const avgRate = rates.reduce((s, r) => s + r, 0) / rates.length;
-            const pBar = avgRate / 100;
-            const n = inspData.reduce((s, d) => s + d.total, 0) / inspData.length;
-            const stdDev = Math.sqrt(pBar * (1 - pBar) / n);
-            const UCL = Math.min(100, +(pBar + 3 * stdDev) * 100);
-            const LCL = Math.max(0, +(pBar - 3 * stdDev) * 100);
-            const CL = +(pBar * 100);
+            const td = inspData.reduce((s, d) => s + d.defects, 0);
+            const tn = inspData.reduce((s, d) => s + d.total, 0);
+            const pBar = td / tn;
+            const limits = inspData.map(d => { const sig = Math.sqrt(pBar * (1 - pBar) / d.total); return { ucl: Math.min(1, pBar + 3 * sig), lcl: Math.max(0, pBar - 3 * sig), ucl2: Math.min(1, pBar + 2 * sig), lcl2: Math.max(0, pBar - 2 * sig), ucl1: Math.min(1, pBar + sig), lcl1: Math.max(0, pBar - sig) }; });
+            const rules = detectWE(inspData, pBar, limits);
+            const violating = new Set([...rules.r1, ...rules.r2, ...rules.r3, ...rules.r4]);
+            const labels = inspData.map(d => d.date.toLocaleDateString());
+            const series = inspData.map(d => +(d.p * 100).toFixed(2));
             charts.control = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                        { label: 'Defect Rate %', data: rates, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.06)', pointRadius: 5, pointBackgroundColor: '#2563eb', tension: 0.15, fill: true, borderWidth: 2.5 },
-                        { label: 'UCL', data: Array(rates.length).fill(UCL), borderColor: '#ef4444', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false },
-                        { label: 'LCL', data: Array(rates.length).fill(LCL), borderColor: '#ef4444', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false },
-                        { label: 'CL', data: Array(rates.length).fill(CL), borderColor: '#22c55e', borderDash: [4, 4], borderWidth: 2, pointRadius: 0, fill: false }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: {
-                        legend: { position: 'top', labels: { usePointStyle: true, padding: 14, font: { size: 10 } } },
-                        tooltip: { callbacks: { label: function(context) { if (context.datasetIndex === 0) { const d = inspData[context.dataIndex]; return `Defect Rate: ${context.parsed.y}% (${d.defects}/${d.total})`; } return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`; } } }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Defect Rate %', font: { size: 10 } }, grid: { color: '#f1f4f9' }, ticks: { callback: v => v + '%' } },
-                        x: { ticks: { maxRotation: 40, minRotation: 30, font: { size: 9 } }, grid: { display: false } }
-                    }
+                type: 'line', data: { labels, datasets: [
+                    { label: 'Defect %', data: series, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.06)', pointRadius: inspData.map((_, i) => violating.has(i) ? 7 : 4), pointBackgroundColor: inspData.map((_, i) => violating.has(i) ? '#ef4444' : '#2563eb'), tension: 0.15, fill: true, borderWidth: 2.5 },
+                    { label: 'UCL', data: limits.map(l => +(l.ucl * 100).toFixed(2)), borderColor: '#ef4444', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0, fill: false },
+                    { label: 'LCL', data: limits.map(l => +(l.lcl * 100).toFixed(2)), borderColor: '#ef4444', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0, fill: false },
+                    { label: 'CL', data: inspData.map(() => +(pBar * 100).toFixed(2)), borderColor: '#22c55e', borderDash: [3, 3], borderWidth: 1.5, pointRadius: 0, fill: false }
+                ]}, options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, font: { size: 10 } } } },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => v + '%' } }, x: { ticks: { maxRotation: 40, font: { size: 9 } } } }
                 }
             });
-            const outOfControl = rates.filter(r => r > UCL || r < LCL).length;
+            charts.run = new Chart(rctx, { type: 'line', data: { labels, datasets: [{ label: 'Defects', data: inspData.map(d => d.defects), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.08)', pointRadius: 2.5, tension: 0.1, fill: true, borderWidth: 1.5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { display: false } } } } });
+
             document.getElementById('controlStats').innerHTML = `
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">Inspections</span><span class="font-semibold">${totalPoints}</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">Avg defect rate</span><span class="font-semibold">${CL.toFixed(1)}%</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">UCL</span><span class="font-semibold text-rose-600">${UCL.toFixed(1)}%</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">LCL</span><span class="font-semibold text-rose-600">${LCL.toFixed(1)}%</span></div>
-                <div class="flex justify-between pt-2 border-t border-gray-200"><span class="text-gray-700 font-medium">Out of control</span><span class="font-semibold ${outOfControl > 0 ? 'text-rose-600' : 'text-emerald-600'}">${outOfControl}</span></div>`;
-            const statusEl = document.getElementById('controlStatus');
-            if (outOfControl > 0) {
-                statusEl.className = 'px-3 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700';
-                statusEl.innerText = '⚠️ Out of Control';
-            } else {
-                statusEl.className = 'px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700';
-                statusEl.innerText = '✅ In Control';
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">Points</span><span class="font-semibold">${inspData.length}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">p̄</span><span class="font-semibold">${(pBar * 100).toFixed(1)}%</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">R1 (3σ)</span><span class="font-semibold ${rules.r1.length ? 'text-rose-600' : 'text-emerald-600'}">${rules.r1.length}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">R2 (2/3)</span><span class="font-semibold ${rules.r2.length ? 'text-rose-600' : 'text-emerald-600'}">${rules.r2.length}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">R3 (4/5)</span><span class="font-semibold ${rules.r3.length ? 'text-rose-600' : 'text-emerald-600'}">${rules.r3.length}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">R4 (8-run)</span><span class="font-semibold ${rules.r4.length ? 'text-rose-600' : 'text-emerald-600'}">${rules.r4.length}</span></div>`;
+
+            document.getElementById('we-rules-indicator').innerHTML = `
+                <span class="we-rule ${rules.r1.length ? 'triggered' : 'clear'}">R1</span>
+                <span class="we-rule ${rules.r2.length ? 'triggered' : 'clear'}">R2</span>
+                <span class="we-rule ${rules.r3.length ? 'triggered' : 'clear'}">R3</span>
+                <span class="we-rule ${rules.r4.length ? 'triggered' : 'clear'}">R4</span>`;
+
+            document.getElementById('controlAlert').innerHTML = violating.size > 0
+                ? `<div class="alert-banner"><i class="fas fa-exclamation-triangle text-red-600 mr-2"></i><strong>${violating.size} out-of-control point(s)</strong> detected.</div>`
+                : `<div class="info-banner"><i class="fas fa-check-circle text-emerald-600 mr-2"></i><strong>Process is in control.</strong> All rules pass.</div>`;
+        }
+
+        function detectWE(data, pBar, limits) {
+            const r1 = [], r2 = [], r3 = [], r4 = [];
+            for (let i = 0; i < data.length; i++) {
+                const d = data[i], l = limits[i];
+                if (d.p > l.ucl || d.p < l.lcl) { r1.push(i); continue; }
+                if (i >= 2) { const l3 = [i-2, i-1, i]; const a2 = l3.filter(j => data[j].p > limits[j].ucl2).length, b2 = l3.filter(j => data[j].p < limits[j].lcl2).length; if (a2 >= 2 || b2 >= 2) { r2.push(i); continue; } }
+                if (i >= 4) { const l5 = [i-4, i-3, i-2, i-1, i]; const a1 = l5.filter(j => data[j].p > limits[j].ucl1).length, b1 = l5.filter(j => data[j].p < limits[j].lcl1).length; if (a1 >= 4 || b1 >= 4) { r3.push(i); continue; } }
+                if (i >= 7) { const l8 = [i-7,i-6,i-5,i-4,i-3,i-2,i-1,i]; if (l8.every(j => data[j].p > pBar) || l8.every(j => data[j].p < pBar)) r4.push(i); }
             }
+            return { r1, r2, r3, r4 };
         }
 
         function renderScatter() {
-            const scatterData = [];
+            const pts = [];
             for (const insp of filteredInspections) {
-                if (isAssemblyProcess(insp.process_type)) continue;   // different unit
-                const delivered = insp.total_outcomes_qty || insp.delivered_qty || 0;
-                const params = parseAcceptanceData(insp);
-                const total = params.length;
-                const defects = params.filter(p => p.rating === 'Reject' || p.rating === 'Rework').length;
-                const rate = total > 0 ? defects / total : 0;
-                if (delivered > 0) scatterData.push({ x: delivered, y: +(rate * 100).toFixed(1), label: insp.process_type || 'Unknown', id: insp.id });
+                if (isAssemblyProcess(insp.process_type)) continue;
+                const del = parseFloat(insp.total_outcomes_qty) || parseFloat(insp.delivered_qty) || 0;
+                const p = parseAcceptanceData(insp);
+                const t = p.length;
+                if (t === 0 || del === 0) continue;
+                const d = p.filter(x => x.rating === 'Reject' || x.rating === 'Rework').length;
+                pts.push({ x: del, y: +(d / t * 100).toFixed(2) });
             }
             const ctx = document.getElementById('scatterChart').getContext('2d');
             if (charts.scatter) charts.scatter.destroy();
-            const n = scatterData.length;
-            if (n === 0) {
-                charts.scatter = new Chart(ctx, {
-                    type: 'scatter',
-                    data: { datasets: [{ label: 'No data', data: [], backgroundColor: '#ccc' }] },
-                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true }, y: { beginAtZero: true } } }
-                });
-                document.getElementById('scatterStats').innerHTML = 'No data available';
-                return;
-            }
-            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
-            for (const d of scatterData) { sumX += d.x; sumY += d.y; sumXY += d.x * d.y; sumX2 += d.x * d.x; sumY2 += d.y * d.y; }
-            const corr = (n * sumXY - sumX * sumY) / Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-            charts.scatter = new Chart(ctx, {
-                type: 'scatter',
-                data: { datasets: [{ label: 'Defect Rate vs Delivered Qty', data: scatterData, backgroundColor: '#3b82f6', pointRadius: 7, pointHoverRadius: 11, pointBorderColor: 'white', pointBorderWidth: 2 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { const d = context.raw; return `Delivered: ${d.x} | Defect Rate: ${d.y}% (${d.label})`; } } } },
-                    scales: {
-                        x: { title: { display: true, text: 'Delivered Qty', font: { size: 10 } }, grid: { color: '#f1f4f9' }, beginAtZero: true },
-                        y: { title: { display: true, text: 'Defect Rate %', font: { size: 10 } }, grid: { color: '#f1f4f9' }, beginAtZero: true, ticks: { callback: v => v + '%' } }
-                    }
-                }
-            });
-            const corrAbs = Math.abs(corr);
-            let strength = 'Weak', emoji = '❌';
-            if (corrAbs > 0.7) { strength = 'Strong'; emoji = '✅'; }
-            else if (corrAbs > 0.4) { strength = 'Moderate'; emoji = '⚠️'; }
+            if (pts.length < 4) { document.getElementById('scatterStats').innerHTML = '<div class="text-gray-400 text-sm">Need ≥ 4 points</div>'; return; }
+            const reg = linearRegression(pts);
+            const fisher = fisherCI(reg.r, reg.n);
+            const xs = pts.map(p => p.x);
+            const lineData = [{ x: Math.min(...xs), y: reg.m * Math.min(...xs) + reg.c }, { x: Math.max(...xs), y: reg.m * Math.max(...xs) + reg.c }];
+            charts.scatter = new Chart(ctx, { type: 'scatter', data: { datasets: [
+                { label: 'Inspections', data: pts, backgroundColor: '#3b82f6', pointRadius: 6, pointBorderColor: 'white', pointBorderWidth: 1.5 },
+                { label: 'Regression', type: 'line', data: lineData, borderColor: '#ef4444', borderWidth: 2, pointRadius: 0, fill: false, showLine: true }
+            ]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { usePointStyle: true, font: { size: 10 } } } }, scales: { x: { title: { display: true, text: 'Delivered Qty', font: { size: 10 } }, beginAtZero: true }, y: { title: { display: true, text: 'Defect Rate %', font: { size: 10 } }, beginAtZero: true, ticks: { callback: v => v + '%' } } } } });
+            const sig = !(fisher.lo <= 0 && fisher.hi >= 0);
+            const strength = sig ? (Math.abs(reg.r) > 0.7 ? 'Strong' : 'Moderate') : 'Not significant';
             document.getElementById('scatterStats').innerHTML = `
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">Data points</span><span class="font-semibold">${n}</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">Correlation (r)</span><span class="font-semibold">${corr.toFixed(3)}</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">r²</span><span class="font-semibold">${(corr*corr).toFixed(3)}</span></div>
-                <div class="flex justify-between py-1 border-b border-gray-100"><span class="text-gray-600">Strength</span><span class="font-semibold">${emoji} ${strength}</span></div>
-                <div class="flex justify-between pt-2 border-t border-gray-200 text-xs text-gray-500">
-                    <span>${corr > 0 ? '↗️ Positive' : '↘️ Negative'}</span>
-                    <span>${corr > 0 ? 'higher volume → more defects' : 'higher volume → fewer defects'}</span>
-                </div>`;
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">n</span><span class="font-semibold">${reg.n}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">r</span><span class="font-semibold">${reg.r.toFixed(3)}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">95% CI</span><span class="font-semibold text-xs">${fisher.lo.toFixed(2)}…${fisher.hi.toFixed(2)}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">r²</span><span class="font-semibold">${reg.r2.toFixed(3)}</span></div>
+                <div class="flex justify-between py-1 border-b"><span class="text-gray-600">Slope</span><span class="font-semibold">${reg.m.toFixed(4)}</span></div>
+                <div class="flex justify-between py-1"><span class="text-gray-600">Strength</span><span class="font-semibold ${sig ? 'text-emerald-600' : 'text-gray-500'}">${strength}</span></div>`;
         }
 
-        function renderFlowchart() {
-            const svg = document.getElementById('flowchartSvg');
-            const nodes = [
-                { id: 'start', label: 'Start', x: 500, y: 40, type: 'start' },
-                { id: 'recv', label: 'Receive Material', x: 500, y: 120, type: 'process' },
-                { id: 'visual', label: 'Visual Inspection', x: 500, y: 210, type: 'decision' },
-                { id: 'measure', label: 'Dimensional Check', x: 500, y: 300, type: 'process' },
-                { id: 'param', label: 'Parameter Check', x: 500, y: 390, type: 'process' },
-                { id: 'eval', label: 'Evaluate Results', x: 500, y: 480, type: 'decision' },
-                { id: 'accept', label: 'Accept', x: 280, y: 580, type: 'end' },
-                { id: 'rework', label: 'Rework', x: 500, y: 580, type: 'process' },
-                { id: 'reject', label: 'Reject', x: 720, y: 580, type: 'end' },
-                { id: 'cond', label: 'Conditional', x: 500, y: 650, type: 'end' },
-            ];
-            const edges = [
-                { from: 'start', to: 'recv' }, { from: 'recv', to: 'visual' },
-                { from: 'visual', to: 'measure', label: 'OK' }, { from: 'visual', to: 'rework', label: 'NOK' },
-                { from: 'measure', to: 'param' }, { from: 'param', to: 'eval' },
-                { from: 'eval', to: 'accept', label: 'OK' }, { from: 'eval', to: 'rework', label: 'Rework' },
-                { from: 'eval', to: 'reject', label: 'Reject' }, { from: 'eval', to: 'cond', label: 'Conditional' },
-                { from: 'rework', to: 'visual', label: 'Re-inspect' }
-            ];
-            let html = `<defs>
-                <marker id="arrow2" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#94a3b8"/></marker>
-                <filter id="shadow3" x="-8%" y="-8%" width="116%" height="116%"><feDropShadow dx="2" dy="3" stdDeviation="4" flood-opacity="0.12"/></filter>
-                <linearGradient id="gradStart" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#334155"/></linearGradient>
-            </defs>`;
-            for (const edge of edges) {
-                const from = nodes.find(n => n.id === edge.from);
-                const to = nodes.find(n => n.id === edge.to);
-                if (!from || !to) continue;
-                const dx = to.x - from.x, dy = to.y - from.y;
-                const len = Math.sqrt(dx * dx + dy * dy);
-                const nx = dx / len, ny = dy / len;
-                const r1 = (from.type === 'start' || from.type === 'end') ? 34 : (from.type === 'decision' ? 42 : 38);
-                const r2 = (to.type === 'start' || to.type === 'end') ? 32 : (to.type === 'decision' ? 42 : 38);
-                const x1 = from.x + nx * r1, y1 = from.y + ny * r1;
-                const x2 = to.x - nx * r2, y2 = to.y - ny * r2;
-                const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2;
-                html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#arrow2)" opacity="0.8"/>`;
-                if (edge.label) {
-                    const offX = Math.abs(dy) < 20 ? 0 : (dy > 0 ? 20 : -20);
-                    const offY = Math.abs(dx) < 20 ? 0 : (dx > 0 ? -12 : 12);
-                    html += `<rect x="${midX + offX - 28}" y="${midY + offY - 11}" width="56" height="22" rx="10" fill="white" stroke="#e2e8f0" stroke-width="1" opacity="0.9"/>`;
-                    html += `<text x="${midX + offX}" y="${midY + offY + 5}" font-size="11" font-weight="600" fill="#475569" text-anchor="middle">${edge.label}</text>`;
-                }
+        function getWeekKey(ds) {
+            const d = new Date(ds);
+            const t = new Date(d.valueOf());
+            const day = (d.getDay() + 6) % 7;
+            t.setDate(t.getDate() - day + 3);
+            const ft = t.valueOf();
+            t.setMonth(0, 1);
+            if (t.getDay() !== 4) t.setMonth(0, 1 + ((4 - t.getDay()) + 7) % 7);
+            const w = 1 + Math.ceil((ft - t) / 604800000);
+            return `${d.getFullYear()}-W${String(w).padStart(2, '0')}`;
+        }
+
+        function renderTimeSeries() {
+            const metric = document.getElementById('tsMetric')?.value || 'fpy';
+            const weeks = {};
+            for (const insp of filteredInspections) {
+                const k = getWeekKey(insp.submitted_at);
+                if (!weeks[k]) weeks[k] = { total: 0, acc: 0, rw: 0, rej: 0, cost: 0 };
+                const p = parseAcceptanceData(insp);
+                weeks[k].total += p.length;
+                weeks[k].acc += p.filter(x => x.rating === 'Accepted').length;
+                weeks[k].rw += p.filter(x => x.rating === 'Rework').length;
+                weeks[k].rej += p.filter(x => x.rating === 'Reject').length;
+                weeks[k].cost += parseFloat(insp.total_internal_failure_cost) || 0;
             }
-            for (const node of nodes) {
-                const isStart = node.type === 'start';
-                const isEnd = node.type === 'end';
-                const isDecision = node.type === 'decision';
-                let rx = 48, ry = 32;
-                if (isStart) { rx = 40; ry = 24; }
-                else if (isDecision) { rx = 54; ry = 34; }
-                else if (isEnd) { rx = 46; ry = 28; }
-                let bg = '#ffffff', border = '#94a3b8', textColor = '#1e293b';
-                let strokeWidth = 2;
-                let filter = 'filter="url(#shadow3)"';
-                if (node.id === 'accept') { bg = '#dcfce7'; border = '#22c55e'; textColor = '#166534'; strokeWidth = 2.5; }
-                if (node.id === 'reject') { bg = '#fee2e2'; border = '#ef4444'; textColor = '#991b1b'; strokeWidth = 2.5; }
-                if (node.id === 'rework') { bg = '#fef9c3'; border = '#eab308'; textColor = '#854d0e'; strokeWidth = 2.5; }
-                if (node.id === 'cond') { bg = '#dbeafe'; border = '#3b82f6'; textColor = '#1e40af'; strokeWidth = 2.5; }
-                if (node.id === 'start') { bg = 'url(#gradStart)'; border = '#1e293b'; textColor = '#ffffff'; strokeWidth = 0; filter = ''; }
-                if (node.id === 'recv' || node.id === 'measure' || node.id === 'param') { border = '#3b82f6'; bg = '#eff6ff'; strokeWidth = 2; }
-                if (node.id === 'visual' || node.id === 'eval') { border = '#8b5cf6'; bg = '#f5f3ff'; strokeWidth = 2; }
-                if (isStart) {
-                    html += `<ellipse cx="${node.x}" cy="${node.y}" rx="${rx}" ry="${ry}" fill="${bg}" stroke="${border}" stroke-width="2" ${filter}/>`;
-                    html += `<text x="${node.x}" y="${node.y+6}" text-anchor="middle" font-size="15" font-weight="700" fill="${textColor}">${node.label}</text>`;
-                } else if (isDecision) {
-                    html += `<polygon points="${node.x},${node.y-ry} ${node.x+rx},${node.y} ${node.x},${node.y+ry} ${node.x-rx},${node.y}" fill="${bg}" stroke="${border}" stroke-width="${strokeWidth}" ${filter}/>`;
-                    const parts = node.label.split(' ');
-                    const labelText = parts.length > 2 ? parts[0] + ' ' + parts[1] : node.label;
-                    html += `<text x="${node.x}" y="${node.y+5}" text-anchor="middle" font-size="13" font-weight="700" fill="${textColor}">${labelText}</text>`;
-                } else if (isEnd) {
-                    html += `<rect x="${node.x - rx}" y="${node.y - ry}" width="${rx * 2}" height="${ry * 2}" rx="14" fill="${bg}" stroke="${border}" stroke-width="${strokeWidth}" ${filter}/>`;
-                    html += `<text x="${node.x}" y="${node.y+5}" text-anchor="middle" font-size="13" font-weight="700" fill="${textColor}">${node.label}</text>`;
-                } else {
-                    html += `<rect x="${node.x - rx}" y="${node.y - ry}" width="${rx * 2}" height="${ry * 2}" rx="10" fill="${bg}" stroke="${border}" stroke-width="${strokeWidth}" ${filter}/>`;
-                    html += `<text x="${node.x}" y="${node.y+5}" text-anchor="middle" font-size="13" font-weight="700" fill="${textColor}">${node.label}</text>`;
-                }
+            const keys = Object.keys(weeks).sort();
+            const ctx = document.getElementById('timeseriesChart').getContext('2d');
+            if (charts.ts) charts.ts.destroy();
+            if (keys.length < 2) { document.getElementById('tsStats').innerHTML = '<div class="text-gray-400 text-sm col-span-5">Need 2+ weeks</div>'; document.getElementById('tsInsight').innerHTML = ''; return; }
+            let series = [], label = '', yFmt = v => v;
+            if (metric === 'fpy') { series = keys.map(k => weeks[k].total > 0 ? +(weeks[k].acc / weeks[k].total * 100).toFixed(2) : 0); label = 'FPY %'; yFmt = v => v.toFixed(1) + '%'; }
+            if (metric === 'defectRate') { series = keys.map(k => weeks[k].total > 0 ? +((weeks[k].rw + weeks[k].rej) / weeks[k].total * 100).toFixed(2) : 0); label = 'Defect %'; yFmt = v => v.toFixed(1) + '%'; }
+            if (metric === 'cost') { series = keys.map(k => +weeks[k].cost.toFixed(2)); label = 'Cost (ETB)'; yFmt = v => 'ETB ' + Math.round(v).toLocaleString(); }
+            if (metric === 'reworkRate') { series = keys.map(k => weeks[k].total > 0 ? +(weeks[k].rw / weeks[k].total * 100).toFixed(2) : 0); label = 'Rework %'; yFmt = v => v.toFixed(1) + '%'; }
+            const mean = series.reduce((s, v) => s + v, 0) / series.length;
+            const sd = Math.sqrt(series.reduce((s, v) => s + (v - mean) ** 2, 0) / series.length);
+            charts.ts = new Chart(ctx, { type: 'line', data: { labels: keys, datasets: [
+                { label, data: series, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', pointRadius: 5, pointBackgroundColor: '#f59e0b', tension: 0.2, fill: true, borderWidth: 2.5 },
+                { label: 'UCL', data: Array(series.length).fill(mean + 3 * sd), borderColor: '#ef4444', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0 },
+                { label: 'LCL', data: Array(series.length).fill(Math.max(0, mean - 3 * sd)), borderColor: '#ef4444', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0 },
+                { label: 'Mean', data: Array(series.length).fill(mean), borderColor: '#22c55e', borderDash: [3, 3], borderWidth: 1.5, pointRadius: 0 }
+            ]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { usePointStyle: true, font: { size: 10 } } } }, scales: { y: { beginAtZero: metric !== 'fpy', ticks: { callback: yFmt } } } } });
+            const delta = series[series.length - 1] - series[0];
+            const improving = (metric === 'fpy' && delta > 0) || (metric !== 'fpy' && delta < 0);
+            const trendIcon = improving ? 'fa-arrow-trend-up' : delta === 0 ? 'fa-minus' : 'fa-arrow-trend-down';
+            const trendColor = improving ? 'text-emerald-600' : delta === 0 ? 'text-gray-600' : 'text-rose-600';
+            document.getElementById('tsStats').innerHTML = `
+                <div class="stat-mini"><div class="label">Weeks</div><div class="value">${keys.length}</div></div>
+                <div class="stat-mini"><div class="label">Mean</div><div class="value">${yFmt(mean)}</div></div>
+                <div class="stat-mini"><div class="label">UCL/LCL</div><div class="value" style="font-size:0.85rem">${yFmt(mean + 3 * sd)}<br>${yFmt(Math.max(0, mean - 3 * sd))}</div></div>
+                <div class="stat-mini"><div class="label">Change</div><div class="value ${trendColor}" style="font-size:0.9rem">${delta > 0 ? '+' : ''}${yFmt(delta)}</div></div>
+                <div class="stat-mini"><div class="label">Trend</div><div class="value ${trendColor}" style="font-size:0.9rem"><i class="fas ${trendIcon}"></i> ${improving ? 'Improving' : delta === 0 ? 'Flat' : 'Degrading'}</div></div>`;
+            document.getElementById('tsInsight').innerHTML = `<i class="fas fa-chart-line text-orange-500 mr-2"></i><strong>${label}</strong> — Mean ${yFmt(mean)}, range ${yFmt(Math.min(...series))} to ${yFmt(Math.max(...series))}. ${improving ? '<span class="text-emerald-700">Trend improving.</span>' : delta === 0 ? 'Stable.' : '<span class="text-rose-700">Trend degrading.</span>'}`;
+        }
+
+        function renderTopN() {
+            const byProc = {};
+            for (const insp of filteredInspections) {
+                const p = insp.process_type || 'Unknown';
+                if (!byProc[p]) byProc[p] = { total: 0, acc: 0, n: 0 };
+                const ps = parseAcceptanceData(insp);
+                byProc[p].total += ps.length;
+                byProc[p].acc += ps.filter(x => x.rating === 'Accepted').length;
+                byProc[p].n++;
             }
-            html += `<text x="500" y="20" text-anchor="middle" font-size="12" fill="#94a3b8" font-weight="500">Inspection Process Flow</text>`;
-            svg.innerHTML = html;
+            const procs = Object.entries(byProc).map(([k, v]) => ({ name: k, fpy: v.total > 0 ? (v.acc / v.total * 100) : 0, n: v.total })).filter(p => p.n >= 5).sort((a, b) => a.fpy - b.fpy);
+            document.getElementById('topProcesses').innerHTML = procs.slice(0, 5).map((p, i) => `<div class="topn-row flex justify-between items-center p-2 rounded border-b border-rose-100" onclick="jumpFilter('filterProcess','${escapeHtml(p.name)}')">
+                <span class="text-xs text-gray-400 w-5">${i + 1}</span><span class="flex-1 font-medium text-xs truncate">${escapeHtml(p.name)}</span>
+                <span class="text-xs ${p.fpy < 70 ? 'text-rose-700' : p.fpy < 85 ? 'text-amber-700' : 'text-emerald-700'} font-bold">${p.fpy.toFixed(1)}%</span>
+                <span class="text-xs text-gray-400 ml-2">n=${p.n}</span>
+            </div>`).join('') || '<div class="text-gray-400 text-xs">No data with n≥5</div>';
+
+            const byProj = {};
+            for (const insp of filteredInspections) {
+                const p = getProjectName(insp) || 'Untitled';
+                if (!byProj[p]) byProj[p] = { cost: 0, n: 0 };
+                byProj[p].cost += parseFloat(insp.total_internal_failure_cost) || 0;
+                byProj[p].n++;
+            }
+            const projs = Object.entries(byProj).map(([k, v]) => ({ name: k, cost: v.cost, n: v.n })).filter(p => p.cost > 0).sort((a, b) => b.cost - a.cost);
+            document.getElementById('topProjects').innerHTML = projs.slice(0, 5).map((p, i) => `<div class="topn-row flex justify-between items-center p-2 rounded border-b border-amber-100" onclick="jumpFilter('filterProject','${escapeHtml(p.name)}')">
+                <span class="text-xs text-gray-400 w-5">${i + 1}</span><span class="flex-1 font-medium text-xs truncate">${escapeHtml(p.name)}</span>
+                <span class="text-xs font-bold text-amber-700">ETB ${Math.round(p.cost).toLocaleString()}</span>
+            </div>`).join('') || '<div class="text-gray-400 text-xs">No cost data</div>';
+
+            const byPart = {};
+            for (const p of filteredParamData) {
+                if (!p.part) continue;
+                const k = p.part + '|' + p.title;
+                if (!byPart[k]) byPart[k] = { part: p.part, title: p.title, total: 0, acc: 0 };
+                byPart[k].total++;
+                if (p.rating === 'Accepted') byPart[k].acc++;
+            }
+            const parts = Object.entries(byPart).map(([k, v]) => ({ part: v.part, fpy: v.total > 0 ? (v.acc / v.total * 100) : 0, n: v.total })).filter(p => p.n >= 5).sort((a, b) => a.fpy - b.fpy);
+            document.getElementById('topParts').innerHTML = parts.slice(0, 5).map((p, i) => `<div class="topn-row flex justify-between items-center p-2 rounded border-b border-blue-100">
+                <span class="text-xs text-gray-400 w-5">${i + 1}</span><span class="flex-1 font-medium text-xs truncate">${escapeHtml(p.part)}</span>
+                <span class="text-xs ${p.fpy < 70 ? 'text-rose-700' : p.fpy < 85 ? 'text-amber-700' : 'text-emerald-700'} font-bold">${p.fpy.toFixed(1)}%</span>
+                <span class="text-xs text-gray-400 ml-2">n=${p.n}</span>
+            </div>`).join('') || '<div class="text-gray-400 text-xs">No parts with n≥5</div>';
         }
 
-        function switchTool(index) {
-            document.querySelectorAll('.tool-card').forEach((el, i) => el.classList.toggle('active', i === index));
-            document.querySelectorAll('.tool-panel').forEach((el, i) => el.classList.toggle('active', i === index));
-            setTimeout(() => {
-                const panel = document.querySelector(`.tool-panel[data-panel="${index}"]`);
-                if (panel) { const canvas = panel.querySelector('canvas'); if (canvas && canvas.chart) canvas.chart.resize(); }
-            }, 120);
+        function jumpFilter(id, val) {
+            const el = document.getElementById(id);
+            if (el) {
+                if (!document.getElementById('filterPanel').classList.contains('open')) toggleFilters();
+                el.value = val;
+                applyFilters();
+                switchTool(0);
+            }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchAndAnalyze();
-            document.getElementById('filterEngineer').addEventListener('change', applyFilters);
-            document.getElementById('filterProject').addEventListener('change', applyFilters);
-            document.getElementById('filterProcess').addEventListener('change', applyFilters);
-        });
+        function switchTool(i) {
+            document.querySelectorAll('.tool-card').forEach((el, idx) => el.classList.toggle('active', idx === i));
+            document.querySelectorAll('.tool-panel').forEach((el, idx) => el.classList.toggle('active', idx === i));
+        }
+
+        ['filterEngineer','filterProject','filterProcess','filterSeverity'].forEach(id => document.getElementById(id)?.addEventListener('change', applyFilters));
+        fetchAndAnalyze();
     </script>
 </body>
 </html>
