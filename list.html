@@ -18,12 +18,11 @@
             .table-wrapper { border-radius: 0 !important; }
             .manual-edit-btn { display: none !important; }
         }
-        body { background: #f1f5f9; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        body { background: #f1f5f9; font-family: 'Inter', system-ui, sans-serif; }
         .table-wrapper { overflow-x: auto; border-radius: 1rem; scroll-behavior: smooth; }
         .table-wrapper::-webkit-scrollbar { height: 6px; }
         .table-wrapper::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 999px; }
         .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
-        .table-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         table { width: 100%; border-collapse: collapse; font-size: 0.82rem; border: 1px solid #d1d5db; }
         th { background: #f8fafc; position: sticky; top: 0; z-index: 10; padding: 12px 10px; font-weight: 600; border: 1px solid #d1d5db; border-bottom: 2px solid #b0b8c4; white-space: nowrap; font-size: 0.7rem; letter-spacing: 0.02em; text-transform: uppercase; color: #475569; }
         th i { margin-right: 4px; color: #64748b; font-size: 0.7rem; }
@@ -36,60 +35,47 @@
         .summary-card .stat-label { font-size: 0.7rem; font-weight: 500; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
         .filter-bar { background: white; border-radius: 1rem; padding: 1rem 1.25rem; border: 1px solid #eef2f6; }
         .filter-bar label { display: block; font-size: 0.65rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
-        .filter-bar label i { margin-right: 4px; font-size: 0.65rem; }
-        .filter-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.6rem 0.9rem; font-size: 0.8rem; background: #fafbfc; transition: all 0.2s; color: #0f172a; }
-        .filter-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); background: white; }
-        .filter-input::placeholder { color: #aab4c2; }
-        .filter-excluded-hint { font-size: 0.6rem; color: #94a3b8; background: #f1f5f9; padding: 2px 10px; border-radius: 999px; display: inline-block; margin-top: 4px; border: 1px dashed #d1d5db; }
-        .filter-excluded-hint i { margin-right: 4px; }
-        .badge { display: inline-block; padding: 0.1rem 0.7rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.01em; }
+        .filter-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.6rem 0.9rem; font-size: 0.8rem; background: #fafbfc; color: #0f172a; }
+        .filter-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); background: white; }
+        .badge { display: inline-block; padding: 0.1rem 0.7rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 600; }
         .badge-accepted { background: #dcfce7; color: #166534; }
         .badge-conditional { background: #f3e8ff; color: #6b21a8; }
-        .badge-excluded { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         .col-delivered { background: #eff6ff; font-weight: 700; color: #1e40af; }
         .col-accepted { color: #166534; font-weight: 600; }
         .col-conditional { color: #6b21a8; font-weight: 600; }
         .cell-nowrap { white-space: nowrap; }
-        .cell-drawing { white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; display: inline-block; font-size: 0.7rem; font-family: 'SF Mono', 'Fira Code', monospace; color: #475569; background: #f8fafc; padding: 1px 8px; border-radius: 999px; border: 1px solid #eef2f6; }
+        .cell-drawing { white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; display: inline-block; font-size: 0.7rem; font-family: 'SF Mono','Fira Code',monospace; color: #475569; background: #f8fafc; padding: 1px 8px; border-radius: 999px; border: 1px solid #eef2f6; }
         .title-name { font-weight: 600; color: #0f172a; display: block; line-height: 1.3; margin-bottom: 4px; font-size: 0.85rem; }
         .sub-assembly-tag { font-size: 0.65rem; background: #eef2ff; color: #4338ca; padding: 0.1rem 0.7rem; border-radius: 9999px; display: inline-block; font-weight: 500; }
-        .badge-card { background: #fafbfc; border-radius: 0.5rem; border: 1px solid #eef2f6; padding: 4px 10px 6px; display: inline-block; min-width: 130px; width: 100%; transition: all 0.15s; }
-        .badge-card:hover { border-color: #cbd5e1; background: white; }
+        .badge-card { background: #fafbfc; border-radius: 0.5rem; border: 1px solid #eef2f6; padding: 4px 10px 6px; display: inline-block; min-width: 130px; width: 100%; }
         .badge-card .stat-row { display: flex; justify-content: space-between; font-size: 0.6rem; line-height: 1.5; }
         .badge-card .stat-label { color: #94a3b8; font-weight: 500; }
         .badge-card .stat-value { font-weight: 700; color: #0f172a; }
         .badge-card .progress-bar { width: 100%; height: 3px; background: #e2e8f0; border-radius: 999px; margin: 3px 0 2px; overflow: hidden; }
         .badge-card .progress-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
         .badge-card .footer-row { display: flex; justify-content: space-between; align-items: center; min-height: 16px; gap: 4px; }
-        .badge-card .manual-tag { font-size: 0.55rem; font-weight: 700; color: #b45309; background: #fef3c7; padding: 0 6px; border-radius: 999px; border: 1px solid #fcd34d; text-transform: uppercase; letter-spacing: 0.04em; }
+        .badge-card .manual-tag { font-size: 0.55rem; font-weight: 700; color: #b45309; background: #fef3c7; padding: 0 6px; border-radius: 999px; border: 1px solid #fcd34d; text-transform: uppercase; }
         .badge-card .actual-pct { font-size: 0.55rem; color: #94a3b8; }
-        .manual-edit-btn { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 2px 4px; font-size: 0.65rem; transition: all 0.2s; border-radius: 6px; }
+        .manual-edit-btn { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 2px 4px; font-size: 0.65rem; border-radius: 6px; }
         .manual-edit-btn:hover { color: #2563eb; background: #eef2ff; }
-        .manual-edit-popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 1.25rem; padding: 1.75rem 2rem 1.5rem; box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25); z-index: 999; min-width: 300px; max-width: 94vw; border: 1px solid #e2e8f0; }
+        .manual-edit-popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 1.25rem; padding: 1.75rem 2rem 1.5rem; box-shadow: 0 24px 80px rgba(0,0,0,0.25); z-index: 999; min-width: 300px; max-width: 94vw; border: 1px solid #e2e8f0; }
         .manual-edit-popup.active { display: block; }
         .manual-edit-popup .popup-title { font-weight: 700; font-size: 1rem; color: #0f172a; margin-bottom: 2px; }
-        .manual-edit-popup .popup-sub { font-size: 0.7rem; color: #94a3b8; word-break: break-all; margin-bottom: 1rem; padding: 4px 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #eef2f6; }
-        .manual-edit-popup label { font-size: 0.65rem; font-weight: 600; color: #475569; display: block; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-        .manual-edit-popup input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.6rem; padding: 8px 12px; font-size: 0.9rem; margin-top: 2px; background: #fafbfc; transition: border 0.2s; }
-        .manual-edit-popup input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12); background: white; }
+        .manual-edit-popup .popup-sub { font-size: 0.7rem; color: #94a3b8; word-break: break-all; margin-bottom: 1rem; padding: 4px 8px; background: #f8fafc; border-radius: 6px; }
+        .manual-edit-popup label { font-size: 0.65rem; font-weight: 600; color: #475569; display: block; margin-top: 10px; text-transform: uppercase; }
+        .manual-edit-popup input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.6rem; padding: 8px 12px; font-size: 0.9rem; margin-top: 2px; background: #fafbfc; }
+        .manual-edit-popup input:focus { outline: none; border-color: #3b82f6; background: white; }
         .manual-edit-popup .popup-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
-        .manual-edit-popup .popup-actions button { padding: 7px 18px; border-radius: 0.6rem; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; }
-        .manual-edit-popup .popup-actions .btn-cancel { background: #f1f5f9; color: #475569; }
-        .manual-edit-popup .popup-actions .btn-cancel:hover { background: #e2e8f0; }
-        .manual-edit-popup .popup-actions .btn-reset { background: #fef2f2; color: #b91c1c; }
-        .manual-edit-popup .popup-actions .btn-reset:hover { background: #fee2e2; }
-        .manual-edit-popup .popup-actions .btn-save { background: #2563eb; color: white; }
-        .manual-edit-popup .popup-actions .btn-save:hover { background: #1d4ed8; }
+        .manual-edit-popup .popup-actions button { padding: 7px 18px; border-radius: 0.6rem; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; }
+        .manual-edit-popup .btn-cancel { background: #f1f5f9; color: #475569; }
+        .manual-edit-popup .btn-reset { background: #fef2f2; color: #b91c1c; }
+        .manual-edit-popup .btn-save { background: #2563eb; color: white; }
         .loader { border: 3px solid #e2e8f0; border-top: 3px solid #3b82f6; border-radius: 50%; width: 32px; height: 32px; animation: spin 0.7s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .excluded-note { font-size: 0.7rem; color: #dc2626; background: #fef2f2; padding: 0.2rem 0.7rem; border-radius: 9999px; border: 1px solid #fecaca; display: inline-block; }
         .btn-icon { display: inline-flex; align-items: center; gap: 6px; }
-        .btn-icon i { font-size: 0.85rem; }
         @media (max-width: 640px) {
             .summary-card .stat-value { font-size: 1.25rem; }
             .summary-card { padding: 0.75rem 1rem; }
-            .filter-bar { padding: 0.75rem; }
-            .manual-edit-popup { min-width: 260px; padding: 1.25rem 1.25rem 1rem; }
             table { font-size: 0.7rem; }
             th, td { padding: 4px 4px; }
             .badge-card { min-width: 100px; }
@@ -98,41 +84,25 @@
     </style>
 </head>
 <body>
-
     <div class="max-w-7xl mx-auto p-3 md:p-6">
-
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-5 mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
             <div class="flex items-center gap-3">
-                <div class="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600">
-                    <i class="fa-solid fa-clipboard-list text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">Inspection Report</h1>
-                    <p class="text-xs text-gray-400 flex items-center gap-1 mt-0.5"></p>
-                </div>
+                <div class="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600"><i class="fa-solid fa-clipboard-list text-xl"></i></div>
+                <div><h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">Inspection Report</h1><p class="text-xs text-gray-400 mt-0.5">First-op quantities per part · excl. assemblies</p></div>
             </div>
             <div class="flex flex-wrap gap-2">
-                <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-sm shadow-sm transition btn-icon"><i class="fas fa-file-excel"></i> Excel</button>
-                <button onclick="copyTableToClipboard()" class="bg-gray-600 hover:bg-gray-700 text-white px-3.5 py-2 rounded-xl text-sm shadow-sm transition btn-icon"><i class="fas fa-copy"></i> Copy</button>
-                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-sm shadow-sm transition btn-icon"><i class="fas fa-print"></i> Print</button>
-                <button onclick="fetchReportData()" class="bg-slate-700 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-sm shadow-sm transition btn-icon"><i class="fas fa-sync-alt"></i> Refresh</button>
-                <button onclick="clearAllManualOverrides()" class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl text-sm shadow-sm transition btn-icon"><i class="fas fa-undo-alt"></i> Reset</button>
+                <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-file-excel"></i> Excel</button>
+                <button onclick="copyTableToClipboard()" class="bg-gray-600 hover:bg-gray-700 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-copy"></i> Copy</button>
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-print"></i> Print</button>
+                <button onclick="fetchReportData()" class="bg-slate-700 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button onclick="clearAllManualOverrides()" class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl text-sm btn-icon"><i class="fas fa-undo-alt"></i> Reset Overrides</button>
             </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 no-print summary-cards">
-            <div class="summary-card flex items-center gap-4">
-                <div class="icon-wrap bg-blue-50 text-blue-600"><i class="fa-solid fa-boxes-stacked"></i></div>
-                <div><div class="stat-value" id="totalDeliveredSum">0</div><div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Delivered (first op)</div></div>
-            </div>
-            <div class="summary-card flex items-center gap-4">
-                <div class="icon-wrap bg-emerald-50 text-emerald-600"><i class="fa-solid fa-circle-check"></i></div>
-                <div><div class="stat-value" id="totalAcceptedSum">0</div><div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Accepted (first op)</div></div>
-            </div>
-            <div class="summary-card flex items-center gap-4">
-                <div class="icon-wrap bg-purple-50 text-purple-600"><i class="fa-solid fa-flag"></i></div>
-                <div><div class="stat-value" id="totalConditionalSum">0</div><div class="stat-label"><i class="fa-regular fa-flag mr-1"></i> Conditional (first op)</div></div>
-            </div>
+            <div class="summary-card flex items-center gap-4"><div class="icon-wrap bg-blue-50 text-blue-600"><i class="fa-solid fa-boxes-stacked"></i></div><div><div class="stat-value" id="totalDeliveredSum">0</div><div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Delivered (first op)</div></div></div>
+            <div class="summary-card flex items-center gap-4"><div class="icon-wrap bg-emerald-50 text-emerald-600"><i class="fa-solid fa-circle-check"></i></div><div><div class="stat-value" id="totalAcceptedSum">0</div><div class="stat-label"><i class="fa-regular fa-circle-check mr-1"></i> Accepted (first op)</div></div></div>
+            <div class="summary-card flex items-center gap-4"><div class="icon-wrap bg-purple-50 text-purple-600"><i class="fa-solid fa-flag"></i></div><div><div class="stat-value" id="totalConditionalSum">0</div><div class="stat-label"><i class="fa-regular fa-flag mr-1"></i> Conditional (first op)</div></div></div>
         </div>
 
         <div class="filter-bar no-print mb-5">
@@ -141,34 +111,28 @@
                 <div><label><i class="fa-solid fa-gears"></i> Process</label><select id="processFilterSelect" class="filter-input"><option value="">All Processes</option></select></div>
                 <div><label><i class="fa-solid fa-user"></i> QC Engineer</label><select id="engineerFilterSelect" class="filter-input"><option value="">All Engineers</option></select></div>
                 <div><label><i class="fa-regular fa-magnifying-glass"></i> Search</label><input type="text" id="searchInput" placeholder="Part, drawing, client…" class="filter-input" /></div>
-                <div class="flex gap-2">
-                    <button id="clearFiltersBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium transition btn-icon flex-1 justify-center"><i class="fas fa-eraser"></i> Clear</button>
-                </div>
+                <div><button id="clearFiltersBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium btn-icon w-full justify-center"><i class="fas fa-eraser"></i> Clear</button></div>
             </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 report-container overflow-hidden">
             <div class="table-wrapper">
                 <table id="reportTable">
-                    <thead>
-                        <tr>
-                            <th class="text-left"><i class="fa-regular fa-user"></i> Client</th>
-                            <th class="text-left" style="min-width:180px;"><i class="fa-regular fa-folder"></i> Title</th>
-                            <th class="text-left" style="min-width:170px;"><i class="fa-regular fa-tag"></i> Subtitle</th>
-                            <th class="text-left" style="min-width:170px;"><i class="fa-regular fa-cubes"></i> Sub Sub Assembly</th>
-                            <th class="text-left cell-nowrap"><i class="fa-regular fa-cog"></i> Part</th>
-                            <th class="text-left cell-nowrap"><i class="fa-regular fa-file-lines"></i> Drawing</th>
-                            <th class="text-right bg-blue-50/60"><i class="fa-regular fa-box"></i> Delivered</th>
-                            <th class="text-right"><i class="fa-regular fa-circle-check"></i> Accepted</th>
-                            <th class="text-right"><i class="fa-regular fa-flag"></i> Conditional</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reportTableBody">
-                        <tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-400 text-sm mt-2">Loading inspections…</p></td></tr>
-                    </tbody>
+                    <thead><tr>
+                        <th class="text-left"><i class="fa-regular fa-user"></i> Client</th>
+                        <th class="text-left" style="min-width:180px;"><i class="fa-regular fa-folder"></i> Title</th>
+                        <th class="text-left" style="min-width:170px;"><i class="fa-regular fa-tag"></i> Subtitle</th>
+                        <th class="text-left" style="min-width:170px;"><i class="fa-regular fa-cubes"></i> Sub Sub Assembly</th>
+                        <th class="text-left cell-nowrap"><i class="fa-regular fa-cog"></i> Part</th>
+                        <th class="text-left cell-nowrap"><i class="fa-regular fa-file-lines"></i> Drawing</th>
+                        <th class="text-right bg-blue-50/60"><i class="fa-regular fa-box"></i> Delivered</th>
+                        <th class="text-right"><i class="fa-regular fa-circle-check"></i> Accepted</th>
+                        <th class="text-right"><i class="fa-regular fa-flag"></i> Conditional</th>
+                    </tr></thead>
+                    <tbody id="reportTableBody"><tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-400 text-sm mt-2">Loading…</p></td></tr></tbody>
                 </table>
             </div>
-            <div id="reportInfo" class="p-3 text-xs text-gray-400 border-t border-gray-100 flex justify-between items-center bg-gray-50/60 no-print">
+            <div class="p-3 text-xs text-gray-400 border-t border-gray-100 flex justify-between items-center bg-gray-50/60 no-print">
                 <span><i class="fa-regular fa-circle-info"></i> <span id="recordStatus">Ready</span></span>
                 <span id="recordCount" class="font-medium text-gray-500"></span>
             </div>
@@ -176,7 +140,6 @@
     </div>
 
     <script>
-        // ── Override keys ──
         const TITLE_KEY = 'manualTitleOverrides';
         const SUBTITLE_KEY = 'manualSubtitleOverrides';
         const ASSEMBLY_KEY = 'manualSubAssemblyOverrides';
@@ -186,80 +149,50 @@
             if (!p) return false;
             const l = p.trim().toLowerCase();
             return l.includes('assembling (welding)') || l.includes('assembling (fastener)') ||
-                l.includes('assembling(welding)') || l.includes('assembling(fastener)');
+                   l.includes('assembling(welding)') || l.includes('assembling(fastener)');
         }
 
-        // ── Server-backed overrides ──────────────────────────────────
         let serverOverrides = {};
-
         async function loadServerOverrides() {
-            try {
-                const resp = await fetch('/api/overrides');
-                if (resp.ok) serverOverrides = await resp.json();
-            } catch { serverOverrides = {}; }
+            try { const r = await fetch('/api/overrides'); if (r.ok) serverOverrides = await r.json(); }
+            catch { serverOverrides = {}; }
         }
-
         function getOverrides(key) {
             const prefix = key + '|';
             const map = {};
-            for (const [k, v] of Object.entries(serverOverrides)) {
-                if (k.startsWith(prefix)) map[k.slice(prefix.length)] = v;
-            }
-            if (Object.keys(map).length === 0) {
-                try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : {}; }
-                catch { return {}; }
-            }
+            for (const [k, v] of Object.entries(serverOverrides)) if (k.startsWith(prefix)) map[k.slice(prefix.length)] = v;
+            if (Object.keys(map).length === 0) { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : {}; } catch { return {}; } }
             return map;
         }
-
         async function saveOverride(level, id, parts, deliv) {
             const key = level === 'title' ? TITLE_KEY : level === 'subtitle' ? SUBTITLE_KEY : ASSEMBLY_KEY;
             if (!key) return;
             const fullKey = `${key}|${id}`;
-
             if (parts === undefined || deliv === undefined) {
                 delete serverOverrides[fullKey];
-                fetch('/api/overrides', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ level: key, id, parts: null, delivered: null })
-                }).catch(() => {});
+                fetch('/api/overrides', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: key, id, parts: null, delivered: null }) }).catch(() => {});
                 const o = (() => { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; } })();
-                delete o[id];
-                localStorage.setItem(key, JSON.stringify(o));
+                delete o[id]; localStorage.setItem(key, JSON.stringify(o));
             } else {
                 serverOverrides[fullKey] = { parts: +parts, delivered: +deliv };
-                fetch('/api/overrides', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ level: key, id, parts: +parts, delivered: +deliv })
-                }).catch(() => {});
+                fetch('/api/overrides', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: key, id, parts: +parts, delivered: +deliv }) }).catch(() => {});
                 const o = (() => { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; } })();
-                o[id] = { parts: +parts, delivered: +deliv };
-                localStorage.setItem(key, JSON.stringify(o));
+                o[id] = { parts: +parts, delivered: +deliv }; localStorage.setItem(key, JSON.stringify(o));
             }
             applyFilters();
         }
-
         async function clearAllManualOverrides() {
-            if (!confirm('Clear ALL manual overrides (Title, Subtitle, Sub Sub Assembly) for every user?')) return;
+            if (!confirm('Clear ALL manual overrides for every user?')) return;
             serverOverrides = {};
-            localStorage.removeItem(TITLE_KEY);
-            localStorage.removeItem(SUBTITLE_KEY);
-            localStorage.removeItem(ASSEMBLY_KEY);
+            localStorage.removeItem(TITLE_KEY); localStorage.removeItem(SUBTITLE_KEY); localStorage.removeItem(ASSEMBLY_KEY);
             await Promise.all([TITLE_KEY, SUBTITLE_KEY, ASSEMBLY_KEY].map(level => Promise.all(
                 Object.keys(getOverrides(level)).map(id =>
-                    fetch('/api/overrides', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ level, id, parts: null, delivered: null })
-                    }).catch(() => {})
+                    fetch('/api/overrides', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level, id, parts: null, delivered: null }) }).catch(() => {})
                 )
             )));
             applyFilters();
         }
 
-        // ── Helpers ──
         function extra(insp, f) { return insp.extra_fields?.[f]?.trim() || ''; }
         function clientName(insp) { return (insp.customer_name && insp.customer_name.trim()) ? insp.customer_name.trim() : extra(insp, 'Customer Name'); }
         function projectName(insp) { return (insp.project_name && insp.project_name.trim()) ? insp.project_name.trim() : extra(insp, 'Project Name'); }
@@ -267,7 +200,7 @@
         function subAssembly(insp) { return extra(insp, 'Sub Sub Assembly') || extra(insp, 'SubAssembly') || extra(insp, 'Sub-Assembly') || ''; }
         function fmt(v) { if (v === undefined || v === null || v === '') return '-'; const n = Number(v); return isNaN(n) ? '-' : n.toLocaleString(); }
         function num(v) { if (v === undefined || v === null || v === '') return 0; const n = Number(v); return isNaN(n) ? 0 : n; }
-        function esc(s) { if (!s) return ''; return s.replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
+        function esc(s) { if (!s) return ''; return s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
         let allRows = [];
         let projSet = new Set(), procSet = new Set(), engSet = new Set();
@@ -277,21 +210,18 @@
             const status = document.getElementById('recordStatus');
             try {
                 await loadServerOverrides();
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-400 text-sm mt-2">Fetching inspections…</p></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12"><div class="loader"></div><p class="text-gray-400 text-sm mt-2">Fetching…</p></td></tr>`;
                 status.innerText = 'Loading…';
                 const resp = await fetch('/api/inspections');
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const data = await resp.json();
-
                 const rows = [];
                 projSet.clear(); procSet.clear(); engSet.clear();
                 let sumD = 0, sumA = 0, sumC = 0;
                 const seenParts = new Set();
-
                 for (const insp of data) {
                     const proc = insp.process_type || '';
                     if (isExcluded(proc)) continue;
-
                     const cl = clientName(insp) || '(no client)';
                     const pr = projectName(insp) || '(no title)';
                     const st = subtitle(insp) || '';
@@ -302,51 +232,29 @@
                     const acc = num(insp.accepted_qty);
                     const cond = num(insp.conditional_accept_qty);
                     const del = acc + cond;
-
                     const partKey = `${cl}|${pr}|${st}|${sa}|${part}`;
                     const isFirst = !seenParts.has(partKey);
-                    if (isFirst) {
-                        seenParts.add(partKey);
-                        sumD += del; sumA += acc; sumC += cond;
-                    }
-
-                    if (pr) projSet.add(pr);
-                    if (proc) procSet.add(proc);
-                    if (eng) engSet.add(eng);
-
-                    rows.push({
-                        client: cl, project: pr, subtitle: st, subAssembly: sa, drawing: draw, part: part,
-                        delivered: fmt(del), deliveredRaw: del,
-                        accepted: fmt(acc), acceptedRaw: acc,
-                        conditional: fmt(cond), conditionalRaw: cond,
-                        process: proc, engineer: eng,
-                        search: `${cl} ${pr} ${st} ${sa} ${draw} ${part} ${del} ${acc} ${cond} ${proc} ${eng}`.toLowerCase(),
-                        isFirstOp: isFirst
-                    });
+                    if (isFirst) { seenParts.add(partKey); sumD += del; sumA += acc; sumC += cond; }
+                    if (pr) projSet.add(pr); if (proc) procSet.add(proc); if (eng) engSet.add(eng);
+                    rows.push({ client: cl, project: pr, subtitle: st, subAssembly: sa, drawing: draw, part, delivered: fmt(del), deliveredRaw: del, accepted: fmt(acc), acceptedRaw: acc, conditional: fmt(cond), conditionalRaw: cond, process: proc, engineer: eng, search: `${cl} ${pr} ${st} ${sa} ${draw} ${part} ${del} ${acc} ${cond} ${proc} ${eng}`.toLowerCase(), isFirstOp: isFirst });
                 }
-
                 document.getElementById('totalDeliveredSum').innerText = sumD.toLocaleString();
                 document.getElementById('totalAcceptedSum').innerText = sumA.toLocaleString();
                 document.getElementById('totalConditionalSum').innerText = sumC.toLocaleString();
-
                 const pSel = document.getElementById('projectFilterSelect');
                 pSel.innerHTML = '<option value="">All Titles</option>';
                 [...projSet].sort().forEach(v => { pSel.innerHTML += `<option value="${esc(v)}">${esc(v)}</option>`; });
-
                 const prSel = document.getElementById('processFilterSelect');
                 prSel.innerHTML = '<option value="">All Processes</option>';
                 [...procSet].sort().forEach(v => { prSel.innerHTML += `<option value="${esc(v)}">${esc(v)}</option>`; });
-
                 const eSel = document.getElementById('engineerFilterSelect');
                 eSel.innerHTML = '<option value="">All Engineers</option>';
                 [...engSet].sort().forEach(v => { eSel.innerHTML += `<option value="${esc(v)}">${esc(v)}</option>`; });
-
                 allRows = rows;
                 applyFilters();
                 status.innerText = `✅ ${rows.length} records · excl. ${EXCLUDED.join(', ')}`;
             } catch (err) {
-                console.error(err);
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-red-500"><i class="fa-regular fa-circle-exclamation text-2xl"></i><p class="mt-2 text-sm">Error loading data. Is the backend at /api/inspections running?</p></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-red-500"><i class="fa-regular fa-circle-exclamation text-2xl"></i><p class="mt-2 text-sm">Error: ${err.message}</p></td></tr>`;
                 status.innerText = '❌ Error';
             }
         }
@@ -364,27 +272,26 @@
             renderAggregated(filtered);
         }
 
+        // Corrected KPI: average units per part (NOT a percentage)
         function metaBadge(parts, deliv, isManual, origParts, origDeliv) {
-            // Average units per part — NOT a percentage
             const avgUnits = parts > 0 ? (deliv / parts) : 0;
             const actualAvg = origParts > 0 ? (origDeliv / origParts) : 0;
             const visual = Math.min(100, (avgUnits / 10) * 100);
             const manualTag = isManual ? `<span class="manual-tag">manual</span>` : '';
             const actualHtml = isManual ? `<span class="actual-pct">actual ${actualAvg.toFixed(1)} u/p</span>` : '';
-            return `
-                <div class="badge-card">
-                    <div class="stat-row"><span class="stat-label">Parts</span><span class="stat-value">${parts}</span></div>
-                    <div class="stat-row"><span class="stat-label">Deliv</span><span class="stat-value">${fmt(deliv)}</span></div>
-                    <div class="stat-row"><span class="stat-label">Avg/part</span><span class="stat-value">${avgUnits.toFixed(1)}</span></div>
-                    <div class="progress-bar"><div class="progress-fill bg-blue-500" style="width:${visual}%"></div></div>
-                    <div class="footer-row">${manualTag}${actualHtml}</div>
-                </div>`;
+            return `<div class="badge-card">
+                <div class="stat-row"><span class="stat-label">Parts</span><span class="stat-value">${parts}</span></div>
+                <div class="stat-row"><span class="stat-label">Deliv</span><span class="stat-value">${fmt(deliv)}</span></div>
+                <div class="stat-row"><span class="stat-label">Avg/part</span><span class="stat-value">${avgUnits.toFixed(1)}</span></div>
+                <div class="progress-bar"><div class="progress-fill bg-blue-500" style="width:${visual}%"></div></div>
+                <div class="footer-row">${manualTag}${actualHtml}</div>
+            </div>`;
         }
 
         function renderAggregated(rows) {
             const tbody = document.getElementById('reportTableBody');
             if (!rows.length) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-smile text-2xl"></i><p class="mt-2 text-sm">No matching records · excl. ${EXCLUDED.join(', ')}</p></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-smile text-2xl"></i><p class="mt-2 text-sm">No matching records</p></td></tr>`;
                 document.getElementById('recordCount').innerText = '0 parts';
                 return;
             }
@@ -406,10 +313,7 @@
                 const p = r.part;
                 if (!ae.parts.has(p)) ae.parts.set(p, { part: p, deliv: 0, acc: 0, cond: 0, drawings: new Set(), firstSeen: false });
                 const pe = ae.parts.get(p);
-                if (!pe.firstSeen) {
-                    pe.deliv += r.deliveredRaw; pe.acc += r.acceptedRaw; pe.cond += r.conditionalRaw;
-                    pe.firstSeen = true;
-                }
+                if (!pe.firstSeen) { pe.deliv += r.deliveredRaw; pe.acc += r.acceptedRaw; pe.cond += r.conditionalRaw; pe.firstSeen = true; }
                 if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
 
@@ -420,9 +324,7 @@
                         let sParts = new Set(), sDeliv = 0;
                         for (const ae of se.assemblies.values()) {
                             let aParts = new Set(), aDeliv = 0;
-                            for (const pe of ae.parts.values()) {
-                                if (pe.deliv > 0) { aParts.add(pe.part); aDeliv += pe.deliv; }
-                            }
+                            for (const pe of ae.parts.values()) if (pe.deliv > 0) { aParts.add(pe.part); aDeliv += pe.deliv; }
                             ae.partsSet = aParts; ae.totalDeliv = aDeliv;
                             sParts = new Set([...sParts, ...aParts]); sDeliv += aDeliv;
                         }
@@ -451,18 +353,16 @@
                 }
             }
 
-            function countParts(ae) { let c = 0; for (const pe of ae.parts.values()) if (pe.deliv > 0) c++; return c; }
-            function rowsAssembly(ae) { return countParts(ae); }
-            function rowsSubtitle(se) { let s = 0; for (const ae of se.assemblies.values()) s += rowsAssembly(ae); return s; }
-            function rowsTitle(te) { let s = 0; for (const se of te.subtitles.values()) s += rowsSubtitle(se); return s; }
-            function rowsClient(ce) { let s = 0; for (const te of ce.titles.values()) s += rowsTitle(te); return s; }
+            const countParts = ae => { let c = 0; for (const pe of ae.parts.values()) if (pe.deliv > 0) c++; return c; };
+            const rowsAssembly = ae => countParts(ae);
+            const rowsSubtitle = se => { let s = 0; for (const ae of se.assemblies.values()) s += rowsAssembly(ae); return s; };
+            const rowsTitle = te => { let s = 0; for (const se of te.subtitles.values()) s += rowsSubtitle(se); return s; };
+            const rowsClient = ce => { let s = 0; for (const te of ce.titles.values()) s += rowsTitle(te); return s; };
 
             let html = '', totalParts = 0;
-
             for (const ce of cm.values()) {
                 const cTotal = rowsClient(ce);
                 let cPrinted = false;
-
                 for (const te of ce.titles.values()) {
                     const tTotal = rowsTitle(te);
                     let tPrinted = false;
@@ -471,7 +371,6 @@
                     const tMan = oT[te.title];
                     if (tMan) { dispTP = tMan.parts; dispTD = tMan.delivered; isTMan = true; }
                     const tBadge = metaBadge(dispTP, dispTD, isTMan, rawTP, rawTD);
-
                     for (const se of te.subtitles.values()) {
                         const sTotal = rowsSubtitle(se);
                         let sPrinted = false;
@@ -481,7 +380,6 @@
                         const sMan = oS[sId];
                         if (sMan) { dispSP = sMan.parts; dispSD = sMan.delivered; isSMan = true; }
                         const sBadge = metaBadge(dispSP, dispSD, isSMan, rawSP, rawSD);
-
                         for (const ae of se.assemblies.values()) {
                             const aTotal = rowsAssembly(ae);
                             let aPrinted = false;
@@ -491,44 +389,26 @@
                             const aMan = oA[aId];
                             if (aMan) { dispAP = aMan.parts; dispAD = aMan.delivered; isAMan = true; }
                             const aBadge = metaBadge(dispAP, dispAD, isAMan, rawAP, rawAD);
-
                             for (const pe of ae.parts.values()) {
                                 if (pe.deliv === 0) continue;
                                 totalParts++;
-                                html += `<tr class="hover:bg-gray-50/70 transition">`;
+                                html += `<tr class="hover:bg-gray-50/70">`;
                                 if (!cPrinted) { html += `<td rowspan="${cTotal}" class="font-semibold align-middle text-slate-700">${esc(ce.client)}</td>`; cPrinted = true; }
-                                if (!tPrinted) {
-                                    html += `<td rowspan="${tTotal}" class="align-top"><div class="title-name">${esc(te.title)}</div>${tBadge}<button class="manual-edit-btn" onclick="openManualEdit('title','${esc(te.title)}',${dispTP},${dispTD})" title="Manual override for Title"><i class="fa-regular fa-pen-to-square"></i></button></td>`;
-                                    tPrinted = true;
-                                }
-                                if (!sPrinted) {
-                                    html += `<td rowspan="${sTotal}" class="align-top"><div class="text-sm font-medium text-gray-600">${esc(se.subtitle) || '—'}</div>${sBadge}<button class="manual-edit-btn" onclick="openManualEdit('subtitle','${esc(sId)}',${dispSP},${dispSD})" title="Manual override for Subtitle"><i class="fa-regular fa-pen-to-square"></i></button></td>`;
-                                    sPrinted = true;
-                                }
-                                if (!aPrinted) {
-                                    html += `<td rowspan="${aTotal}" class="align-top"><div class="sub-assembly-tag">${esc(ae.assembly) || '—'}</div>${aBadge}<button class="manual-edit-btn" onclick="openManualEdit('assembly','${esc(aId)}',${dispAP},${dispAD})" title="Manual override for Sub Sub Assembly"><i class="fa-regular fa-pen-to-square"></i></button></td>`;
-                                    aPrinted = true;
-                                }
+                                if (!tPrinted) { html += `<td rowspan="${tTotal}" class="align-top"><div class="title-name">${esc(te.title)}</div>${tBadge}<button class="manual-edit-btn" onclick="openManualEdit('title','${esc(te.title)}',${dispTP},${dispTD})"><i class="fa-regular fa-pen-to-square"></i></button></td>`; tPrinted = true; }
+                                if (!sPrinted) { html += `<td rowspan="${sTotal}" class="align-top"><div class="text-sm font-medium text-gray-600">${esc(se.subtitle) || '—'}</div>${sBadge}<button class="manual-edit-btn" onclick="openManualEdit('subtitle','${esc(sId)}',${dispSP},${dispSD})"><i class="fa-regular fa-pen-to-square"></i></button></td>`; sPrinted = true; }
+                                if (!aPrinted) { html += `<td rowspan="${aTotal}" class="align-top"><div class="sub-assembly-tag">${esc(ae.assembly) || '—'}</div>${aBadge}<button class="manual-edit-btn" onclick="openManualEdit('assembly','${esc(aId)}',${dispAP},${dispAD})"><i class="fa-regular fa-pen-to-square"></i></button></td>`; aPrinted = true; }
                                 const drawings = [...pe.drawings].sort().join(', ');
                                 html += `<td class="cell-nowrap font-medium">${esc(pe.part)}</td>`;
                                 html += `<td><span class="cell-drawing" title="${esc(drawings) || '—'}">${esc(drawings) || '—'}</span></td>`;
-                                html += `<td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${fmt(pe.deliv)}</td>
-                                    <td class="text-right tabular-nums col-accepted">${fmt(pe.acc)}</td>
-                                    <td class="text-right tabular-nums col-conditional">${fmt(pe.cond)}</td>`;
-                                html += `</tr>`;
+                                html += `<td class="text-right tabular-nums font-bold text-blue-700 col-delivered">${fmt(pe.deliv)}</td><td class="text-right tabular-nums col-accepted">${fmt(pe.acc)}</td><td class="text-right tabular-nums col-conditional">${fmt(pe.cond)}</td></tr>`;
                             }
                         }
                     }
                 }
             }
 
-            if (totalParts === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-gray-400"><i class="fa-regular fa-face-smile text-2xl"></i><p class="mt-2 text-sm">No parts with delivered quantity · excl. ${EXCLUDED.join(', ')}</p></td></tr>`;
-                document.getElementById('recordCount').innerText = '0 parts';
-            } else {
-                tbody.innerHTML = html;
-                document.getElementById('recordCount').innerText = `${totalParts} parts · ${rows.length} records · excl. ${EXCLUDED.join(', ')}`;
-            }
+            if (totalParts === 0) { tbody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-gray-400">No parts with delivered quantity</td></tr>`; document.getElementById('recordCount').innerText = '0 parts'; }
+            else { tbody.innerHTML = html; document.getElementById('recordCount').innerText = `${totalParts} parts · ${rows.length} records · excl. ${EXCLUDED.join(', ')}`; }
         }
 
         function openManualEdit(level, id, curParts, curDeliv) {
@@ -537,7 +417,7 @@
             const popup = document.createElement('div');
             popup.className = 'manual-edit-popup active';
             popup.innerHTML = `
-                <div class="popup-title"><i class="fa-regular fa-pen-to-square text-amber-500 mr-2"></i>Manual override — ${labels[level]}</div>
+                <div class="popup-title"><i class="fa-regular fa-pen-to-square text-amber-500 mr-2"></i>Override — ${labels[level]}</div>
                 <div class="popup-sub">${esc(id)}</div>
                 <label><i class="fa-regular fa-cubes mr-1"></i> Parts (unique)</label>
                 <input type="number" id="manualPartsInput" value="${curParts}" min="0" step="1" />
@@ -546,15 +426,10 @@
                 <div class="popup-actions">
                     <button class="btn-cancel" onclick="this.closest('.manual-edit-popup').remove()">Cancel</button>
                     <button class="btn-reset" onclick="saveOverride('${level}','${esc(id)}',undefined,undefined); this.closest('.manual-edit-popup').remove();">Reset</button>
-                    <button class="btn-save" onclick="
-                        const p = parseInt(document.getElementById('manualPartsInput').value) || 0;
-                        const d = parseInt(document.getElementById('manualDelivInput').value) || 0;
-                        saveOverride('${level}','${esc(id)}',p,d);
-                        this.closest('.manual-edit-popup').remove();
-                    "><i class="fa-regular fa-floppy-disk mr-1"></i>Save</button>
+                    <button class="btn-save" onclick="const p=parseInt(document.getElementById('manualPartsInput').value)||0;const d=parseInt(document.getElementById('manualDelivInput').value)||0;saveOverride('${level}','${esc(id)}',p,d);this.closest('.manual-edit-popup').remove();"><i class="fa-regular fa-floppy-disk mr-1"></i>Save</button>
                 </div>`;
             document.body.appendChild(popup);
-            popup.addEventListener('click', function(e) { if (e.target === popup) popup.remove(); });
+            popup.addEventListener('click', e => { if (e.target === popup) popup.remove(); });
             setTimeout(() => document.getElementById('manualPartsInput')?.focus(), 50);
         }
 
@@ -590,85 +465,68 @@
                 if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
 
-            for (const ce of cm.values()) {
-                for (const te of ce.titles.values()) {
-                    let tParts = new Set(), tDeliv = 0;
-                    for (const se of te.subtitles.values()) {
-                        let sParts = new Set(), sDeliv = 0;
-                        for (const ae of se.assemblies.values()) {
-                            let aParts = new Set(), aDeliv = 0;
-                            for (const pe of ae.parts.values()) {
-                                if (pe.deliv > 0) { aParts.add(pe.part); aDeliv += pe.deliv; }
-                            }
-                            ae.partsSet = aParts; ae.totalDeliv = aDeliv;
-                            sParts = new Set([...sParts, ...aParts]); sDeliv += aDeliv;
-                        }
-                        se.partsSet = sParts; se.totalDeliv = sDeliv;
-                        tParts = new Set([...tParts, ...sParts]); tDeliv += sDeliv;
+            for (const ce of cm.values()) for (const te of ce.titles.values()) {
+                let tParts = new Set(), tDeliv = 0;
+                for (const se of te.subtitles.values()) {
+                    let sParts = new Set(), sDeliv = 0;
+                    for (const ae of se.assemblies.values()) {
+                        let aParts = new Set(), aDeliv = 0;
+                        for (const pe of ae.parts.values()) if (pe.deliv > 0) { aParts.add(pe.part); aDeliv += pe.deliv; }
+                        ae.partsSet = aParts; ae.totalDeliv = aDeliv;
+                        sParts = new Set([...sParts, ...aParts]); sDeliv += aDeliv;
                     }
-                    te.partsSet = tParts; te.totalDeliv = tDeliv;
+                    se.partsSet = sParts; se.totalDeliv = sDeliv;
+                    tParts = new Set([...tParts, ...sParts]); tDeliv += sDeliv;
                 }
+                te.partsSet = tParts; te.totalDeliv = tDeliv;
             }
 
             const oT = getOverrides(TITLE_KEY), oS = getOverrides(SUBTITLE_KEY), oA = getOverrides(ASSEMBLY_KEY);
-            for (const ce of cm.values()) {
-                for (const te of ce.titles.values()) {
-                    const m = oT[te.title];
-                    if (m) { te.partsSet = new Set(Array(m.parts).fill('manual')); te.totalDeliv = m.delivered; }
-                    for (const se of te.subtitles.values()) {
-                        const id = `${ce.client}|${te.title}|${se.subtitle}`;
-                        const m2 = oS[id];
-                        if (m2) { se.partsSet = new Set(Array(m2.parts).fill('manual')); se.totalDeliv = m2.delivered; }
-                        for (const ae of se.assemblies.values()) {
-                            const id2 = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`;
-                            const m3 = oA[id2];
-                            if (m3) { ae.partsSet = new Set(Array(m3.parts).fill('manual')); ae.totalDeliv = m3.delivered; }
-                        }
+            for (const ce of cm.values()) for (const te of ce.titles.values()) {
+                const m = oT[te.title]; if (m) { te.partsSet = new Set(Array(m.parts).fill('manual')); te.totalDeliv = m.delivered; }
+                for (const se of te.subtitles.values()) {
+                    const id = `${ce.client}|${te.title}|${se.subtitle}`;
+                    const m2 = oS[id]; if (m2) { se.partsSet = new Set(Array(m2.parts).fill('manual')); se.totalDeliv = m2.delivered; }
+                    for (const ae of se.assemblies.values()) {
+                        const id2 = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`;
+                        const m3 = oA[id2]; if (m3) { ae.partsSet = new Set(Array(m3.parts).fill('manual')); ae.totalDeliv = m3.delivered; }
                     }
                 }
             }
 
-            function countParts(ae) { let c = 0; for (const pe of ae.parts.values()) if (pe.deliv > 0) c++; return c; }
-            function rowsAssembly(ae) { return countParts(ae); }
-            function rowsSubtitle(se) { let s = 0; for (const ae of se.assemblies.values()) s += rowsAssembly(ae); return s; }
-            function rowsTitle(te) { let s = 0; for (const se of te.subtitles.values()) s += rowsSubtitle(se); return s; }
-            function rowsClient(ce) { let s = 0; for (const te of ce.titles.values()) s += rowsTitle(te); return s; }
+            const countParts = ae => { let c = 0; for (const pe of ae.parts.values()) if (pe.deliv > 0) c++; return c; };
+            const rowsAssembly = ae => countParts(ae);
+            const rowsSubtitle = se => { let s = 0; for (const ae of se.assemblies.values()) s += rowsAssembly(ae); return s; };
+            const rowsTitle = te => { let s = 0; for (const se of te.subtitles.values()) s += rowsSubtitle(se); return s; };
+            const rowsClient = ce => { let s = 0; for (const te of ce.titles.values()) s += rowsTitle(te); return s; };
 
-            const headers = ['Client','Title','Title #Parts','Title Total Deliv','Title Avg/part','Subtitle','Subtitle #Parts','Subtitle Total Deliv','Subtitle Avg/part','Sub Sub Assembly','Sub Sub Assembly #Parts','Sub Sub Assembly Total Deliv','Sub Sub Assembly Avg/part','Part Name','Drawing No.','Delivered','Accepted','Conditional'];
+            const headers = ['Client','Title','Title #Parts','Title Total Deliv','Title Avg/part','Subtitle','Subtitle #Parts','Subtitle Total Deliv','Subtitle Avg/part','Sub Sub Assembly','Sub Sub #Parts','Sub Sub Total Deliv','Sub Sub Avg/part','Part Name','Drawing No.','Delivered','Accepted','Conditional'];
             const data = [headers];
             const merges = [];
             let rowIdx = 1;
-
             for (const ce of cm.values()) {
                 const cTotal = rowsClient(ce);
                 if (cTotal === 0) continue;
                 const cStart = rowIdx;
                 let firstC = true;
-
                 for (const te of ce.titles.values()) {
                     const tTotal = rowsTitle(te);
                     if (tTotal === 0) continue;
                     const tStart = rowIdx;
                     let firstT = true;
-                    const tP = te.partsSet.size, tD = te.totalDeliv;
-                    const tAvg = tP > 0 ? (tD / tP) : 0;
-
+                    const tP = te.partsSet.size, tD = te.totalDeliv, tAvg = tP > 0 ? (tD / tP) : 0;
                     for (const se of te.subtitles.values()) {
                         const sTotal = rowsSubtitle(se);
                         if (sTotal === 0) continue;
                         const sStart = rowIdx;
                         let firstS = true;
-                        const sP = se.partsSet.size, sD = se.totalDeliv;
-                        const sAvg = sP > 0 ? (sD / sP) : 0;
-
+                        const sP = se.partsSet.size, sD = se.totalDeliv, sAvg = sP > 0 ? (sD / sP) : 0;
                         for (const ae of se.assemblies.values()) {
                             const aTotal = rowsAssembly(ae);
                             if (aTotal === 0) continue;
                             const aStart = rowIdx;
                             let firstA = true;
-                            const aP = ae.partsSet.size, aD = ae.totalDeliv;
-                            const aAvg = aP > 0 ? (aD / aP) : 0;
-
+                            const aP = ae.partsSet.size, aD = ae.totalDeliv, aAvg = aP > 0 ? (aD / aP) : 0;
                             for (const pe of ae.parts.values()) {
                                 if (pe.deliv === 0) continue;
                                 const draws = [...pe.drawings].sort().join(', ');
@@ -693,7 +551,7 @@
                                 row.push(fmt(pe.cond));
                                 data.push(row);
                                 rowIdx++;
-                                firstC = false; firstT = false; firstS = false; firstA = false;
+                                firstC = firstT = firstS = firstA = false;
                             }
                             if (aTotal > 1) for (let c = 9; c <= 12; c++) merges.push({ s: { r: aStart, c }, e: { r: aStart + aTotal - 1, c } });
                         }
@@ -703,12 +561,10 @@
                 }
                 if (cTotal > 1) merges.push({ s: { r: cStart, c: 0 }, e: { r: cStart + cTotal - 1, c: 0 } });
             }
-
-            if (data.length === 1) { alert('No parts with delivered quantity to export.'); return; }
-
+            if (data.length === 1) { alert('No parts to export.'); return; }
             const ws = XLSX.utils.aoa_to_sheet(data);
             ws['!merges'] = merges;
-            ws['!cols'] = [{ wch: 18 },{ wch: 22 },{ wch: 14 },{ wch: 16 },{ wch: 14 },{ wch: 20 },{ wch: 14 },{ wch: 16 },{ wch: 14 },{ wch: 20 },{ wch: 14 },{ wch: 16 },{ wch: 14 },{ wch: 20 },{ wch: 25 },{ wch: 14 },{ wch: 12 },{ wch: 14 }];
+            ws['!cols'] = [{wch:18},{wch:22},{wch:14},{wch:16},{wch:14},{wch:20},{wch:14},{wch:16},{wch:14},{wch:20},{wch:14},{wch:16},{wch:14},{wch:20},{wch:25},{wch:14},{wch:12},{wch:14}];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Inspection Report');
             XLSX.writeFile(wb, `inspection_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
@@ -746,67 +602,51 @@
                 if (r.drawing && r.drawing !== '-') pe.drawings.add(r.drawing);
             }
 
-            for (const ce of cm.values()) {
-                for (const te of ce.titles.values()) {
-                    let tParts = new Set(), tDeliv = 0;
-                    for (const se of te.subtitles.values()) {
-                        let sParts = new Set(), sDeliv = 0;
-                        for (const ae of se.assemblies.values()) {
-                            let aParts = new Set(), aDeliv = 0;
-                            for (const pe of ae.parts.values()) {
-                                if (pe.deliv > 0) { aParts.add(pe.part); aDeliv += pe.deliv; }
-                            }
-                            ae.partsSet = aParts; ae.totalDeliv = aDeliv;
-                            sParts = new Set([...sParts, ...aParts]); sDeliv += aDeliv;
-                        }
-                        se.partsSet = sParts; se.totalDeliv = sDeliv;
-                        tParts = new Set([...tParts, ...sParts]); tDeliv += sDeliv;
+            for (const ce of cm.values()) for (const te of ce.titles.values()) {
+                let tParts = new Set(), tDeliv = 0;
+                for (const se of te.subtitles.values()) {
+                    let sParts = new Set(), sDeliv = 0;
+                    for (const ae of se.assemblies.values()) {
+                        let aParts = new Set(), aDeliv = 0;
+                        for (const pe of ae.parts.values()) if (pe.deliv > 0) { aParts.add(pe.part); aDeliv += pe.deliv; }
+                        ae.partsSet = aParts; ae.totalDeliv = aDeliv;
+                        sParts = new Set([...sParts, ...aParts]); sDeliv += aDeliv;
                     }
-                    te.partsSet = tParts; te.totalDeliv = tDeliv;
+                    se.partsSet = sParts; se.totalDeliv = sDeliv;
+                    tParts = new Set([...tParts, ...sParts]); tDeliv += sDeliv;
                 }
+                te.partsSet = tParts; te.totalDeliv = tDeliv;
             }
 
             const oT = getOverrides(TITLE_KEY), oS = getOverrides(SUBTITLE_KEY), oA = getOverrides(ASSEMBLY_KEY);
-            for (const ce of cm.values()) {
-                for (const te of ce.titles.values()) {
-                    const m = oT[te.title];
-                    if (m) { te.partsSet = new Set(Array(m.parts).fill('manual')); te.totalDeliv = m.delivered; }
-                    for (const se of te.subtitles.values()) {
-                        const id = `${ce.client}|${te.title}|${se.subtitle}`;
-                        const m2 = oS[id];
-                        if (m2) { se.partsSet = new Set(Array(m2.parts).fill('manual')); se.totalDeliv = m2.delivered; }
-                        for (const ae of se.assemblies.values()) {
-                            const id2 = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`;
-                            const m3 = oA[id2];
-                            if (m3) { ae.partsSet = new Set(Array(m3.parts).fill('manual')); ae.totalDeliv = m3.delivered; }
-                        }
+            for (const ce of cm.values()) for (const te of ce.titles.values()) {
+                const m = oT[te.title]; if (m) { te.partsSet = new Set(Array(m.parts).fill('manual')); te.totalDeliv = m.delivered; }
+                for (const se of te.subtitles.values()) {
+                    const id = `${ce.client}|${te.title}|${se.subtitle}`;
+                    const m2 = oS[id]; if (m2) { se.partsSet = new Set(Array(m2.parts).fill('manual')); se.totalDeliv = m2.delivered; }
+                    for (const ae of se.assemblies.values()) {
+                        const id2 = `${ce.client}|${te.title}|${se.subtitle}|${ae.assembly}`;
+                        const m3 = oA[id2]; if (m3) { ae.partsSet = new Set(Array(m3.parts).fill('manual')); ae.totalDeliv = m3.delivered; }
                     }
                 }
             }
 
-            let tsv = "Client\tTitle\tTitle #Parts\tTitle Total Deliv\tTitle Avg/part\tSubtitle\tSubtitle #Parts\tSubtitle Total Deliv\tSubtitle Avg/part\tSub Sub Assembly\tSub Sub Assembly #Parts\tSub Sub Assembly Total Deliv\tSub Sub Assembly Avg/part\tPart Name\tDrawing No.\tDelivered\tAccepted\tConditional\n";
-
-            for (const ce of cm.values()) {
-                for (const te of ce.titles.values()) {
-                    const tP = te.partsSet.size, tD = te.totalDeliv, tAvg = tP > 0 ? (tD / tP) : 0;
-                    for (const se of te.subtitles.values()) {
-                        const sP = se.partsSet.size, sD = se.totalDeliv, sAvg = sP > 0 ? (sD / sP) : 0;
-                        for (const ae of se.assemblies.values()) {
-                            const aP = ae.partsSet.size, aD = ae.totalDeliv, aAvg = aP > 0 ? (aD / aP) : 0;
-                            for (const pe of ae.parts.values()) {
-                                if (pe.deliv === 0) continue;
-                                const draws = [...pe.drawings].sort().join(', ');
-                                tsv += `${ce.client}\t${te.title}\t${tP}\t${fmt(tD)}\t${tAvg.toFixed(1)}\t${se.subtitle}\t${sP}\t${fmt(sD)}\t${sAvg.toFixed(1)}\t${ae.assembly}\t${aP}\t${fmt(aD)}\t${aAvg.toFixed(1)}\t${pe.part}\t${draws || '—'}\t${fmt(pe.deliv)}\t${fmt(pe.acc)}\t${fmt(pe.cond)}\n`;
-                            }
+            let tsv = "Client\tTitle\tTitle #Parts\tTitle Total Deliv\tTitle Avg/part\tSubtitle\tSubtitle #Parts\tSubtitle Total Deliv\tSubtitle Avg/part\tSub Sub Assembly\tSub Sub #Parts\tSub Sub Total Deliv\tSub Sub Avg/part\tPart Name\tDrawing No.\tDelivered\tAccepted\tConditional\n";
+            for (const ce of cm.values()) for (const te of ce.titles.values()) {
+                const tP = te.partsSet.size, tD = te.totalDeliv, tAvg = tP > 0 ? (tD / tP) : 0;
+                for (const se of te.subtitles.values()) {
+                    const sP = se.partsSet.size, sD = se.totalDeliv, sAvg = sP > 0 ? (sD / sP) : 0;
+                    for (const ae of se.assemblies.values()) {
+                        const aP = ae.partsSet.size, aD = ae.totalDeliv, aAvg = aP > 0 ? (aD / aP) : 0;
+                        for (const pe of ae.parts.values()) {
+                            if (pe.deliv === 0) continue;
+                            const draws = [...pe.drawings].sort().join(', ');
+                            tsv += `${ce.client}\t${te.title}\t${tP}\t${fmt(tD)}\t${tAvg.toFixed(1)}\t${se.subtitle}\t${sP}\t${fmt(sD)}\t${sAvg.toFixed(1)}\t${ae.assembly}\t${aP}\t${fmt(aD)}\t${aAvg.toFixed(1)}\t${pe.part}\t${draws || '—'}\t${fmt(pe.deliv)}\t${fmt(pe.acc)}\t${fmt(pe.cond)}\n`;
                         }
                     }
                 }
             }
-
-            try {
-                await navigator.clipboard.writeText(tsv);
-                alert(`✅ Aggregated table copied · excl. ${EXCLUDED.join(', ')}`);
-            } catch (err) { alert('❌ Copy failed: ' + err); }
+            try { await navigator.clipboard.writeText(tsv); alert('✅ Copied'); } catch (err) { alert('❌ Copy failed: ' + err); }
         }
 
         function clearFilters() {
@@ -816,13 +656,11 @@
             document.getElementById('engineerFilterSelect').value = '';
             applyFilters();
         }
-
         document.getElementById('searchInput').addEventListener('input', () => { if (allRows.length) applyFilters(); });
         document.getElementById('projectFilterSelect').addEventListener('change', () => { if (allRows.length) applyFilters(); });
         document.getElementById('processFilterSelect').addEventListener('change', () => { if (allRows.length) applyFilters(); });
         document.getElementById('engineerFilterSelect').addEventListener('change', () => { if (allRows.length) applyFilters(); });
         document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
-
         fetchReportData();
     </script>
 </body>
