@@ -8,117 +8,95 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        body { background: #f0f4f8; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        body { background: #f0f4f8; font-family: 'Inter', system-ui, sans-serif; }
         .toast-container { position: fixed; top: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(14px); border-radius: 14px; padding: 14px 22px; color: #f1f5f9; font-size: 0.9rem; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); border-left: 5px solid #4ade80; transform: translateX(120%); transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; max-width: 420px; display: flex; align-items: center; gap: 12px; }
+        .toast { background: rgba(15,23,42,0.94); backdrop-filter: blur(14px); border-radius: 14px; padding: 14px 22px; color: #f1f5f9; font-size: 0.9rem; box-shadow: 0 12px 40px rgba(0,0,0,0.3); border-left: 5px solid #4ade80; transform: translateX(120%); transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1); pointer-events: auto; max-width: 420px; display: flex; align-items: center; gap: 12px; }
         .toast.show { transform: translateX(0); }
         .toast.error { border-left-color: #f87171; }
         .toast.info { border-left-color: #60a5fa; }
         .toast .toast-icon { font-size: 1.3rem; flex-shrink: 0; }
-        .stat-card { background: white; border-radius: 1rem; padding: 0.75rem 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e9edf2; transition: all 0.2s; position: relative; overflow: hidden; }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.07); }
-        .stat-card .stat-icon-wrapper { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.1rem; flex-shrink: 0; }
+        .stat-card { background: white; border-radius: 1rem; padding: 0.75rem 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e9edf2; }
+        .stat-card .stat-icon-wrapper { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.1rem; }
         .stat-card .stat-value { font-size: 1.5rem; font-weight: 700; color: #0a1a2f; line-height: 1.2; }
-        .stat-card .stat-label { font-size: 0.65rem; color: #64748b; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+        .stat-card .stat-label { font-size: 0.65rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
         .stat-card .stat-badge { font-size: 0.55rem; background: #f1f5f9; color: #475569; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
-        .filter-select { border-radius: 0.6rem; border: 1.5px solid #e2e8f0; padding: 0.3rem 0.75rem; background: white; font-size: 0.8rem; transition: all 0.2s; width: 100%; }
+        .filter-select { border-radius: 0.6rem; border: 1.5px solid #e2e8f0; padding: 0.3rem 0.75rem; background: white; font-size: 0.8rem; width: 100%; }
         .filter-select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
-        .filter-label { display: block; font-size: 0.6rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+        .filter-label { display: block; font-size: 0.6rem; font-weight: 600; color: #475569; text-transform: uppercase; margin-bottom: 2px; }
         .table-wrapper { overflow-x: auto; border-radius: 1rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #f8fafc; padding: 12px 12px; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: #475569; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        th { background: #f8fafc; padding: 12px 12px; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; color: #475569; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
         td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #0f172a; }
         tr:hover td { background: #fafbfc; }
-        .clickable-assembly { cursor: pointer; font-weight: 700; color: #1e293b; transition: color 0.15s; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: #a5b4fc; text-decoration-thickness: 2px; }
+        .clickable-assembly { cursor: pointer; font-weight: 700; color: #1e293b; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: #a5b4fc; }
         .clickable-assembly:hover { color: #4f46e5; }
-        .clickable-completion { cursor: pointer; transition: all 0.2s; padding: 4px 8px; border-radius: 8px; }
-        .clickable-completion:hover { background: #eef2ff; transform: scale(1.02); }
+        .clickable-completion { cursor: pointer; padding: 4px 8px; border-radius: 8px; }
+        .clickable-completion:hover { background: #eef2ff; }
         .progress-bar-bg { background: #e2e8f0; border-radius: 999px; overflow: hidden; height: 6px; width: 100%; max-width: 100px; }
         .progress-fill { height: 6px; border-radius: 999px; background: linear-gradient(90deg, #6366f1, #818cf8); transition: width 0.5s ease; }
         .percent-value { font-weight: 700; color: #0f172a; font-size: 0.85rem; min-width: 48px; display: inline-block; }
         .subtitle-group-name { font-weight: 700; color: #4f46e5; font-size: 0.85rem; }
-        .subsub-group-name { font-weight: 700; color: #0f172a; font-size: 0.9rem; }
         .group-meta { font-size: 0.6rem; color: #94a3b8; display: block; margin-top: 2px; font-weight: 500; }
         .group-meta .highlight { font-weight: 700; color: #0f172a; }
-        .btn-excel { background: #0b9e6e; color: white; border-radius: 0.6rem; padding: 0.3rem 0.8rem; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.2s, transform 0.15s; border: none; cursor: pointer; }
-        .btn-excel:hover { background: #058b5e; transform: translateY(-1px); }
-        .btn-outline { background: white; border: 1.5px solid #e2e8f0; border-radius: 0.6rem; padding: 0.3rem 0.8rem; font-size: 0.75rem; font-weight: 600; color: #4f46e5; transition: all 0.2s; cursor: pointer; }
+        .btn-excel { background: #0b9e6e; color: white; border-radius: 0.6rem; padding: 0.3rem 0.8rem; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; border: none; cursor: pointer; }
+        .btn-excel:hover { background: #058b5e; }
+        .btn-outline { background: white; border: 1.5px solid #e2e8f0; border-radius: 0.6rem; padding: 0.3rem 0.8rem; font-size: 0.75rem; font-weight: 600; color: #4f46e5; cursor: pointer; }
         .btn-outline:hover { background: #f8fafc; border-color: #a5b4fc; }
         .modal-overlay { background: rgba(0,0,0,0.45); backdrop-filter: blur(6px); }
         .modal-card { background: white; border-radius: 1.5rem; max-width: 96%; width: 100%; max-height: 92vh; overflow: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.25); }
-        .modal-card .modal-header { background: white; padding: 0.75rem 1.25rem; border-bottom: 1px solid #eef2f6; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; border-radius: 1.5rem 1.5rem 0 0; }
+        .modal-card .modal-header { background: white; padding: 0.75rem 1.25rem; border-bottom: 1px solid #eef2f6; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
         .modal-card .modal-title { font-size: 1rem; font-weight: 700; color: #0a1a2f; }
-        .modal-card .modal-close { background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer; transition: color 0.2s; padding: 0 4px; }
+        .modal-card .modal-close { background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer; padding: 0 4px; }
         .modal-card .modal-close:hover { color: #0f172a; }
         .modal-card .modal-body { padding: 1rem 1.25rem; }
         .subsub-parts-table { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
-        .subsub-parts-table th { background: #f1f5f9; padding: 6px 8px; font-weight: 600; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em; color: #475569; border-bottom: 2px solid #e2e8f0; text-align: left; }
+        .subsub-parts-table th { background: #f1f5f9; padding: 6px 8px; font-weight: 600; font-size: 0.6rem; text-transform: uppercase; color: #475569; border-bottom: 2px solid #e2e8f0; text-align: left; }
         .subsub-parts-table td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #0f172a; }
-        .subsub-parts-table .part-link { color: #4f46e5; font-weight: 500; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: #c7d2fe; transition: color 0.15s; }
+        .subsub-parts-table .part-link { color: #4f46e5; font-weight: 500; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
         .subsub-parts-table .part-link:hover { color: #1e40af; }
         .modal-summary-badge { display: inline-block; background: #eef2ff; color: #4f46e5; padding: 1px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 600; }
         .hero-banner { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4f46e5 100%); border-radius: 1.5rem; padding: 1.25rem 2rem; color: white; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; box-shadow: 0 8px 30px rgba(79,70,229,0.25); position: relative; overflow: hidden; }
         .hero-banner::after { content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: rgba(255,255,255,0.04); border-radius: 50%; pointer-events: none; }
         .hero-banner .hero-icon { font-size: 2rem; opacity: 0.9; }
         .hero-banner .hero-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
-        .hero-banner .hero-sub { font-size: 0.8rem; opacity: 0.8; font-weight: 400; }
-        .hero-banner .hero-badge { background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); padding: 3px 12px; border-radius: 999px; font-size: 0.65rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.1); }
-        .hero-banner .hero-image-placeholder { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.08); padding: 0.3rem 1rem 0.3rem 0.8rem; border-radius: 999px; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.06); font-size: 0.8rem; }
-        .hero-banner .hero-image-placeholder i { font-size: 1.2rem; }
+        .hero-banner .hero-sub { font-size: 0.8rem; opacity: 0.8; }
+        .hero-banner .hero-badge { background: rgba(255,255,255,0.15); padding: 3px 12px; border-radius: 999px; font-size: 0.65rem; font-weight: 600; }
+        .hero-banner .hero-image-placeholder { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.08); padding: 0.3rem 1rem 0.3rem 0.8rem; border-radius: 999px; font-size: 0.8rem; }
         .inspection-history-wrap { max-height: 260px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 0.75rem; }
         .inspection-history-wrap table { font-size: 0.75rem; }
         .inspection-history-wrap th { position: sticky; top: 0; z-index: 2; background: #f8fafc; }
         @media (max-width: 640px) {
-            .hero-banner { padding: 1rem 1rem; flex-direction: column; align-items: flex-start; }
-            .hero-banner .hero-title { font-size: 1.1rem; }
+            .hero-banner { padding: 1rem; flex-direction: column; align-items: flex-start; }
             .stat-card .stat-value { font-size: 1.2rem; }
             .modal-card { max-width: 100%; margin: 0.5rem; border-radius: 1rem; }
-            .modal-card .modal-header { padding: 0.5rem 0.75rem; }
-            .modal-card .modal-body { padding: 0.5rem 0.75rem; }
-            .subsub-parts-table { font-size: 0.7rem; }
-            .subsub-parts-table th, .subsub-parts-table td { padding: 4px 5px; }
-            .stat-card .stat-icon-wrapper { width: 30px; height: 30px; font-size: 0.9rem; }
             .filter-grid { grid-template-columns: 1fr 1fr !important; }
         }
     </style>
 </head>
 <body>
-
     <div class="toast-container" id="toastContainer"></div>
-
     <div class="max-w-7xl mx-auto px-4 py-4 md:px-6">
-
         <div class="hero-banner mb-5">
             <div class="flex items-center gap-3 flex-wrap">
                 <div class="hero-icon"><i class="fa-solid fa-industry"></i></div>
-                <div>
-                    <div class="hero-title">Assembly Process Analysis</div>
-                    <div class="hero-sub">Welding &amp; Fastener — QC insights</div>
-                </div>
+                <div><div class="hero-title">Assembly Process Analysis</div><div class="hero-sub">Welding &amp; Fastener — QC insights</div></div>
                 <span class="hero-badge"><i class="fa-regular fa-circle-check mr-1"></i> Live Data</span>
             </div>
-            <div class="hero-image-placeholder">
-                <i class="fa-solid fa-cubes"></i>
-                <span><strong>Sub‑Sub</strong> Assembly View</span>
-                <i class="fa-solid fa-chevron-right text-xs opacity-50 ml-1"></i>
-            </div>
+            <div class="hero-image-placeholder"><i class="fa-solid fa-cubes"></i><span><strong>Sub‑Sub</strong> Assembly View</span></div>
         </div>
 
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
             <div>
-                <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-simple text-indigo-500"></i>
-                </h1>
+                <h1 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-chart-simple text-indigo-500"></i></h1>
                 <p class="text-xs text-gray-500">
                     <i class="fa-regular fa-circle-info text-indigo-400 mr-1"></i>
-                    Showing <strong>only parts selected</strong> in the QC inspection's Part List for each sub‑sub assembly.
-                    <br><span class="text-indigo-400 text-[0.6rem]">Completion = (selected parts / total non‑assembly parts) × 100 &nbsp;|&nbsp; Denominator from all non‑assembly inspections for the same sub‑sub</span>
+                    Completion = <strong>(selected parts / non-assembly total parts) × 100</strong>. Denominator comes from all non-assembly inspections for the same sub‑sub.
                 </p>
             </div>
             <div class="flex gap-2 flex-wrap">
                 <button onclick="exportAnalysisToExcel()" class="btn-excel"><i class="fa-solid fa-file-excel"></i> Export</button>
                 <button onclick="refreshData()" class="btn-outline"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
-                <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 transition border border-transparent"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
+                <button onclick="window.location.href='/' || history.back()" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 border border-transparent"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
             </div>
         </div>
 
@@ -129,54 +107,30 @@
                 <div><label class="filter-label"><i class="fa-regular fa-tag mr-1"></i> Subtitle</label><select id="filterSubtitle" class="filter-select"><option value="">All Subtitles</option></select></div>
                 <div><label class="filter-label"><i class="fa-regular fa-layer-group mr-1"></i> Sub‑Sub</label><select id="filterSubSub" class="filter-select"><option value="">All</option></select></div>
             </div>
-            <div class="flex justify-end mt-2">
-                <button onclick="clearFilters()" class="bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium text-slate-700 transition"><i class="fa-regular fa-eraser mr-1"></i> Clear Filters</button>
-            </div>
+            <div class="flex justify-end mt-2"><button onclick="clearFilters()" class="bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium text-slate-700"><i class="fa-regular fa-eraser mr-1"></i> Clear Filters</button></div>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4">
-            <div class="stat-card">
-                <div class="flex items-center justify-between mb-0.5"><div class="stat-icon-wrapper bg-indigo-50 text-indigo-600"><i class="fa-solid fa-cube"></i></div><span class="stat-badge">unique</span></div>
-                <div class="stat-value" id="totalParts">—</div>
-                <div class="stat-label">Unique Parts (selected)</div>
-            </div>
-            <div class="stat-card">
-                <div class="flex items-center justify-between mb-0.5"><div class="stat-icon-wrapper bg-blue-50 text-blue-600"><i class="fa-solid fa-boxes-stacked"></i></div><span class="stat-badge">total</span></div>
-                <div class="stat-value text-blue-700" id="totalDelivered">—</div>
-                <div class="stat-label">Total Delivered Qty</div>
-            </div>
-            <div class="stat-card">
-                <div class="flex items-center justify-between mb-0.5"><div class="stat-icon-wrapper bg-emerald-50 text-emerald-600"><i class="fa-solid fa-rectangle-list"></i></div></div>
-                <div class="stat-value" id="totalSubtitles">—</div>
-                <div class="stat-label">Subtitles</div>
-            </div>
-            <div class="stat-card">
-                <div class="flex items-center justify-between mb-0.5"><div class="stat-icon-wrapper bg-amber-50 text-amber-600"><i class="fa-solid fa-folder-open"></i></div></div>
-                <div class="stat-value" id="totalSubSub">—</div>
-                <div class="stat-label">Sub‑Sub Assemblies</div>
-            </div>
+            <div class="stat-card"><div class="flex items-center justify-between mb-0.5"><div class="stat-icon-wrapper bg-indigo-50 text-indigo-600"><i class="fa-solid fa-cube"></i></div><span class="stat-badge">unique</span></div><div class="stat-value" id="totalParts">—</div><div class="stat-label">Unique Parts (selected)</div></div>
+            <div class="stat-card"><div class="flex items-center justify-between mb-0.5"><div class="stat-icon-wrapper bg-blue-50 text-blue-600"><i class="fa-solid fa-boxes-stacked"></i></div><span class="stat-badge">total</span></div><div class="stat-value text-blue-700" id="totalDelivered">—</div><div class="stat-label">Total Delivered Qty</div></div>
+            <div class="stat-card"><div class="flex items-center justify-between mb-0.5"><div class="stat-icon-wrapper bg-emerald-50 text-emerald-600"><i class="fa-solid fa-rectangle-list"></i></div></div><div class="stat-value" id="totalSubtitles">—</div><div class="stat-label">Subtitles</div></div>
+            <div class="stat-card"><div class="flex items-center justify-between mb-0.5"><div class="stat-icon-wrapper bg-amber-50 text-amber-600"><i class="fa-solid fa-folder-open"></i></div></div><div class="stat-value" id="totalSubSub">—</div><div class="stat-label">Sub‑Sub Assemblies</div></div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100/80 overflow-hidden">
             <div class="px-4 py-2.5 border-b bg-slate-50/60 flex flex-wrap justify-between items-center gap-2">
-                <h2 class="font-semibold text-slate-700 text-sm flex items-center gap-2">
-                    <i class="fa-regular fa-table text-indigo-500"></i>
-                    Parts Distribution
-                    <span class="text-xs font-normal text-gray-400 ml-1">— only selected parts</span>
-                </h2>
+                <h2 class="font-semibold text-slate-700 text-sm flex items-center gap-2"><i class="fa-regular fa-table text-indigo-500"></i> Parts Distribution <span class="text-xs font-normal text-gray-400 ml-1">— only selected parts</span></h2>
                 <span class="text-xs text-slate-400" id="recordCount"></span>
             </div>
             <div class="table-wrapper">
                 <table class="min-w-full" id="analysisTable">
-                    <thead>
-                        <tr>
-                            <th class="text-left"><i class="fa-regular fa-user mr-1"></i>Client</th>
-                            <th class="text-left"><i class="fa-regular fa-folder mr-1"></i>Project</th>
-                            <th class="text-left"><i class="fa-regular fa-tag mr-1"></i>Subtitle</th>
-                            <th class="text-left"><i class="fa-regular fa-layer-group mr-1"></i>Sub‑Sub Assembly</th>
-                            <th class="text-center"><i class="fa-regular fa-chart-simple mr-1"></i>Assembly Completion</th>
-                        </tr>
-                    </thead>
+                    <thead><tr>
+                        <th class="text-left"><i class="fa-regular fa-user mr-1"></i>Client</th>
+                        <th class="text-left"><i class="fa-regular fa-folder mr-1"></i>Project</th>
+                        <th class="text-left"><i class="fa-regular fa-tag mr-1"></i>Subtitle</th>
+                        <th class="text-left"><i class="fa-regular fa-layer-group mr-1"></i>Sub‑Sub Assembly</th>
+                        <th class="text-center"><i class="fa-regular fa-chart-simple mr-1"></i>Assembly Completion</th>
+                    </tr></thead>
                     <tbody id="analysisTableBody"></tbody>
                 </table>
             </div>
@@ -189,54 +143,42 @@
 
     <div id="completionModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCompletionModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <span class="modal-title" id="completionModalTitle"><i class="fa-regular fa-chart-pie text-indigo-500 mr-2"></i>Assembly Progress</span>
-                <button onclick="closeCompletionModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
-            </div>
+            <div class="modal-header"><span class="modal-title" id="completionModalTitle"><i class="fa-regular fa-chart-pie text-indigo-500 mr-2"></i>Assembly Progress</span><button onclick="closeCompletionModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button></div>
             <div class="modal-body" id="completionModalBody"></div>
         </div>
     </div>
 
     <div id="assemblyModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeAssemblyModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <span class="modal-title" id="assemblyModalTitle"><i class="fa-regular fa-cubes text-amber-500 mr-2"></i>Assembly Details</span>
-                <button onclick="closeAssemblyModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
-            </div>
+            <div class="modal-header"><span class="modal-title" id="assemblyModalTitle"><i class="fa-regular fa-cubes text-amber-500 mr-2"></i>Assembly Details</span><button onclick="closeAssemblyModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button></div>
             <div class="modal-body" id="assemblyModalBody"></div>
         </div>
     </div>
 
     <div id="partModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden modal-overlay" onclick="closePartModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <span class="modal-title" id="partModalTitle"><i class="fa-regular fa-microchip text-purple-500 mr-2"></i>Part Details</span>
-                <button onclick="closePartModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
-            </div>
+            <div class="modal-header"><span class="modal-title" id="partModalTitle"><i class="fa-regular fa-microchip text-purple-500 mr-2"></i>Part Details</span><button onclick="closePartModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button></div>
             <div class="modal-body" id="partModalBody"></div>
         </div>
     </div>
 
     <script>
-        const TARGET_PROCESSES = ['Assembling (welding)', 'Assembling (fastener)'];
-
-        function isTargetProcess(processType) {
-            if (!processType) return false;
-            const lower = processType.trim().toLowerCase();
-            return lower.includes('assembling (welding)') || lower.includes('assembling (fastener)') ||
-                lower.includes('assembling(welding)') || lower.includes('assembling(fastener)');
+        function isTargetProcess(pt) {
+            if (!pt) return false;
+            const l = pt.trim().toLowerCase();
+            return l.includes('assembling (welding)') || l.includes('assembling (fastener)') ||
+                   l.includes('assembling(welding)') || l.includes('assembling(fastener)');
         }
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            if (!container) return;
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
+        function showToast(msg, type = 'success') {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
             const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info');
-            toast.innerHTML = `<span class="toast-icon"><i class="fa-solid ${icon}"></i></span><span>${message}</span>`;
-            container.appendChild(toast);
-            requestAnimationFrame(() => toast.classList.add('show'));
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4200);
+            t.innerHTML = `<span class="toast-icon"><i class="fa-solid ${icon}"></i></span><span>${msg}</span>`;
+            c.appendChild(t);
+            requestAnimationFrame(() => t.classList.add('show'));
+            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 4200);
         }
 
         function getExtraField(insp, field) {
@@ -248,240 +190,189 @@
             return insp[field]?.trim() || insp.extra_fields?.[field]?.trim() || '';
         }
 
-        function parseTagNoPairs(tagNoValue) {
-            if (!tagNoValue) return null;
-            if (typeof tagNoValue === 'string') {
-                const trimmed = tagNoValue.trim();
-                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        function parseTagNoPairs(v) {
+            if (!v) return null;
+            if (typeof v === 'string') {
+                const t = v.trim();
+                if (t.startsWith('{') && t.endsWith('}')) {
                     try {
-                        const parsed = JSON.parse(trimmed);
-                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-                            const pairs = [];
-                            for (const [key, val] of Object.entries(parsed)) pairs.push({ name: key, qty: String(val) });
-                            return pairs;
-                        }
-                    } catch (e) {
+                        const p = JSON.parse(t);
+                        if (typeof p === 'object' && p !== null && !Array.isArray(p)) return Object.entries(p).map(([k, val]) => ({ name: k, qty: String(val) }));
+                    } catch {
                         const pairs = [];
-                        const content = trimmed.slice(1, -1);
-                        const parts = content.split(',').map(p => p.trim());
-                        for (const part of parts) {
-                            const colonIdx = part.indexOf(':');
-                            if (colonIdx > 0) {
-                                let key = part.slice(0, colonIdx).trim().replace(/^"|"$/g, '');
-                                let val = part.slice(colonIdx + 1).trim().replace(/^"|"$/g, '');
-                                pairs.push({ name: key, qty: val });
-                            }
+                        for (const part of t.slice(1, -1).split(',').map(s => s.trim())) {
+                            const i = part.indexOf(':');
+                            if (i > 0) pairs.push({ name: part.slice(0, i).trim().replace(/^"|"$/g, ''), qty: part.slice(i + 1).trim().replace(/^"|"$/g, '') });
                         }
-                        if (pairs.length > 0) return pairs;
+                        if (pairs.length) return pairs;
                     }
                 }
-                if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-                    try {
-                        const arr = JSON.parse(trimmed);
-                        if (Array.isArray(arr)) return arr.map(item => ({ name: String(item), qty: '' }));
-                    } catch (e) {}
+                if (t.startsWith('[') && t.endsWith(']')) {
+                    try { const arr = JSON.parse(t); if (Array.isArray(arr)) return arr.map(i => ({ name: String(i), qty: '' })); } catch {}
                 }
-                if (trimmed.includes(',')) {
-                    const items = trimmed.split(',').map(s => s.trim()).filter(s => s);
-                    return items.map(item => ({ name: item, qty: '' }));
-                }
-                return [{ name: trimmed, qty: '' }];
+                if (t.includes(',')) return t.split(',').map(s => ({ name: s.trim(), qty: '' })).filter(p => p.name);
+                return [{ name: t, qty: '' }];
             }
-            if (typeof tagNoValue === 'object' && tagNoValue !== null) {
-                if (Array.isArray(tagNoValue)) return tagNoValue.map(item => ({ name: String(item), qty: '' }));
-                const pairs = [];
-                for (const [key, val] of Object.entries(tagNoValue)) pairs.push({ name: key, qty: String(val) });
-                return pairs;
+            if (typeof v === 'object') {
+                if (Array.isArray(v)) return v.map(i => ({ name: String(i), qty: '' }));
+                return Object.entries(v).map(([k, val]) => ({ name: k, qty: String(val) }));
             }
-            return [{ name: String(tagNoValue), qty: '' }];
+            return [{ name: String(v), qty: '' }];
         }
 
         function getPartNumber(insp) {
-            const candidates = ['tag_no', 'Tag No', 'Tag Number', 'Part Number', 'Drawing Number', 'Part ID', 'part_number', 'drawing_number'];
-            for (const key of candidates) {
-                let val = insp.extra_fields?.[key] || insp[key];
-                if (val && val.trim()) return val.trim();
-            }
-            if (insp.extra_fields) {
-                for (const [k, v] of Object.entries(insp.extra_fields)) {
-                    if (v && v.trim()) {
-                        const lowerK = k.toLowerCase();
-                        if (lowerK.includes('tag') || lowerK.includes('number') || lowerK.includes('id') || lowerK.includes('drawing')) return v.trim();
-                    }
-                }
-            }
+            const cand = ['tag_no', 'Tag No', 'Tag Number', 'Part Number', 'Drawing Number', 'Part ID', 'part_number', 'drawing_number'];
+            for (const k of cand) { const v = insp.extra_fields?.[k] || insp[k]; if (v && v.trim()) return v.trim(); }
             return null;
         }
 
         function getSuggestedNext(insp) {
-            if (insp.suggested_next_operation && insp.suggested_next_operation.trim() !== '') return insp.suggested_next_operation.trim();
-            if (insp.extra_fields && insp.extra_fields["Suggested Next Operation"]) return insp.extra_fields["Suggested Next Operation"].trim();
+            if (insp.suggested_next_operation && insp.suggested_next_operation.trim()) return insp.suggested_next_operation.trim();
+            if (insp.extra_fields?.['Suggested Next Operation']) return insp.extra_fields['Suggested Next Operation'].trim();
             return null;
         }
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } [m]));
-        }
-
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
         function formatQty(v) { if (v === undefined || v === null) return '0'; return Number(v).toLocaleString(); }
-        function safePct(val) { if (val === null || val === undefined || isNaN(val) || !isFinite(val)) return 0; return Math.min(100, Math.max(0, val)); }
+        function safePct(v) { if (v === null || v === undefined || isNaN(v) || !isFinite(v)) return 0; return Math.min(100, Math.max(0, v)); }
 
-        let allRows = [];
-        let filteredRows = [];
-        let subSubAssemblyMap = new Map();
-        let nonTargetSubSubMap = new Map();
-        let partInspectionsMap = new Map();
-        let partToSubSubKey = new Map();
-        let partNumberMap = new Map();
-        let selectedPartsMap = new Map();
-        let allPartsMap = new Map();
-        let assemblyCompletionData = new Map();
+        let allRows = [], filteredRows = [];
+        let subSubAssemblyMap = new Map(), nonTargetSubSubMap = new Map(), partInspectionsMap = new Map();
+        let partToSubSubKey = new Map(), partNumberMap = new Map();
+        let selectedPartsMap = new Map(), allPartsMap = new Map(), assemblyCompletionData = new Map();
 
         async function fetchInspections() {
-            try {
-                const res = await fetch('/api/inspections');
-                if (!res.ok) throw new Error();
-                return await res.json();
-            } catch { showToast('Failed to load inspections', 'error'); return []; }
+            try { const r = await fetch('/api/inspections'); if (!r.ok) throw new Error(); return await r.json(); }
+            catch { showToast('Failed to load', 'error'); return []; }
         }
 
         function aggregateAssemblyData(inspections) {
-            const targetInsp    = inspections.filter(insp => isTargetProcess(insp.process_type));
-            const nonTargetInsp = inspections.filter(insp => !isTargetProcess(insp.process_type));
+            const targetInsp = inspections.filter(i => isTargetProcess(i.process_type));
+            const nonTargetInsp = inspections.filter(i => !isTargetProcess(i.process_type));
 
-            // ─── Step 1: selected parts map ───
+            // Step 1: selected parts per sub-sub key
             const selectedMap = new Map();
             for (const insp of targetInsp) {
-                const client   = getExtraField(insp, 'Customer Name') || 'Unknown';
-                const title    = getExtraField(insp, 'Project Name')  || 'Untitled';
-                const subtitle = getExtraField(insp, 'Subtitle')      || '(no subtitle)';
-                const subSub   = getExtraField(insp, 'Sub Sub Assembly') || '—';
-                const key = `${client}||${title}||${subtitle}||${subSub}`;
+                const key = [
+                    getExtraField(insp, 'Customer Name') || 'Unknown',
+                    getExtraField(insp, 'Project Name') || 'Untitled',
+                    getExtraField(insp, 'Subtitle') || '(no subtitle)',
+                    getExtraField(insp, 'Sub Sub Assembly') || '—'
+                ].join('||');
                 const extra = insp.extra_fields || {};
-                let selectedNames = [];
-                if (extra.selectedPartNames && Array.isArray(extra.selectedPartNames))
-                    selectedNames = extra.selectedPartNames.filter(n => n && n.trim());
+                let names = [];
+                if (Array.isArray(extra.selectedPartNames)) names = extra.selectedPartNames.filter(n => n && n.trim());
                 if (extra.selectedParts) {
-                    if (Array.isArray(extra.selectedParts))
-                        selectedNames = [...selectedNames, ...extra.selectedParts.map(p => p.name || p).filter(n => n && n.trim())];
-                    else if (typeof extra.selectedParts === 'object')
-                        selectedNames = [...selectedNames, ...Object.keys(extra.selectedParts).filter(n => n && n.trim())];
+                    if (Array.isArray(extra.selectedParts)) names.push(...extra.selectedParts.map(p => p.name || p).filter(n => n && n.trim()));
+                    else if (typeof extra.selectedParts === 'object') names.push(...Object.keys(extra.selectedParts).filter(n => n && n.trim()));
                 }
                 const tagNo = extra['Tag No.'];
-                if (tagNo && typeof tagNo === 'string') {
-                    const pairs = parseTagNoPairs(tagNo);
-                    if (pairs) selectedNames = [...selectedNames, ...pairs.map(p => p.name).filter(n => n && n.trim())];
-                }
-                if (tagNo && typeof tagNo === 'object' && !Array.isArray(tagNo))
-                    selectedNames = [...selectedNames, ...Object.keys(tagNo).filter(n => n && n.trim())];
+                if (tagNo && typeof tagNo === 'string') { const p = parseTagNoPairs(tagNo); if (p) names.push(...p.map(x => x.name).filter(n => n && n.trim())); }
+                if (tagNo && typeof tagNo === 'object' && !Array.isArray(tagNo)) names.push(...Object.keys(tagNo).filter(n => n && n.trim()));
                 if (!selectedMap.has(key)) selectedMap.set(key, new Set());
-                const set = selectedMap.get(key);
-                for (const name of selectedNames) if (name && name.trim()) set.add(name.trim());
+                names.forEach(n => { if (n && n.trim()) selectedMap.get(key).add(n.trim()); });
             }
 
-            // ─── Step 2: ALL component parts from NON-ASSEMBLY inspections only ───
-            // The assembly record's "Part Name" is the assembly itself (e.g. "Main Frame"),
-            // so it is NOT a valid denominator. Only non-assembly parts are components.
+            // Step 2: ALL parts from NON-assembly inspections — the correct denominator
             const allMap = new Map();
             for (const insp of nonTargetInsp) {
-                const client   = getExtraField(insp, 'Customer Name') || 'Unknown';
-                const title    = getExtraField(insp, 'Project Name')  || 'Untitled';
-                const subtitle = getExtraField(insp, 'Subtitle')      || '(no subtitle)';
-                const subSub   = getExtraField(insp, 'Sub Sub Assembly') || '—';
-                const partName = getExtraField(insp, 'Part Name')     || 'Unnamed Part';
-                const key = `${client}||${title}||${subtitle}||${subSub}`;
+                const key = [
+                    getExtraField(insp, 'Customer Name') || 'Unknown',
+                    getExtraField(insp, 'Project Name') || 'Untitled',
+                    getExtraField(insp, 'Subtitle') || '(no subtitle)',
+                    getExtraField(insp, 'Sub Sub Assembly') || '—'
+                ].join('||');
+                const partName = getExtraField(insp, 'Part Name') || 'Unnamed';
                 if (!allMap.has(key)) allMap.set(key, new Set());
                 allMap.get(key).add(partName);
             }
 
-            // ─── Step 3: targetMap ───
+            // Step 3: targetMap (assembly records)
             const targetMap = new Map();
             for (const insp of targetInsp) {
-                const client   = getExtraField(insp, 'Customer Name') || 'Unknown';
-                const title    = getExtraField(insp, 'Project Name')  || 'Untitled';
-                const subtitle = getExtraField(insp, 'Subtitle')      || '(no subtitle)';
-                const subSub   = getExtraField(insp, 'Sub Sub Assembly') || '—';
-                const partName = getExtraField(insp, 'Part Name')     || 'Unnamed Part';
-                const delivered = insp.delivered_qty || 0;
-                const accepted  = insp.accepted_qty  || 0;
-                const conditional = insp.conditional_accept_qty || 0;
-                const submittedAt = new Date(insp.submitted_at);
-                const key = `${client}||${title}||${subtitle}||${subSub}`;
-                if (!targetMap.has(key)) targetMap.set(key, { client, title, subtitle, subSub, parts: new Map(), totalDelivered: 0, totalAccepted: 0, totalConditional: 0, latestDate: null });
-                const entry = targetMap.get(key);
-                const partData = entry.parts.get(partName) || { delivered: 0, accepted: 0, conditional: 0 };
-                partData.delivered += delivered;
-                partData.accepted  += accepted;
-                partData.conditional += conditional;
-                entry.parts.set(partName, partData);
-                entry.totalDelivered  += delivered;
-                entry.totalAccepted   += accepted;
-                entry.totalConditional += conditional;
-                if (!entry.latestDate || submittedAt > entry.latestDate) entry.latestDate = submittedAt;
+                const key = [
+                    getExtraField(insp, 'Customer Name') || 'Unknown',
+                    getExtraField(insp, 'Project Name') || 'Untitled',
+                    getExtraField(insp, 'Subtitle') || '(no subtitle)',
+                    getExtraField(insp, 'Sub Sub Assembly') || '—'
+                ].join('||');
+                const partName = getExtraField(insp, 'Part Name') || 'Unnamed';
+                if (!targetMap.has(key)) {
+                    const [c, t, s, ss] = key.split('||');
+                    targetMap.set(key, { client: c, title: t, subtitle: s, subSub: ss, parts: new Map(), totalDelivered: 0, totalAccepted: 0, totalConditional: 0, latestDate: null });
+                }
+                const e = targetMap.get(key);
+                const pd = e.parts.get(partName) || { delivered: 0, accepted: 0, conditional: 0 };
+                pd.delivered += insp.delivered_qty || 0;
+                pd.accepted += insp.accepted_qty || 0;
+                pd.conditional += insp.conditional_accept_qty || 0;
+                e.parts.set(partName, pd);
+                e.totalDelivered += insp.delivered_qty || 0;
+                e.totalAccepted += insp.accepted_qty || 0;
+                e.totalConditional += insp.conditional_accept_qty || 0;
+                const ts = new Date(insp.submitted_at);
+                if (!e.latestDate || ts > e.latestDate) e.latestDate = ts;
             }
 
-            // ─── Step 4: nonTargetMap but only selected parts ───
+            // Step 4: nonTargetMap filtered to selected parts
             const nonTargetMap = new Map();
             for (const insp of nonTargetInsp) {
-                const client   = getExtraField(insp, 'Customer Name') || 'Unknown';
-                const title    = getExtraField(insp, 'Project Name')  || 'Untitled';
-                const subtitle = getExtraField(insp, 'Subtitle')      || '(no subtitle)';
-                const subSub   = getExtraField(insp, 'Sub Sub Assembly') || '—';
-                const partName = getExtraField(insp, 'Part Name')     || 'Unnamed Part';
-                const delivered = insp.delivered_qty || 0;
-                const key = `${client}||${title}||${subtitle}||${subSub}`;
-                const selectedSet = selectedMap.get(key);
-                if (!selectedSet || !selectedSet.has(partName)) continue;
-                if (!nonTargetMap.has(key)) nonTargetMap.set(key, { client, title, subtitle, subSub, parts: new Map() });
-                const entry = nonTargetMap.get(key);
-                const partData = entry.parts.get(partName) || { delivered: 0 };
-                partData.delivered += delivered;
-                entry.parts.set(partName, partData);
-            }
-
-            // ─── Step 5: ensure selected parts with no non-target data appear with 0 ───
-            for (const [key, selectedSet] of selectedMap) {
+                const key = [
+                    getExtraField(insp, 'Customer Name') || 'Unknown',
+                    getExtraField(insp, 'Project Name') || 'Untitled',
+                    getExtraField(insp, 'Subtitle') || '(no subtitle)',
+                    getExtraField(insp, 'Sub Sub Assembly') || '—'
+                ].join('||');
+                const partName = getExtraField(insp, 'Part Name') || 'Unnamed';
+                const sel = selectedMap.get(key);
+                if (!sel || !sel.has(partName)) continue;
                 if (!nonTargetMap.has(key)) {
-                    const parts = key.split('||');
-                    if (parts.length === 4) nonTargetMap.set(key, { client: parts[0], title: parts[1], subtitle: parts[2], subSub: parts[3], parts: new Map() });
+                    const [c, t, s, ss] = key.split('||');
+                    nonTargetMap.set(key, { client: c, title: t, subtitle: s, subSub: ss, parts: new Map() });
                 }
-                const entry = nonTargetMap.get(key);
-                if (entry) for (const partName of selectedSet) if (!entry.parts.has(partName)) entry.parts.set(partName, { delivered: 0 });
+                const e = nonTargetMap.get(key);
+                const pd = e.parts.get(partName) || { delivered: 0 };
+                pd.delivered += insp.delivered_qty || 0;
+                e.parts.set(partName, pd);
             }
 
-            // ─── Step 6: build rows ───
+            // Step 5: ensure selected parts appear with 0 if no data
+            for (const [key, sel] of selectedMap) {
+                if (!nonTargetMap.has(key)) {
+                    const [c, t, s, ss] = key.split('||');
+                    nonTargetMap.set(key, { client: c, title: t, subtitle: s, subSub: ss, parts: new Map() });
+                }
+                const e = nonTargetMap.get(key);
+                for (const pn of sel) if (!e.parts.has(pn)) e.parts.set(pn, { delivered: 0 });
+            }
+
+            // Step 6: rows
             const rows = [];
             const p2ss = new Map();
             const pnMap = new Map();
             for (const insp of inspections) {
-                const partName = getExtraField(insp, 'Part Name') || 'Unnamed Part';
-                if (!pnMap.has(partName)) {
-                    const num = getPartNumber(insp);
-                    if (num) pnMap.set(partName, num);
-                }
+                const pn = getExtraField(insp, 'Part Name') || 'Unnamed';
+                if (!pnMap.has(pn)) { const n = getPartNumber(insp); if (n) pnMap.set(pn, n); }
             }
             for (const [key, entry] of targetMap) {
-                const selectedSet = selectedMap.get(key) || new Set();
-                for (const [partName, partData] of entry.parts) {
-                    if (!selectedSet.has(partName)) continue;
-                    rows.push({ client: entry.client, title: entry.title, subtitle: entry.subtitle, subSub: entry.subSub, subSubKey: key, partName, delivered: partData.delivered, accepted: partData.accepted, conditional: partData.conditional, subSubPartCount: entry.parts.size });
+                const sel = selectedMap.get(key) || new Set();
+                for (const [partName, pd] of entry.parts) {
+                    if (!sel.has(partName)) continue;
+                    rows.push({ client: entry.client, title: entry.title, subtitle: entry.subtitle, subSub: entry.subSub, subSubKey: key, partName, delivered: pd.delivered, accepted: pd.accepted, conditional: pd.conditional, subSubPartCount: entry.parts.size });
                     p2ss.set(partName, key);
                 }
             }
             for (const [key, entry] of nonTargetMap) {
-                const selectedSet = selectedMap.get(key) || new Set();
-                for (const [partName, partData] of entry.parts) {
-                    if (!selectedSet.has(partName)) continue;
-                    const exists = rows.some(r => r.partName === partName && r.subSubKey === key);
-                    if (!exists) {
-                        rows.push({ client: entry.client, title: entry.title, subtitle: entry.subtitle, subSub: entry.subSub, subSubKey: key, partName, delivered: partData.delivered || 0, accepted: 0, conditional: 0, subSubPartCount: selectedSet.size });
-                        p2ss.set(partName, key);
-                    }
+                const sel = selectedMap.get(key) || new Set();
+                for (const [partName, pd] of entry.parts) {
+                    if (!sel.has(partName)) continue;
+                    if (rows.some(r => r.partName === partName && r.subSubKey === key)) continue;
+                    rows.push({ client: entry.client, title: entry.title, subtitle: entry.subtitle, subSub: entry.subSub, subSubKey: key, partName, delivered: pd.delivered || 0, accepted: 0, conditional: 0, subSubPartCount: sel.size });
+                    p2ss.set(partName, key);
                 }
             }
 
-            // ─── Step 7: subtitle part counts ───
+            // Step 7: subtitle part counts
             const subtitlePartCounts = new Map();
             for (const row of rows) {
                 const sk = `${row.client}||${row.title}||${row.subtitle}`;
@@ -489,47 +380,41 @@
                 subtitlePartCounts.get(sk).add(row.partName);
             }
             for (const row of rows) {
-                const sk = `${row.client}||${row.title}||${row.subtitle}`;
-                row.subtitlePartCount = subtitlePartCounts.get(sk)?.size || 0;
+                row.subtitlePartCount = subtitlePartCounts.get(`${row.client}||${row.title}||${row.subtitle}`)?.size || 0;
             }
 
-            // ─── Part inspections ───
+            // Part inspections
             const partInspMap = new Map();
             for (const insp of inspections) {
-                const pn = getExtraField(insp, 'Part Name') || 'Unnamed Part';
+                const pn = getExtraField(insp, 'Part Name') || 'Unnamed';
                 if (!partInspMap.has(pn)) partInspMap.set(pn, []);
                 partInspMap.get(pn).push(insp);
             }
 
-            // ─── Step 8: COMPLETION — correct denominator ───
+            // Step 8: COMPLETION — correct denominator
             const completionData = new Map();
-            // Prefer client-reported totalPartsCount, else non-assembly total, else selectedCount
-            const assemblyByKey = new Map();
+            const asmByKey = new Map();
             for (const insp of targetInsp) {
-                const client   = getExtraField(insp, 'Customer Name') || 'Unknown';
-                const title    = getExtraField(insp, 'Project Name')  || 'Untitled';
-                const subtitle = getExtraField(insp, 'Subtitle')      || '(no subtitle)';
-                const subSub   = getExtraField(insp, 'Sub Sub Assembly') || '—';
-                const key = `${client}||${title}||${subtitle}||${subSub}`;
+                const key = [
+                    getExtraField(insp, 'Customer Name') || 'Unknown',
+                    getExtraField(insp, 'Project Name') || 'Untitled',
+                    getExtraField(insp, 'Subtitle') || '(no subtitle)',
+                    getExtraField(insp, 'Sub Sub Assembly') || '—'
+                ].join('||');
                 const ts = new Date(insp.submitted_at).getTime();
-                const prev = assemblyByKey.get(key);
-                if (!prev || ts > prev.ts) assemblyByKey.set(key, { insp, ts });
+                const prev = asmByKey.get(key);
+                if (!prev || ts > prev.ts) asmByKey.set(key, { insp, ts });
             }
             const allKeys = new Set([...allMap.keys(), ...selectedMap.keys()]);
             for (const key of allKeys) {
-                const nonAsmSet     = allMap.get(key)      || new Set();
-                const selectedSet   = selectedMap.get(key) || new Set();
-                const selectedCount = selectedSet.size;
-                const clientTotal   = +(assemblyByKey.get(key)?.insp?.extra_fields?.totalPartsCount || 0);
-                const nonAsmTotal   = nonAsmSet.size;
-                const totalParts = clientTotal > 0 ? clientTotal : Math.max(nonAsmTotal, selectedCount);
-                const pct = totalParts > 0 ? (selectedCount / totalParts) * 100 : 0;
-                completionData.set(key, {
-                    totalParts,
-                    selectedParts: selectedCount,
-                    pct: Math.min(100, pct),
-                    source: clientTotal > 0 ? 'client' : (nonAsmTotal > 0 ? 'derived' : 'fallback')
-                });
+                const nonAsmSet = allMap.get(key) || new Set();
+                const sel = selectedMap.get(key) || new Set();
+                const selCount = sel.size;
+                const clientTotal = +(asmByKey.get(key)?.insp?.extra_fields?.totalPartsCount || 0);
+                const nonAsmTotal = nonAsmSet.size;
+                const totalParts = clientTotal > 0 ? clientTotal : Math.max(nonAsmTotal, selCount);
+                const pct = totalParts > 0 ? (selCount / totalParts) * 100 : 0;
+                completionData.set(key, { totalParts, selectedParts: selCount, pct: Math.min(100, pct), source: clientTotal > 0 ? 'client' : (nonAsmTotal > 0 ? 'derived' : 'fallback') });
             }
 
             return { rows, targetMap, nonTargetMap, partInspections: partInspMap, partToSubSubKey: p2ss, partNumberMap: pnMap, selectedPartsMap: selectedMap, allPartsMap: allMap, completionData };
@@ -538,416 +423,244 @@
         function renderAnalysis(rows) {
             const tbody = document.getElementById('analysisTableBody');
             if (!rows.length) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fa-regular fa-inbox text-2xl block mb-2"></i>No data for the selected processes.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fa-regular fa-inbox text-2xl block mb-2"></i>No data</td></tr>`;
                 ['totalParts','totalDelivered','totalSubtitles','totalSubSub'].forEach(id => document.getElementById(id).innerText = '0');
                 document.getElementById('recordCount').innerText = '0 records';
                 document.getElementById('recordCountBottom').innerText = '0 parts';
                 return;
             }
 
-            const filteredRows = rows;
-
             const assemblyMap = new Map();
-            for (const row of filteredRows) {
+            for (const row of rows) {
                 const key = row.subSubKey;
                 if (!assemblyMap.has(key)) {
-                    const compData = window.assemblyCompletionData?.get(key) || { totalParts: 0, selectedParts: 0, pct: 0 };
-                    assemblyMap.set(key, {
-                        client: row.client, title: row.title, subtitle: row.subtitle, subSub: row.subSub,
-                        parts: [], totalDelivered: 0, totalAccepted: 0, totalConditional: 0,
-                        subSubPartCount: row.subSubPartCount, subtitlePartCount: row.subtitlePartCount,
-                        totalParts: compData.totalParts || 0, selectedParts: compData.selectedParts || 0, completion: compData.pct || 0
-                    });
+                    const cd = window.assemblyCompletionData?.get(key) || { totalParts: 0, selectedParts: 0, pct: 0 };
+                    assemblyMap.set(key, { client: row.client, title: row.title, subtitle: row.subtitle, subSub: row.subSub, parts: [], totalDelivered: 0, subSubPartCount: row.subSubPartCount, subtitlePartCount: row.subtitlePartCount, totalParts: cd.totalParts, selectedParts: cd.selectedParts, completion: cd.pct });
                 }
-                const entry = assemblyMap.get(key);
-                entry.parts.push({ partName: row.partName, delivered: row.delivered, accepted: row.accepted, conditional: row.conditional });
-                entry.totalDelivered   += row.delivered;
-                entry.totalAccepted    += row.accepted;
-                entry.totalConditional += row.conditional;
+                const e = assemblyMap.get(key);
+                e.parts.push(row);
+                e.totalDelivered += row.delivered;
             }
 
-            const uniqueParts = new Set(filteredRows.map(r => r.partName));
-            document.getElementById('totalParts').innerText = uniqueParts.size;
-            document.getElementById('totalDelivered').innerText = formatQty(filteredRows.reduce((s, r) => s + r.delivered, 0));
-            document.getElementById('totalSubtitles').innerText = new Set(filteredRows.map(r => r.subtitle)).size;
-            document.getElementById('totalSubSub').innerText = new Set(filteredRows.map(r => r.subSub)).size;
+            const uParts = new Set(rows.map(r => r.partName));
+            document.getElementById('totalParts').innerText = uParts.size;
+            document.getElementById('totalDelivered').innerText = formatQty(rows.reduce((s, r) => s + r.delivered, 0));
+            document.getElementById('totalSubtitles').innerText = new Set(rows.map(r => r.subtitle)).size;
+            document.getElementById('totalSubSub').innerText = new Set(rows.map(r => r.subSub)).size;
 
             const hierarchy = {};
-            for (const row of filteredRows) {
-                const c = row.client;
+            for (const row of rows) {
+                const c = row.client, t = row.title, s = row.subtitle, ss = row.subSub;
                 if (!hierarchy[c]) hierarchy[c] = {};
-                const t = row.title;
                 if (!hierarchy[c][t]) hierarchy[c][t] = {};
-                const s = row.subtitle;
                 if (!hierarchy[c][t][s]) hierarchy[c][t][s] = {};
-                const ss = row.subSub;
                 if (!hierarchy[c][t][s][ss]) {
-                    const assemblyEntry = assemblyMap.get(row.subSubKey);
-                    hierarchy[c][t][s][ss] = {
-                        parts: [],
-                        subSubTotalDelivered: assemblyEntry ? assemblyEntry.totalDelivered : 0,
-                        subSubPartCount: assemblyEntry ? assemblyEntry.parts.length : 0,
-                        subtitlePartCount: row.subtitlePartCount,
-                        assemblyProgressPct: assemblyEntry ? assemblyEntry.completion : 0,
-                        subSubKey: row.subSubKey, client: c, title: t, subtitle: s, subSub: ss,
-                        totalParts: assemblyEntry ? assemblyEntry.totalParts : 0,
-                        selectedParts: assemblyEntry ? assemblyEntry.selectedParts : 0
-                    };
+                    const ae = assemblyMap.get(row.subSubKey);
+                    hierarchy[c][t][s][ss] = { parts: [], subSubTotalDelivered: ae ? ae.totalDelivered : 0, subSubPartCount: ae ? ae.parts.length : 0, subtitlePartCount: row.subtitlePartCount, completion: ae ? ae.completion : 0, subSubKey: row.subSubKey, client: c, title: t, subtitle: s, subSub: ss, totalParts: ae ? ae.totalParts : 0, selectedParts: ae ? ae.selectedParts : 0 };
                 }
-                hierarchy[c][t][s][ss].parts.push({ partName: row.partName, delivered: row.delivered });
+                hierarchy[c][t][s][ss].parts.push({ partName: row.partName });
             }
-
-            for (const client in hierarchy) {
-                let totalRows = 0;
-                for (const title in hierarchy[client])
-                    for (const subtitle in hierarchy[client][title])
-                        for (const subSub in hierarchy[client][title][subtitle])
-                            totalRows += hierarchy[client][title][subtitle][subSub].parts.length;
-                hierarchy[client]._rowCount = totalRows;
+            for (const c in hierarchy) {
+                let tr = 0;
+                for (const t in hierarchy[c]) for (const s in hierarchy[c][t]) for (const ss in hierarchy[c][t][s]) tr += hierarchy[c][t][s][ss].parts.length;
+                hierarchy[c]._rowCount = tr;
             }
 
             let html = '';
-            let clientPrinted = false;
-            for (const client in hierarchy) {
-                const clientData = hierarchy[client];
-                clientPrinted = false;
-                for (const title in clientData) {
-                    if (title === '_rowCount') continue;
-                    const titleData = clientData[title];
-                    let titlePrinted = false;
-                    let titleRowCount = 0;
-                    for (const s in titleData) for (const ss in titleData[s]) titleRowCount += titleData[s][ss].parts.length;
-                    for (const subtitle in titleData) {
-                        const subtitleData = titleData[subtitle];
-                        let subtitlePrinted = false;
-                        let subtitleRowCount = 0;
-                        for (const ss in subtitleData) subtitleRowCount += subtitleData[ss].parts.length;
-                        for (const subSub in subtitleData) {
-                            const subSubData = subtitleData[subSub];
-                            const parts = subSubData.parts;
-                            const partCount = subSubData.subSubPartCount;
-                            const totalDeliv = subSubData.subSubTotalDelivered;
-                            const subtitlePartCnt = subSubData.subtitlePartCount;
-                            const pctSub = uniqueParts.size > 0 ? (subtitlePartCnt / uniqueParts.size) * 100 : 0;
-                            const completion = subSubData.assemblyProgressPct;
-                            const totalP = subSubData.totalParts;
-                            const selectedP = subSubData.selectedParts;
-
-                            let subSubPrinted = false;
-                            for (const part of parts) {
+            for (const c in hierarchy) {
+                const cD = hierarchy[c];
+                let cPrinted = false;
+                for (const t in cD) {
+                    if (t === '_rowCount') continue;
+                    const tD = cD[t];
+                    let tPrinted = false, tRC = 0;
+                    for (const s in tD) for (const ss in tD[s]) tRC += tD[s][ss].parts.length;
+                    for (const s in tD) {
+                        const sD = tD[s];
+                        let sPrinted = false, sRC = 0;
+                        for (const ss in sD) sRC += sD[ss].parts.length;
+                        for (const ss in sD) {
+                            const ssD = sD[ss];
+                            const parts = ssD.parts;
+                            const pct = uParts.size > 0 ? (ssD.subtitlePartCount / uParts.size) * 100 : 0;
+                            const compVal = safePct(ssD.completion);
+                            let ssPrinted = false;
+                            for (const p of parts) {
                                 html += `<tr>`;
-                                if (!clientPrinted) { html += `<td rowspan="${clientData._rowCount}" class="font-medium align-top">${escapeHtml(client)}</td>`; clientPrinted = true; }
-                                if (!titlePrinted) { html += `<td rowspan="${titleRowCount}" class="font-medium align-top">${escapeHtml(title)}</td>`; titlePrinted = true; }
-                                if (!subtitlePrinted) {
-                                    html += `<td rowspan="${subtitleRowCount}" class="align-top"><div class="subtitle-group-name">${escapeHtml(subtitle)}</div><span class="group-meta">${subtitlePartCnt} parts · ${pctSub.toFixed(1)}% of unique parts</span></td>`;
-                                    subtitlePrinted = true;
+                                if (!cPrinted) { html += `<td rowspan="${cD._rowCount}" class="font-medium align-top">${escapeHtml(c)}</td>`; cPrinted = true; }
+                                if (!tPrinted) { html += `<td rowspan="${tRC}" class="font-medium align-top">${escapeHtml(t)}</td>`; tPrinted = true; }
+                                if (!sPrinted) { html += `<td rowspan="${sRC}" class="align-top"><div class="subtitle-group-name">${escapeHtml(s)}</div><span class="group-meta">${ssD.subtitlePartCount} parts · ${pct.toFixed(1)}% of unique</span></td>`; sPrinted = true; }
+                                if (!ssPrinted) {
+                                    html += `<td rowspan="${parts.length}" class="align-top"><div class="clickable-assembly" onclick="showAssemblyDetails('${escapeHtml(ss)}','${escapeHtml(c)}','${escapeHtml(t)}','${escapeHtml(s)}')">${escapeHtml(ss)}</div><span class="group-meta">${ssD.subSubPartCount} parts · <span class="highlight">${formatQty(ssD.subSubTotalDelivered)}</span> total delivered</span><span class="group-meta text-indigo-400">${ssD.selectedParts}/${ssD.totalParts} parts selected</span></td>`;
+                                    ssPrinted = true;
                                 }
-                                if (!subSubPrinted) {
-                                    html += `<td rowspan="${parts.length}" class="align-top">
-                                        <div class="clickable-assembly" onclick="showAssemblyDetails('${escapeHtml(subSub)}','${escapeHtml(client)}','${escapeHtml(title)}','${escapeHtml(subtitle)}')">${escapeHtml(subSub)}</div>
-                                        <span class="group-meta">${partCount} parts · <span class="highlight">${formatQty(totalDeliv)}</span> total delivered</span>
-                                        <span class="group-meta text-indigo-400">${selectedP}/${totalP} parts selected</span>
-                                    </td>`;
-                                    subSubPrinted = true;
-                                }
-                                const compVal = safePct(completion);
-                                const fraction = `${selectedP} / ${totalP}`;
-                                html += `<td class="text-center">
-                                    <div class="flex flex-col items-center clickable-completion" onclick="showCompletionDetails('${escapeHtml(subSub)}','${escapeHtml(client)}','${escapeHtml(title)}','${escapeHtml(subtitle)}')">
-                                        <div class="flex items-center gap-2 w-full justify-center">
-                                            <span class="percent-value">${compVal.toFixed(0)}%</span>
-                                            <div class="progress-bar-bg"><div class="progress-fill" style="width:${compVal}%"></div></div>
-                                        </div>
-                                        <span class="text-[0.6rem] text-gray-400 mt-0.5">${fraction} delivered</span>
-                                    </div>
-                                </td>`;
-                                html += `</tr>`;
+                                html += `<td class="text-center"><div class="flex flex-col items-center clickable-completion" onclick="showCompletionDetails('${escapeHtml(ss)}','${escapeHtml(c)}','${escapeHtml(t)}','${escapeHtml(s)}')"><div class="flex items-center gap-2 w-full justify-center"><span class="percent-value">${compVal.toFixed(0)}%</span><div class="progress-bar-bg"><div class="progress-fill" style="width:${compVal}%"></div></div></div><span class="text-[0.6rem] text-gray-400 mt-0.5">${ssD.selectedParts} / ${ssD.totalParts} delivered</span></div></td></tr>`;
                             }
                         }
                     }
                 }
             }
-
             tbody.innerHTML = html;
-            document.getElementById('recordCount').innerText = `${filteredRows.length} part records`;
-            document.getElementById('recordCountBottom').innerText = `${uniqueParts.size} unique parts · ${new Set(filteredRows.map(r => r.subSub)).size} sub‑sub assemblies`;
-            document.getElementById('recordStatus').innerHTML = `✅ Loaded ${filteredRows.length} records — completion = selected parts / non‑assembly total parts`;
+            document.getElementById('recordCount').innerText = `${rows.length} part records`;
+            document.getElementById('recordCountBottom').innerText = `${uParts.size} unique parts · ${new Set(rows.map(r => r.subSub)).size} sub‑sub`;
+            document.getElementById('recordStatus').innerHTML = `✅ ${rows.length} records — completion = selected / non-assembly total`;
         }
 
         function showCompletionDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
-            const compData = window.assemblyCompletionData?.get(key) || { totalParts: 0, selectedParts: 0, pct: 0 };
-            const targetEntry = window.subSubAssemblyMap?.get(key);
-            const selectedSet = window.selectedPartsMap?.get(key) || new Set();
-            document.getElementById('completionModalTitle').innerHTML = `<i class="fa-regular fa-chart-pie text-indigo-500 mr-2"></i>${escapeHtml(subSub)} — Assembly Progress`;
+            const cd = window.assemblyCompletionData?.get(key) || { totalParts: 0, selectedParts: 0, pct: 0 };
+            const te = window.subSubAssemblyMap?.get(key);
+            const sel = window.selectedPartsMap?.get(key) || new Set();
+            document.getElementById('completionModalTitle').innerHTML = `<i class="fa-regular fa-chart-pie text-indigo-500 mr-2"></i>${escapeHtml(subSub)} — Progress`;
             const body = document.getElementById('completionModalBody');
-
-            if (!targetEntry || targetEntry.parts.size === 0) {
-                body.innerHTML = `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No assembly parts found.</div>`;
-                document.getElementById('completionModal').classList.remove('hidden');
-                return;
-            }
-
-            const partsList = Array.from(targetEntry.parts.entries()).filter(([pName]) => selectedSet.has(pName));
-            const totalDelivered = partsList.reduce((s, [_, d]) => s + (d.delivered || 0), 0);
-            const totalAcceptedCond = partsList.reduce((s, [_, d]) => s + (d.accepted || 0) + (d.conditional || 0), 0);
-            const sortedParts = partsList.sort((a, b) => (b[1].accepted + b[1].conditional) - (a[1].accepted + a[1].conditional));
-            const totalP = compData.totalParts || 0, selectedP = compData.selectedParts || 0, pct = compData.pct || 0;
-
-            let html = `
-                <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
-                    <span><span class="font-medium">${escapeHtml(client)}</span> · <span class="font-medium">${escapeHtml(title)}</span> · <span class="font-medium">${escapeHtml(subtitle)}</span></span>
-                    <span class="modal-summary-badge">${sortedParts.length} parts</span>
-                    <span class="modal-summary-badge bg-emerald-50 text-emerald-700">${formatQty(totalDelivered)} delivered</span>
-                    <span class="modal-summary-badge bg-blue-50 text-blue-700">${formatQty(totalAcceptedCond)} accepted + conditional</span>
-                    <span class="modal-summary-badge bg-indigo-50 text-indigo-700"><i class="fa-regular fa-check-circle mr-1"></i>${selectedP} / ${totalP} parts assembled (${pct.toFixed(0)}%)</span>
-                </div>
-                <div class="text-xs text-gray-400 mb-2"><i class="fa-regular fa-tag mr-1"></i> Parts from Assembling (welding) and Assembling (fastener) — tag_no from database</div>
-                <div class="overflow-x-auto">
-                    <table class="subsub-parts-table">
-                        <thead><tr><th>Part Name</th><th>tag_no (Part Number)</th><th class="text-center">Qty</th><th class="text-center">Delivered</th><th class="text-center">Accepted</th><th class="text-center">Conditional</th></tr></thead>
-                        <tbody>`;
-            for (const [pName, data] of sortedParts) {
-                const rawTagNo = window.partNumberMap?.get(pName) || null;
-                const pairs = parseTagNoPairs(rawTagNo);
-                const tagNames = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
-                const tagQtys  = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
-                html += `<tr>
-                    <td><span class="part-link" onclick="closeCompletionModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
-                    <td>${tagNames}</td>
-                    <td class="text-center">${tagQtys}</td>
-                    <td class="text-center">${formatQty(data.delivered)}</td>
-                    <td class="text-center text-emerald-700 font-medium">${formatQty(data.accepted)}</td>
-                    <td class="text-center text-blue-600">${formatQty(data.conditional)}</td>
-                </tr>`;
+            if (!te || te.parts.size === 0) { body.innerHTML = `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No assembly parts.</div>`; document.getElementById('completionModal').classList.remove('hidden'); return; }
+            const list = Array.from(te.parts.entries()).filter(([p]) => sel.has(p));
+            const totDel = list.reduce((s, [_, d]) => s + (d.delivered || 0), 0);
+            const totAcc = list.reduce((s, [_, d]) => s + (d.accepted || 0) + (d.conditional || 0), 0);
+            const sorted = list.sort((a, b) => (b[1].accepted + b[1].conditional) - (a[1].accepted + a[1].conditional));
+            const tP = cd.totalParts || 0, sP = cd.selectedParts || 0, pct = cd.pct || 0;
+            let html = `<div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
+                <span>${escapeHtml(client)} · ${escapeHtml(title)} · ${escapeHtml(subtitle)}</span>
+                <span class="modal-summary-badge">${sorted.length} parts</span>
+                <span class="modal-summary-badge bg-emerald-50 text-emerald-700">${formatQty(totDel)} delivered</span>
+                <span class="modal-summary-badge bg-blue-50 text-blue-700">${formatQty(totAcc)} accepted+cond</span>
+                <span class="modal-summary-badge bg-indigo-50 text-indigo-700"><i class="fa-regular fa-check-circle mr-1"></i>${sP} / ${tP} (${pct.toFixed(0)}%)</span>
+            </div>
+            <div class="overflow-x-auto"><table class="subsub-parts-table">
+                <thead><tr><th>Part</th><th>tag_no</th><th class="text-center">Qty</th><th class="text-center">Delivered</th><th class="text-center">Accepted</th><th class="text-center">Conditional</th></tr></thead><tbody>`;
+            for (const [pn, d] of sorted) {
+                const tn = window.partNumberMap?.get(pn);
+                const pairs = parseTagNoPairs(tn);
+                const tNames = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
+                const tQ = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
+                html += `<tr><td><span class="part-link" onclick="closeCompletionModal(); showPartDetails('${escapeHtml(pn)}')">${escapeHtml(pn)}</span></td><td>${tNames}</td><td class="text-center">${tQ}</td><td class="text-center">${formatQty(d.delivered)}</td><td class="text-center text-emerald-700">${formatQty(d.accepted)}</td><td class="text-center text-blue-600">${formatQty(d.conditional)}</td></tr>`;
             }
             html += `</tbody></table></div>`;
             body.innerHTML = html;
             document.getElementById('completionModal').classList.remove('hidden');
         }
-
-        function closeCompletionModal(e) {
-            if (!e || e.target === document.getElementById('completionModal') || e.target.closest('.modal-close') || e.target.closest('button'))
-                document.getElementById('completionModal').classList.add('hidden');
-        }
+        function closeCompletionModal(e) { if (!e || e.target === document.getElementById('completionModal') || e.target.closest('.modal-close') || e.target.closest('button')) document.getElementById('completionModal').classList.add('hidden'); }
 
         function showAssemblyDetails(subSub, client, title, subtitle) {
             const key = `${client}||${title}||${subtitle}||${subSub}`;
-            const nonTargetEntry = window.nonTargetSubSubMap?.get(key);
-            const selectedSet = window.selectedPartsMap?.get(key) || new Set();
+            const nt = window.nonTargetSubSubMap?.get(key);
+            const sel = window.selectedPartsMap?.get(key) || new Set();
             document.getElementById('assemblyModalTitle').innerHTML = `<i class="fa-regular fa-cubes text-amber-500 mr-2"></i>${escapeHtml(subSub)} — Component Parts`;
             const body = document.getElementById('assemblyModalBody');
-
-            if (!nonTargetEntry || nonTargetEntry.parts.size === 0) {
-                if (selectedSet.size === 0) {
-                    body.innerHTML = `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No parts selected for this assembly.</div>`;
-                    document.getElementById('assemblyModal').classList.remove('hidden');
-                    return;
-                }
-                const partsList = Array.from(selectedSet).map(name => [name, { delivered: 0 }]);
-                const targetEntry = window.subSubAssemblyMap?.get(key);
-                const totalDeliveredAssembly = targetEntry ? targetEntry.totalDelivered : 0;
-                let html = `
-                    <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
-                        <span><span class="font-medium">${escapeHtml(client)}</span> · <span class="font-medium">${escapeHtml(title)}</span> · <span class="font-medium">${escapeHtml(subtitle)}</span></span>
-                        <span class="modal-summary-badge">${partsList.length} parts</span>
-                        <span class="modal-summary-badge bg-indigo-50 text-indigo-700">${formatQty(totalDeliveredAssembly)} total delivered (assembly)</span>
-                        <span class="modal-summary-badge bg-amber-50 text-amber-700"><i class="fa-regular fa-check-circle mr-1"></i>selected only</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="subsub-parts-table">
-                            <thead><tr><th>Part Name</th><th>Part Number</th><th class="text-center">Qty</th><th class="text-center">Delivered</th></tr></thead>
-                            <tbody>`;
-                for (const [pName, data] of partsList) {
-                    const rawTagNo = window.partNumberMap?.get(pName) || null;
-                    const pairs = parseTagNoPairs(rawTagNo);
-                    const tagNames = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
-                    const tagQtys  = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
-                    html += `<tr>
-                        <td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
-                        <td>${tagNames}</td>
-                        <td class="text-center">${tagQtys}</td>
-                        <td class="text-center font-medium">${formatQty(data.delivered)}</td>
-                    </tr>`;
+            const te = window.subSubAssemblyMap?.get(key);
+            const totDel = te ? te.totalDelivered : 0;
+            if (!nt || nt.parts.size === 0) {
+                if (!sel.size) { body.innerHTML = `<div class="text-sm text-gray-500 p-4 text-center"><i class="fa-regular fa-inbox text-3xl block mb-3 text-gray-300"></i>No parts.</div>`; document.getElementById('assemblyModal').classList.remove('hidden'); return; }
+                const list = Array.from(sel).map(n => [n, { delivered: 0 }]);
+                let html = `<div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600"><span>${escapeHtml(client)} · ${escapeHtml(title)} · ${escapeHtml(subtitle)}</span><span class="modal-summary-badge">${list.length} parts</span><span class="modal-summary-badge bg-indigo-50 text-indigo-700">${formatQty(totDel)} total delivered</span></div><div class="overflow-x-auto"><table class="subsub-parts-table"><thead><tr><th>Part</th><th>Part Number</th><th class="text-center">Qty</th><th class="text-center">Delivered</th></tr></thead><tbody>`;
+                for (const [pn, d] of list) {
+                    const tn = window.partNumberMap?.get(pn);
+                    const pairs = parseTagNoPairs(tn);
+                    const n = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
+                    const q = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
+                    html += `<tr><td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pn)}')">${escapeHtml(pn)}</span></td><td>${n}</td><td class="text-center">${q}</td><td class="text-center">${formatQty(d.delivered)}</td></tr>`;
                 }
                 html += `</tbody></table></div>`;
                 body.innerHTML = html;
                 document.getElementById('assemblyModal').classList.remove('hidden');
                 return;
             }
-
-            const partsList = Array.from(nonTargetEntry.parts.entries()).filter(([pName]) => selectedSet.has(pName));
-            const sortedParts = partsList.sort((a, b) => b[1].delivered - a[1].delivered);
-            const targetEntry = window.subSubAssemblyMap?.get(key);
-            const totalDeliveredAssembly = targetEntry ? targetEntry.totalDelivered : 0;
-            let html = `
-                <div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600">
-                    <span><span class="font-medium">${escapeHtml(client)}</span> · <span class="font-medium">${escapeHtml(title)}</span> · <span class="font-medium">${escapeHtml(subtitle)}</span></span>
-                    <span class="modal-summary-badge">${partsList.length} parts</span>
-                    <span class="modal-summary-badge bg-indigo-50 text-indigo-700">${formatQty(totalDeliveredAssembly)} total delivered (assembly)</span>
-                    <span class="modal-summary-badge bg-amber-50 text-amber-700"><i class="fa-regular fa-check-circle mr-1"></i>selected only</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="subsub-parts-table">
-                        <thead><tr><th>Part Name</th><th>Part Number</th><th class="text-center">Qty</th><th class="text-center">Delivered</th></tr></thead>
-                        <tbody>`;
-            for (const [pName, data] of sortedParts) {
-                const rawTagNo = window.partNumberMap?.get(pName) || null;
-                const pairs = parseTagNoPairs(rawTagNo);
-                const tagNames = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
-                const tagQtys  = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
-                html += `<tr>
-                    <td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pName)}')">${escapeHtml(pName)}</span></td>
-                    <td>${tagNames}</td>
-                    <td class="text-center">${tagQtys}</td>
-                    <td class="text-center font-medium">${formatQty(data.delivered)}</td>
-                </tr>`;
+            const list = Array.from(nt.parts.entries()).filter(([p]) => sel.has(p)).sort((a, b) => b[1].delivered - a[1].delivered);
+            let html = `<div class="flex flex-wrap items-center gap-2 mb-3 text-sm text-gray-600"><span>${escapeHtml(client)} · ${escapeHtml(title)} · ${escapeHtml(subtitle)}</span><span class="modal-summary-badge">${list.length} parts</span><span class="modal-summary-badge bg-indigo-50 text-indigo-700">${formatQty(totDel)} total delivered</span></div><div class="overflow-x-auto"><table class="subsub-parts-table"><thead><tr><th>Part</th><th>Part Number</th><th class="text-center">Qty</th><th class="text-center">Delivered</th></tr></thead><tbody>`;
+            for (const [pn, d] of list) {
+                const tn = window.partNumberMap?.get(pn);
+                const pairs = parseTagNoPairs(tn);
+                const n = pairs ? pairs.map(p => escapeHtml(p.name)).join('<br>') : '—';
+                const q = pairs ? pairs.map(p => escapeHtml(p.qty)).join('<br>') : '—';
+                html += `<tr><td><span class="part-link" onclick="closeAssemblyModal(); showPartDetails('${escapeHtml(pn)}')">${escapeHtml(pn)}</span></td><td>${n}</td><td class="text-center">${q}</td><td class="text-center">${formatQty(d.delivered)}</td></tr>`;
             }
             html += `</tbody></table></div>`;
             body.innerHTML = html;
             document.getElementById('assemblyModal').classList.remove('hidden');
         }
-
-        function closeAssemblyModal(e) {
-            if (!e || e.target === document.getElementById('assemblyModal') || e.target.closest('.modal-close') || e.target.closest('button'))
-                document.getElementById('assemblyModal').classList.add('hidden');
-        }
+        function closeAssemblyModal(e) { if (!e || e.target === document.getElementById('assemblyModal') || e.target.closest('.modal-close') || e.target.closest('button')) document.getElementById('assemblyModal').classList.add('hidden'); }
 
         function showPartDetails(partName) {
-            const inspections = window.partInspectionsMap?.get(partName);
-            if (!inspections || !inspections.length) { showToast('No inspections found for this part', 'error'); return; }
+            const insps = window.partInspectionsMap?.get(partName);
+            if (!insps || !insps.length) { showToast('No data', 'error'); return; }
             document.getElementById('partModalTitle').innerHTML = `<i class="fa-regular fa-microchip text-purple-500 mr-2"></i>${escapeHtml(partName)}`;
             const body = document.getElementById('partModalBody');
-            const lastInsp = inspections[inspections.length - 1];
-            const nextOp = lastInsp ? getSuggestedNext(lastInsp) : null;
-            const lastDate = lastInsp ? new Date(lastInsp.submitted_at).toLocaleDateString() : '—';
-            const lastProcess = lastInsp?.process_type || '—';
-
-            let html = `
-                <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
-                    <div class="bg-slate-50 rounded-lg p-2.5"><div class="text-xs text-gray-400">Last Operation</div><div class="font-medium">${escapeHtml(lastProcess)}</div><div class="text-xs text-gray-400">${lastDate}</div></div>
-                    <div class="bg-slate-50 rounded-lg p-2.5"><div class="text-xs text-gray-400">Suggested Next</div><div class="font-medium">${nextOp ? escapeHtml(nextOp) : '—'}</div></div>
-                </div>
-                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5"><i class="fa-regular fa-clock mr-1"></i>Inspection History</div>
-                <div class="inspection-history-wrap border rounded-lg overflow-hidden">
-                    <table class="min-w-full text-sm border-0">
-                        <thead><tr><th class="p-1.5 text-left">Date</th><th class="p-1.5 text-left">Process</th><th class="p-1.5 text-left">Condition</th><th class="p-1.5 text-center">Del</th><th class="p-1.5 text-center">Acc</th><th class="p-1.5 text-center">Rework</th><th class="p-1.5 text-center">Reject</th><th class="p-1.5 text-center">Cond</th><th class="p-1.5 text-center">Rating</th></tr></thead>
-                        <tbody>`;
-            const sorted = [...inspections].sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
-            for (const insp of sorted) {
-                const date = new Date(insp.submitted_at).toLocaleDateString();
-                const process = insp.process_type || '—';
-                const opCond = getExtraField(insp, 'Operation Condition') || '—';
-                const del = insp.delivered_qty || 0;
-                const acc = insp.accepted_qty || 0;
-                const rework = insp.rework_qty || 0;
-                const rej = insp.reject_qty || 0;
-                const cond = insp.conditional_accept_qty || 0;
-                const rating = insp.derived_result || insp.acceptance_data?.p0?.rating || '—';
-                html += `<tr class="border-b hover:bg-gray-50">
-                    <td class="p-1.5">${date}</td>
-                    <td class="p-1.5">${escapeHtml(process)}</td>
-                    <td class="p-1.5">${escapeHtml(opCond)}</td>
-                    <td class="p-1.5 text-center">${del}</td>
-                    <td class="p-1.5 text-center text-emerald-700">${acc}</td>
-                    <td class="p-1.5 text-center text-amber-600">${rework}</td>
-                    <td class="p-1.5 text-center text-red-600">${rej}</td>
-                    <td class="p-1.5 text-center text-blue-600">${cond}</td>
-                    <td class="p-1.5 text-center">${escapeHtml(rating)}</td>
-                </tr>`;
+            const sorted = [...insps].sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+            const last = sorted[sorted.length - 1];
+            const lastDate = last ? new Date(last.submitted_at).toLocaleDateString() : '—';
+            let html = `<div class="grid grid-cols-2 gap-2 mb-3 text-sm"><div class="bg-slate-50 rounded-lg p-2.5"><div class="text-xs text-gray-400">Last Operation</div><div class="font-medium">${escapeHtml(last?.process_type || '—')}</div><div class="text-xs text-gray-400">${lastDate}</div></div><div class="bg-slate-50 rounded-lg p-2.5"><div class="text-xs text-gray-400">Suggested Next</div><div class="font-medium">${last ? escapeHtml(getSuggestedNext(last) || '—') : '—'}</div></div></div>
+            <div class="text-xs font-semibold text-gray-500 uppercase mb-1.5"><i class="fa-regular fa-clock mr-1"></i>History</div>
+            <div class="inspection-history-wrap border rounded-lg overflow-hidden"><table class="min-w-full text-sm border-0"><thead><tr><th class="p-1.5 text-left">Date</th><th class="p-1.5 text-left">Process</th><th class="p-1.5 text-left">Cond</th><th class="p-1.5 text-center">Del</th><th class="p-1.5 text-center">Acc</th><th class="p-1.5 text-center">Rwk</th><th class="p-1.5 text-center">Rej</th><th class="p-1.5 text-center">Cnd</th><th class="p-1.5 text-center">Rating</th></tr></thead><tbody>`;
+            for (const i of sorted) {
+                html += `<tr class="border-b hover:bg-gray-50"><td class="p-1.5">${new Date(i.submitted_at).toLocaleDateString()}</td><td class="p-1.5">${escapeHtml(i.process_type || '—')}</td><td class="p-1.5">${escapeHtml(getExtraField(i, 'Operation Condition') || '—')}</td><td class="p-1.5 text-center">${i.delivered_qty || 0}</td><td class="p-1.5 text-center text-emerald-700">${i.accepted_qty || 0}</td><td class="p-1.5 text-center text-amber-600">${i.rework_qty || 0}</td><td class="p-1.5 text-center text-red-600">${i.reject_qty || 0}</td><td class="p-1.5 text-center text-blue-600">${i.conditional_accept_qty || 0}</td><td class="p-1.5 text-center">${escapeHtml(i.derived_result || i.acceptance_data?.p0?.rating || '—')}</td></tr>`;
             }
             html += `</tbody></table></div>`;
             body.innerHTML = html;
             document.getElementById('partModal').classList.remove('hidden');
         }
-
-        function closePartModal(e) {
-            if (!e || e.target === document.getElementById('partModal') || e.target.closest('.modal-close') || e.target.closest('button'))
-                document.getElementById('partModal').classList.add('hidden');
-        }
+        function closePartModal(e) { if (!e || e.target === document.getElementById('partModal') || e.target.closest('.modal-close') || e.target.closest('button')) document.getElementById('partModal').classList.add('hidden'); }
 
         function exportAnalysisToExcel() {
-            if (!allRows.length) { showToast('No data to export', 'error'); return; }
-            const data = [['Client','Project Title','Subtitle','Sub‑Sub Assembly','Part Name','tag_no (Part Number)','Qty','Delivered Qty','Accepted Qty','Conditional Qty','Completion (%)','Selected / Total']];
-            const rowsToExport = filteredRows.length ? filteredRows : allRows;
+            if (!allRows.length) { showToast('No data', 'error'); return; }
+            const data = [['Client','Project','Subtitle','Sub‑Sub','Part','tag_no','Qty','Delivered','Accepted','Conditional','Completion %','Selected / Total']];
+            const rowsToExp = filteredRows.length ? filteredRows : allRows;
             const compMap = new Map();
-            for (const row of rowsToExport) {
-                const key = row.subSubKey;
-                if (!compMap.has(key)) compMap.set(key, window.assemblyCompletionData?.get(key) || { totalParts: 0, selectedParts: 0, pct: 0 });
-            }
-            for (const row of rowsToExport) {
-                const comp = compMap.get(row.subSubKey) || { totalParts: 0, selectedParts: 0, pct: 0 };
-                const rawTagNo = window.partNumberMap?.get(row.partName) || '—';
-                const pairs = parseTagNoPairs(rawTagNo);
+            for (const r of rowsToExp) { const k = r.subSubKey; if (!compMap.has(k)) compMap.set(k, window.assemblyCompletionData?.get(k) || { totalParts: 0, selectedParts: 0, pct: 0 }); }
+            for (const r of rowsToExp) {
+                const comp = compMap.get(r.subSubKey) || { totalParts: 0, selectedParts: 0, pct: 0 };
+                const tn = window.partNumberMap?.get(r.partName) || '—';
+                const pairs = parseTagNoPairs(tn);
                 let tagDisplay = '—', qtyDisplay = '—';
-                if (pairs && pairs.length > 0) { tagDisplay = pairs.map(p => p.name).join('; '); qtyDisplay = pairs.map(p => p.qty).join('; '); }
-                else if (rawTagNo !== '—') tagDisplay = String(rawTagNo);
-                data.push([row.client, row.title, row.subtitle, row.subSub, row.partName, tagDisplay, qtyDisplay, row.delivered, row.accepted, row.conditional || 0, comp.pct.toFixed(1) + '%', `${comp.selectedParts} / ${comp.totalParts}`]);
+                if (pairs && pairs.length) { tagDisplay = pairs.map(p => p.name).join('; '); qtyDisplay = pairs.map(p => p.qty).join('; '); }
+                else tagDisplay = String(tn);
+                data.push([r.client, r.title, r.subtitle, r.subSub, r.partName, tagDisplay, qtyDisplay, r.delivered, r.accepted, r.conditional || 0, comp.pct.toFixed(1) + '%', `${comp.selectedParts} / ${comp.totalParts}`]);
             }
             const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 20 },{ wch: 25 },{ wch: 20 },{ wch: 20 },{ wch: 25 },{ wch: 30 },{ wch: 12 },{ wch: 14 },{ wch: 14 },{ wch: 14 },{ wch: 20 },{ wch: 25 }];
+            ws['!cols'] = [{wch:20},{wch:25},{wch:20},{wch:20},{wch:25},{wch:30},{wch:12},{wch:14},{wch:14},{wch:14},{wch:20},{wch:25}];
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Assembly Analysis');
+            XLSX.utils.book_append_sheet(wb, ws, 'Assembly');
             XLSX.writeFile(wb, `assembly_analysis_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`);
-            showToast('Excel exported successfully', 'success');
         }
 
         function applyFilters() {
-            const client   = document.getElementById('filterClient').value;
-            const title    = document.getElementById('filterTitle').value;
-            const subtitle = document.getElementById('filterSubtitle').value;
-            const subSub   = document.getElementById('filterSubSub').value;
-            let filtered = [...allRows];
-            if (client)   filtered = filtered.filter(r => r.client === client);
-            if (title)    filtered = filtered.filter(r => r.title === title);
-            if (subtitle) filtered = filtered.filter(r => r.subtitle === subtitle);
-            if (subSub)   filtered = filtered.filter(r => r.subSub === subSub);
-            filteredRows = filtered;
-            renderAnalysis(filtered);
+            const c = document.getElementById('filterClient').value;
+            const t = document.getElementById('filterTitle').value;
+            const s = document.getElementById('filterSubtitle').value;
+            const ss = document.getElementById('filterSubSub').value;
+            let f = [...allRows];
+            if (c) f = f.filter(r => r.client === c);
+            if (t) f = f.filter(r => r.title === t);
+            if (s) f = f.filter(r => r.subtitle === s);
+            if (ss) f = f.filter(r => r.subSub === ss);
+            filteredRows = f;
+            renderAnalysis(f);
         }
-
         function populateFilters(rows) {
-            const clients   = [...new Set(rows.map(r => r.client))].sort();
-            const titles    = [...new Set(rows.map(r => r.title))].sort();
-            const subtitles = [...new Set(rows.map(r => r.subtitle))].sort();
-            const subSubs   = [...new Set(rows.map(r => r.subSub))].sort();
-            document.getElementById('filterClient').innerHTML   = '<option value="">All Clients</option>' + clients.map(c => `<option>${escapeHtml(c)}</option>`).join('');
-            document.getElementById('filterTitle').innerHTML    = '<option value="">All Titles</option>' + titles.map(t => `<option>${escapeHtml(t)}</option>`).join('');
-            document.getElementById('filterSubtitle').innerHTML = '<option value="">All Subtitles</option>' + subtitles.map(s => `<option>${escapeHtml(s)}</option>`).join('');
-            document.getElementById('filterSubSub').innerHTML   = '<option value="">All</option>' + subSubs.map(s => `<option>${escapeHtml(s)}</option>`).join('');
+            document.getElementById('filterClient').innerHTML = '<option value="">All</option>' + [...new Set(rows.map(r => r.client))].sort().map(c => `<option>${escapeHtml(c)}</option>`).join('');
+            document.getElementById('filterTitle').innerHTML = '<option value="">All</option>' + [...new Set(rows.map(r => r.title))].sort().map(t => `<option>${escapeHtml(t)}</option>`).join('');
+            document.getElementById('filterSubtitle').innerHTML = '<option value="">All</option>' + [...new Set(rows.map(r => r.subtitle))].sort().map(s => `<option>${escapeHtml(s)}</option>`).join('');
+            document.getElementById('filterSubSub').innerHTML = '<option value="">All</option>' + [...new Set(rows.map(r => r.subSub))].sort().map(s => `<option>${escapeHtml(s)}</option>`).join('');
         }
-
-        function clearFilters() {
-            ['filterClient','filterTitle','filterSubtitle','filterSubSub'].forEach(id => document.getElementById(id).value = '');
-            applyFilters();
-        }
-
+        function clearFilters() { ['filterClient','filterTitle','filterSubtitle','filterSubSub'].forEach(id => document.getElementById(id).value = ''); applyFilters(); }
         async function refreshData() {
-            const inspections = await fetchInspections();
-            const result = aggregateAssemblyData(inspections);
-            allRows = result.rows;
-            window.subSubAssemblyMap = result.targetMap;
-            window.nonTargetSubSubMap = result.nonTargetMap;
-            window.partInspectionsMap = result.partInspections;
-            window.partToSubSubKey = result.partToSubSubKey;
-            window.partNumberMap = result.partNumberMap;
-            window.selectedPartsMap = result.selectedPartsMap;
-            window.allPartsMap = result.allPartsMap;
-            window.assemblyCompletionData = result.completionData;
+            const insps = await fetchInspections();
+            const res = aggregateAssemblyData(insps);
+            allRows = res.rows;
+            window.subSubAssemblyMap = res.targetMap;
+            window.nonTargetSubSubMap = res.nonTargetMap;
+            window.partInspectionsMap = res.partInspections;
+            window.partToSubSubKey = res.partToSubSubKey;
+            window.partNumberMap = res.partNumberMap;
+            window.selectedPartsMap = res.selectedPartsMap;
+            window.allPartsMap = res.allPartsMap;
+            window.assemblyCompletionData = res.completionData;
             populateFilters(allRows);
             filteredRows = [...allRows];
             applyFilters();
-            showToast(`Data refreshed – ${allRows.length} part records (completion = selected / non‑assembly total)`, 'info');
+            showToast(`Refreshed — ${allRows.length} parts`, 'info');
         }
-
-        document.getElementById('filterClient').addEventListener('change', applyFilters);
-        document.getElementById('filterTitle').addEventListener('change', applyFilters);
-        document.getElementById('filterSubtitle').addEventListener('change', applyFilters);
-        document.getElementById('filterSubSub').addEventListener('change', applyFilters);
-        window.addEventListener('keydown', e => {
-            if (e.key === 'Escape') { closePartModal(e); closeAssemblyModal(e); closeCompletionModal(e); }
-        });
-
+        ['filterClient','filterTitle','filterSubtitle','filterSubSub'].forEach(id => document.getElementById(id).addEventListener('change', applyFilters));
+        window.addEventListener('keydown', e => { if (e.key === 'Escape') { closePartModal(e); closeAssemblyModal(e); closeCompletionModal(e); } });
         refreshData();
     </script>
 </body>
