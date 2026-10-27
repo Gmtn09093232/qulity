@@ -7,13 +7,14 @@ const jwt = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-app.use(cors({ origin: '*', methods: ['GET','POST','PUT','DELETE','OPTIONS'], allowedHeaders: ['Content-Type','Authorization'] }));
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 app.use(express.json());
 app.use(express.static('public'));
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here_change_in_production';
 
+// ─── HELPER: Determine which table to use ───
 function getTableForProcess(processType) {
   if (!processType) return 'rolling_inspections';
   const lower = processType.toLowerCase();
@@ -22,12 +23,14 @@ function getTableForProcess(processType) {
   return 'rolling_inspections';
 }
 
+// ─── CANONICAL DERIVED-FIELD HELPERS ───
 function normaliseOperationStatus(raw) {
   const lower = String(raw || '').trim().toLowerCase();
   if (!lower) return null;
   if (lower === 'continue') return 'continuous';
   return lower;
 }
+
 function deriveResult(acceptanceData) {
   const ratings = Object.values(acceptanceData || {}).map(p => (p && p.rating) || '').filter(Boolean);
   if (ratings.length === 0) return null;
@@ -36,29 +39,36 @@ function deriveResult(acceptanceData) {
   if (ratings.includes('Conditional Accept')) return 'Conditional Accept';
   return 'Accepted';
 }
+
 function computeCumulativePoints(acceptanceData) {
   const ratings = Object.values(acceptanceData || {}).map(p => (p && p.rating) || '').filter(Boolean);
   if (ratings.length === 0) return 0;
   const scoreMap = { 'Accepted': 1, 'Conditional Accept': 0.5, 'Rework': 0.25, 'Reject': 0 };
   return +(ratings.reduce((s, r) => s + (scoreMap[r] ?? 0), 0) / ratings.length).toFixed(3);
 }
+
+// ─── BUILD INSPECTION ROW (DATA SANITIZATION) ───
 function buildInspectionRow(req) {
   const extra = req.body.extra_fields || {};
   const processT = req.body.process_type;
   const table = getTableForProcess(processT);
   const isAsm = table === 'assembly_inspections';
+
   const acceptance = req.body.acceptance_data || {};
   const accepted = +req.body.accepted_qty || 0;
   const rework = +req.body.rework_qty || 0;
   const reject = +req.body.reject_qty || 0;
   const conditional = +req.body.conditional_accept_qty || 0;
   const totalOutcomes = isAsm ? 0 : (accepted + rework + reject + conditional);
+
   const selectedPartNames = Array.isArray(extra.selectedPartNames)
     ? extra.selectedPartNames.filter(n => n && n.trim())
     : (extra.selectedParts && typeof extra.selectedParts === 'object' ? Object.keys(extra.selectedParts).filter(n => n && n.trim()) : []);
+  
   const assemblyPartsCount = isAsm ? selectedPartNames.length : 0;
   const assemblyTotalParts = isAsm ? (+extra.totalPartsCount || 0) : 0;
   const assemblyCompletion = (isAsm && assemblyTotalParts > 0) ? +((assemblyPartsCount / assemblyTotalParts) * 100).toFixed(1) : null;
+
   return {
     ...req.body,
     submitted_at: new Date(),
@@ -74,7 +84,16 @@ function buildInspectionRow(req) {
     suggested_next_operation: req.body.suggested_next_operation || extra['process order'] || null,
     operation_status: normaliseOperationStatus(req.body.operation_status),
     normalised_operation: normaliseOperationStatus(req.body.operation_status),
-    total_internal_failure_cost: +req.body.total_internal_failure_cost || 0,
+    
+    // NUMERIC SAFETY: Force these fields to be parsed as floats so PostgreSQL doesn't reject "0.75" or "338.84"
+    defected_material_cost: parseFloat(req.body.defected_material_cost) || 0,
+    labor_hours: parseFloat(req.body.labor_hours) || 0,
+    salary_per_hour: parseFloat(req.body.salary_per_hour) || 0,
+    machining_hours: parseFloat(req.body.machining_hours) || 0,
+    machining_cost_per_hr: parseFloat(req.body.machining_cost_per_hr) || 0,
+    total_internal_failure_cost: parseFloat(req.body.total_internal_failure_cost) || 0,
+    total_minutes: parseFloat(req.body.total_minutes) || 0,
+    
     severity: (req.body.severity || extra['Severity'] || 'major').toLowerCase(),
     is_final_op: !!req.body.is_final_op,
     total_outcomes_qty: totalOutcomes,
@@ -86,6 +105,7 @@ function buildInspectionRow(req) {
   };
 }
 
+// ─── TELEGRAM AUTH ───
 function validateTelegramData(data, botToken) {
   const { hash, ...rest } = data;
   const checkString = Object.keys(rest).sort().map(key => `${key}=${rest[key]}`).join('\n');
@@ -94,6 +114,7 @@ function validateTelegramData(data, botToken) {
   return computedHash === hash;
 }
 
+// ─── STATIC ROUTES ───
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
@@ -102,6 +123,7 @@ app.get('/up', (req, res) => res.sendFile(path.join(__dirname, 'up.html')));
 app.get('/tools', (req, res) => res.sendFile(path.join(__dirname, 'tools.html')));
 app.get('/dash', (req, res) => res.sendFile(path.join(__dirname, 'dash.html')));
 
+// ─── GET /api/inspections ───
 app.get('/api/inspections', async (req, res) => {
   try {
     const [r, a] = await Promise.all([
@@ -116,6 +138,7 @@ app.get('/api/inspections', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ─── GET /api/inspections/:id ───
 app.get('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
   let { data, error } = await supabase.from('rolling_inspections').select('*').eq('id', id).single();
@@ -126,6 +149,7 @@ app.get('/api/inspections/:id', async (req, res) => {
   res.json(ad);
 });
 
+// ─── POST /api/inspections ───
 app.post('/api/inspections', async (req, res) => {
   try {
     const row = buildInspectionRow(req);
@@ -136,6 +160,7 @@ app.post('/api/inspections', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ─── PUT /api/inspections/:id (migrates table when category changes) ───
 app.put('/api/inspections/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -143,13 +168,17 @@ app.put('/api/inspections/:id', async (req, res) => {
     const { data: r } = await supabase.from('rolling_inspections').select('id').eq('id', id).maybeSingle();
     const { data: a } = await supabase.from('assembly_inspections').select('id').eq('id', id).maybeSingle();
     const oldTable = r ? 'rolling_inspections' : (a ? 'assembly_inspections' : null);
+    
     if (!oldTable) return res.status(404).json({ error: 'Not found' });
+    
     const row = buildInspectionRow(req);
+    
     if (oldTable === newTable) {
       const { data, error } = await supabase.from(newTable).update(row).eq('id', id).select();
       if (error) return res.status(400).json({ error: error.message });
       return res.json(data[0]);
     }
+    
     await supabase.from(oldTable).delete().eq('id', id);
     const { data, error } = await supabase.from(newTable).insert([row]).select();
     if (error) return res.status(400).json({ error: error.message });
@@ -157,6 +186,7 @@ app.put('/api/inspections/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ─── DELETE /api/inspections/:id ───
 app.delete('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
   let { error: e1 } = await supabase.from('rolling_inspections').delete().eq('id', id);
@@ -166,6 +196,7 @@ app.delete('/api/inspections/:id', async (req, res) => {
   res.status(204).send();
 });
 
+// ─── LAST OPERATION ENDPOINT ───
 app.post('/api/inspections/last-operation', async (req, res) => {
   const { part_name, project_name, subtitle, sub_sub_assembly, drawing_no, tag_no, exclude_id } = req.body;
   if (!part_name) return res.json({ last_operation: null });
@@ -196,6 +227,7 @@ app.post('/api/inspections/last-operation', async (req, res) => {
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+// ─── THRESHOLDS ───
 app.get('/api/thresholds', async (req, res) => {
   try {
     const { data, error } = await supabase.from('report_thresholds').select('*').eq('id', 'default').maybeSingle();
@@ -204,6 +236,7 @@ app.get('/api/thresholds', async (req, res) => {
   } catch { res.json({ fpy_critical: 70, fpy_needs: 85, fpy_watch: 95, epy_target: 98 }); }
 });
 
+// ─── OVERRIDES ───
 let _ov = {};
 app.get('/api/overrides', async (req, res) => {
   try {
@@ -214,6 +247,7 @@ app.get('/api/overrides', async (req, res) => {
     res.json(m);
   } catch { res.json(_ov); }
 });
+
 app.post('/api/overrides', async (req, res) => {
   const { level, id, parts, delivered } = req.body || {};
   if (!level || !id) return res.status(400).json({ error: 'level and id required' });
@@ -228,6 +262,7 @@ app.post('/api/overrides', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── TELEGRAM AUTH ───
 app.post('/api/telegram-auth', async (req, res) => {
   const td = req.body;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -249,9 +284,11 @@ app.post('/api/telegram-auth', async (req, res) => {
   res.json({ success: true, token, user: { id: user.telegram_id, name: `${user.first_name} ${user.last_name}`, username: user.username } });
 });
 
+// ─── START SERVER ───
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ Server on http://localhost:${PORT}`);
-  console.log(`🔗 Supabase: ${process.env.SUPABASE_URL}`);
-  console.log(`🤖 Telegram: ${process.env.TELEGRAM_BOT_TOKEN ? 'Yes' : 'No'}`);
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`🔗 Supabase URL: ${process.env.SUPABASE_URL}`);
+  console.log(`🤖 Telegram bot configured: ${process.env.TELEGRAM_BOT_TOKEN ? 'Yes' : 'No'}`);
+  console.log(`📂 Using both 'rolling_inspections' and 'assembly_inspections' tables.`);
 });
