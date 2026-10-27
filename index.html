@@ -283,7 +283,7 @@
                         <div><label class="block text-xs font-medium text-slate-500 mb-1">Machining Cost per Hr (ETB)</label><input type="number" step="0.01" id="machiningCostPerHr" class="input-field" /></div>
                     </div>
                     <div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                        <span class="font-medium text-slate-700">Total Internal Failure Cost (ETB):</span>
+                        <span class="font-medium text-slate-700">Total Internal Failure Cost (ETB): <span class="text-xs text-slate-400 font-normal">(Base Cost × Defective Qty)</span></span>
                         <span id="totalFailureCostDisplay" class="text-xl font-bold text-blue-700">0.00</span>
                         <input type="hidden" id="totalInternalFailureCost" />
                     </div>
@@ -804,17 +804,31 @@
                 }
             }
         }
+        
         function computeFailureCost() {
-            const mat = +document.getElementById("defectedMaterialCost").value || 0;
-            const lab = +document.getElementById("laborHours").value || 0;
-            const sal = +document.getElementById("salaryPerHour").value || 0;
-            const mh = +document.getElementById("machiningHours").value || 0;
-            const mr = +document.getElementById("machiningCostPerHr").value || 0;
-            const total = mat + lab * sal + mh * mr;
+            const mat = parseFloat(document.getElementById("defectedMaterialCost").value) || 0;
+            const lab = parseFloat(document.getElementById("laborHours").value) || 0;
+            const sal = parseFloat(document.getElementById("salaryPerHour").value) || 0;
+            const mh = parseFloat(document.getElementById("machiningHours").value) || 0;
+            const mr = parseFloat(document.getElementById("machiningCostPerHr").value) || 0;
+            
+            // Get the defective quantities
+            const rework = parseFloat(document.getElementById("reworkQty").value) || 0;
+            const reject = parseFloat(document.getElementById("rejectQty").value) || 0;
+            const defectiveQty = rework + reject;
+
+            // Base cost per unit/batch
+            const baseCost = mat + (lab * sal) + (mh * mr);
+            
+            // Multiply base cost by the total number of defective parts
+            // If defectiveQty is 0, cost is 0
+            const total = defectiveQty > 0 ? (baseCost * defectiveQty) : 0;
+            
             document.getElementById("totalInternalFailureCost").value = total.toFixed(2);
             document.getElementById("totalFailureCostDisplay").innerText = total.toFixed(2);
             return total;
         }
+
         async function fetchLastOperation() {
             const partName = document.getElementById('extra_Part_Name')?.value?.trim();
             const container = document.getElementById('lastOperationContainer');
@@ -1076,7 +1090,7 @@
             f.value = l === "12" ? 87.125 : l === "13" ? 90.1 : l === "14" ? 96.6 : "";
             computeFailureCost();
         });
-        ["defectedMaterialCost","laborHours","salaryPerHour","machiningHours","machiningCostPerHr"].forEach(id => document.getElementById(id)?.addEventListener("input", computeFailureCost));
+        ["defectedMaterialCost","laborHours","salaryPerHour","machiningHours","machiningCostPerHr", "reworkQty", "rejectQty"].forEach(id => document.getElementById(id)?.addEventListener("input", computeFailureCost));
         document.getElementById("startTime")?.addEventListener("change", updateTotalTime);
         document.getElementById("endTime")?.addEventListener("change", updateTotalTime);
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
