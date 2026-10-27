@@ -14,7 +14,6 @@ app.use(express.static('public'));
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here_change_in_production';
 
-// ─── HELPER: Determine which table to use ───
 function getTableForProcess(processType) {
   if (!processType) return 'rolling_inspections';
   const lower = processType.toLowerCase();
@@ -23,7 +22,6 @@ function getTableForProcess(processType) {
   return 'rolling_inspections';
 }
 
-// ─── CANONICAL DERIVED-FIELD HELPERS ───
 function normaliseOperationStatus(raw) {
   const lower = String(raw || '').trim().toLowerCase();
   if (!lower) return null;
@@ -47,7 +45,6 @@ function computeCumulativePoints(acceptanceData) {
   return +(ratings.reduce((s, r) => s + (scoreMap[r] ?? 0), 0) / ratings.length).toFixed(3);
 }
 
-// ─── BUILD INSPECTION ROW (DATA SANITIZATION) ───
 function buildInspectionRow(req) {
   const extra = req.body.extra_fields || {};
   const processT = req.body.process_type;
@@ -55,10 +52,12 @@ function buildInspectionRow(req) {
   const isAsm = table === 'assembly_inspections';
 
   const acceptance = req.body.acceptance_data || {};
-  const accepted = +req.body.accepted_qty || 0;
-  const rework = +req.body.rework_qty || 0;
-  const reject = +req.body.reject_qty || 0;
-  const conditional = +req.body.conditional_accept_qty || 0;
+  
+  // Ensure all numeric fields are parsed as floats (decimals)
+  const accepted = parseFloat(req.body.accepted_qty) || 0;
+  const rework = parseFloat(req.body.rework_qty) || 0;
+  const reject = parseFloat(req.body.reject_qty) || 0;
+  const conditional = parseFloat(req.body.conditional_accept_qty) || 0;
   const totalOutcomes = isAsm ? 0 : (accepted + rework + reject + conditional);
 
   const selectedPartNames = Array.isArray(extra.selectedPartNames)
@@ -66,7 +65,7 @@ function buildInspectionRow(req) {
     : (extra.selectedParts && typeof extra.selectedParts === 'object' ? Object.keys(extra.selectedParts).filter(n => n && n.trim()) : []);
   
   const assemblyPartsCount = isAsm ? selectedPartNames.length : 0;
-  const assemblyTotalParts = isAsm ? (+extra.totalPartsCount || 0) : 0;
+  const assemblyTotalParts = isAsm ? (parseFloat(extra.totalPartsCount) || 0) : 0;
   const assemblyCompletion = (isAsm && assemblyTotalParts > 0) ? +((assemblyPartsCount / assemblyTotalParts) * 100).toFixed(1) : null;
 
   return {
@@ -85,14 +84,24 @@ function buildInspectionRow(req) {
     operation_status: normaliseOperationStatus(req.body.operation_status),
     normalised_operation: normaliseOperationStatus(req.body.operation_status),
     
-    // NUMERIC SAFETY: Force these fields to be parsed as floats so PostgreSQL doesn't reject "0.75" or "338.84"
+    // Parse ALL numeric fields safely as floats to preserve decimals
+    accepted_qty: accepted,
+    rework_qty: rework,
+    reject_qty: reject,
+    conditional_accept_qty: conditional,
+    delivered_qty: parseFloat(req.body.delivered_qty) || 0,
+    total_delivered_qty: req.body.total_delivered_qty ? parseFloat(req.body.total_delivered_qty) : null,
+    selected_parts_count: req.body.selected_parts_count ? parseFloat(req.body.selected_parts_count) : null,
+    assembly_progress_pct: req.body.assembly_progress_pct ? parseFloat(req.body.assembly_progress_pct) : null,
+    total_minutes: parseFloat(req.body.total_minutes) || 0,
+    shift: req.body.shift ? parseInt(req.body.shift) : null, // Shift is usually integer
+    
     defected_material_cost: parseFloat(req.body.defected_material_cost) || 0,
     labor_hours: parseFloat(req.body.labor_hours) || 0,
     salary_per_hour: parseFloat(req.body.salary_per_hour) || 0,
     machining_hours: parseFloat(req.body.machining_hours) || 0,
     machining_cost_per_hr: parseFloat(req.body.machining_cost_per_hr) || 0,
     total_internal_failure_cost: parseFloat(req.body.total_internal_failure_cost) || 0,
-    total_minutes: parseFloat(req.body.total_minutes) || 0,
     
     severity: (req.body.severity || extra['Severity'] || 'major').toLowerCase(),
     is_final_op: !!req.body.is_final_op,
@@ -105,7 +114,6 @@ function buildInspectionRow(req) {
   };
 }
 
-// ─── TELEGRAM AUTH ───
 function validateTelegramData(data, botToken) {
   const { hash, ...rest } = data;
   const checkString = Object.keys(rest).sort().map(key => `${key}=${rest[key]}`).join('\n');
@@ -114,7 +122,6 @@ function validateTelegramData(data, botToken) {
   return computedHash === hash;
 }
 
-// ─── STATIC ROUTES ───
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
@@ -123,7 +130,6 @@ app.get('/up', (req, res) => res.sendFile(path.join(__dirname, 'up.html')));
 app.get('/tools', (req, res) => res.sendFile(path.join(__dirname, 'tools.html')));
 app.get('/dash', (req, res) => res.sendFile(path.join(__dirname, 'dash.html')));
 
-// ─── GET /api/inspections ───
 app.get('/api/inspections', async (req, res) => {
   try {
     const [r, a] = await Promise.all([
@@ -138,7 +144,6 @@ app.get('/api/inspections', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── GET /api/inspections/:id ───
 app.get('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
   let { data, error } = await supabase.from('rolling_inspections').select('*').eq('id', id).single();
@@ -149,7 +154,6 @@ app.get('/api/inspections/:id', async (req, res) => {
   res.json(ad);
 });
 
-// ─── POST /api/inspections ───
 app.post('/api/inspections', async (req, res) => {
   try {
     const row = buildInspectionRow(req);
@@ -160,7 +164,6 @@ app.post('/api/inspections', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── PUT /api/inspections/:id (migrates table when category changes) ───
 app.put('/api/inspections/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -186,7 +189,6 @@ app.put('/api/inspections/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── DELETE /api/inspections/:id ───
 app.delete('/api/inspections/:id', async (req, res) => {
   const { id } = req.params;
   let { error: e1 } = await supabase.from('rolling_inspections').delete().eq('id', id);
@@ -196,7 +198,6 @@ app.delete('/api/inspections/:id', async (req, res) => {
   res.status(204).send();
 });
 
-// ─── LAST OPERATION ENDPOINT ───
 app.post('/api/inspections/last-operation', async (req, res) => {
   const { part_name, project_name, subtitle, sub_sub_assembly, drawing_no, tag_no, exclude_id } = req.body;
   if (!part_name) return res.json({ last_operation: null });
@@ -227,7 +228,6 @@ app.post('/api/inspections/last-operation', async (req, res) => {
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-// ─── THRESHOLDS ───
 app.get('/api/thresholds', async (req, res) => {
   try {
     const { data, error } = await supabase.from('report_thresholds').select('*').eq('id', 'default').maybeSingle();
@@ -236,7 +236,6 @@ app.get('/api/thresholds', async (req, res) => {
   } catch { res.json({ fpy_critical: 70, fpy_needs: 85, fpy_watch: 95, epy_target: 98 }); }
 });
 
-// ─── OVERRIDES ───
 let _ov = {};
 app.get('/api/overrides', async (req, res) => {
   try {
@@ -262,7 +261,6 @@ app.post('/api/overrides', async (req, res) => {
   res.json({ ok: true });
 });
 
-// ─── TELEGRAM AUTH ───
 app.post('/api/telegram-auth', async (req, res) => {
   const td = req.body;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -284,11 +282,9 @@ app.post('/api/telegram-auth', async (req, res) => {
   res.json({ success: true, token, user: { id: user.telegram_id, name: `${user.first_name} ${user.last_name}`, username: user.username } });
 });
 
-// ─── START SERVER ───
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   console.log(`🔗 Supabase URL: ${process.env.SUPABASE_URL}`);
   console.log(`🤖 Telegram bot configured: ${process.env.TELEGRAM_BOT_TOKEN ? 'Yes' : 'No'}`);
-  console.log(`📂 Using both 'rolling_inspections' and 'assembly_inspections' tables.`);
 });
